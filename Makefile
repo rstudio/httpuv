@@ -1,10 +1,22 @@
+OS := $(shell uname)
+
+ifeq (Darwin,$(OS))
+CPPFLAGS += -D_DARWIN_USE_64_BIT_INODE=1
+LDFLAGS += -framework CoreServices
+SOEXT = dylib
+endif
+ifeq (Linux,$(OS))
+LDFLAGS += -lrt
+SOEXT = so
+endif
+
 all: webserver
 
-webserver: webserver.c libuv/libuv.a http-parser/http_parser.o
-	g++ -Wall -I"$(SRCDIR)libuv/include" -I"$(SRCDIR)http-parser" \
-		-I"/home/jcheng/R/x86_64-pc-linux-gnu-library/2.15/BH/include" \
-		-o webserver webserver.c "$(SRCDIR)libuv/libuv.a" \
-		"$(SRCDIR)http-parser/http_parser.o" -lrt
+webserver: webserver.hpp webserver.cpp libuv/libuv.a http-parser/http_parser.o
+	$(CXX) $(CPPFLAGS) -Wall -I"$(SRCDIR)libuv/include" -I"$(SRCDIR)http-parser" \
+		-I"$(SRCDIR)boost/include" \
+		-o webserver webserver.cpp "$(SRCDIR)libuv/libuv.a" \
+		"$(SRCDIR)http-parser/http_parser.o" $(LDFLAGS) 
 
 libuv/libuv.a:
 	$(MAKE) --directory "$(SRCDIR)libuv"

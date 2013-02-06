@@ -207,4 +207,5 @@ libuv/LICENSE
 libuv/README.md
 libuv/uv.gyp
 libuv/vcbuild.bat
-webserver.c
+webserver.cpp
+webserver.hpp
