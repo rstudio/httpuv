@@ -5,10 +5,12 @@
 #include <uv.h>
 #include <http_parser.h>
 
-#include <boost/function.hpp>
-#include <boost/optional.hpp>
+class WriteCallback {
+public:
+    virtual void onWrite(int status) = 0;
+};
 
-class HttpRequest {
+class HttpRequest : public WriteCallback {
 
 private:
     uv_loop_t* _pLoop;
@@ -51,7 +53,9 @@ public:
     virtual int _on_body(http_parser* pParser, const char* pAt, size_t length);
     virtual int _on_message_complete(http_parser* pParser);
 
-    void write(const char* pData, size_t length, boost::function<void(int)> callback);
+    virtual void onWrite(int status);
+
+    void write(const char* pData, size_t length, WriteCallback* pCallback);
 
     void fatal_error(const char* method, const char* message);
     void _on_closed(uv_handle_t* handle);
@@ -67,7 +71,6 @@ private:
     int _status_code;
     std::string _status;
     std::map<std::string, std::string> _headers;
-    boost::optional<std::istream> _body;
 };
 
 #define DECLARE_CALLBACK_1(function_name, return_type, type_1) \
@@ -90,4 +93,4 @@ DECLARE_CALLBACK_3(on_request_read, void, uv_stream_t*, ssize_t, uv_buf_t)
 DECLARE_CALLBACK_2(on_response_write, void, uv_write_t*, int)
 
 void beginWrite(uv_stream_t* stream, const char* pData, size_t length,
-                boost::function<void(int)> callback);
+                WriteCallback* pCallback);

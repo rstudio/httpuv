@@ -5,8 +5,6 @@
 
 #include <iostream>
 
-#include <boost/bind.hpp>
-
 static uv_tcp_t server;
 static http_parser_settings settings;
 static uv_buf_t resbuf;
@@ -90,7 +88,7 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
     std::cout << _bytesRead << " bytes read" << std::endl;
     _headers.clear();
 
-    beginWrite((uv_stream_t*)&_handle, resbuf.base, resbuf.len, boost::bind(&HttpRequest::_on_response_write, this, _1));
+    beginWrite((uv_stream_t*)&_handle, resbuf.base, resbuf.len, this);
 
     return 0;
 }
@@ -136,10 +134,6 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
     free(buf.base);
 }
 
-void HttpRequest::_on_response_write(int status) {
-    std::cerr << "Response written: " << status << std::endl;
-}
-
 void HttpRequest::handleRequest() {
     int r = uv_read_start((uv_stream_t*)&_handle, &on_alloc, &on_request_read);
     if (r) {
@@ -147,7 +141,10 @@ void HttpRequest::handleRequest() {
         fatal_error("read_start", uv_strerror(err));
         return;
     }
+}
 
+void HttpRequest::onWrite(int status) {
+    std::cerr << "Response written: " << status << std::endl;
 }
 
 
@@ -235,17 +232,17 @@ int main() {
 typedef struct {
     uv_write_t handle;
     uv_buf_t data;
-    boost::function<void(int)> callback;
+    WriteCallback* callback;
 } write_req_t;
 
 static void endWrite(uv_write_t* write, int status) {
     write_req_t* req = reinterpret_cast<write_req_t*>(write);
-    req->callback(status);
+    req->callback->onWrite(status);
     free(req);
 }
 
 void beginWrite(uv_stream_t *stream, const char *pData, size_t length,
-                boost::function<void(int)> callback) {
+                WriteCallback* callback) {
     write_req_t* req = (write_req_t*)malloc(sizeof(write_req_t));
     memset(req, 0, sizeof(write_req_t));
 
