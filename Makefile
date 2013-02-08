@@ -14,7 +14,7 @@ all: webserver
 
 webserver: webserver.hpp webserver.cpp libuv/libuv.a http-parser/http_parser.o
 	$(CXX) $(CPPFLAGS) -Wall -I"$(SRCDIR)libuv/include" -I"$(SRCDIR)http-parser" \
-		-o webserver webserver.cpp "$(SRCDIR)libuv/libuv.a" \
+            -o webserver webserver.cpp "$(SRCDIR)libuv/libuv.a" \
                 "$(SRCDIR)http-parser/http_parser.o" $(LDFLAGS)
 
 libuv/libuv.a:

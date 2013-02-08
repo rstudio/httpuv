@@ -1,6 +1,10 @@
+#ifndef WEBSERVER_HPP
+#define WEBSERVER_HPP
+
 #include <map>
 #include <string>
 #include <iostream>
+#include <vector>
 
 #include <uv.h>
 #include <http_parser.h>
@@ -66,31 +70,51 @@ public:
 
 };
 
-class HttpResponse {
-private:
-    int _status_code;
+struct HttpResponse {
+
+    HttpRequest* _pRequest;
+    int _statusCode;
     std::string _status;
-    std::map<std::string, std::string> _headers;
+    std::vector<std::pair<std::string, std::string> > _headers;
+    std::vector<char> _responseHeader;
+    char* _pBody;
+    uv_buf_t _body;
+
+public:
+    HttpResponse(HttpRequest* pRequest, int statusCode,
+                 const std::string& status, char* pBody, size_t length)
+        : _pRequest(pRequest), _statusCode(statusCode), _status(status) {
+
+        _body = uv_buf_init(pBody, length);
+    }
+
+    virtual ~HttpResponse() {
+    }
+
+    void addHeader(const std::string& name, const std::string& value);
+    void writeResponse(uv_write_t* req, uv_write_cb callback);
 };
 
-#define DECLARE_CALLBACK_1(function_name, return_type, type_1) \
-    return_type function_name(type_1 arg1);
-#define DECLARE_CALLBACK_3(function_name, return_type, type_1, type_2, type_3) \
-    return_type function_name(type_1 arg1, type_2 arg2, type_3 arg3);
-#define DECLARE_CALLBACK_2(function_name, return_type, type_1, type_2) \
-    return_type function_name(type_1 arg1, type_2 arg2);
+#define DECLARE_CALLBACK_1(type, function_name, return_type, type_1) \
+    return_type type##_##function_name(type_1 arg1);
+#define DECLARE_CALLBACK_3(type, function_name, return_type, type_1, type_2, type_3) \
+    return_type type##_##function_name(type_1 arg1, type_2 arg2, type_3 arg3);
+#define DECLARE_CALLBACK_2(type, function_name, return_type, type_1, type_2) \
+    return_type type##_##function_name(type_1 arg1, type_2 arg2);
 
-DECLARE_CALLBACK_1(on_message_begin, int, http_parser*)
-DECLARE_CALLBACK_3(on_url, int, http_parser*, const char*, size_t)
-DECLARE_CALLBACK_1(on_status_complete, int, http_parser*)
-DECLARE_CALLBACK_3(on_header_field, int, http_parser*, const char*, size_t)
-DECLARE_CALLBACK_3(on_header_value, int, http_parser*, const char*, size_t)
-DECLARE_CALLBACK_1(on_headers_complete, int, http_parser*)
-DECLARE_CALLBACK_3(on_body, int, http_parser*, const char*, size_t)
-DECLARE_CALLBACK_1(on_message_complete, int, http_parser*)
-DECLARE_CALLBACK_1(on_closed, void, uv_handle_t*)
-DECLARE_CALLBACK_3(on_request_read, void, uv_stream_t*, ssize_t, uv_buf_t)
-DECLARE_CALLBACK_2(on_response_write, void, uv_write_t*, int)
+DECLARE_CALLBACK_1(HttpRequest, on_message_begin, int, http_parser*)
+DECLARE_CALLBACK_3(HttpRequest, on_url, int, http_parser*, const char*, size_t)
+DECLARE_CALLBACK_1(HttpRequest, on_status_complete, int, http_parser*)
+DECLARE_CALLBACK_3(HttpRequest, on_header_field, int, http_parser*, const char*, size_t)
+DECLARE_CALLBACK_3(HttpRequest, on_header_value, int, http_parser*, const char*, size_t)
+DECLARE_CALLBACK_1(HttpRequest, on_headers_complete, int, http_parser*)
+DECLARE_CALLBACK_3(HttpRequest, on_body, int, http_parser*, const char*, size_t)
+DECLARE_CALLBACK_1(HttpRequest, on_message_complete, int, http_parser*)
+DECLARE_CALLBACK_1(HttpRequest, on_closed, void, uv_handle_t*)
+DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, uv_buf_t)
+DECLARE_CALLBACK_2(HttpRequest, on_response_write, void, uv_write_t*, int)
 
 void beginWrite(uv_stream_t* stream, const char* pData, size_t length,
                 WriteCallback* pCallback);
+
+#endif // WEBSERVER_HPP
