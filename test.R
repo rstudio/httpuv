@@ -1,7 +1,7 @@
 (function() {
   require(eventloop)
   server <- makeServer(function(env) {
-    print(c(method=env$REQUEST_METHOD, url=env$URL))
+    print(as.list(env))
     paste(as.character(rnorm(10)), collapse='\n')
   })
   if (server != 0) {
