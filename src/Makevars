@@ -1,6 +1,6 @@
 ## Use the R_HOME indirection to support installations of multiple R version
-PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` ./libuv/libuv.a
-PKG_CPPFLAGS += "-I./libuv/include"
+PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` ./libuv/libuv.a ./http-parser/http_parser.o
+PKG_CPPFLAGS += "-I./libuv/include" "-I./http-parser"
 
 .PHONY: all libuv.a http-parser.o
 
@@ -9,9 +9,10 @@ $(SHLIB): libuv.a http-parser.o
 
 libuv.a:
 	$(MAKE) --directory=libuv \
-	  CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)"
+		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" \
+		libuv.a
 
 http-parser.o:
 	$(MAKE) --directory=http-parser \
-	  CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" \
-	  http_parser.o
+		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" \
+		http_parser.o
