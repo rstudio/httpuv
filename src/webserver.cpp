@@ -65,6 +65,10 @@ std::map<std::string, std::string> HttpRequest::headers() const {
     return _headers;
 }
 
+std::vector<char> HttpRequest::body() {
+    return _body;
+}
+
 int HttpRequest::_on_message_begin(http_parser* pParser) {
     trace("on_message_begin");
     _headers.clear();
@@ -100,11 +104,15 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
          iter++) {
         std::cout << iter->first << std::string(" = ") << iter->second << std::endl;
     }
+    // TODO: Allocate body
     return 0;
 }
 
 int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) {
     trace("on_body");
+    for (size_t i = 0; i < length; i++) {
+        _body.push_back(*(pAt+i));
+    }
     _bytesRead += length;
     return 0;
 }

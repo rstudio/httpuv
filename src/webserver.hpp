@@ -35,6 +35,7 @@ private:
     std::string _url;
     std::map<std::string, std::string> _headers;
     std::string _lastHeaderField;
+    std::vector<char> _body;
     unsigned long _bytesRead;
 
     void trace(const std::string& msg);
@@ -63,6 +64,7 @@ public:
     std::string method() const;
     std::string url() const;
     std::map<std::string, std::string> headers() const;
+    std::vector<char> body();
 
 public:
     // Callbacks

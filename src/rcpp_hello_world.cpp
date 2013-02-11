@@ -50,6 +50,14 @@ public:
         env["PATH_INFO"] = path;
         env["QUERY_STRING"] = queryString;
 
+        env["rook.version"] = "0.0";
+        env["rook.url_scheme"] = "http";
+
+        std::vector<char> body = pRequest->body();
+        RawVector input = RawVector(body.size());
+        std::copy(body.begin(), body.end(), input.begin());
+        env["rook.input"] = input;
+
         std::map<std::string, std::string> headers = pRequest->headers();
         for (std::map<std::string, std::string>::iterator it = headers.begin();
             it != headers.end();
