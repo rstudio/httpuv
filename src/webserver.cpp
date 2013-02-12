@@ -241,12 +241,6 @@ IMPLEMENT_CALLBACK_1(HttpRequest, on_message_complete, int, http_parser*)
 IMPLEMENT_CALLBACK_1(HttpRequest, on_closed, void, uv_handle_t*)
 IMPLEMENT_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, uv_buf_t)
 
-typedef struct {
-    uv_write_t handle;
-    uv_buf_t data;
-    WriteCallback* callback;
-} write_req_t;
-
 void on_Socket_close(uv_handle_t* pHandle);
 
 void Socket::addConnection(HttpRequest* request) {
