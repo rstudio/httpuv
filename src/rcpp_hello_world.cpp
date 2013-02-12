@@ -3,7 +3,7 @@
 #include <map>
 #include <string>
 #include <uv.h>
-#include "webserver.hpp"
+#include "http.hpp"
 
 std::string normalizeHeaderName(const std::string& name) {
     std::string result = name;

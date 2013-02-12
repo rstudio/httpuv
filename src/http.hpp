@@ -1,5 +1,5 @@
-#ifndef WEBSERVER_HPP
-#define WEBSERVER_HPP
+#ifndef HTTP_HPP
+#define HTTP_HPP
 
 #include <map>
 #include <string>
@@ -161,4 +161,4 @@ uv_tcp_t* createServer(uv_loop_t* loop, const std::string& host, int port,
 void freeServer(uv_tcp_t* pServer);
 bool runNonBlocking(uv_loop_t* loop);
 
-#endif // WEBSERVER_HPP
+#endif // HTTP_HPP
