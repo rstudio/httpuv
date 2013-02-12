@@ -4,15 +4,13 @@
 #include <assert.h>
 #include <string.h>
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 
 // TODO: Streaming response body (with chunked transfer encoding)
 // TODO: Fast/easy use of files as response body
 
-void on_close(uv_handle_t* handle) {
-    free(handle);
-}
 http_parser_settings& request_settings() {
     static http_parser_settings settings;
     settings.on_message_begin = HttpRequest_on_message_begin;
@@ -26,21 +24,15 @@ http_parser_settings& request_settings() {
     return settings;
 }
 
-#define RESPONSE \
-	"HTTP/1.1 200 OK\r\n" \
-	"Content-Type: text/plain\r\n" \
-	"Content-Length: 12\r\n" \
-	"\r\n" \
-	"hello world\n"
-
 void on_response_written(uv_write_t* handle, int status) {
     if (status != 0)
         std::cerr << "Error writing response: " << status << std::endl;
-    free((HttpResponse*)handle->data);
+    delete ((HttpResponse*)handle->data);
     free(handle);
 }
 
 uv_buf_t on_alloc(uv_handle_t* handle, size_t suggested_size) {
+    // Freed in HttpRequest::_on_request_read
     void* result = malloc(suggested_size);
     return uv_buf_init((char*)result, suggested_size);
 }
@@ -102,7 +94,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
     for (std::map<std::string, std::string>::iterator iter = _headers.begin();
          iter != _headers.end();
          iter++) {
-        std::cout << iter->first << std::string(" = ") << iter->second << std::endl;
+        //std::cout << iter->first << std::string(" = ") << iter->second << std::endl;
     }
     // TODO: Allocate body
     return 0;
@@ -120,8 +112,11 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
 int HttpRequest::_on_message_complete(http_parser* pParser) {
     trace("on_message_complete");
 
+    // Deleted in on_response_written
     HttpResponse* pResp = _pRequestHandler->getResponse(this);
-    uv_write_t* pWriteReq = new uv_write_t();
+    // Freed in on_response_written
+    uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));
+    memset(pWriteReq, 0, sizeof(uv_write_t));
     pWriteReq->data = pResp;
     pResp->writeResponse(pWriteReq, &on_response_written);
 
@@ -138,18 +133,26 @@ void HttpRequest::_on_closed(uv_handle_t* handle) {
 }
 
 void HttpRequest::close() {
+    std::cerr << "Closing handle " << &_handle << std::endl;
+    _pSocket->removeConnection(this);
     uv_close((uv_handle_t*)&_handle, HttpRequest_on_closed);
 }
 
 void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
     if (nread > 0) {
-        std::cerr << nread << " bytes read\n";
-        int parsed = http_parser_execute(&_parser, &request_settings(), buf.base, nread);
-        if (_parser.upgrade) {
-            // TODO: Handle HTTP upgrade
-        } else if (parsed < nread) {
-            fatal_error("on_request_read", "parse error");
-            close();
+        //std::cerr << nread << " bytes read\n";
+        if (_protocol == HTTP) {
+            int parsed = http_parser_execute(&_parser, &request_settings(), buf.base, nread);
+            if (_parser.upgrade) {
+                char* pData = buf.base + parsed;
+                ssize_t pDataLen = nread - parsed;
+                // TODO: Check for websocket headers and switch mode (or close)
+            } else if (parsed < nread) {
+                fatal_error("on_request_read", "parse error");
+                close();
+            }
+        } else if (_protocol == WebSockets) {
+            // TODO
         }
     } else if (nread < 0) {
         uv_err_t err = uv_last_error(_pLoop);
@@ -197,13 +200,14 @@ void HttpResponse::writeResponse(uv_write_t *req, uv_write_cb callback) {
          it++) {
         response << it->first << ": " << it->second << "\r\n";
     }
-    response << "Content-Length: " << _body.len << "\r\n";
+    response << "Content-Length: " << _bodyBuf.size() << "\r\n";
     response << "\r\n";
     std::string responseStr = response.str();
     _responseHeader.assign(responseStr.begin(), responseStr.end());
 
     uv_buf_t headerBuf = uv_buf_init(&_responseHeader[0], _responseHeader.size());
-    uv_buf_t buffers[] = {headerBuf, this->_body};
+    uv_buf_t bodyBuf = uv_buf_init(&_bodyBuf[0], _bodyBuf.size());
+    uv_buf_t buffers[] = {headerBuf, bodyBuf};
 
     int r = uv_write(req, (uv_stream_t*)this->_pRequest->handle(), buffers, 2, callback);
     if (r) {
@@ -243,38 +247,49 @@ typedef struct {
     WriteCallback* callback;
 } write_req_t;
 
-static void endWrite(uv_write_t* write, int status) {
-    write_req_t* req = reinterpret_cast<write_req_t*>(write);
-    req->callback->onWrite(status);
-    free(req);
+void on_Socket_close(uv_handle_t* pHandle);
+
+void Socket::addConnection(HttpRequest* request) {
+    connections.push_back(request);
 }
 
-void beginWrite(uv_stream_t *stream, const char *pData, size_t length,
-                WriteCallback* callback) {
-    write_req_t* req = (write_req_t*)malloc(sizeof(write_req_t));
-    memset(req, 0, sizeof(write_req_t));
-
-    req->data = uv_buf_init(const_cast<char*>(pData), length);
-    req->callback = callback;
-    uv_write(&req->handle, stream, &req->data, 1, &endWrite);
+void Socket::removeConnection(HttpRequest* request) {
+    connections.erase(
+        std::remove(connections.begin(), connections.end(), request),
+        connections.end());
 }
 
-typedef struct {
-    uv_tcp_t handle;
-    RequestHandler* pRequestHandler;
-} server_t;
+Socket::~Socket() {
+}
+
+void Socket::destroy() {
+    for (std::vector<HttpRequest*>::reverse_iterator it = connections.rbegin();
+        it != connections.rend();
+        it++) {
+
+        std::cerr << "Request close on " << *it << std::endl;
+        (*it)->close();
+    }
+    uv_close((uv_handle_t*)&handle, on_Socket_close);
+}
+
+void on_Socket_close(uv_handle_t* pHandle) {
+    delete (Socket*)pHandle->data;
+}
 
 void on_request(uv_stream_t* handle, int status) {
-    printf("on_connect\n");
-
     if (status == -1) {
         uv_err_t err = uv_last_error(handle->loop);
         fprintf(stderr, "connection error: %s\n", uv_strerror(err));
         return;
     }
 
+    Socket* pSocket = (Socket*)handle->data;
+
+    // Freed by HttpRequest itself when close() is called, which
+    // can occur on EOF, error, or when the Socket is destroyed
     HttpRequest* req = new HttpRequest(
-        handle->loop, ((server_t*)handle)->pRequestHandler);
+        handle->loop, pSocket->pRequestHandler, pSocket);
 
     int r = uv_accept(handle, (uv_stream_t*)req->handle());
     if (r) {
@@ -291,25 +306,32 @@ void on_request(uv_stream_t* handle, int status) {
 uv_tcp_t* createServer(uv_loop_t* pLoop, const std::string& host, int port,
     RequestHandler* pRequestHandler) {
 
-    server_t* pServer = (server_t*)malloc(sizeof(server_t));
-    memset(pServer, 0, sizeof(server_t));
-    uv_tcp_init(pLoop, &pServer->handle);
-    pServer->pRequestHandler = pRequestHandler;
+    // Deletes itself when destroy() is called, which occurs in freeServer()
+    Socket* pSocket = new Socket();
+    uv_tcp_init(pLoop, &pSocket->handle);
+    pSocket->handle.data = pSocket;
+    pSocket->pRequestHandler = pRequestHandler;
 
     struct sockaddr_in address = uv_ip4_addr(host.c_str(), port);
-    int r = uv_tcp_bind(&pServer->handle, address);
+    int r = uv_tcp_bind(&pSocket->handle, address);
     if (r) {
+        pSocket->destroy();
         return NULL;
     }
-    r = uv_listen((uv_stream_t*)&pServer->handle, 128, &on_request);
+    r = uv_listen((uv_stream_t*)&pSocket->handle, 128, &on_request);
     if (r) {
+        pSocket->destroy();
         return NULL;
     }
 
-    return (uv_tcp_t*)pServer;
+    return &pSocket->handle;
 }
-void freeServer(uv_tcp_t* pServer) {
-    uv_close((uv_handle_t*)pServer, &on_close);
+void freeServer(uv_tcp_t* pHandle) {
+    uv_loop_t* loop = pHandle->loop;
+    Socket* pSocket = (Socket*)pHandle->data;
+    pSocket->destroy();
+    
+    runNonBlocking(loop);
 }
 bool runNonBlocking(uv_loop_t* loop) {
     uv_run(loop, UV_RUN_NOWAIT);

@@ -65,29 +65,32 @@ public:
             env["HTTP_" + normalizeHeaderName(it->first)] = it->second;
         }
 
-        // TODO: Fix memory leak!
-        std::string* pResult = new std::string(Rcpp::as<std::string>((*_pFunc)(env)));
-        return new HttpResponse(pRequest, 200, "OK", const_cast<char*>(pResult->c_str()), pResult->size());
+        RawVector responseBytes((*_pFunc)(env));
+        std::vector<char> resp(responseBytes.size());
+        resp.assign(responseBytes.begin(), responseBytes.end());
+        return new HttpResponse(pRequest, 200, "OK", resp);
     }
 };
 
 // [[Rcpp::export]]
-intptr_t makeServer(Rcpp::Function func){
+intptr_t makeServer(const std::string& host, int port, Rcpp::Function func){
     using namespace Rcpp;
     Function* pFunc = new Function(func);
     RRequestHandler* pHandler = new RRequestHandler(pFunc);
     uv_tcp_t* pServer = createServer(
-        uv_default_loop(), "0.0.0.0", 8000, (RequestHandler*)pHandler);
+        uv_default_loop(), host.c_str(), port, (RequestHandler*)pHandler);
 
+    std::cerr << "makeServer " << (intptr_t)pServer << "\n";
     return (intptr_t)pServer;
 }
 
 // [[Rcpp::export]]
 void destroyServer(intptr_t handle) {
+    std::cerr << "destroyServer " << handle << "\n";
     freeServer((uv_tcp_t*)handle);
 }
 
 // [[Rcpp::export]]
-bool run() {
+bool runNB() {
     return runNonBlocking(uv_default_loop());
 }

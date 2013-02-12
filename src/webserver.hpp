@@ -18,10 +18,31 @@ public:
     virtual void onWrite(int status) = 0;
 };
 
+enum Protocol {
+    HTTP,
+    WebSockets
+};
+
 class RequestHandler {
 public:
     virtual ~RequestHandler() {}
     virtual HttpResponse* getResponse(HttpRequest* request) = 0;
+};
+
+class Socket {
+public:
+    uv_tcp_t handle;
+    RequestHandler* pRequestHandler;
+    std::vector<HttpRequest*> connections;
+
+    Socket() {
+    }
+
+    void addConnection(HttpRequest* request);
+    void removeConnection(HttpRequest* request);
+
+    virtual ~Socket();
+    virtual void destroy();
 };
 
 class HttpRequest : public WriteCallback {
@@ -30,7 +51,9 @@ private:
     uv_loop_t* _pLoop;
     RequestHandler* _pRequestHandler;
     uv_tcp_t _handle;
+    Socket* _pSocket;
     http_parser _parser;
+    Protocol _protocol;
     uv_write_t _writeReq;
     std::string _url;
     std::map<std::string, std::string> _headers;
@@ -41,10 +64,10 @@ private:
     void trace(const std::string& msg);
 
 public:
-    HttpRequest(uv_loop_t* pLoop, RequestHandler* pRequestHandler)
-        : _bytesRead(0) {
-        _pLoop = pLoop;
-        _pRequestHandler = pRequestHandler;
+    HttpRequest(uv_loop_t* pLoop, RequestHandler* pRequestHandler,
+            Socket* pSocket)
+        : _protocol(HTTP), _bytesRead(0), _pLoop(pLoop),
+          _pRequestHandler(pRequestHandler), _pSocket(pSocket) {
 
         uv_tcp_init(pLoop, &_handle);
         _handle.data = this;
@@ -53,6 +76,8 @@ public:
         _parser.data = this;
 
         _writeReq.data = this;
+
+        _pSocket->addConnection(this);
     }
 
     virtual ~HttpRequest() {
@@ -96,15 +121,13 @@ struct HttpResponse {
     std::string _status;
     std::vector<std::pair<std::string, std::string> > _headers;
     std::vector<char> _responseHeader;
-    char* _pBody;
-    uv_buf_t _body;
+    std::vector<char> _bodyBuf;
 
 public:
     HttpResponse(HttpRequest* pRequest, int statusCode,
-                 const std::string& status, char* pBody, size_t length)
-        : _pRequest(pRequest), _statusCode(statusCode), _status(status) {
+                 const std::string& status, const std::vector<char>& body)
+        : _pRequest(pRequest), _statusCode(statusCode), _status(status), _bodyBuf(body) {
 
-        _body = uv_buf_init(pBody, length);
     }
 
     virtual ~HttpResponse() {
@@ -132,9 +155,6 @@ DECLARE_CALLBACK_1(HttpRequest, on_message_complete, int, http_parser*)
 DECLARE_CALLBACK_1(HttpRequest, on_closed, void, uv_handle_t*)
 DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, uv_buf_t)
 DECLARE_CALLBACK_2(HttpRequest, on_response_write, void, uv_write_t*, int)
-
-void beginWrite(uv_stream_t* stream, const char* pData, size_t length,
-                WriteCallback* pCallback);
 
 uv_tcp_t* createServer(uv_loop_t* loop, const std::string& host, int port,
     RequestHandler* pRequestHandler);
