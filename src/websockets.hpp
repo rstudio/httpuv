@@ -103,4 +103,6 @@ protected:
   void onFrameComplete();
 };
 
+std::string createHandshakeResponse(std::string key);
+
 #endif // WEBSOCKETS_HPP

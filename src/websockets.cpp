@@ -5,6 +5,14 @@
 #include <iostream>
 #include <iomanip>
 
+#include <sha1.h>
+#include <base64.hpp>
+
+template <typename T>
+T min(T a, T b) {
+  return (a > b) ? b : a;
+}
+
 bool WSFrameHeader::isHeaderComplete() const {
   if (_data.size() < 2)
     return false;
@@ -105,7 +113,7 @@ void WebSocketParser::read(const char* data, size_t len) {
         // the complete header is read. It's possible/likely it also
         // holds part of the payload.
         size_t startingSize = _header.size();
-        std::copy(data, data + std::min(len, MAX_HEADER_BYTES),
+        std::copy(data, data + min(len, MAX_HEADER_BYTES),
           std::back_inserter(_header));
 
         WSFrameHeader frame(&_header[0], _header.size());
@@ -125,7 +133,7 @@ void WebSocketParser::read(const char* data, size_t len) {
         break;
       }
       case InPayload: {
-        size_t bytesToConsume = std::min(len, _bytesLeft);
+        size_t bytesToConsume = min((uint64_t)len, _bytesLeft);
         _bytesLeft -= bytesToConsume;
         onPayload(data, bytesToConsume);
 
@@ -179,10 +187,43 @@ void WebSocketConnection::onFrameComplete() {
   }
 }
 
-int main() {
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+  return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+  s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+  return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+  return ltrim(rtrim(s));
+}
+
+std::string createHandshakeResponse(std::string key) {
+  std::string clear = trim(key) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+  SHA1_CTX ctx;
+  SHA1_Init(&ctx);
+  SHA1_Update(&ctx, (uint8_t*)&clear[0], clear.size());
+
+  std::vector<uint8_t> digest(SHA1_DIGEST_SIZE);
+  SHA1_Final(&ctx, &digest[0]);
+
+  return b64encode(digest);
+}
+
+int main1() {
   const char* data = "\x01\x7E";
   WSFrameHeader frame(data, 2);
   //std::cout << (int)frame.read(12, 4) << std::endl;
   //std::cout << (int)frame.read64(0, 16) << std::endl;
   std::cout << frame.isHeaderComplete() << std::endl;
+}
+
+int main() {
+  std::cout << createHandshakeResponse("dGhlIHNhbXBsZSBub25jZQ==") << std::endl;
 }

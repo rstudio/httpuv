@@ -1,11 +1,11 @@
 ## Use the R_HOME indirection to support installations of multiple R version
-PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` ./libuv/libuv.a ./http-parser/http_parser.o
-PKG_CPPFLAGS += "-I./libuv/include" "-I./http-parser"
+PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` ./libuv/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o
+PKG_CPPFLAGS += -I./libuv/include -I./http-parser -I./sha1 -I./base64
 
 .PHONY: all libuv.a http-parser.o
 
 all: $(SHLIB)
-$(SHLIB): libuv.a http-parser.o
+$(SHLIB): libuv.a http-parser.o sha1.o base64.o
 
 libuv.a:
 	$(MAKE) --directory=libuv \
@@ -16,3 +16,9 @@ http-parser.o:
 	$(MAKE) --directory=http-parser \
 		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" \
 		http_parser.o
+
+sha1.o:
+	(cd sha1 && $(CC) $(CFLAGS) $(CPICFLAGS) -c sha1.c -o sha1.o)
+
+base64.o:
+	(cd base64 && $(CXX) $(CFLAGS) $(CPICFLAGS) -c base64.cpp -o base64.o)
