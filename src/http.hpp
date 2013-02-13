@@ -16,143 +16,143 @@ class HttpResponse;
 
 class WriteCallback {
 public:
-    virtual ~WriteCallback() {}
-    virtual void onWrite(int status) = 0;
+  virtual ~WriteCallback() {}
+  virtual void onWrite(int status) = 0;
 };
 
 enum Protocol {
-    HTTP,
-    WebSockets
+  HTTP,
+  WebSockets
 };
 
 class RequestHandler {
 public:
-    virtual ~RequestHandler() {}
-    virtual HttpResponse* getResponse(HttpRequest* request) = 0;
-    virtual void onWSMessage(bool binary, const char* data, size_t len) {
-    }
-    virtual void onWSClose() {
-    }
+  virtual ~RequestHandler() {}
+  virtual HttpResponse* getResponse(HttpRequest* request) = 0;
+  virtual void onWSMessage(bool binary, const char* data, size_t len) {
+  }
+  virtual void onWSClose() {
+  }
 };
 
 class Socket {
 public:
-    uv_tcp_t handle;
-    RequestHandler* pRequestHandler;
-    std::vector<HttpRequest*> connections;
+  uv_tcp_t handle;
+  RequestHandler* pRequestHandler;
+  std::vector<HttpRequest*> connections;
 
-    Socket() {
-    }
+  Socket() {
+  }
 
-    void addConnection(HttpRequest* request);
-    void removeConnection(HttpRequest* request);
+  void addConnection(HttpRequest* request);
+  void removeConnection(HttpRequest* request);
 
-    virtual ~Socket();
-    virtual void destroy();
+  virtual ~Socket();
+  virtual void destroy();
 };
 
 class HttpRequest : WriteCallback, WebSocketConnection {
 
 private:
-    uv_loop_t* _pLoop;
-    RequestHandler* _pRequestHandler;
-    uv_tcp_t _handle;
-    Socket* _pSocket;
-    http_parser _parser;
-    Protocol _protocol;
-    uv_write_t _writeReq;
-    std::string _url;
-    std::map<std::string, std::string> _headers;
-    std::string _lastHeaderField;
-    std::vector<char> _body;
-    unsigned long _bytesRead;
+  uv_loop_t* _pLoop;
+  RequestHandler* _pRequestHandler;
+  uv_tcp_t _handle;
+  Socket* _pSocket;
+  http_parser _parser;
+  Protocol _protocol;
+  uv_write_t _writeReq;
+  std::string _url;
+  std::map<std::string, std::string> _headers;
+  std::string _lastHeaderField;
+  std::vector<char> _body;
+  unsigned long _bytesRead;
 
-    void trace(const std::string& msg);
-
-public:
-    HttpRequest(uv_loop_t* pLoop, RequestHandler* pRequestHandler,
-            Socket* pSocket)
-        : _protocol(HTTP), _bytesRead(0), _pLoop(pLoop),
-          _pRequestHandler(pRequestHandler), _pSocket(pSocket) {
-
-        uv_tcp_init(pLoop, &_handle);
-        _handle.data = this;
-
-        http_parser_init(&_parser, HTTP_REQUEST);
-        _parser.data = this;
-
-        _writeReq.data = this;
-
-        _pSocket->addConnection(this);
-    }
-
-    virtual ~HttpRequest() {
-    }
-
-    uv_tcp_t* handle();
-    void handleRequest();
-
-    std::string method() const;
-    std::string url() const;
-    std::map<std::string, std::string> headers() const;
-    std::vector<char> body();
+  void trace(const std::string& msg);
 
 public:
-    // Callbacks
-    virtual int _on_message_begin(http_parser* pParser);
-    virtual int _on_url(http_parser* pParser, const char* pAt, size_t length);
-    virtual int _on_status_complete(http_parser* pParser);
-    virtual int _on_header_field(http_parser* pParser, const char* pAt, size_t length);
-    virtual int _on_header_value(http_parser* pParser, const char* pAt, size_t length);
-    virtual int _on_headers_complete(http_parser* pParser);
-    virtual int _on_body(http_parser* pParser, const char* pAt, size_t length);
-    virtual int _on_message_complete(http_parser* pParser);
+  HttpRequest(uv_loop_t* pLoop, RequestHandler* pRequestHandler,
+      Socket* pSocket)
+    : _protocol(HTTP), _bytesRead(0), _pLoop(pLoop),
+      _pRequestHandler(pRequestHandler), _pSocket(pSocket) {
 
-    virtual void onWSMessage(bool binary, const char* data, size_t len);
-    virtual void onWSClose(int code);
+    uv_tcp_init(pLoop, &_handle);
+    _handle.data = this;
+
+    http_parser_init(&_parser, HTTP_REQUEST);
+    _parser.data = this;
+
+    _writeReq.data = this;
+
+    _pSocket->addConnection(this);
+  }
+
+  virtual ~HttpRequest() {
+  }
+
+  uv_tcp_t* handle();
+  void handleRequest();
+
+  std::string method() const;
+  std::string url() const;
+  std::map<std::string, std::string> headers() const;
+  std::vector<char> body();
+
+public:
+  // Callbacks
+  virtual int _on_message_begin(http_parser* pParser);
+  virtual int _on_url(http_parser* pParser, const char* pAt, size_t length);
+  virtual int _on_status_complete(http_parser* pParser);
+  virtual int _on_header_field(http_parser* pParser, const char* pAt, size_t length);
+  virtual int _on_header_value(http_parser* pParser, const char* pAt, size_t length);
+  virtual int _on_headers_complete(http_parser* pParser);
+  virtual int _on_body(http_parser* pParser, const char* pAt, size_t length);
+  virtual int _on_message_complete(http_parser* pParser);
+
+  virtual void onWSMessage(bool binary, const char* data, size_t len);
+  virtual void onWSClose(int code);
 
 
-    virtual void onWrite(int status);
+  virtual void onWrite(int status);
 
-    void write(const char* pData, size_t length, WriteCallback* pCallback);
+  void write(const char* pData, size_t length, WriteCallback* pCallback);
 
-    void fatal_error(const char* method, const char* message);
-    void _on_closed(uv_handle_t* handle);
-    void close();
-    void _on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf);
-    void _on_response_write(int status);
+  void fatal_error(const char* method, const char* message);
+  void _on_closed(uv_handle_t* handle);
+  void close();
+  void _on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf);
+  void _on_response_write(int status);
 
 };
 
 struct HttpResponse {
 
-    HttpRequest* _pRequest;
-    int _statusCode;
-    std::string _status;
-    std::vector<std::pair<std::string, std::string> > _headers;
-    std::vector<char> _responseHeader;
-    std::vector<char> _bodyBuf;
+  HttpRequest* _pRequest;
+  int _statusCode;
+  std::string _status;
+  std::vector<std::pair<std::string, std::string> > _headers;
+  std::vector<char> _responseHeader;
+  std::vector<char> _bodyBuf;
 
 public:
-    HttpResponse(HttpRequest* pRequest, int statusCode,
-                 const std::string& status, const std::vector<char>& body)
-        : _pRequest(pRequest), _statusCode(statusCode), _status(status), _bodyBuf(body) {
+  HttpResponse(HttpRequest* pRequest, int statusCode,
+         const std::string& status, const std::vector<char>& body)
+    : _pRequest(pRequest), _statusCode(statusCode), _status(status), _bodyBuf(body) {
 
-    }
+  }
 
-    virtual ~HttpResponse() {
-    }
+  virtual ~HttpResponse() {
+  }
 
-    void addHeader(const std::string& name, const std::string& value);
-    void writeResponse(uv_write_t* req, uv_write_cb callback);
+  void addHeader(const std::string& name, const std::string& value);
+  void writeResponse(uv_write_t* req, uv_write_cb callback);
 };
 
 #define DECLARE_CALLBACK_1(type, function_name, return_type, type_1) \
-    return_type type##_##function_name(type_1 arg1);
+  return_type type##_##function_name(type_1 arg1);
 #define DECLARE_CALLBACK_3(type, function_name, return_type, type_1, type_2, type_3) \
-    return_type type##_##function_name(type_1 arg1, type_2 arg2, type_3 arg3);
+  return_type type##_##function_name(type_1 arg1, type_2 arg2, type_3 arg3);
 #define DECLARE_CALLBACK_2(type, function_name, return_type, type_1, type_2) \
-    return_type type##_##function_name(type_1 arg1, type_2 arg2);
+  return_type type##_##function_name(type_1 arg1, type_2 arg2);
 
 DECLARE_CALLBACK_1(HttpRequest, on_message_begin, int, http_parser*)
 DECLARE_CALLBACK_3(HttpRequest, on_url, int, http_parser*, const char*, size_t)
@@ -167,7 +167,7 @@ DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, uv
 DECLARE_CALLBACK_2(HttpRequest, on_response_write, void, uv_write_t*, int)
 
 uv_tcp_t* createServer(uv_loop_t* loop, const std::string& host, int port,
-    RequestHandler* pRequestHandler);
+  RequestHandler* pRequestHandler);
 void freeServer(uv_tcp_t* pServer);
 bool runNonBlocking(uv_loop_t* loop);
 
