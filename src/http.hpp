@@ -9,6 +9,8 @@
 #include <uv.h>
 #include <http_parser.h>
 
+#include "websockets.hpp"
+
 class HttpRequest;
 class HttpResponse;
 
@@ -27,6 +29,10 @@ class RequestHandler {
 public:
     virtual ~RequestHandler() {}
     virtual HttpResponse* getResponse(HttpRequest* request) = 0;
+    virtual void onWSMessage(bool binary, const char* data, size_t len) {
+    }
+    virtual void onWSClose() {
+    }
 };
 
 class Socket {
@@ -45,7 +51,7 @@ public:
     virtual void destroy();
 };
 
-class HttpRequest : public WriteCallback {
+class HttpRequest : WriteCallback, WebSocketConnection {
 
 private:
     uv_loop_t* _pLoop;
@@ -101,6 +107,10 @@ public:
     virtual int _on_headers_complete(http_parser* pParser);
     virtual int _on_body(http_parser* pParser, const char* pAt, size_t length);
     virtual int _on_message_complete(http_parser* pParser);
+
+    virtual void onWSMessage(bool binary, const char* data, size_t len);
+    virtual void onWSClose(int code);
+
 
     virtual void onWrite(int status);
 

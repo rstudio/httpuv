@@ -5,17 +5,17 @@
 #include <iostream>
 #include <iomanip>
 
-bool WSFrame::isHeaderComplete() const {
-  if (_len < 2)
+bool WSFrameHeader::isHeaderComplete() const {
+  if (_data.size() < 2)
     return false;
 
-  return _len * 8 >= (size_t)headerLength();
+  return _data.size() * 8 >= (size_t)headerLength();
 }
 
-bool WSFrame::fin() const {
+bool WSFrameHeader::fin() const {
   return read(0, 1) != 0;
 }
-Opcode WSFrame::opcode() const {
+Opcode WSFrameHeader::opcode() const {
   uint8_t oc = read(4, 4);
   switch (oc) {
   case Continuation:
@@ -29,10 +29,10 @@ Opcode WSFrame::opcode() const {
     return Reserved;
   }
 }
-bool WSFrame::masked() const {
+bool WSFrameHeader::masked() const {
   return read(8, 1) != 0;
 }
-uint64_t WSFrame::payloadLength() const {
+uint64_t WSFrameHeader::payloadLength() const {
   uint8_t pl = read(9, 7);
   switch (pl) {
     case 126:
@@ -43,46 +43,46 @@ uint64_t WSFrame::payloadLength() const {
       return pl;
   }
 }
-uint32_t WSFrame::maskingKey() const {
+uint32_t WSFrameHeader::maskingKey() const {
   if (!masked())
     return 0;
   else
     return read64(9 + payloadLengthLength(), 32);
 }
-size_t WSFrame::headerLength() const {
+size_t WSFrameHeader::headerLength() const {
   return 9 + payloadLengthLength() + maskingKeyLength();
 }
-uint8_t WSFrame::read(size_t bitOffset, size_t bitWidth) const {
+uint8_t WSFrameHeader::read(size_t bitOffset, size_t bitWidth) const {
   size_t byteOffset = bitOffset / 8;
   bitOffset = bitOffset % 8;
 
   assert((bitOffset + bitWidth) <= 8);
-  assert(byteOffset < _len);
+  assert(byteOffset < _data.size());
 
   uint8_t mask = 0xFF;
   mask <<= (8 - bitWidth);
   mask >>= bitOffset;
 
-  char byte = *(_data + byteOffset);
+  char byte = _data[byteOffset];
   return (byte & mask) >> (8 - bitWidth - bitOffset);
 }
-uint64_t WSFrame::read64(size_t bitOffset, size_t bitWidth) const {
+uint64_t WSFrameHeader::read64(size_t bitOffset, size_t bitWidth) const {
   assert((bitOffset % 8) == 0);
   assert((bitWidth % 8) == 0);
 
   size_t byteOffset = bitOffset / 8;
   size_t byteWidth = bitWidth / 8;
-  assert(byteOffset + byteWidth <= _len);
+  assert(byteOffset + byteWidth <= _data.size());
 
   uint64_t result = 0;
 
   for (size_t i = 0; i < byteWidth; i++) {
-    result = (result << 8) + *(_data + byteOffset + i);
+    result = (result << 8) + _data[byteOffset + i];
   }
   
   return result;
 }
-uint8_t WSFrame::payloadLengthLength() const {
+uint8_t WSFrameHeader::payloadLengthLength() const {
   uint8_t pll = read(9, 7);
   switch (pll) {
     case 126:
@@ -93,7 +93,7 @@ uint8_t WSFrame::payloadLengthLength() const {
       return 7;
   }
 }
-uint8_t WSFrame::maskingKeyLength() const {
+uint8_t WSFrameHeader::maskingKeyLength() const {
   return masked() ? 32 : 0;
 }
 
@@ -108,7 +108,7 @@ void WebSocketParser::read(const char* data, size_t len) {
         std::copy(data, data + std::min(len, MAX_HEADER_BYTES),
           std::back_inserter(_header));
 
-        WSFrame frame(&_header[0], _header.size());
+        WSFrameHeader frame(&_header[0], _header.size());
 
         if (frame.isHeaderComplete()) {
           onHeaderComplete(frame);
@@ -146,9 +146,42 @@ void WebSocketParser::read(const char* data, size_t len) {
   }
 }
 
+void WebSocketConnection::onHeaderComplete(const WSFrameHeader& header) {
+  _header = header;
+  if (!header.fin())
+    _incompleteContentHeader = header;
+}
+void WebSocketConnection::onPayload(const char* data, size_t len) {
+  std::copy(data, data + len, std::back_inserter(_payload));
+}
+void WebSocketConnection::onFrameComplete() {
+  if (_header.fin()) {
+    switch (_header.opcode()) {
+      case Text:
+      case Binary: {
+        onWSMessage(_header.opcode() == Binary, &_payload[0], _payload.size());
+        break;
+      }
+      case Close: {
+        // TODO: Send close response
+        // TODO: Use correct close code
+        onWSClose(0);
+      }
+      case Ping: {
+        // TODO: Implement ping
+      }
+      case Pong: {
+        // TODO: Implement pong
+      }
+    }
+
+    _payload.clear();
+  }
+}
+
 int main() {
   const char* data = "\x01\x7E";
-  WSFrame frame(data, 2);
+  WSFrameHeader frame(data, 2);
   //std::cout << (int)frame.read(12, 4) << std::endl;
   //std::cout << (int)frame.read64(0, 16) << std::endl;
   std::cout << frame.isHeaderComplete() << std::endl;

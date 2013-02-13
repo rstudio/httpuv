@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#include <string>
 #include <vector>
 
 enum Opcode {
@@ -18,17 +19,17 @@ enum Opcode {
 
 const size_t MAX_HEADER_BYTES = 14;
 
-class WSFrame {
-  const char* _data;
-  size_t _len;
+class WSFrameHeader {
+  std::vector<char> _data;
 
 public:
-  WSFrame() : _data(NULL), _len(0) {
+  WSFrameHeader() : _data(MAX_HEADER_BYTES) {
   }
-  WSFrame(const char* data, size_t len) : _data(data), _len(len) {
+  WSFrameHeader(const char* data, size_t len) 
+    : _data(data, data + (std::min(MAX_HEADER_BYTES, len))) {
   }
 
-  virtual ~WSFrame() {
+  virtual ~WSFrameHeader() {
   }
 
   // IMPORTANT: Don't attempt to call any of the other methods
@@ -36,7 +37,6 @@ public:
   bool isHeaderComplete() const;
   bool isPayloadComplete() const;
 
-  // Don't attempt 
   bool fin() const;
   Opcode opcode() const;
   bool masked() const;
@@ -77,10 +77,30 @@ public:
   void read(const char* data, size_t len);
 
 protected:
-  virtual void onHeaderComplete(const WSFrame& frame) = 0;
+  virtual void onHeaderComplete(const WSFrameHeader& header) = 0;
   virtual void onPayload(const char* data, size_t len) = 0;
   virtual void onFrameComplete() = 0;
 
+};
+
+class WebSocketConnection : public WebSocketParser {
+  WSFrameHeader _incompleteContentHeader;
+  WSFrameHeader _header;
+  std::vector<char> _payload;
+
+public:
+  WebSocketConnection() {
+  }
+  virtual ~WebSocketConnection() {
+  }
+
+protected:
+  virtual void onWSMessage(bool binary, const char* data, size_t len) = 0;
+  virtual void onWSClose(int code) = 0;
+
+  void onHeaderComplete(const WSFrameHeader& header);
+  void onPayload(const char* data, size_t len);
+  void onFrameComplete();
 };
 
 #endif // WEBSOCKETS_HPP

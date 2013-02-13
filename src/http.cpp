@@ -123,6 +123,14 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
     return 0;
 }
 
+void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
+    _pRequestHandler->onWSMessage(binary, data, len);
+}
+void HttpRequest::onWSClose(int code) {
+    // TODO: Call close() here?
+}
+
+
 void HttpRequest::fatal_error(const char* method, const char* message) {
     fprintf(stderr, "ERROR: [%s] %s\n", method, message);
 }
@@ -134,6 +142,8 @@ void HttpRequest::_on_closed(uv_handle_t* handle) {
 
 void HttpRequest::close() {
     std::cerr << "Closing handle " << &_handle << std::endl;
+    if (_protocol == WebSockets)
+        _pRequestHandler->onWSClose();
     _pSocket->removeConnection(this);
     uv_close((uv_handle_t*)&_handle, HttpRequest_on_closed);
 }
@@ -147,12 +157,13 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
                 char* pData = buf.base + parsed;
                 ssize_t pDataLen = nread - parsed;
                 // TODO: Check for websocket headers and switch mode (or close)
+                // _protocol = WebSockets;
             } else if (parsed < nread) {
                 fatal_error("on_request_read", "parse error");
                 close();
             }
         } else if (_protocol == WebSockets) {
-            // TODO
+            read(buf.base, nread);
         }
     } else if (nread < 0) {
         uv_err_t err = uv_last_error(_pLoop);
