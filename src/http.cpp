@@ -133,7 +133,7 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 
   if (!pParser->upgrade) {
     // Deleted in on_response_written
-    HttpResponse* pResp = _pRequestHandler->getResponse(this);
+    HttpResponse* pResp = _pWebApplication->getResponse(this);
     // Freed in on_response_written
     uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));
     memset(pWriteReq, 0, sizeof(uv_write_t));
@@ -145,7 +145,7 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 }
 
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
-  _pRequestHandler->onWSMessage(binary, data, len);
+  _pWebApplication->onWSMessage(this, binary, data, len);
 }
 void HttpRequest::onWSClose(int code) {
   // TODO: Call close() here?
@@ -164,7 +164,7 @@ void HttpRequest::_on_closed(uv_handle_t* handle) {
 void HttpRequest::close() {
   std::cerr << "Closing handle " << &_handle << std::endl;
   if (_protocol == WebSockets)
-    _pRequestHandler->onWSClose();
+    _pWebApplication->onWSClose(this);
   _pSocket->removeConnection(this);
   uv_close((uv_handle_t*)&_handle, HttpRequest_on_closed);
 }
@@ -342,7 +342,7 @@ void on_request(uv_stream_t* handle, int status) {
   // Freed by HttpRequest itself when close() is called, which
   // can occur on EOF, error, or when the Socket is destroyed
   HttpRequest* req = new HttpRequest(
-    handle->loop, pSocket->pRequestHandler, pSocket);
+    handle->loop, pSocket->pWebApplication, pSocket);
 
   int r = uv_accept(handle, (uv_stream_t*)req->handle());
   if (r) {
@@ -357,13 +357,13 @@ void on_request(uv_stream_t* handle, int status) {
 }
 
 uv_tcp_t* createServer(uv_loop_t* pLoop, const std::string& host, int port,
-  RequestHandler* pRequestHandler) {
+  WebApplication* pWebApplication) {
 
   // Deletes itself when destroy() is called, which occurs in freeServer()
   Socket* pSocket = new Socket();
   uv_tcp_init(pLoop, &pSocket->handle);
   pSocket->handle.data = pSocket;
-  pSocket->pRequestHandler = pRequestHandler;
+  pSocket->pWebApplication = pWebApplication;
 
   struct sockaddr_in address = uv_ip4_addr(host.c_str(), port);
   int r = uv_tcp_bind(&pSocket->handle, address);

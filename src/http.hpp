@@ -31,20 +31,20 @@ enum Protocol {
   WebSockets
 };
 
-class RequestHandler {
+class WebApplication {
 public:
-  virtual ~RequestHandler() {}
+  virtual ~WebApplication() {}
   virtual HttpResponse* getResponse(HttpRequest* request) = 0;
-  virtual void onWSMessage(bool binary, const char* data, size_t len) {
-  }
-  virtual void onWSClose() {
-  }
+  virtual void onWSOpen(WebSocketConnection* conn) = 0;
+  virtual void onWSMessage(WebSocketConnection* conn,
+                           bool binary, const char* data, size_t len) = 0;
+  virtual void onWSClose(WebSocketConnection* conn) = 0;
 };
 
 class Socket {
 public:
   uv_tcp_t handle;
-  RequestHandler* pRequestHandler;
+  WebApplication* pWebApplication;
   std::vector<HttpRequest*> connections;
 
   Socket() {
@@ -61,7 +61,7 @@ class HttpRequest : WriteCallback, WebSocketConnection {
 
 private:
   uv_loop_t* _pLoop;
-  RequestHandler* _pRequestHandler;
+  WebApplication* _pWebApplication;
   uv_tcp_t _handle;
   Socket* _pSocket;
   http_parser _parser;
@@ -76,10 +76,10 @@ private:
   void trace(const std::string& msg);
 
 public:
-  HttpRequest(uv_loop_t* pLoop, RequestHandler* pRequestHandler,
+  HttpRequest(uv_loop_t* pLoop, WebApplication* pWebApplication,
       Socket* pSocket)
     : _protocol(HTTP), _bytesRead(0), _pLoop(pLoop),
-      _pRequestHandler(pRequestHandler), _pSocket(pSocket) {
+      _pWebApplication(pWebApplication), _pSocket(pSocket) {
 
     uv_tcp_init(pLoop, &_handle);
     _handle.data = this;
@@ -173,7 +173,7 @@ DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, uv
 DECLARE_CALLBACK_2(HttpRequest, on_response_write, void, uv_write_t*, int)
 
 uv_tcp_t* createServer(uv_loop_t* loop, const std::string& host, int port,
-  RequestHandler* pRequestHandler);
+  WebApplication* pWebApplication);
 void freeServer(uv_tcp_t* pServer);
 bool runNonBlocking(uv_loop_t* loop);
 

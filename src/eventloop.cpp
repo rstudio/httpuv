@@ -18,20 +18,22 @@ std::string normalizeHeaderName(const std::string& name) {
   return result;
 }
 
-class RRequestHandler : public RequestHandler {
+class RWebApplication : public WebApplication {
 private:
   Rcpp::Function _onRequest;
+  Rcpp::Function _onWSOpen;
   Rcpp::Function _onWSMessage;
   Rcpp::Function _onWSClose;
 
 public:
-  RRequestHandler(Rcpp::Function onRequest,
-    Rcpp::Function onWSMessage, Rcpp::Function onWSClose) :
-    _onRequest(onRequest), _onWSMessage(onWSMessage), _onWSClose(onWSClose) {
+  RWebApplication(Rcpp::Function onRequest, Rcpp::Function onWSOpen,
+                  Rcpp::Function onWSMessage, Rcpp::Function onWSClose) :
+    _onRequest(onRequest), _onWSOpen(onWSOpen), _onWSMessage(onWSMessage),
+    _onWSClose(onWSClose) {
 
   }
 
-  virtual ~RRequestHandler() {
+  virtual ~RWebApplication() {
   }
 
   virtual HttpResponse* getResponse(HttpRequest* pRequest) {
@@ -74,29 +76,35 @@ public:
     return new HttpResponse(pRequest, 200, "OK", resp);
   }
 
-  void onWSMessage(bool binary, const char* data, size_t len) {
+  void onWSOpen(WebSocketConnection* pConn) {
+    _onWSOpen((intptr_t)pConn);
+  }
+
+  void onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {
     if (binary)
-      _onWSMessage(binary, std::vector<char>(data, data + len));
+      _onWSMessage((intptr_t)pConn, binary, std::vector<char>(data, data + len));
     else
-      _onWSMessage(binary, std::string(data, len));
+      _onWSMessage((intptr_t)pConn, binary, std::string(data, len));
   }
   
-  void onWSClose() {
-    _onWSClose();
+  void onWSClose(WebSocketConnection* pConn) {
+    _onWSClose((intptr_t)pConn);
   }
 
 };
 
 // [[Rcpp::export]]
 intptr_t makeServer(const std::string& host, int port,
-  Rcpp::Function onRequest, Rcpp::Function onWSMessage, Rcpp::Function onWSClose) {
+                    Rcpp::Function onRequest, Rcpp::Function onWSOpen,
+                    Rcpp::Function onWSMessage, Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
   // Deleted when owning pHandler is deleted
   // TODO: When is this deleted??
-  RRequestHandler* pHandler = new RRequestHandler(onRequest, onWSMessage, onWSClose);
+  RWebApplication* pHandler = 
+    new RWebApplication(onRequest, onWSOpen, onWSMessage, onWSClose);
   uv_tcp_t* pServer = createServer(
-    uv_default_loop(), host.c_str(), port, (RequestHandler*)pHandler);
+    uv_default_loop(), host.c_str(), port, (WebApplication*)pHandler);
 
   std::cerr << "makeServer " << (intptr_t)pServer << "\n";
   return (intptr_t)pServer;

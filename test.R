@@ -7,7 +7,10 @@ library(eventloop)
       #print(as.list(env))
       charToRaw(paste(as.character(rnorm(10)), collapse='\n'))
     },
-    onWSMessage = function(binary, msg) {
+    onWSOpen = function(ws) {
+      
+    },
+    onWSMessage = function(ws, binary, msg) {
       cat("Message received!\n")
       cat(paste('"', msg, '"', sep=''))
       cat("\n")
