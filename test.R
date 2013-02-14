@@ -9,7 +9,7 @@ library(eventloop)
     },
     onWSMessage = function(binary, msg) {
       cat("Message received!\n")
-      cat(msg)
+      cat(paste('"', msg, '"', sep=''))
       cat("\n")
     },
     onWSClose = function() {

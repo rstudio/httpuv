@@ -13,6 +13,21 @@ T min(T a, T b) {
   return (a > b) ? b : a;
 }
 
+std::string dumpbin(const char* data, size_t len) {
+  std::string output;
+  for (size_t i = 0; i < len; i++) {
+    char byte = data[i];
+    for (size_t mask = 0x80; mask > 0; mask >>= 1) {
+      output.push_back(byte & mask ? '1' : '0');
+    }
+    if (i % 4 == 3)
+      output.push_back('\n');
+    else
+      output.push_back(' ');
+  }
+  return output;
+}
+
 bool WSFrameHeader::isHeaderComplete() const {
   if (_data.size() < 2)
     return false;
@@ -44,9 +59,9 @@ uint64_t WSFrameHeader::payloadLength() const {
   uint8_t pl = read(9, 7);
   switch (pl) {
     case 126:
-      return read(16, 16);
+      return read64(16, 16);
     case 127:
-      return read(16, 64);
+      return read64(16, 64);
     default:
       return pl;
   }
@@ -89,7 +104,8 @@ uint64_t WSFrameHeader::read64(size_t bitOffset, size_t bitWidth) const {
   uint64_t result = 0;
 
   for (size_t i = 0; i < byteWidth; i++) {
-    result = (result << 8) + _data[byteOffset + i];
+    result <<= 8;
+    result += (uint64_t)(unsigned char)_data[byteOffset + i];
   }
   
   return result;
@@ -111,7 +127,6 @@ uint8_t WSFrameHeader::maskingKeyLength() const {
 
 void WebSocketParser::read(const char* data, size_t len) {
   while (len > 0) {
-
     // crude check for underflow
     assert(len < 1000000000000000000);
 
@@ -169,7 +184,7 @@ void WebSocketParser::read(const char* data, size_t len) {
 
 void WebSocketConnection::onHeaderComplete(const WSFrameHeader& header) {
   _header = header;
-  if (!header.fin())
+  if (!header.fin() && header.opcode() != Continuation)
     _incompleteContentHeader = header;
 }
 void WebSocketConnection::onPayload(const char* data, size_t len) {
@@ -186,8 +201,20 @@ void WebSocketConnection::onPayload(const char* data, size_t len) {
   }
 }
 void WebSocketConnection::onFrameComplete() {
-  if (_header.fin()) {
+  if (!_header.fin()) {
+    std::copy(_payload.begin(), _payload.end(),
+      std::back_inserter(_incompleteContentPayload));
+  } else {
     switch (_header.opcode()) {
+      case Continuation: {
+        std::copy(_payload.begin(), _payload.end(),
+          std::back_inserter(_incompleteContentPayload));
+        onWSMessage(_incompleteContentHeader.opcode() == Binary,
+          &_incompleteContentPayload[0], _incompleteContentPayload.size());
+
+        _incompleteContentPayload.clear();
+        break;
+      }
       case Text:
       case Binary: {
         onWSMessage(_header.opcode() == Binary, &_payload[0], _payload.size());
@@ -205,9 +232,9 @@ void WebSocketConnection::onFrameComplete() {
         // TODO: Implement pong
       }
     }
-
-    _payload.clear();
   }
+
+  _payload.clear();
 }
 
 // trim from start

@@ -9,6 +9,13 @@
     // Web Socket is connected, send data using send()
     ws.send("Message to send");
     console.log("Message is sent...");
+
+    var msg = "1";
+    for (var i = 0; i < 100000; i++) {
+      msg = msg + "1";
+    }
+    msg = msg + "!";
+    ws.send(msg);
   };
   ws.onmessage = function (evt) 
   { 

@@ -86,6 +86,7 @@ protected:
 class WebSocketConnection : public WebSocketParser {
   WSFrameHeader _incompleteContentHeader;
   WSFrameHeader _header;
+  std::vector<char> _incompleteContentPayload;
   std::vector<char> _payload;
 
 public:
