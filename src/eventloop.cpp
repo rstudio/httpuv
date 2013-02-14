@@ -20,15 +20,18 @@ std::string normalizeHeaderName(const std::string& name) {
 
 class RRequestHandler : public RequestHandler {
 private:
-  Rcpp::Function* _pFunc;
+  Rcpp::Function _onRequest;
+  Rcpp::Function _onWSMessage;
+  Rcpp::Function _onWSClose;
 
 public:
-  RRequestHandler(Rcpp::Function* pFunc) {
-    _pFunc = pFunc;
+  RRequestHandler(Rcpp::Function onRequest,
+    Rcpp::Function onWSMessage, Rcpp::Function onWSClose) :
+    _onRequest(onRequest), _onWSMessage(onWSMessage), _onWSClose(onWSClose) {
+
   }
 
   virtual ~RRequestHandler() {
-    delete _pFunc;
   }
 
   virtual HttpResponse* getResponse(HttpRequest* pRequest) {
@@ -58,25 +61,40 @@ public:
     std::copy(body.begin(), body.end(), input.begin());
     env["rook.input"] = input;
 
-    std::map<std::string, std::string> headers = pRequest->headers();
+    std::map<std::string, std::string, compare_ci> headers = pRequest->headers();
     for (std::map<std::string, std::string>::iterator it = headers.begin();
       it != headers.end();
       it++) {
       env["HTTP_" + normalizeHeaderName(it->first)] = it->second;
     }
 
-    RawVector responseBytes((*_pFunc)(env));
+    RawVector responseBytes((_onRequest)(env));
     std::vector<char> resp(responseBytes.size());
     resp.assign(responseBytes.begin(), responseBytes.end());
     return new HttpResponse(pRequest, 200, "OK", resp);
   }
+
+  void onWSMessage(bool binary, const char* data, size_t len) {
+    if (binary)
+      _onWSMessage(binary, std::vector<char>(data, data + len));
+    else
+      _onWSMessage(binary, std::string(data, len));
+  }
+  
+  void onWSClose() {
+    _onWSClose();
+  }
+
 };
 
 // [[Rcpp::export]]
-intptr_t makeServer(const std::string& host, int port, Rcpp::Function func){
+intptr_t makeServer(const std::string& host, int port,
+  Rcpp::Function onRequest, Rcpp::Function onWSMessage, Rcpp::Function onWSClose) {
+
   using namespace Rcpp;
-  Function* pFunc = new Function(func);
-  RRequestHandler* pHandler = new RRequestHandler(pFunc);
+  // Deleted when owning pHandler is deleted
+  // TODO: When is this deleted??
+  RRequestHandler* pHandler = new RRequestHandler(onRequest, onWSMessage, onWSClose);
   uv_tcp_t* pServer = createServer(
     uv_default_loop(), host.c_str(), port, (RequestHandler*)pHandler);
 

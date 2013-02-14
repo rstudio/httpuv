@@ -17,7 +17,7 @@ bool WSFrameHeader::isHeaderComplete() const {
   if (_data.size() < 2)
     return false;
 
-  return _data.size() * 8 >= (size_t)headerLength();
+  return _data.size() >= (size_t)headerLength();
 }
 
 bool WSFrameHeader::fin() const {
@@ -51,14 +51,18 @@ uint64_t WSFrameHeader::payloadLength() const {
       return pl;
   }
 }
-uint32_t WSFrameHeader::maskingKey() const {
+void WSFrameHeader::maskingKey(uint8_t key[4]) const {
   if (!masked())
-    return 0;
-  else
-    return read64(9 + payloadLengthLength(), 32);
+    memset(key, 0, 4);
+  else {
+    key[0] = read(9 + payloadLengthLength(), 8);
+    key[1] = read(9 + payloadLengthLength() + 8, 8);
+    key[2] = read(9 + payloadLengthLength() + 16, 8);
+    key[3] = read(9 + payloadLengthLength() + 24, 8);
+  }
 }
 size_t WSFrameHeader::headerLength() const {
-  return 9 + payloadLengthLength() + maskingKeyLength();
+  return (9 + payloadLengthLength() + maskingKeyLength()) / 8;
 }
 uint8_t WSFrameHeader::read(size_t bitOffset, size_t bitWidth) const {
   size_t byteOffset = bitOffset / 8;
@@ -107,6 +111,10 @@ uint8_t WSFrameHeader::maskingKeyLength() const {
 
 void WebSocketParser::read(const char* data, size_t len) {
   while (len > 0) {
+
+    // crude check for underflow
+    assert(len < 1000000000000000000);
+
     switch (_state) {
       case InHeader: {
         // The _header vector<char> accumulates header data until
@@ -127,8 +135,13 @@ void WebSocketParser::read(const char* data, size_t len) {
           _state = InPayload;
           _header.clear();
 
-          data += payloadOffset;
-          len -= payloadOffset;
+          data += payloadOffset - startingSize;
+          len -= payloadOffset - startingSize;
+        }
+        else {
+          // All of the data was consumed, but no header
+          data += len;
+          len = 0;
         }
         break;
       }
@@ -137,13 +150,13 @@ void WebSocketParser::read(const char* data, size_t len) {
         _bytesLeft -= bytesToConsume;
         onPayload(data, bytesToConsume);
 
+        data += bytesToConsume;
+        len -= bytesToConsume;
+
         if (_bytesLeft == 0) {
           onFrameComplete();
           
           _state = InHeader;
-
-          data += bytesToConsume;
-          len -= bytesToConsume;
         }
         break;
       }
@@ -160,7 +173,17 @@ void WebSocketConnection::onHeaderComplete(const WSFrameHeader& header) {
     _incompleteContentHeader = header;
 }
 void WebSocketConnection::onPayload(const char* data, size_t len) {
+  size_t origSize = _payload.size();
   std::copy(data, data + len, std::back_inserter(_payload));
+
+  if (_header.maskingKeyLength() != 0) {
+    uint8_t mask[4];
+    _header.maskingKey(mask);
+    for (size_t i = origSize; i < _payload.size(); i++) {
+      size_t j = i % 4;
+      _payload[i] = _payload[i] ^ mask[j];
+    }
+  }
 }
 void WebSocketConnection::onFrameComplete() {
   if (_header.fin()) {

@@ -53,7 +53,7 @@ std::string HttpRequest::url() const {
   return _url;
 }
 
-std::map<std::string, std::string> HttpRequest::headers() const {
+std::map<std::string, std::string, compare_ci> HttpRequest::headers() const {
   return _headers;
 }
 
@@ -85,13 +85,32 @@ int HttpRequest::_on_header_field(http_parser* pParser, const char* pAt, size_t 
 
 int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t length) {
   trace("on_header_value");
-  _headers[_lastHeaderField] = std::string(pAt, length);
+
+  std::string value(pAt, length);
+
+  if (_headers.find(_lastHeaderField) != _headers.end()) {
+    // If the field already exists...
+
+    if (_headers[_lastHeaderField].size() > 0) {
+      // ...and is already non-empty...
+
+      if (value.size() > 0) {
+        // ...and this value is also non-empty, then combine using comma...
+        value = _headers[_lastHeaderField] + "," + value;
+      } else {
+        // ...but if this value is empty, then use previous value (no-op).
+        value = _headers[_lastHeaderField];
+      }
+    }
+  }
+
+  _headers[_lastHeaderField] = value;
   return 0;
 }
 
 int HttpRequest::_on_headers_complete(http_parser* pParser) {
   trace("on_headers_complete");
-  for (std::map<std::string, std::string>::iterator iter = _headers.begin();
+  for (std::map<std::string, std::string, compare_ci>::iterator iter = _headers.begin();
      iter != _headers.end();
      iter++) {
     //std::cout << iter->first << std::string(" = ") << iter->second << std::endl;
@@ -112,13 +131,15 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
 int HttpRequest::_on_message_complete(http_parser* pParser) {
   trace("on_message_complete");
 
-  // Deleted in on_response_written
-  HttpResponse* pResp = _pRequestHandler->getResponse(this);
-  // Freed in on_response_written
-  uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));
-  memset(pWriteReq, 0, sizeof(uv_write_t));
-  pWriteReq->data = pResp;
-  pResp->writeResponse(pWriteReq, &on_response_written);
+  if (!pParser->upgrade) {
+    // Deleted in on_response_written
+    HttpResponse* pResp = _pRequestHandler->getResponse(this);
+    // Freed in on_response_written
+    uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));
+    memset(pWriteReq, 0, sizeof(uv_write_t));
+    pWriteReq->data = pResp;
+    pResp->writeResponse(pWriteReq, &on_response_written);
+  }
 
   return 0;
 }
@@ -156,8 +177,35 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
       if (_parser.upgrade) {
         char* pData = buf.base + parsed;
         ssize_t pDataLen = nread - parsed;
-        // TODO: Check for websocket headers and switch mode (or close)
-        // _protocol = WebSockets;
+
+        if (_headers.find("upgrade") != _headers.end() &&
+            _headers["upgrade"] == std::string("websocket") &&
+            _headers.find("sec-websocket-key") != _headers.end()) {
+
+          HttpResponse* pResp = new HttpResponse(this, 101, "Switching Protocols",
+            std::vector<char>());
+          pResp->addHeader("Upgrade", "websocket");
+          pResp->addHeader("Connection", "Upgrade");
+          pResp->addHeader(
+            "Sec-WebSocket-Accept",
+            createHandshakeResponse(_headers["sec-websocket-key"]));
+          // TODO: Consult app about supported WS protocol
+          //pResp->addHeader("Sec-WebSocket-Protocol", "");
+
+          uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));
+          memset(pWriteReq, 0, sizeof(uv_write_t));
+          pWriteReq->data = pResp;
+          pResp->writeResponse(pWriteReq, &on_response_written);
+
+          _protocol = WebSockets;
+
+          read(pData, pDataLen);
+        }
+
+        if (_protocol != WebSockets) {
+          // TODO: Write failure
+          close();
+        }
       } else if (parsed < nread) {
         fatal_error("on_request_read", "parse error");
         close();

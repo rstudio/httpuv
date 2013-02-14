@@ -11,6 +11,12 @@
 
 #include "websockets.hpp"
 
+struct compare_ci {
+  bool operator()(const std::string& a, const std::string& b) const {
+    return strcasecmp(a.c_str(), b.c_str()) < 0;
+  }
+};
+
 class HttpRequest;
 class HttpResponse;
 
@@ -62,7 +68,7 @@ private:
   Protocol _protocol;
   uv_write_t _writeReq;
   std::string _url;
-  std::map<std::string, std::string> _headers;
+  std::map<std::string, std::string, compare_ci> _headers;
   std::string _lastHeaderField;
   std::vector<char> _body;
   unsigned long _bytesRead;
@@ -94,7 +100,7 @@ public:
 
   std::string method() const;
   std::string url() const;
-  std::map<std::string, std::string> headers() const;
+  std::map<std::string, std::string, compare_ci> headers() const;
   std::vector<char> body();
 
 public:

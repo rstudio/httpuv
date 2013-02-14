@@ -1,8 +1,19 @@
 library(eventloop)
+
 (function() {
   require(eventloop)
-  run("0.0.0.0", 8002, function(env) {
-    #print(as.list(env))
-    charToRaw(paste(as.character(rnorm(10)), collapse='\n'))
-  })
+  run("0.0.0.0", 8002, list(
+    call = function(env) {
+      #print(as.list(env))
+      charToRaw(paste(as.character(rnorm(10)), collapse='\n'))
+    },
+    onWSMessage = function(binary, msg) {
+      cat("Message received!\n")
+      cat(msg)
+      cat("\n")
+    },
+    onWSClose = function() {
+      cat("WSClose\n");
+    }
+  ))
 })()

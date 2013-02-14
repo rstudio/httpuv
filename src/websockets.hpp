@@ -41,7 +41,7 @@ public:
   Opcode opcode() const;
   bool masked() const;
   uint64_t payloadLength() const;
-  uint32_t maskingKey() const;
+  void maskingKey(uint8_t key[4]) const;
   size_t headerLength() const;
 
 //private:
