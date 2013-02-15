@@ -11,7 +11,7 @@
     console.log("Message is sent...");
 
     var msg = "1";
-    for (var i = 0; i < 100000; i++) {
+    for (var i = 0; i < 10000; i++) {
       msg = msg + "1";
     }
     msg = msg + "!";
@@ -21,6 +21,7 @@
   { 
     var received_msg = evt.data;
     console.log("Message is received...");
+    console.log(received_msg);
   };
   ws.onclose = function()
   { 

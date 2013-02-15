@@ -5,6 +5,14 @@
 #include <uv.h>
 #include "http.hpp"
 
+// TODO: Re. R_ignore_SIGPIPE... there must be a better way!?
+
+#ifndef _WIN32
+extern int R_ignore_SIGPIPE;
+#else
+static int R_ignore_SIGPIPE;
+#endif
+
 std::string normalizeHeaderName(const std::string& name) {
   std::string result = name;
   for (std::string::iterator it = result.begin();
@@ -70,25 +78,33 @@ public:
       env["HTTP_" + normalizeHeaderName(it->first)] = it->second;
     }
 
+    R_ignore_SIGPIPE = 0;
     RawVector responseBytes((_onRequest)(env));
+    R_ignore_SIGPIPE = 1;
     std::vector<char> resp(responseBytes.size());
     resp.assign(responseBytes.begin(), responseBytes.end());
     return new HttpResponse(pRequest, 200, "OK", resp);
   }
 
   void onWSOpen(WebSocketConnection* pConn) {
+    R_ignore_SIGPIPE = 0;
     _onWSOpen((intptr_t)pConn);
+    R_ignore_SIGPIPE = 1;
   }
 
   void onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {
+    R_ignore_SIGPIPE = 0;
     if (binary)
       _onWSMessage((intptr_t)pConn, binary, std::vector<char>(data, data + len));
     else
       _onWSMessage((intptr_t)pConn, binary, std::string(data, len));
+    R_ignore_SIGPIPE = 1;
   }
   
   void onWSClose(WebSocketConnection* pConn) {
+    R_ignore_SIGPIPE = 0;
     _onWSClose((intptr_t)pConn);
+    R_ignore_SIGPIPE = 1;
   }
 
 };
@@ -118,5 +134,9 @@ void destroyServer(intptr_t handle) {
 
 // [[Rcpp::export]]
 bool runNB() {
-  return runNonBlocking(uv_default_loop());
+  void (*origHandler)(int);
+  R_ignore_SIGPIPE = 1;
+  bool result = runNonBlocking(uv_default_loop());
+  R_ignore_SIGPIPE = 0;
+  return result;
 }

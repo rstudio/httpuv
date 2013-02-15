@@ -66,7 +66,6 @@ private:
   Socket* _pSocket;
   http_parser _parser;
   Protocol _protocol;
-  uv_write_t _writeReq;
   std::string _url;
   std::map<std::string, std::string, compare_ci> _headers;
   std::string _lastHeaderField;
@@ -87,8 +86,6 @@ public:
     http_parser_init(&_parser, HTTP_REQUEST);
     _parser.data = this;
 
-    _writeReq.data = this;
-
     _pSocket->addConnection(this);
   }
 
@@ -102,6 +99,8 @@ public:
   std::string url() const;
   std::map<std::string, std::string, compare_ci> headers() const;
   std::vector<char> body();
+
+  void sendWSMessage(bool binary, const char* pData, size_t length);
 
 public:
   // Callbacks
@@ -150,7 +149,7 @@ public:
   }
 
   void addHeader(const std::string& name, const std::string& value);
-  void writeResponse(uv_write_t* req, uv_write_cb callback);
+  void writeResponse();
 };
 
 #define DECLARE_CALLBACK_1(type, function_name, return_type, type_1) \

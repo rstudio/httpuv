@@ -15,7 +15,7 @@ library(eventloop)
       cat(paste('"', msg, '"', sep=''))
       cat("\n")
     },
-    onWSClose = function() {
+    onWSClose = function(ws) {
       cat("WSClose\n");
     }
   ))

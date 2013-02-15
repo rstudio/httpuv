@@ -105,5 +105,8 @@ protected:
 };
 
 std::string createHandshakeResponse(std::string key);
+void createFrameHeader(Opcode opcode, bool mask, size_t payloadSize,
+                       int32_t maskingKey,
+                       char ppData[MAX_HEADER_BYTES], size_t* pBytesUsed);
 
 #endif // WEBSOCKETS_HPP
