@@ -176,7 +176,6 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   _pWebApplication->onWSMessage(this, binary, data, len);
-  sendWSMessage(false, data, len);
 }
 void HttpRequest::onWSClose(int code) {
   // TODO: Call close() here?
@@ -227,6 +226,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
           pResp->writeResponse();
 
           _protocol = WebSockets;
+          _pWebApplication->onWSOpen(this);
 
           read(pData, pDataLen);
         }

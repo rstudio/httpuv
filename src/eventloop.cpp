@@ -110,6 +110,20 @@ public:
 };
 
 // [[Rcpp::export]]
+void sendWSMessage(intptr_t conn, bool binary, Rcpp::RObject message) {
+  R_ignore_SIGPIPE = 1;
+  WebSocketConnection* wsc = reinterpret_cast<WebSocketConnection*>(conn);
+  if (binary) {
+    Rcpp::RawVector raw = Rcpp::as<Rcpp::RawVector>(message);
+    wsc->sendWSMessage(binary, reinterpret_cast<char*>(&raw[0]), raw.size());
+  } else {
+    std::string str = Rcpp::as<std::string>(message);
+    wsc->sendWSMessage(binary, str.c_str(), str.size());
+  }
+  R_ignore_SIGPIPE = 0;
+}
+
+// [[Rcpp::export]]
 intptr_t makeServer(const std::string& host, int port,
                     Rcpp::Function onRequest, Rcpp::Function onWSOpen,
                     Rcpp::Function onWSMessage, Rcpp::Function onWSClose) {

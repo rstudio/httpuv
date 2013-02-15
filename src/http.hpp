@@ -116,10 +116,7 @@ public:
   virtual void onWSMessage(bool binary, const char* data, size_t len);
   virtual void onWSClose(int code);
 
-
   virtual void onWrite(int status);
-
-  void write(const char* pData, size_t length, WriteCallback* pCallback);
 
   void fatal_error(const char* method, const char* message);
   void _on_closed(uv_handle_t* handle);

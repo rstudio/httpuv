@@ -8,15 +8,18 @@ library(eventloop)
       charToRaw(paste(as.character(rnorm(10)), collapse='\n'))
     },
     onWSOpen = function(ws) {
+      print("Got WS!")
+      ws$send("hello")
       
-    },
-    onWSMessage = function(ws, binary, msg) {
-      cat("Message received!\n")
-      cat(paste('"', msg, '"', sep=''))
-      cat("\n")
-    },
-    onWSClose = function(ws) {
-      cat("WSClose\n");
+      ws$onMessage(function(binary, msg) {
+        cat("Message received!\n")
+        #cat(paste('"', msg, '"', sep=''))
+        cat("\n")
+        ws$send(msg)
+      })
+      ws$onClose(function() {
+        cat("WSClose\n");
+      })
     }
   ))
 })()

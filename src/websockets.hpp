@@ -95,6 +95,8 @@ public:
   virtual ~WebSocketConnection() {
   }
 
+  virtual void sendWSMessage(bool binary, const char* pData, size_t length) = 0;
+
 protected:
   virtual void onWSMessage(bool binary, const char* data, size_t len) = 0;
   virtual void onWSClose(int code) = 0;
