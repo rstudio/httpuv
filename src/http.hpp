@@ -101,6 +101,7 @@ public:
   std::vector<char> body();
 
   void sendWSMessage(bool binary, const char* pData, size_t length);
+  void closeWS();
 
 public:
   // Callbacks

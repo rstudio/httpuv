@@ -94,6 +94,11 @@ void HttpRequest::sendWSMessage(bool binary, const char* pData, size_t length) {
            &on_ws_message_sent);
 }
 
+void HttpRequest::closeWS() {
+  // TODO: Follow proper WS protocol (send Close frame)
+  close();
+}
+
 
 int HttpRequest::_on_message_begin(http_parser* pParser) {
   trace("on_message_begin");

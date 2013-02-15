@@ -124,6 +124,15 @@ void sendWSMessage(intptr_t conn, bool binary, Rcpp::RObject message) {
 }
 
 // [[Rcpp::export]]
+void closeWS(intptr_t conn) {
+  R_ignore_SIGPIPE = 1;
+  std::cerr << "GOT HERE\n";
+  WebSocketConnection* wsc = reinterpret_cast<WebSocketConnection*>(conn);
+  wsc->closeWS();
+  R_ignore_SIGPIPE = 0;
+}
+
+// [[Rcpp::export]]
 intptr_t makeServer(const std::string& host, int port,
                     Rcpp::Function onRequest, Rcpp::Function onWSOpen,
                     Rcpp::Function onWSMessage, Rcpp::Function onWSClose) {

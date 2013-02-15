@@ -23,10 +23,11 @@
     console.log("Message is received...");
     console.log(received_msg);
   };
-  ws.onclose = function()
+  ws.onclose = function(evt)
   { 
     // websocket is closed.
     console.log("Connection is closed..."); 
+    console.log(evt);
   };
   </script>
 </head>

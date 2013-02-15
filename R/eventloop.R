@@ -58,6 +58,12 @@ WebSocket <- setRefClass(
         # TODO: Ensure that message is UTF-8 encoded
         sendWSMessage(.handle, FALSE, as.character(message))
       }
+    },
+    close = function() {
+      if (is.null(.handle))
+        return()
+      
+      closeWS(.handle)
     }
   )
 )

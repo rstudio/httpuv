@@ -96,6 +96,7 @@ public:
   }
 
   virtual void sendWSMessage(bool binary, const char* pData, size_t length) = 0;
+  virtual void closeWS() = 0;
 
 protected:
   virtual void onWSMessage(bool binary, const char* data, size_t len) = 0;
