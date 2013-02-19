@@ -19,12 +19,18 @@ enum Opcode {
 
 const size_t MAX_HEADER_BYTES = 14;
 
+/* Interprets the bytes that make up a WebSocket frame header.
+ * See RFC 6455 Section 5 (especially 5.2) for details on the
+ * wire format.
+ */
 class WSFrameHeader {
   std::vector<char> _data;
 
 public:
   WSFrameHeader() : _data(MAX_HEADER_BYTES) {
   }
+
+  // The data is copied (up to 14 bytes worth)
   WSFrameHeader(const char* data, size_t len) 
     : _data(data, data + (std::min(MAX_HEADER_BYTES, len))) {
   }
@@ -78,6 +84,7 @@ public:
 
 protected:
   virtual void onHeaderComplete(const WSFrameHeader& header) = 0;
+  // The data is copied
   virtual void onPayload(const char* data, size_t len) = 0;
   virtual void onFrameComplete() = 0;
 

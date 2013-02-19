@@ -8,14 +8,40 @@ AppWrapper <- setRefClass(
     initialize = function(app) {
       .app <<- app
     },
+    call = function(req) {
+      result <- try(.app$call(req))
+      if (inherits(result, 'try-error')) {
+        return(list(
+          status=500L,
+          headers=list(
+            'Content-Type'='text/plain'
+          ),
+          body=charToRaw(
+            paste("ERROR:", attr(result, "condition")$message, collapse="\n"))
+        ))
+      } else {
+        return(result)
+      }
+    },
     onWSOpen = function(handle) {
       ws <- WebSocket$new(handle)
       .wsconns[[as.character(handle)]] <<- ws
-      .app$onWSOpen(ws)
+      result <- try(.app$onWSOpen(ws))
+      
+      # If an unexpected error happened, just close up
+      if (inherits(result, 'try-error')) {
+        # TODO: Close code indicating error?
+        ws$close()
+      }
     },
     onWSMessage = function(handle, binary, message) {
       for (handler in .wsconns[[as.character(handle)]]$.messageCallbacks) {
-        handler(binary, message)
+        result <- try(handler(binary, message))
+        if (inherits(result, 'try-error')) {
+          # TODO: Close code indicating error?
+          .wsconns[[as.character(handle)]]$close()
+          return()
+        }
       }
     },
     onWSClose = function(handle) {
@@ -70,7 +96,8 @@ WebSocket <- setRefClass(
 
 run <- function(host, port, app) {
   appWrapper <- AppWrapper$new(app)
-  server <- makeServer(host, port, app$call,
+  server <- makeServer(host, port,
+                       appWrapper$call,
                        appWrapper$onWSOpen,
                        appWrapper$onWSMessage,
                        appWrapper$onWSClose)

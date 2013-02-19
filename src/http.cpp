@@ -90,6 +90,7 @@ void HttpRequest::sendWSMessage(bool binary, const char* pData, size_t length) {
   buffers[0] = uv_buf_init(&(*pSend->pHeader)[0], pSend->pHeader->size());
   buffers[1] = uv_buf_init(&(*pSend->pData)[0], pSend->pData->size());
 
+  // TODO: Handle return code
   uv_write(&pSend->writeReq, (uv_stream_t*)handle(), buffers, 2,
            &on_ws_message_sent);
 }
@@ -404,6 +405,7 @@ uv_tcp_t* createServer(uv_loop_t* pLoop, const std::string& host, int port,
 
   // Deletes itself when destroy() is called, which occurs in freeServer()
   Socket* pSocket = new Socket();
+  // TODO: Handle error
   uv_tcp_init(pLoop, &pSocket->handle);
   pSocket->handle.data = pSocket;
   pSocket->pWebApplication = pWebApplication;
@@ -430,5 +432,5 @@ void freeServer(uv_tcp_t* pHandle) {
   runNonBlocking(loop);
 }
 bool runNonBlocking(uv_loop_t* loop) {
-  uv_run(loop, UV_RUN_NOWAIT);
+  return uv_run(loop, UV_RUN_NOWAIT);
 }
