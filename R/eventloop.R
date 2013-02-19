@@ -9,7 +9,14 @@ AppWrapper <- setRefClass(
       .app <<- app
     },
     call = function(req) {
-      result <- try(.app$call(req))
+      result <- try({
+        resp <- .app$call(req)
+        if ('file' %in% names(resp$body)) {
+          filename <- resp$body[['file']]
+          resp$body <- readBin(filename, raw(), file.info(filename)$size)
+        }
+        resp
+      })
       if (inherits(result, 'try-error')) {
         return(list(
           status=500L,

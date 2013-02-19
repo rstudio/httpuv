@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <uv.h>
+#include <Rinternals.h>
 #include "http.hpp"
 
 // TODO: Re. R_ignore_SIGPIPE... there must be a better way!?
@@ -140,7 +141,11 @@ public:
     
     List responseHeaders = response["headers"];
     
-    RawVector responseBytes = response["body"];
+    RawVector responseBytes;
+    if (Rf_isString(response["body"]))
+      responseBytes = Function("charToRaw")(response["body"]);
+    else
+      responseBytes = response["body"];
     // Unnecessary copy
     std::vector<char> resp(responseBytes.begin(), responseBytes.end());
 
