@@ -1,2 +1,3 @@
-useDynLib(eventloop)
 export(run)
+export(WebSocket)
+useDynLib(eventloop)

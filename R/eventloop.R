@@ -1,3 +1,6 @@
+#' @useDynLib eventloop
+NULL
+
 AppWrapper <- setRefClass(
   'AppWrapper',
   fields = list(
@@ -54,9 +57,7 @@ AppWrapper <- setRefClass(
     onWSClose = function(handle) {
       ws <- .wsconns[[as.character(handle)]]
       ws$.handle <- NULL
-      print(paste("handle:", handle))
       rm(list=as.character(handle), pos=.wsconns)
-      print(paste("handle1:", handle))
       for (handler in ws$.closeCallbacks) {
         handler()
       }
@@ -64,6 +65,7 @@ AppWrapper <- setRefClass(
   )
 )
 
+#' @export
 WebSocket <- setRefClass(
   'WebSocket',
   fields = list(
@@ -101,6 +103,7 @@ WebSocket <- setRefClass(
   )
 )
 
+#' @export
 run <- function(host, port, app) {
   appWrapper <- AppWrapper$new(app)
   server <- makeServer(host, port,

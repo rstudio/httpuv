@@ -193,12 +193,12 @@ void HttpRequest::fatal_error(const char* method, const char* message) {
 }
 
 void HttpRequest::_on_closed(uv_handle_t* handle) {
-  printf("Closed\n");
+  // printf("Closed\n");
   delete this;
 }
 
 void HttpRequest::close() {
-  std::cerr << "Closing handle " << &_handle << std::endl;
+  // std::cerr << "Closing handle " << &_handle << std::endl;
   if (_protocol == WebSockets)
     _pWebApplication->onWSClose(this);
   _pSocket->removeConnection(this);
@@ -271,15 +271,6 @@ void HttpRequest::handleRequest() {
     return;
   }
 }
-
-void HttpRequest::onWrite(int status) {
-  std::cerr << "Response written: " << status << std::endl;
-  if (status != 0) {
-    uv_err_t err = uv_last_error(_pLoop);
-    fatal_error("on_write", uv_strerror(err));
-  }
-}
-
 
 void HttpResponse::addHeader(const std::string& name, const std::string& value) {
   _headers.push_back(std::pair<std::string, std::string>(name, value));
@@ -364,7 +355,7 @@ void Socket::destroy() {
     it != connections.rend();
     it++) {
 
-    std::cerr << "Request close on " << *it << std::endl;
+    // std::cerr << "Request close on " << *it << std::endl;
     (*it)->close();
   }
   uv_close((uv_handle_t*)&handle, on_Socket_close);

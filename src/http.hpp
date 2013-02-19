@@ -20,12 +20,6 @@ struct compare_ci {
 class HttpRequest;
 class HttpResponse;
 
-class WriteCallback {
-public:
-  virtual ~WriteCallback() {}
-  virtual void onWrite(int status) = 0;
-};
-
 enum Protocol {
   HTTP,
   WebSockets
@@ -57,7 +51,7 @@ public:
   virtual void destroy();
 };
 
-class HttpRequest : WriteCallback, WebSocketConnection {
+class HttpRequest : WebSocketConnection {
 
 private:
   uv_loop_t* _pLoop;
@@ -116,8 +110,6 @@ public:
 
   virtual void onWSMessage(bool binary, const char* data, size_t len);
   virtual void onWSClose(int code);
-
-  virtual void onWrite(int status);
 
   void fatal_error(const char* method, const char* message);
   void _on_closed(uv_handle_t* handle);
