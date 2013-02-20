@@ -2,8 +2,11 @@
 #include <stdio.h>
 #include <map>
 #include <string>
-#include <uv.h>
 #include <Rinternals.h>
+#undef Realloc
+// Also need to undefine the Free macro
+#undef Free
+#include <uv.h>
 #include "uvutil.hpp"
 #include "http.hpp"
 
@@ -80,6 +83,16 @@ const std::string& getStatusDescription(int code) {
     return unknown;
 }
 
+#define ServerHandle Rcpp::XPtr<int>
+template <typename T>
+ServerHandle externalize(T* pServer) {
+  return ServerHandle((int*)pServer, false);
+}
+template <typename T>
+T* internalize(ServerHandle serverHandle) {
+  return (T*)((int*)serverHandle);
+}
+
 class RWebApplication : public WebApplication {
 private:
   Rcpp::Function _onRequest;
@@ -152,7 +165,7 @@ public:
 
     HttpResponse* pResp = new HttpResponse(pRequest, status, statusDesc, resp);
     CharacterVector headerNames = responseHeaders.names();
-    for (size_t i = 0; i < responseHeaders.size(); i++) {
+    for (R_len_t i = 0; i < responseHeaders.size(); i++) {
       pResp->addHeader(
         std::string((char*)headerNames[i], headerNames[i].size()),
         Rcpp::as<std::string>(responseHeaders[i]));
@@ -163,31 +176,31 @@ public:
 
   void onWSOpen(WebSocketConnection* pConn) {
     R_ignore_SIGPIPE = 0;
-    _onWSOpen((intptr_t)pConn);
+    _onWSOpen(externalize(pConn));
     R_ignore_SIGPIPE = 1;
   }
 
   void onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {
     R_ignore_SIGPIPE = 0;
     if (binary)
-      _onWSMessage((intptr_t)pConn, binary, std::vector<char>(data, data + len));
+      _onWSMessage(externalize(pConn), binary, std::vector<char>(data, data + len));
     else
-      _onWSMessage((intptr_t)pConn, binary, std::string(data, len));
+      _onWSMessage(externalize(pConn), binary, std::string(data, len));
     R_ignore_SIGPIPE = 1;
   }
   
   void onWSClose(WebSocketConnection* pConn) {
     R_ignore_SIGPIPE = 0;
-    _onWSClose((intptr_t)pConn);
+    _onWSClose(externalize(pConn));
     R_ignore_SIGPIPE = 1;
   }
 
 };
 
 // [[Rcpp::export]]
-void sendWSMessage(intptr_t conn, bool binary, Rcpp::RObject message) {
+void sendWSMessage(ServerHandle conn, bool binary, Rcpp::RObject message) {
   R_ignore_SIGPIPE = 1;
-  WebSocketConnection* wsc = reinterpret_cast<WebSocketConnection*>(conn);
+  WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
   if (binary) {
     Rcpp::RawVector raw = Rcpp::as<Rcpp::RawVector>(message);
     wsc->sendWSMessage(binary, reinterpret_cast<char*>(&raw[0]), raw.size());
@@ -199,10 +212,10 @@ void sendWSMessage(intptr_t conn, bool binary, Rcpp::RObject message) {
 }
 
 // [[Rcpp::export]]
-void closeWS(intptr_t conn) {
+void closeWS(ServerHandle conn) {
   R_ignore_SIGPIPE = 1;
   std::cerr << "GOT HERE\n";
-  WebSocketConnection* wsc = reinterpret_cast<WebSocketConnection*>(conn);
+  WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
   wsc->closeWS();
   R_ignore_SIGPIPE = 0;
 }
@@ -220,10 +233,10 @@ struct ServerAndTimeout {
 void dummyTimerCallback(uv_timer_t* pTimer, int status) {
 }
 
-void destroyServer(intptr_t handle);
+void destroyServer(ServerHandle handle);
 
 // [[Rcpp::export]]
-intptr_t makeServer(const std::string& host, int port,
+Rcpp::RObject makeServer(const std::string& host, int port,
                     unsigned int pollTimeoutMs,
                     Rcpp::Function onRequest, Rcpp::Function onWSOpen,
                     Rcpp::Function onWSMessage, Rcpp::Function onWSClose) {
@@ -242,7 +255,7 @@ intptr_t makeServer(const std::string& host, int port,
   }
 
   ServerAndTimeout* result = new ServerAndTimeout();
-  std::cerr << "makeServer " << (intptr_t)result << "\n";
+  std::cerr << "makeServer " << (uintptr_t)result << "\n";
   result->server = pServer;
   if (pollTimeoutMs != 0) {
     uv_timer_init(uv_default_loop(), &result->timeoutTimer);
@@ -251,12 +264,12 @@ intptr_t makeServer(const std::string& host, int port,
     if (r) {
       // failure
       std::cerr << "Failed to start timer\n";
-      destroyServer((intptr_t)result);
+      destroyServer(externalize(result));
       return NULL;
     }
   }
 
-  return (intptr_t)result;
+  return externalize(result);
 }
 
 void onCloseTimeoutTimer(uv_handle_t* pHandle) {
@@ -264,9 +277,9 @@ void onCloseTimeoutTimer(uv_handle_t* pHandle) {
 }
 
 // [[Rcpp::export]]
-void destroyServer(intptr_t handle) {
-  std::cerr << "destroyServer " << handle << "\n";
-  ServerAndTimeout* pST = (ServerAndTimeout*)handle;
+void destroyServer(ServerHandle handle) {
+  std::cerr << "destroyServer " << internalize<ServerAndTimeout>(handle) << "\n";
+  ServerAndTimeout* pST = internalize<ServerAndTimeout>(handle);
   freeServer(pST->server);
   if (pST->timeoutTimer.loop) {
     uv_close(toHandle(&pST->timeoutTimer), &onCloseTimeoutTimer);

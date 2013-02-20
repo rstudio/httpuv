@@ -2,19 +2,26 @@
 ## Use the R_HOME indirection to support installations of multiple R version
 PKG_LIBS = $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "Rcpp:::LdFlags()") ./libuv/libuv.a ./http-parser/http_parser.o
 
-PKG_CPPFLAGS += "-I./libuv/include" "-I./http-parser"
+PKG_CPPFLAGS += -I./libuv/include -I./http-parser -I./sha1 -I./base64 -D_WIN32_WINNT=0x0600
+CFLAGS += -D_WIN32_WINNT=0x0600
 
 .PHONY: all libuv.a http-parser.o
 
 all: $(SHLIB)
-$(SHLIB): libuv.a http-parser.o
+$(SHLIB): libuv.a http-parser.o sha1.o base64.o
 
 libuv.a:
   $(MAKE) --directory=libuv \
-    CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" \
+    CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) --std=gnu89" AR="$(AR)" RANLIB="$(RANLIB)" \
     SRCDIR=. OS=mingw libuv.a
 
 http-parser.o:
   $(MAKE) --directory=http-parser \
     CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" \
     SRCDIR=. http_parser.o
+
+sha1.o: sha1/sha1.c sha1/sha1.h
+	(cd sha1 && $(CC) $(CFLAGS) $(CPICFLAGS) -c sha1.c -o sha1.o)
+
+base64.o: base64/base64.cpp base64/base64.hpp
+	(cd base64 && $(CXX) $(CFLAGS) $(CPICFLAGS) -c base64.cpp -o base64.o)

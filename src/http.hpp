@@ -71,8 +71,8 @@ private:
 public:
   HttpRequest(uv_loop_t* pLoop, WebApplication* pWebApplication,
       Socket* pSocket)
-    : _protocol(HTTP), _bytesRead(0), _pLoop(pLoop),
-      _pWebApplication(pWebApplication), _pSocket(pSocket) {
+    : _pLoop(pLoop), _pWebApplication(pWebApplication), _pSocket(pSocket),
+      _protocol(HTTP), _bytesRead(0) {
 
     uv_tcp_init(pLoop, &_handle);
     _handle.data = this;
