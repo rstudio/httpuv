@@ -4,6 +4,7 @@
 #include <string>
 #include <uv.h>
 #include <Rinternals.h>
+#include "uvutil.hpp"
 #include "http.hpp"
 
 // TODO: Re. R_ignore_SIGPIPE... there must be a better way!?
@@ -206,8 +207,24 @@ void closeWS(intptr_t conn) {
   R_ignore_SIGPIPE = 0;
 }
 
+struct ServerAndTimeout {
+  uv_tcp_t* server;
+  uv_timer_t timeoutTimer;
+
+  ServerAndTimeout() : server(NULL) {
+    memset(&timeoutTimer, 0, sizeof(uv_timer_t));
+    timeoutTimer.data = this;
+  }
+};
+
+void dummyTimerCallback(uv_timer_t* pTimer, int status) {
+}
+
+void destroyServer(intptr_t handle);
+
 // [[Rcpp::export]]
 intptr_t makeServer(const std::string& host, int port,
+                    unsigned int pollTimeoutMs,
                     Rcpp::Function onRequest, Rcpp::Function onWSOpen,
                     Rcpp::Function onWSMessage, Rcpp::Function onWSClose) {
 
@@ -219,19 +236,53 @@ intptr_t makeServer(const std::string& host, int port,
   uv_tcp_t* pServer = createServer(
     uv_default_loop(), host.c_str(), port, (WebApplication*)pHandler);
 
-  std::cerr << "makeServer " << (intptr_t)pServer << "\n";
-  return (intptr_t)pServer;
+  if (!pServer) {
+    delete pHandler;
+    return NULL;
+  }
+
+  ServerAndTimeout* result = new ServerAndTimeout();
+  std::cerr << "makeServer " << (intptr_t)result << "\n";
+  result->server = pServer;
+  if (pollTimeoutMs != 0) {
+    uv_timer_init(uv_default_loop(), &result->timeoutTimer);
+    int r = uv_timer_start(&result->timeoutTimer, &dummyTimerCallback,
+      (int64_t)pollTimeoutMs, (int64_t)pollTimeoutMs);
+    if (r) {
+      // failure
+      std::cerr << "Failed to start timer\n";
+      destroyServer((intptr_t)result);
+      return NULL;
+    }
+  }
+
+  return (intptr_t)result;
+}
+
+void onCloseTimeoutTimer(uv_handle_t* pHandle) {
+  delete (ServerAndTimeout*)pHandle->data;
 }
 
 // [[Rcpp::export]]
 void destroyServer(intptr_t handle) {
   std::cerr << "destroyServer " << handle << "\n";
-  freeServer((uv_tcp_t*)handle);
+  ServerAndTimeout* pST = (ServerAndTimeout*)handle;
+  freeServer(pST->server);
+  if (pST->timeoutTimer.loop) {
+    uv_close(toHandle(&pST->timeoutTimer), &onCloseTimeoutTimer);
+  }
+}
+
+// [[Rcpp::export]]
+bool runOnce() {
+  R_ignore_SIGPIPE = 1;
+  bool result = uv_run(uv_default_loop(), UV_RUN_ONCE);
+  R_ignore_SIGPIPE = 0;
+  return result;
 }
 
 // [[Rcpp::export]]
 bool runNB() {
-  void (*origHandler)(int);
   R_ignore_SIGPIPE = 1;
   bool result = runNonBlocking(uv_default_loop());
   R_ignore_SIGPIPE = 0;

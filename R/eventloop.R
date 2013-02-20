@@ -105,16 +105,35 @@ WebSocket <- setRefClass(
 
 #' @export
 run <- function(host, port, app) {
-  appWrapper <- AppWrapper$new(app)
-  server <- makeServer(host, port,
-                       appWrapper$call,
-                       appWrapper$onWSOpen,
-                       appWrapper$onWSMessage,
-                       appWrapper$onWSClose)
   if (server != 0) {
     on.exit(destroyServer(server))
     while (runNB()) {
       Sys.sleep(0.01)
     }
   }
+}
+
+#' @export
+createServer <- function(host, port, app, maxTimeout) {
+  
+  appWrapper <- AppWrapper$new(app)
+  server <- makeServer(host, port, maxTimeout,
+                       appWrapper$call,
+                       appWrapper$onWSOpen,
+                       appWrapper$onWSMessage,
+                       appWrapper$onWSClose)
+  if (identical(as.numeric(server), 0)) {
+    stop("Failed to create server")
+  }
+  return(server)
+}
+
+#' @export
+service <- function() {
+  runOnce()
+}
+
+#' @export
+stopServer <- function(handle) {
+  destroyServer(handle)
 }
