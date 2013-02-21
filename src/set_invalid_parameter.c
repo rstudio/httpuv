@@ -1,3 +1,5 @@
+#ifdef _WIN32
+
 #include <stdlib.h>
 
 // These definitions are to make libuv work without linking to msvcr90
@@ -7,3 +9,5 @@ typedef void (*_invalid_parameter_handler)(const wchar_t * expression, const wch
 _invalid_parameter_handler _set_invalid_parameter_handler(_invalid_parameter_handler pNew) {
 	return NULL;
 }
+
+#endif
