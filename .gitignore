@@ -4,8 +4,6 @@
 *.o
 *.so
 *.dll
-/R/RcppExports.R
-/src/RcppExports.cpp
 /eventloop.creator.user*
 *.swp
 
