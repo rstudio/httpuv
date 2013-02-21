@@ -83,14 +83,18 @@ const std::string& getStatusDescription(int code) {
     return unknown;
 }
 
-#define ServerHandle Rcpp::XPtr<int>
 template <typename T>
-ServerHandle externalize(T* pServer) {
-  return ServerHandle((int*)pServer, false);
+std::string externalize(T* pServer) {
+  std::ostringstream os;
+  os << reinterpret_cast<uintptr_t>(pServer);
+  return os.str();
 }
 template <typename T>
-T* internalize(ServerHandle serverHandle) {
-  return (T*)((int*)serverHandle);
+T* internalize(std::string serverHandle) {
+  std::istringstream is(serverHandle);
+  uintptr_t result;
+  is >> result;
+  return reinterpret_cast<T*>(result);
 }
 
 class RWebApplication : public WebApplication {
@@ -198,7 +202,7 @@ public:
 };
 
 // [[Rcpp::export]]
-void sendWSMessage(ServerHandle conn, bool binary, Rcpp::RObject message) {
+void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
   R_ignore_SIGPIPE = 1;
   WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
   if (binary) {
@@ -212,7 +216,7 @@ void sendWSMessage(ServerHandle conn, bool binary, Rcpp::RObject message) {
 }
 
 // [[Rcpp::export]]
-void closeWS(ServerHandle conn) {
+void closeWS(std::string conn) {
   R_ignore_SIGPIPE = 1;
   std::cerr << "GOT HERE\n";
   WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
@@ -233,7 +237,7 @@ struct ServerAndTimeout {
 void dummyTimerCallback(uv_timer_t* pTimer, int status) {
 }
 
-void destroyServer(ServerHandle handle);
+void destroyServer(std::string handle);
 
 // [[Rcpp::export]]
 Rcpp::RObject makeServer(const std::string& host, int port,
@@ -251,7 +255,7 @@ Rcpp::RObject makeServer(const std::string& host, int port,
 
   if (!pServer) {
     delete pHandler;
-    return NULL;
+    return R_NilValue;
   }
 
   ServerAndTimeout* result = new ServerAndTimeout();
@@ -265,11 +269,11 @@ Rcpp::RObject makeServer(const std::string& host, int port,
       // failure
       std::cerr << "Failed to start timer\n";
       destroyServer(externalize(result));
-      return NULL;
+      return R_NilValue;
     }
   }
 
-  return externalize(result);
+  return Rcpp::wrap(externalize(result));
 }
 
 void onCloseTimeoutTimer(uv_handle_t* pHandle) {
@@ -277,7 +281,7 @@ void onCloseTimeoutTimer(uv_handle_t* pHandle) {
 }
 
 // [[Rcpp::export]]
-void destroyServer(ServerHandle handle) {
+void destroyServer(std::string handle) {
   std::cerr << "destroyServer " << internalize<ServerAndTimeout>(handle) << "\n";
   ServerAndTimeout* pST = internalize<ServerAndTimeout>(handle);
   freeServer(pST->server);

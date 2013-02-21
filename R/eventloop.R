@@ -122,7 +122,7 @@ createServer <- function(host, port, app, maxTimeout) {
                        appWrapper$onWSOpen,
                        appWrapper$onWSMessage,
                        appWrapper$onWSClose)
-  if (identical(as.numeric(server), 0)) {
+  if (is.null(server)) {
     stop("Failed to create server")
   }
   return(server)
