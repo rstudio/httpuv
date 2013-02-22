@@ -7,5 +7,5 @@ Author: RStudio, Inc.
 Maintainer: Joe Cheng <joe@rstudio.com>
 Description: TBD
 License: AGPL-3
-Depends: Rcpp (>= 0.10.2)
+Depends: Rcpp (>= 0.10.2), methods
 LinkingTo: Rcpp

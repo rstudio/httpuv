@@ -218,7 +218,6 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
 // [[Rcpp::export]]
 void closeWS(std::string conn) {
   R_ignore_SIGPIPE = 1;
-  std::cerr << "GOT HERE\n";
   WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
   wsc->closeWS();
   R_ignore_SIGPIPE = 0;
@@ -259,15 +258,14 @@ Rcpp::RObject makeServer(const std::string& host, int port,
   }
 
   ServerAndTimeout* result = new ServerAndTimeout();
-  std::cerr << "makeServer " << (uintptr_t)result << "\n";
   result->server = pServer;
   if (pollTimeoutMs != 0) {
     uv_timer_init(uv_default_loop(), &result->timeoutTimer);
     int r = uv_timer_start(&result->timeoutTimer, &dummyTimerCallback,
       (int64_t)pollTimeoutMs, (int64_t)pollTimeoutMs);
     if (r) {
+      // TODO: Warn??
       // failure
-      std::cerr << "Failed to start timer\n";
       destroyServer(externalize(result));
       return R_NilValue;
     }
@@ -282,7 +280,6 @@ void onCloseTimeoutTimer(uv_handle_t* pHandle) {
 
 // [[Rcpp::export]]
 void destroyServer(std::string handle) {
-  std::cerr << "destroyServer " << internalize<ServerAndTimeout>(handle) << "\n";
   ServerAndTimeout* pST = internalize<ServerAndTimeout>(handle);
   freeServer(pST->server);
   if (pST->timeoutTimer.loop) {

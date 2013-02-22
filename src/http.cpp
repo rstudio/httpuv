@@ -25,8 +25,10 @@ http_parser_settings& request_settings() {
 }
 
 void on_response_written(uv_write_t* handle, int status) {
-  if (status != 0)
+  if (status != 0) {
+    // TODO: Warn??
     std::cerr << "Error writing response: " << status << std::endl;
+  }
   delete ((HttpResponse*)handle->data);
   free(handle);
 }

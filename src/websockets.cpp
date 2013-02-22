@@ -325,15 +325,3 @@ void createFrameHeader(Opcode opcode, bool mask, size_t payloadSize,
 
   *pLen = (pMaskingKey - pBuf) + (mask ? 4 : 0);
 }
-
-int main1() {
-  const char* data = "\x01\x7E";
-  WSFrameHeader frame(data, 2);
-  //std::cout << (int)frame.read(12, 4) << std::endl;
-  //std::cout << (int)frame.read64(0, 16) << std::endl;
-  std::cout << frame.isHeaderComplete() << std::endl;
-}
-
-int main() {
-  std::cout << createHandshakeResponse("dGhlIHNhbXBsZSBub25jZQ==") << std::endl;
-}
