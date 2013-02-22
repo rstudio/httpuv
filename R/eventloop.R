@@ -104,16 +104,6 @@ WebSocket <- setRefClass(
 )
 
 #' @export
-run <- function(host, port, app) {
-  if (server != 0) {
-    on.exit(destroyServer(server))
-    while (runNB()) {
-      Sys.sleep(0.01)
-    }
-  }
-}
-
-#' @export
 createServer <- function(host, port, app, maxTimeout) {
   
   appWrapper <- AppWrapper$new(app)

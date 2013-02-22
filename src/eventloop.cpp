@@ -7,8 +7,8 @@
 // Also need to undefine the Free macro
 #undef Free
 #include <uv.h>
-#include "uvutil.hpp"
-#include "http.hpp"
+#include "uvutil.h"
+#include "http.h"
 
 // TODO: Re. R_ignore_SIGPIPE... there must be a better way!?
 
@@ -207,10 +207,10 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
   WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
   if (binary) {
     Rcpp::RawVector raw = Rcpp::as<Rcpp::RawVector>(message);
-    wsc->sendWSMessage(binary, reinterpret_cast<char*>(&raw[0]), raw.size());
+    wsc->sendWSMessage(Binary, reinterpret_cast<char*>(&raw[0]), raw.size());
   } else {
     std::string str = Rcpp::as<std::string>(message);
-    wsc->sendWSMessage(binary, str.c_str(), str.size());
+    wsc->sendWSMessage(Text, str.c_str(), str.size());
   }
   R_ignore_SIGPIPE = 0;
 }

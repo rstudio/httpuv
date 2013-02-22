@@ -1,4 +1,4 @@
-#include "websockets.hpp"
+#include "websockets.h"
 #include <assert.h>
 
 #include <algorithm>
@@ -182,6 +182,33 @@ void WebSocketParser::read(const char* data, size_t len) {
   }
 }
 
+void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t length) {
+  std::vector<char> header(MAX_HEADER_BYTES);
+
+  size_t headerLength;
+  createFrameHeader(opcode, false, length, 0,
+    &header[0], &headerLength);
+  header.resize(headerLength);
+
+  sendWSFrame(&header[0], header.size(), pData, length);
+}
+
+void WebSocketConnection::closeWS() {
+  // If we have already sent a close message, do nothing. It's especially
+  // important that we don't call closeWSSocket twice, this might lead to
+  // a crash as we (eventually) might double-free the Socket object.
+  if (_connState & WS_CLOSE_SENT)
+    return;
+
+  // Send the close message
+  _connState |= WS_CLOSE_SENT;
+  sendWSMessage(Close, NULL, 0);
+
+  // If close messages have been both sent and received, close socket.
+  if (_connState == WS_CLOSE)
+    closeWSSocket();
+}
+
 void WebSocketConnection::onHeaderComplete(const WSFrameHeader& header) {
   _header = header;
   if (!header.fin() && header.opcode() != Continuation)
@@ -221,15 +248,35 @@ void WebSocketConnection::onFrameComplete() {
         break;
       }
       case Close: {
-        // TODO: Send close response
-        // TODO: Use correct close code
+        _connState |= WS_CLOSE_RECEIVED;
+
+        // If we haven't sent a Close frame before, send one now, echoing
+        // the callback
+        if (!(_connState & WS_CLOSE_SENT)) {
+          _connState |= WS_CLOSE_SENT;
+          sendWSMessage(Close, &_payload[0], _payload.size());
+        }
+
+        // TODO: Delay closeWSSocket call until close message is actually sent
+        closeWSSocket();
+
+        // TODO: Use code and status
         onWSClose(0);
+
+        break;
       }
       case Ping: {
-        // TODO: Implement ping
+        // Send back a pong
+        sendWSMessage(Pong, &_payload[0], _payload.size());
+        break;
       }
       case Pong: {
-        // TODO: Implement pong
+        // No action needed
+        break;
+      }
+      case Reserved: {
+        // TODO: Warn and close connection?
+        break;
       }
     }
   }

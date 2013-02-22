@@ -9,7 +9,7 @@
 #include <uv.h>
 #include <http_parser.h>
 
-#include "websockets.hpp"
+#include "websockets.h"
 
 struct compare_ci {
   bool operator()(const std::string& a, const std::string& b) const {
@@ -94,8 +94,9 @@ public:
   std::map<std::string, std::string, compare_ci> headers() const;
   std::vector<char> body();
 
-  void sendWSMessage(bool binary, const char* pData, size_t length);
-  void closeWS();
+  void sendWSFrame(const char* pHeader, size_t headerSize,
+                   const char* pData, size_t dataSize);
+  void closeWSSocket();
 
 public:
   // Callbacks

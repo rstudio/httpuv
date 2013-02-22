@@ -1,5 +1,4 @@
 export(createServer)
-export(run)
 export(service)
 export(stopServer)
 export(WebSocket)

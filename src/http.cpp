@@ -1,4 +1,4 @@
-#include "http.hpp"
+#include "http.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -77,16 +77,12 @@ void on_ws_message_sent(uv_write_t* handle, int status) {
   free(pSend);
 }
 
-void HttpRequest::sendWSMessage(bool binary, const char* pData, size_t length) {
+void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
+                              const char* pData, size_t dataSize) {
   ws_send_t* pSend = (ws_send_t*)malloc(sizeof(ws_send_t));
   memset(pSend, 0, sizeof(ws_send_t));
-  pSend->pHeader = new std::vector<char>(MAX_HEADER_BYTES);
-  pSend->pData = new std::vector<char>(pData, pData + length);
-
-  size_t headerLength;
-  createFrameHeader(binary ? Binary : Text, false, length, 0,
-    &(*pSend->pHeader)[0], &headerLength);
-  pSend->pHeader->resize(headerLength);
+  pSend->pHeader = new std::vector<char>(pHeader, pHeader + headerSize);
+  pSend->pData = new std::vector<char>(pData, pData + dataSize);
 
   uv_buf_t buffers[2];
   buffers[0] = uv_buf_init(&(*pSend->pHeader)[0], pSend->pHeader->size());
@@ -97,8 +93,7 @@ void HttpRequest::sendWSMessage(bool binary, const char* pData, size_t length) {
            &on_ws_message_sent);
 }
 
-void HttpRequest::closeWS() {
-  // TODO: Follow proper WS protocol (send Close frame)
+void HttpRequest::closeWSSocket() {
   close();
 }
 
