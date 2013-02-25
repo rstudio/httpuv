@@ -280,7 +280,7 @@ void stop_loop_timer_cb(uv_timer_t* handle, int status) {
 }
 
 // [[Rcpp::export]]
-bool run(uint64_t timeoutMillis) {
+bool run(uint32_t timeoutMillis) {
   static uv_timer_t timer_req = {0};
   int r;
 

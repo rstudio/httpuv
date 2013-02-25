@@ -53,11 +53,11 @@ BEGIN_RCPP
 END_RCPP
 }
 // run
-bool run(uint64_t timeoutMillis);
+bool run(uint32_t timeoutMillis);
 RcppExport SEXP eventloop_run(SEXP timeoutMillisSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
-    uint64_t timeoutMillis = Rcpp::as<uint64_t >(timeoutMillisSEXP);
+    uint32_t timeoutMillis = Rcpp::as<uint32_t >(timeoutMillisSEXP);
     bool __result = run(timeoutMillis);
     return Rcpp::wrap(__result);
 END_RCPP
