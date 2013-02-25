@@ -1,3 +1,27 @@
+#' HTTP and WebSocket server
+#' 
+#' Allows R code to listen for and interact with HTTP and WebSocket clients, so 
+#' you can serve web traffic directly out of your R process. Implementation is
+#' based on \href{https://github.com/joyent/libuv}{libuv} and
+#' \href{https://github.com/joyent/http-parser}{http-parser}.
+#' 
+#' This is a low-level library that provides little more than network I/O and 
+#' implementations of the HTTP and WebSocket protocols. For an easy way to 
+#' create web applications, try \href{http://rstudio.com/shiny/}{Shiny} instead.
+#' 
+#' @examples
+#' \dontrun{
+#' demo("echo", package="eventloop")
+#' }
+#' 
+#' @seealso startServer
+#'   
+#' @name eventloop-package
+#' @aliases eventloop
+#' @docType package
+#' @title HTTP and WebSocket server
+#' @author Joe Cheng \email{joe@@rstudio.com}
+#' @keywords package
 #' @useDynLib eventloop
 NULL
 
@@ -72,7 +96,7 @@ AppWrapper <- setRefClass(
 #' when messages are received or the connection is closed.
 #' 
 #' WebSocket objects should never be created directly. They are obtained by
-#' passing an \code{onWSOpen} function to \code{\link{createServer}}.
+#' passing an \code{onWSOpen} function to \code{\link{startServer}}.
 #' 
 #' \strong{Methods}
 #' 
@@ -136,8 +160,43 @@ WebSocket <- setRefClass(
   )
 )
 
+#' Create an HTTP/WebSocket server
+#' 
+#' Creates an HTTP/WebSocket server on the specified host and port.
+#' 
+#' @param host A string that is a valid IPv4 address that is owned by this 
+#'   server, or \code{"0.0.0.0"} to listen on all IP addresses.
+#' @param port A number or integer that indicates the server port that should be
+#'   listened on. Note that on most Unix-like systems including Linux and Mac OS
+#'   X, port numbers smaller than 1025 require root privileges.
+#' @param app A collection of functions that define your application. See 
+#'   Details.
+#' @param maxTimeout Approximate number of milliseconds eventloop will wait 
+#'   between checking for user interruption. It's best to leave this at the 
+#'   default value, and this parameter may be renamed or removed in the future.
+#' @return A handle for this server that can be passed to \code{\link{stopServer}}
+#'   to shut the server down.
+#'   
+#' @details \code{startServer} binds the specified port, but no connections are 
+#'   actually accepted. See \code{\link{service}}, which should be called 
+#'   repeatedly in order to actually accept and handle connections. If the port
+#'   cannot be bound (most likely due to permissions or because it is already
+#'   bound), an error is raised.
+#'   
+#'   The \code{app} parameter is where your application logic will be provided 
+#'   to the server. This can be a list, environment, or reference class that 
+#'   contains the following named functions/methods:
+#'   
+#'   \describe{
+#'     \item{\code{call(req)}}{Process the given HTTP request, and return an
+#'   HTTP response. [TODO: Link to Rook documentation]}
+#'     \item{\code{onWSOpen(ws)}}{Called back when a WebSocket connection is established.
+#'     The given object can be used to be notified when a message is received from
+#'     the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}
+#'   }
+#'   
 #' @export
-createServer <- function(host, port, app, maxTimeout) {
+startServer <- function(host, port, app, maxTimeout=250) {
   
   appWrapper <- AppWrapper$new(app)
   server <- makeServer(host, port, maxTimeout,

@@ -10,7 +10,7 @@
 \details{
   WebSocket objects should never be created directly. They
   are obtained by passing an \code{onWSOpen} function to
-  \code{\link{createServer}}.
+  \code{\link{startServer}}.
 
   \strong{Methods}
 

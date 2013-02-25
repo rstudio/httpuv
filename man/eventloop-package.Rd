@@ -1,37 +1,34 @@
-\name{eventloop-package}
-\alias{eventloop-package}
-\alias{eventloop}
 \docType{package}
-\title{
-What the package does (short line)
-}
+\name{eventloop-package}
+\alias{eventloop}
+\alias{eventloop-package}
+\title{HTTP and WebSocket server}
 \description{
-More about what it does (maybe more than one line)
-~~ A concise (1-5 lines) description of the package ~~
+  HTTP and WebSocket server
 }
 \details{
-\tabular{ll}{
-Package: \tab eventloop\cr
-Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2013-01-31\cr
-License: \tab What license is it under?\cr
-}
-~~ An overview of how to use the package, including the most important functions ~~
-}
-\author{
-Who wrote it
+  Allows R code to listen for and interact with HTTP and
+  WebSocket clients, so you can serve web traffic directly
+  out of your R process. Implementation is based on
+  \href{https://github.com/joyent/libuv}{libuv} and
+  \href{https://github.com/joyent/http-parser}{http-parser}.
 
-Maintainer: Who to complain to <yourfault@somewhere.net>
-}
-\references{
-~~ Literature or other references for background information ~~
-}
-\keyword{ package }
-\seealso{
-~~ Optional links to other man pages, e.g. ~~
-~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
+  This is a low-level library that provides little more
+  than network I/O and implementations of the HTTP and
+  WebSocket protocols. For an easy way to create web
+  applications, try \href{http://rstudio.com/shiny/}{Shiny}
+  instead.
 }
 \examples{
-%% ~~ simple examples of the most important functions ~~
+\dontrun{
+demo("echo", package="eventloop")
 }
+}
+\author{
+  Joe Cheng \email{joe@rstudio.com}
+}
+\seealso{
+  startServer
+}
+\keyword{package}
+
