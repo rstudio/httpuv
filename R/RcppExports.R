@@ -9,19 +9,15 @@ closeWS <- function(conn) {
     invisible(.Call('eventloop_closeWS', PACKAGE = 'eventloop', conn))
 }
 
-makeServer <- function(host, port, pollTimeoutMs, onRequest, onWSOpen, onWSMessage, onWSClose) {
-    .Call('eventloop_makeServer', PACKAGE = 'eventloop', host, port, pollTimeoutMs, onRequest, onWSOpen, onWSMessage, onWSClose)
+makeServer <- function(host, port, onRequest, onWSOpen, onWSMessage, onWSClose) {
+    .Call('eventloop_makeServer', PACKAGE = 'eventloop', host, port, onRequest, onWSOpen, onWSMessage, onWSClose)
 }
 
 destroyServer <- function(handle) {
     invisible(.Call('eventloop_destroyServer', PACKAGE = 'eventloop', handle))
 }
 
-runOnce <- function() {
-    .Call('eventloop_runOnce', PACKAGE = 'eventloop')
-}
-
-runNB <- function() {
-    .Call('eventloop_runNB', PACKAGE = 'eventloop')
+run <- function(timeoutMillis) {
+    .Call('eventloop_run', PACKAGE = 'eventloop', timeoutMillis)
 }
 

@@ -171,9 +171,6 @@ WebSocket <- setRefClass(
 #'   X, port numbers smaller than 1025 require root privileges.
 #' @param app A collection of functions that define your application. See 
 #'   Details.
-#' @param maxTimeout Approximate number of milliseconds eventloop will wait 
-#'   between checking for user interruption. It's best to leave this at the 
-#'   default value, and this parameter may be renamed or removed in the future.
 #' @return A handle for this server that can be passed to \code{\link{stopServer}}
 #'   to shut the server down.
 #'   
@@ -196,10 +193,10 @@ WebSocket <- setRefClass(
 #'   }
 #'   
 #' @export
-startServer <- function(host, port, app, maxTimeout=250) {
+startServer <- function(host, port, app) {
   
   appWrapper <- AppWrapper$new(app)
-  server <- makeServer(host, port, maxTimeout,
+  server <- makeServer(host, port,
                        appWrapper$call,
                        appWrapper$onWSOpen,
                        appWrapper$onWSMessage,
@@ -210,9 +207,11 @@ startServer <- function(host, port, app, maxTimeout=250) {
   return(server)
 }
 
+#' @param timeoutMs Approximate number of milliseconds to run before returning.
+#'   If 0, then the function does not normally return.
 #' @export
-service <- function() {
-  runOnce()
+service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
+  run(timeoutMs)
 }
 
 #' @export

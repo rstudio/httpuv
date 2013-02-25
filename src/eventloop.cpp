@@ -233,14 +233,10 @@ struct ServerAndTimeout {
   }
 };
 
-void dummyTimerCallback(uv_timer_t* pTimer, int status) {
-}
-
 void destroyServer(std::string handle);
 
 // [[Rcpp::export]]
 Rcpp::RObject makeServer(const std::string& host, int port,
-                    unsigned int pollTimeoutMs,
                     Rcpp::Function onRequest, Rcpp::Function onWSOpen,
                     Rcpp::Function onWSMessage, Rcpp::Function onWSClose) {
 
@@ -259,17 +255,6 @@ Rcpp::RObject makeServer(const std::string& host, int port,
 
   ServerAndTimeout* result = new ServerAndTimeout();
   result->server = pServer;
-  if (pollTimeoutMs != 0) {
-    uv_timer_init(uv_default_loop(), &result->timeoutTimer);
-    int r = uv_timer_start(&result->timeoutTimer, &dummyTimerCallback,
-      (int64_t)pollTimeoutMs, (int64_t)pollTimeoutMs);
-    if (r) {
-      // TODO: Warn??
-      // failure
-      destroyServer(externalize(result));
-      return R_NilValue;
-    }
-  }
 
   return Rcpp::wrap(externalize(result));
 }
@@ -287,18 +272,36 @@ void destroyServer(std::string handle) {
   }
 }
 
-// [[Rcpp::export]]
-bool runOnce() {
-  R_ignore_SIGPIPE = 1;
-  bool result = uv_run(uv_default_loop(), UV_RUN_ONCE);
-  R_ignore_SIGPIPE = 0;
-  return result;
+void dummy_close_cb(uv_handle_t* handle) {
+}
+
+void stop_loop_timer_cb(uv_timer_t* handle, int status) {
+  uv_stop(handle->loop);
 }
 
 // [[Rcpp::export]]
-bool runNB() {
+bool run(uint64_t timeoutMillis) {
+  static uv_timer_t timer_req = {0};
+  int r;
+
+  if (!timer_req.loop) {
+    r = uv_timer_init(uv_default_loop(), &timer_req);
+    if (r) {
+      // TODO: Handle timer error
+    }
+  }
+
+  if (timeoutMillis > 0) {
+    uv_timer_stop(&timer_req);
+    r = uv_timer_start(&timer_req, &stop_loop_timer_cb, timeoutMillis, 0);
+    if (r) {
+      // TODO: Handle timer error
+    }
+  }
+
   R_ignore_SIGPIPE = 1;
-  bool result = runNonBlocking(uv_default_loop());
+  bool result = uv_run(uv_default_loop(), UV_RUN_ONCE);
   R_ignore_SIGPIPE = 0;
+
   return result;
 }

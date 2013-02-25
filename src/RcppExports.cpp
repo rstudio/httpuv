@@ -28,18 +28,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // makeServer
-Rcpp::RObject makeServer(const std::string& host, int port, unsigned int pollTimeoutMs, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
-RcppExport SEXP eventloop_makeServer(SEXP hostSEXP, SEXP portSEXP, SEXP pollTimeoutMsSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
+Rcpp::RObject makeServer(const std::string& host, int port, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
+RcppExport SEXP eventloop_makeServer(SEXP hostSEXP, SEXP portSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     std::string host = Rcpp::as<std::string >(hostSEXP);
     int port = Rcpp::as<int >(portSEXP);
-    unsigned int pollTimeoutMs = Rcpp::as<unsigned int >(pollTimeoutMsSEXP);
     Rcpp::Function onRequest = Rcpp::as<Rcpp::Function >(onRequestSEXP);
     Rcpp::Function onWSOpen = Rcpp::as<Rcpp::Function >(onWSOpenSEXP);
     Rcpp::Function onWSMessage = Rcpp::as<Rcpp::Function >(onWSMessageSEXP);
     Rcpp::Function onWSClose = Rcpp::as<Rcpp::Function >(onWSCloseSEXP);
-    Rcpp::RObject __result = makeServer(host, port, pollTimeoutMs, onRequest, onWSOpen, onWSMessage, onWSClose);
+    Rcpp::RObject __result = makeServer(host, port, onRequest, onWSOpen, onWSMessage, onWSClose);
     return Rcpp::wrap(__result);
 END_RCPP
 }
@@ -53,21 +52,13 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// runOnce
-bool runOnce();
-RcppExport SEXP eventloop_runOnce() {
+// run
+bool run(uint64_t timeoutMillis);
+RcppExport SEXP eventloop_run(SEXP timeoutMillisSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
-    bool __result = runOnce();
-    return Rcpp::wrap(__result);
-END_RCPP
-}
-// runNB
-bool runNB();
-RcppExport SEXP eventloop_runNB() {
-BEGIN_RCPP
-    Rcpp::RNGScope __rngScope;
-    bool __result = runNB();
+    uint64_t timeoutMillis = Rcpp::as<uint64_t >(timeoutMillisSEXP);
+    bool __result = run(timeoutMillis);
     return Rcpp::wrap(__result);
 END_RCPP
 }
