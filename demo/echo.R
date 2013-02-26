@@ -26,7 +26,7 @@ app <- list(
         sprintf("var ws = new WebSocket(%s);", wsUrl),
         "ws.onmessage = function(msg) {",
         '  var msgDiv = document.createElement("pre");',
-        '  msgDiv.innerHTML = msg.data;',
+        '  msgDiv.innerHTML = msg.data.replace(/&/g, "&amp;").replace(/\\</g, "&lt;");',
         '  document.getElementById("output").appendChild(msgDiv);',
         "}",
         "function sendInput() {",
@@ -55,11 +55,5 @@ app <- list(
   }
 )
 
-server <- startServer("0.0.0.0", 9454, app, 250)
 browseURL("http://localhost:9454/")
-tryCatch({
-  while (TRUE) {
-    service()
-    Sys.sleep(0.1)
-  }
-}, finally = stopServer(server))
+runServer("0.0.0.0", 9454, app, 250)

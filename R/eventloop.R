@@ -191,7 +191,7 @@ WebSocket <- setRefClass(
 #'     The given object can be used to be notified when a message is received from
 #'     the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}
 #'   }
-#'   
+#' @seealso \code{\link{runServer}}
 #' @export
 startServer <- function(host, port, app) {
   
@@ -246,4 +246,38 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 #' @export
 stopServer <- function(handle) {
   destroyServer(handle)
+}
+
+#' Run a server
+#' 
+#' This is a convenience function that provides a simple way to call 
+#' \code{\link{startServer}}, \code{\link{service}}, and 
+#' \code{\link{stopServer}} in the correct sequence. It does not return unless 
+#' interrupted or an error occurs.
+#' 
+#' If you have multiple hosts and/or ports to listen on, call the individual 
+#' functions instead of \code{runServer}.
+#' 
+#' @param host A string that is a valid IPv4 address that is owned by this 
+#'   server, or \code{"0.0.0.0"} to listen on all IP addresses.
+#' @param port A number or integer that indicates the server port that should be
+#'   listened on. Note that on most Unix-like systems including Linux and Mac OS
+#'   X, port numbers smaller than 1025 require root privileges.
+#' @param app A collection of functions that define your application. See 
+#'   Details.
+#' @param interruptIntervalMs How often to check for interrupt. The default 
+#'   should be appropriate for most situations.
+#'   
+#' @seealso \code{\link{startServer}}, \code{\link{service}},
+#'   \code{\link{stopServer}}
+#' @export
+runServer <- function(host, port, app,
+                      interruptIntervalMs = ifelse(interactive(), 100, 1000)) {
+  server <- startServer(host, port, app)
+  on.exit(stopServer(server))
+  
+  while (TRUE) {
+    service(interruptIntervalMs)
+    Sys.sleep(0.001)
+  }
 }
