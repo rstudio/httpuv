@@ -2,22 +2,22 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 sendWSMessage <- function(conn, binary, message) {
-    invisible(.Call('eventloop_sendWSMessage', PACKAGE = 'eventloop', conn, binary, message))
+    invisible(.Call('httpuv_sendWSMessage', PACKAGE = 'httpuv', conn, binary, message))
 }
 
 closeWS <- function(conn) {
-    invisible(.Call('eventloop_closeWS', PACKAGE = 'eventloop', conn))
+    invisible(.Call('httpuv_closeWS', PACKAGE = 'httpuv', conn))
 }
 
 makeServer <- function(host, port, onRequest, onWSOpen, onWSMessage, onWSClose) {
-    .Call('eventloop_makeServer', PACKAGE = 'eventloop', host, port, onRequest, onWSOpen, onWSMessage, onWSClose)
+    .Call('httpuv_makeServer', PACKAGE = 'httpuv', host, port, onRequest, onWSOpen, onWSMessage, onWSClose)
 }
 
 destroyServer <- function(handle) {
-    invisible(.Call('eventloop_destroyServer', PACKAGE = 'eventloop', handle))
+    invisible(.Call('httpuv_destroyServer', PACKAGE = 'httpuv', handle))
 }
 
 run <- function(timeoutMillis) {
-    .Call('eventloop_run', PACKAGE = 'eventloop', timeoutMillis)
+    .Call('httpuv_run', PACKAGE = 'httpuv', timeoutMillis)
 }
 

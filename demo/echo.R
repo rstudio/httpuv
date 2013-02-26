@@ -1,4 +1,4 @@
-library(eventloop)
+library(httpuv)
 
 app <- list(
   call = function(req) {

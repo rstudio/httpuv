@@ -1,7 +1,7 @@
-library(eventloop)
+library(httpuv)
 
 (function() {
-  require(eventloop)
+  require(httpuv)
   run("0.0.0.0", 8002, list(
     call = function(env) {
       #print(as.list(env))

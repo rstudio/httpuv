@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // sendWSMessage
 void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message);
-RcppExport SEXP eventloop_sendWSMessage(SEXP connSEXP, SEXP binarySEXP, SEXP messageSEXP) {
+RcppExport SEXP httpuv_sendWSMessage(SEXP connSEXP, SEXP binarySEXP, SEXP messageSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     std::string conn = Rcpp::as<std::string >(connSEXP);
@@ -19,7 +19,7 @@ END_RCPP
 }
 // closeWS
 void closeWS(std::string conn);
-RcppExport SEXP eventloop_closeWS(SEXP connSEXP) {
+RcppExport SEXP httpuv_closeWS(SEXP connSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     std::string conn = Rcpp::as<std::string >(connSEXP);
@@ -29,7 +29,7 @@ END_RCPP
 }
 // makeServer
 Rcpp::RObject makeServer(const std::string& host, int port, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
-RcppExport SEXP eventloop_makeServer(SEXP hostSEXP, SEXP portSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
+RcppExport SEXP httpuv_makeServer(SEXP hostSEXP, SEXP portSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     std::string host = Rcpp::as<std::string >(hostSEXP);
@@ -44,7 +44,7 @@ END_RCPP
 }
 // destroyServer
 void destroyServer(std::string handle);
-RcppExport SEXP eventloop_destroyServer(SEXP handleSEXP) {
+RcppExport SEXP httpuv_destroyServer(SEXP handleSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     std::string handle = Rcpp::as<std::string >(handleSEXP);
@@ -54,7 +54,7 @@ END_RCPP
 }
 // run
 bool run(uint32_t timeoutMillis);
-RcppExport SEXP eventloop_run(SEXP timeoutMillisSEXP) {
+RcppExport SEXP httpuv_run(SEXP timeoutMillisSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     uint32_t timeoutMillis = Rcpp::as<uint32_t >(timeoutMillisSEXP);

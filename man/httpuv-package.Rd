@@ -1,7 +1,7 @@
 \docType{package}
-\name{eventloop-package}
-\alias{eventloop}
-\alias{eventloop-package}
+\name{httpuv-package}
+\alias{httpuv}
+\alias{httpuv-package}
 \title{HTTP and WebSocket server}
 \description{
   HTTP and WebSocket server
@@ -21,7 +21,7 @@
 }
 \examples{
 \dontrun{
-demo("echo", package="eventloop")
+demo("echo", package="httpuv")
 }
 }
 \author{

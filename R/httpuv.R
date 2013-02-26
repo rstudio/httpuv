@@ -11,18 +11,18 @@
 #' 
 #' @examples
 #' \dontrun{
-#' demo("echo", package="eventloop")
+#' demo("echo", package="httpuv")
 #' }
 #' 
 #' @seealso startServer
 #'   
-#' @name eventloop-package
-#' @aliases eventloop
+#' @name httpuv-package
+#' @aliases httpuv
 #' @docType package
 #' @title HTTP and WebSocket server
 #' @author Joe Cheng \email{joe@@rstudio.com}
 #' @keywords package
-#' @useDynLib eventloop
+#' @useDynLib httpuv
 NULL
 
 AppWrapper <- setRefClass(
