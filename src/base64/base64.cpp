@@ -26,7 +26,7 @@ std::string b64encode(const std::vector<uint8_t>& data)
    int i, len;
 
    size_t data_len = data.size();
-   int data_elem = 0;
+   size_t data_elem = 0;
    std::string databuf;
 
    while( data_elem < data_len ) {
