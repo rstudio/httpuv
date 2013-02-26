@@ -2,7 +2,7 @@
 \alias{startServer}
 \title{Create an HTTP/WebSocket server}
 \usage{
-  startServer(host, port, app, maxTimeout = 250)
+  startServer(host, port, app)
 }
 \arguments{
   \item{host}{A string that is a valid IPv4 address that is
@@ -16,12 +16,6 @@
 
   \item{app}{A collection of functions that define your
   application. See Details.}
-
-  \item{maxTimeout}{Approximate number of milliseconds
-  eventloop will wait between checking for user
-  interruption. It's best to leave this at the default
-  value, and this parameter may be renamed or removed in
-  the future.}
 }
 \value{
   A handle for this server that can be passed to

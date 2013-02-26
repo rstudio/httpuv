@@ -207,13 +207,42 @@ startServer <- function(host, port, app) {
   return(server)
 }
 
-#' @param timeoutMs Approximate number of milliseconds to run before returning.
-#'   If 0, then the function does not normally return.
+#' Process requests
+#' 
+#' Process HTTP requests and WebSocket messages. Even if a server exists, no
+#' requests are serviced unless and until \code{service} is called.
+#' 
+#' Note that while \code{service} is waiting for a new request, the process is
+#' not interruptible using normal R means (Esc, Ctrl+C, etc.). If being
+#' interruptible is a requirement, then call \code{service} in a while loop
+#' with a very short but non-zero \code{\link{Sys.sleep}} during each iteration.
+#' 
+#' @param timeoutMs Approximate number of milliseconds to run before returning. 
+#'   If 0, then the function will continually process requests without returning
+#'   unless an error occurs.
+#'
+#' @examples
+#' \dontrun{
+#' while (TRUE) {
+#'   service()
+#'   Sys.sleep(0.001)
+#' }
+#' }
+#' 
 #' @export
 service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
   run(timeoutMs)
 }
 
+#' Stop a running server
+#' 
+#' Given a handle that was returned from a previous invocation of 
+#' \code{\link{startServer}}, closes all open connections for that server and 
+#' unbinds the port. \strong{Be careful not to call \code{stopServer} more than
+#' once on a handle, as this will cause the R process to crash!}
+#' 
+#' @param A handle that was previously returned from \code{\link{startServer}}.
+#'   
 #' @export
 stopServer <- function(handle) {
   destroyServer(handle)
