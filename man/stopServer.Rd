@@ -5,7 +5,7 @@
   stopServer(handle)
 }
 \arguments{
-  \item{A}{handle that was previously returned from
+  \item{handle}{A handle that was previously returned from
   \code{\link{startServer}}.}
 }
 \description{

@@ -8,6 +8,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <Rinternals.h>
+
 // TODO: Streaming response body (with chunked transfer encoding)
 // TODO: Fast/easy use of files as response body
 
@@ -27,7 +29,7 @@ http_parser_settings& request_settings() {
 void on_response_written(uv_write_t* handle, int status) {
   if (status != 0) {
     // TODO: Warn??
-    std::cerr << "Error writing response: " << status << std::endl;
+    REprintf("Error writing response: %d\n", status);
   }
   delete ((HttpResponse*)handle->data);
   free(handle);
@@ -186,7 +188,7 @@ void HttpRequest::onWSClose(int code) {
 
 
 void HttpRequest::fatal_error(const char* method, const char* message) {
-  fprintf(stderr, "ERROR: [%s] %s\n", method, message);
+  REprintf("ERROR: [%s] %s\n", method, message);
 }
 
 void HttpRequest::_on_closed(uv_handle_t* handle) {
@@ -365,7 +367,7 @@ void on_Socket_close(uv_handle_t* pHandle) {
 void on_request(uv_stream_t* handle, int status) {
   if (status == -1) {
     uv_err_t err = uv_last_error(handle->loop);
-    fprintf(stderr, "connection error: %s\n", uv_strerror(err));
+    REprintf("connection error: %s\n", uv_strerror(err));
     return;
   }
 
@@ -379,7 +381,7 @@ void on_request(uv_stream_t* handle, int status) {
   int r = uv_accept(handle, (uv_stream_t*)req->handle());
   if (r) {
     uv_err_t err = uv_last_error(handle->loop);
-    fprintf(stderr, "accept: %s\n", uv_strerror(err));
+    REprintf("accept: %s\n", uv_strerror(err));
     delete req;
     return;
   }

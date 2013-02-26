@@ -46,4 +46,7 @@
   received from the client, to send messages to the client,
   etc. See \code{\link{WebSocket}}.} }
 }
+\seealso{
+  \code{\link{runServer}}
+}
 
