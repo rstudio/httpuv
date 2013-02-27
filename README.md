@@ -9,7 +9,9 @@ by Joyent, Inc.
 
 ## Installing
 
-Windows users, make sure the correct version of [RTools](http://cran.r-project.org/bin/windows/Rtools/) is installed and in your system path.
+The [Rcpp](http://cran.r-project.org/web/packages/Rcpp/index.html) package is required.
+
+Windows users also need to make sure the correct version of [RTools](http://cran.r-project.org/bin/windows/Rtools/) is installed and in the system path. 
 
 ```
 git clone https://github.com/rstudio/httpuv
