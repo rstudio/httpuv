@@ -242,7 +242,6 @@ Rcpp::RObject makeServer(const std::string& host, int port,
 
   using namespace Rcpp;
   // Deleted when owning pHandler is deleted
-  // TODO: When is this deleted??
   RWebApplication* pHandler = 
     new RWebApplication(onRequest, onWSOpen, onWSMessage, onWSClose);
   uv_tcp_t* pServer = createServer(
@@ -287,7 +286,8 @@ bool run(uint32_t timeoutMillis) {
   if (!timer_req.loop) {
     r = uv_timer_init(uv_default_loop(), &timer_req);
     if (r) {
-      // TODO: Handle timer error
+      throwLastError(uv_default_loop(),
+          "Failed to initialize libuv timeout timer: ");
     }
   }
 
@@ -295,7 +295,8 @@ bool run(uint32_t timeoutMillis) {
     uv_timer_stop(&timer_req);
     r = uv_timer_start(&timer_req, &stop_loop_timer_cb, timeoutMillis, 0);
     if (r) {
-      // TODO: Handle timer error
+      throwLastError(uv_default_loop(),
+          "Failed to start libuv timeout timer: ");
     }
   }
 
