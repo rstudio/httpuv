@@ -137,6 +137,12 @@ public:
     env["rook.version"] = "0.0";
     env["rook.url_scheme"] = "http";
 
+    Address addr = pRequest->serverAddress();
+    env["SERVER_NAME"] = addr.host;
+    std::ostringstream portstr;
+    portstr << addr.port;
+    env["SERVER_PORT"] = portstr.str();
+
     std::vector<char> body = pRequest->body();
     RawVector input = RawVector(body.size());
     std::copy(body.begin(), body.end(), input.begin());

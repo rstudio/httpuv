@@ -49,6 +49,34 @@ uv_tcp_t* HttpRequest::handle() {
   return &_handle;
 }
 
+Address HttpRequest::serverAddress() {
+  Address address;
+
+  struct sockaddr_in addr = {0};
+  int len = sizeof(sockaddr_in);
+  int r = uv_tcp_getsockname(&_handle, (struct sockaddr*)&addr, &len);
+  if (r) {
+    // TODO: warn?
+    return address;
+  }
+
+  if (addr.sin_family != AF_INET) {
+    // TODO: warn
+    return address;
+  }
+
+  // addrstr is a pointer to static buffer, no need to free
+  char* addrstr = inet_ntoa(addr.sin_addr);
+  if (addrstr)
+    address.host = std::string(addrstr);
+  else {
+    // TODO: warn?
+  }
+  address.port = ntohs(addr.sin_port);
+
+  return address;
+}
+
 std::string HttpRequest::method() const {
   return http_method_str((enum http_method)_parser.method);
 }

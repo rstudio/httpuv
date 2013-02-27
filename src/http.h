@@ -51,6 +51,14 @@ public:
   virtual void destroy();
 };
 
+struct Address {
+  std::string host;
+  unsigned short port;
+
+  Address() : port(0) {
+  }
+};
+
 class HttpRequest : WebSocketConnection {
 
 private:
@@ -87,6 +95,8 @@ public:
   }
 
   uv_tcp_t* handle();
+  Address serverAddress();
+
   void handleRequest();
 
   std::string method() const;
