@@ -3,3 +3,6 @@
 /\.mailmap$
 /\.git$
 /\.travis.yml$
+/\.o$
+/\.so$
+/\.dll$
