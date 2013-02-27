@@ -140,7 +140,7 @@ public:
     std::vector<char> body = pRequest->body();
     RawVector input = RawVector(body.size());
     std::copy(body.begin(), body.end(), input.begin());
-    env["rook.input"] = input;
+    env["httpuv.body"] = input;
 
     std::map<std::string, std::string, compare_ci> headers = pRequest->headers();
     for (std::map<std::string, std::string>::iterator it = headers.begin();

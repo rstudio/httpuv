@@ -25,6 +25,56 @@
 #' @useDynLib httpuv
 NULL
 
+# Implementation of Rook input stream
+InputStream <- setRefClass(
+  'InputStream',
+  fields = list(
+    .conn = 'ANY',
+    .length = 'integer'
+  ),
+  methods = list(
+    initialize = function(data) {
+      .conn <<- file(open="w+b")
+      .length <<- length(data)
+
+      writeBin(data, .conn)
+      seek(.conn, 0)
+    },
+    read_lines = function(n = -1L) {
+      readLines(.conn, n, warn=FALSE)
+    },
+    read = function(l = -1L) {
+      # l < 0 means read all remaining bytes
+      if (l < 0)
+        l <- .length - seek(.conn)
+      
+      if (l == 0)
+        return(raw())
+      else
+        return(readBin(.conn, raw(), l))
+    },
+    rewind = function() {
+      seek(.conn, 0)
+    },
+    close = function() {
+      base::close(.conn)
+    }
+  )
+)
+
+#Implementation of Rook error stream
+ErrorStream <- setRefClass(
+  'ErrorStream',
+  methods = list(
+    cat = function(... , sep = " ", fill = FALSE, labels = NULL) {
+      base::cat(..., sep=sep, fill=fill, labels=labels, file=stderr())
+    },
+    flush = function() {
+      base::flush(stderr())
+    }
+  )
+)
+
 AppWrapper <- setRefClass(
   'AppWrapper',
   fields = list(
@@ -33,11 +83,34 @@ AppWrapper <- setRefClass(
   ),
   methods = list(
     initialize = function(app) {
-      .app <<- app
+      if (is.function(app))
+        .app <<- list(call=app)
+      else
+        .app <<- app
     },
     call = function(req) {
       result <- try({
+        
+        inputStream <- InputStream$new(req$httpuv.body)
+        on.exit(inputStream$close())
+        req$rook.input <- inputStream
+        rm('httpuv.body', envir=req)
+        
+        req$rook.errors <- ErrorStream$new()
+        
+        req$httpuv.version <- packageVersion('httpuv')
+        
+        # These appear to be required for Rook multipart parsing to work
+        if (!is.null(req$HTTP_CONTENT_TYPE))
+          req$CONTENT_TYPE <- req$HTTP_CONTENT_TYPE
+        if (!is.null(req$HTTP_CONTENT_LENGTH))
+          req$CONTENT_LENGTH <- req$HTTP_CONTENT_LENGTH
+        
         resp <- .app$call(req)
+        
+        # Coerce all headers to character
+        resp$headers <- lapply(resp$headers, paste)
+        
         if ('file' %in% names(resp$body)) {
           filename <- resp$body[['file']]
           resp$body <- readBin(filename, raw(), file.info(filename)$size)
