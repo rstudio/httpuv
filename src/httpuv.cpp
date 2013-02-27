@@ -223,16 +223,6 @@ void closeWS(std::string conn) {
   R_ignore_SIGPIPE = 0;
 }
 
-struct ServerAndTimeout {
-  uv_tcp_t* server;
-  uv_timer_t timeoutTimer;
-
-  ServerAndTimeout() : server(NULL) {
-    memset(&timeoutTimer, 0, sizeof(uv_timer_t));
-    timeoutTimer.data = this;
-  }
-};
-
 void destroyServer(std::string handle);
 
 // [[Rcpp::export]]
@@ -252,23 +242,13 @@ Rcpp::RObject makeServer(const std::string& host, int port,
     return R_NilValue;
   }
 
-  ServerAndTimeout* result = new ServerAndTimeout();
-  result->server = pServer;
-
-  return Rcpp::wrap(externalize(result));
-}
-
-void onCloseTimeoutTimer(uv_handle_t* pHandle) {
-  delete (ServerAndTimeout*)pHandle->data;
+  return Rcpp::wrap(externalize(pServer));
 }
 
 // [[Rcpp::export]]
 void destroyServer(std::string handle) {
-  ServerAndTimeout* pST = internalize<ServerAndTimeout>(handle);
-  freeServer(pST->server);
-  if (pST->timeoutTimer.loop) {
-    uv_close(toHandle(&pST->timeoutTimer), &onCloseTimeoutTimer);
-  }
+  uv_tcp_t* pServer = internalize<uv_tcp_t>(handle);
+  freeServer(pServer);
 }
 
 void dummy_close_cb(uv_handle_t* handle) {
@@ -278,6 +258,7 @@ void stop_loop_timer_cb(uv_timer_t* handle, int status) {
   uv_stop(handle->loop);
 }
 
+// Run the libuv default loop for roughly timeoutMillis, then stop
 // [[Rcpp::export]]
 bool run(uint32_t timeoutMillis) {
   static uv_timer_t timer_req = {0};
