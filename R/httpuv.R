@@ -244,8 +244,8 @@ WebSocket <- setRefClass(
 #'   X, port numbers smaller than 1025 require root privileges.
 #' @param app A collection of functions that define your application. See 
 #'   Details.
-#' @return A handle for this server that can be passed to \code{\link{stopServer}}
-#'   to shut the server down.
+#' @return A handle for this server that can be passed to
+#'   \code{\link{stopServer}} to shut the server down.
 #'   
 #' @details \code{startServer} binds the specified port, but no connections are 
 #'   actually accepted. See \code{\link{service}}, which should be called 
@@ -258,8 +258,10 @@ WebSocket <- setRefClass(
 #'   contains the following named functions/methods:
 #'   
 #'   \describe{
-#'     \item{\code{call(req)}}{Process the given HTTP request, and return an
-#'   HTTP response. [TODO: Link to Rook documentation]}
+#'     \item{\code{call(req)}}{Process the given HTTP request, and return an 
+#'     HTTP response. This method should be implemented in accordance with the
+#'     \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
+#'     specification.}
 #'     \item{\code{onWSOpen(ws)}}{Called back when a WebSocket connection is established.
 #'     The given object can be used to be notified when a message is received from
 #'     the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}

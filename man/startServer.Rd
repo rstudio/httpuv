@@ -39,8 +39,10 @@
   following named functions/methods:
 
   \describe{ \item{\code{call(req)}}{Process the given HTTP
-  request, and return an HTTP response. [TODO: Link to Rook
-  documentation]} \item{\code{onWSOpen(ws)}}{Called back
+  request, and return an HTTP response. This method should
+  be implemented in accordance with the
+  \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
+  specification.} \item{\code{onWSOpen(ws)}}{Called back
   when a WebSocket connection is established.  The given
   object can be used to be notified when a message is
   received from the client, to send messages to the client,

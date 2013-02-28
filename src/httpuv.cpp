@@ -134,7 +134,7 @@ public:
     env["PATH_INFO"] = path;
     env["QUERY_STRING"] = queryString;
 
-    env["rook.version"] = "0.0";
+    env["rook.version"] = "1.1-0";
     env["rook.url_scheme"] = "http";
 
     Address addr = pRequest->serverAddress();
