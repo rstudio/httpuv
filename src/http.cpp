@@ -146,7 +146,7 @@ int HttpRequest::_on_status_complete(http_parser* pParser) {
 }
 int HttpRequest::_on_header_field(http_parser* pParser, const char* pAt, size_t length) {
   trace("on_header_field");
-  _lastHeaderField = std::string(pAt, length);
+  std::copy(pAt, pAt + length, std::back_inserter(_lastHeaderField));
   return 0;
 }
 
@@ -172,16 +172,12 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
   }
 
   _headers[_lastHeaderField] = value;
+  _lastHeaderField.clear();
   return 0;
 }
 
 int HttpRequest::_on_headers_complete(http_parser* pParser) {
   trace("on_headers_complete");
-  for (std::map<std::string, std::string, compare_ci>::iterator iter = _headers.begin();
-     iter != _headers.end();
-     iter++) {
-    //std::cout << iter->first << std::string(" = ") << iter->second << std::endl;
-  }
   // TODO: Allocate body
   return 0;
 }
