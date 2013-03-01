@@ -9,8 +9,8 @@ closeWS <- function(conn) {
     invisible(.Call('httpuv_closeWS', PACKAGE = 'httpuv', conn))
 }
 
-makeServer <- function(host, port, onRequest, onWSOpen, onWSMessage, onWSClose) {
-    .Call('httpuv_makeServer', PACKAGE = 'httpuv', host, port, onRequest, onWSOpen, onWSMessage, onWSClose)
+makeServer <- function(host, port, onHeaders, onRequest, onWSOpen, onWSMessage, onWSClose) {
+    .Call('httpuv_makeServer', PACKAGE = 'httpuv', host, port, onHeaders, onRequest, onWSOpen, onWSMessage, onWSClose)
 }
 
 destroyServer <- function(handle) {

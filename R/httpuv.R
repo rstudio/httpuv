@@ -75,6 +75,52 @@ ErrorStream <- setRefClass(
   )
 )
 
+rookCall <- function(func, req) {
+  result <- try({
+    
+    inputStream <- InputStream$new(req$httpuv.body)
+    on.exit(inputStream$close())
+    req$rook.input <- inputStream
+    rm('httpuv.body', envir=req)
+    
+    req$rook.errors <- ErrorStream$new()
+    
+    req$httpuv.version <- packageVersion('httpuv')
+    
+    # These appear to be required for Rook multipart parsing to work
+    if (!is.null(req$HTTP_CONTENT_TYPE))
+      req$CONTENT_TYPE <- req$HTTP_CONTENT_TYPE
+    if (!is.null(req$HTTP_CONTENT_LENGTH))
+      req$CONTENT_LENGTH <- req$HTTP_CONTENT_LENGTH
+    
+    resp <- func(req)
+
+    if (is.null(resp) || length(resp) == 0)
+      return(NULL)
+    
+    # Coerce all headers to character
+    resp$headers <- lapply(resp$headers, paste)
+    
+    if ('file' %in% names(resp$body)) {
+      filename <- resp$body[['file']]
+      resp$body <- readBin(filename, raw(), file.info(filename)$size)
+    }
+    resp
+  })
+  if (inherits(result, 'try-error')) {
+    return(list(
+      status=500L,
+      headers=list(
+        'Content-Type'='text/plain'
+      ),
+      body=charToRaw(
+        paste("ERROR:", attr(result, "condition")$message, collapse="\n"))
+    ))
+  } else {
+    return(result)
+  }
+}
+
 AppWrapper <- setRefClass(
   'AppWrapper',
   fields = list(
@@ -88,47 +134,15 @@ AppWrapper <- setRefClass(
       else
         .app <<- app
     },
-    call = function(req) {
-      result <- try({
-        
-        inputStream <- InputStream$new(req$httpuv.body)
-        on.exit(inputStream$close())
-        req$rook.input <- inputStream
-        rm('httpuv.body', envir=req)
-        
-        req$rook.errors <- ErrorStream$new()
-        
-        req$httpuv.version <- packageVersion('httpuv')
-        
-        # These appear to be required for Rook multipart parsing to work
-        if (!is.null(req$HTTP_CONTENT_TYPE))
-          req$CONTENT_TYPE <- req$HTTP_CONTENT_TYPE
-        if (!is.null(req$HTTP_CONTENT_LENGTH))
-          req$CONTENT_LENGTH <- req$HTTP_CONTENT_LENGTH
-        
-        resp <- .app$call(req)
-        
-        # Coerce all headers to character
-        resp$headers <- lapply(resp$headers, paste)
-        
-        if ('file' %in% names(resp$body)) {
-          filename <- resp$body[['file']]
-          resp$body <- readBin(filename, raw(), file.info(filename)$size)
-        }
-        resp
+    getOnHeaders = function() {
+      if (is.null(.app$onHeaders))
+        return(NULL)
+      return(function(req) {
+        rookCall(.app$onHeaders, req)
       })
-      if (inherits(result, 'try-error')) {
-        return(list(
-          status=500L,
-          headers=list(
-            'Content-Type'='text/plain'
-          ),
-          body=charToRaw(
-            paste("ERROR:", attr(result, "condition")$message, collapse="\n"))
-        ))
-      } else {
-        return(result)
-      }
+    },
+    call = function(req) {
+      rookCall(.app$call, req)
     },
     onWSOpen = function(handle) {
       ws <- WebSocket$new(handle)
@@ -262,6 +276,11 @@ WebSocket <- setRefClass(
 #'     HTTP response. This method should be implemented in accordance with the
 #'     \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
 #'     specification.}
+#'     \item{\code{onHeaders(req)}}{Optional. Similar to \code{call}, but occurs
+#'     when headers are received. Return \code{NULL} to continue normal
+#'     processing of the request, or a Rook response to send that response,
+#'     stop processing the request, and ask the client to close the connection.
+#'     (This can be used to implement upload size limits, for example.)}
 #'     \item{\code{onWSOpen(ws)}}{Called back when a WebSocket connection is established.
 #'     The given object can be used to be notified when a message is received from
 #'     the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}
@@ -272,6 +291,7 @@ startServer <- function(host, port, app) {
   
   appWrapper <- AppWrapper$new(app)
   server <- makeServer(host, port,
+                       appWrapper$getOnHeaders(),
                        appWrapper$call,
                        appWrapper$onWSOpen,
                        appWrapper$onWSMessage,

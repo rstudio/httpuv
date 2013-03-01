@@ -97,91 +97,124 @@ T* internalize(std::string serverHandle) {
   return reinterpret_cast<T*>(result);
 }
 
+void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
+  using namespace Rcpp;
+  
+  Environment& env = *pEnv;
+
+  std::string url = pRequest->url();
+  size_t qsIndex = url.find('?');
+  std::string path, queryString;
+  if (qsIndex == std::string::npos)
+    path = url;
+  else {
+    path = url.substr(0, qsIndex);
+    queryString = url.substr(qsIndex);
+  }
+
+  env["REQUEST_METHOD"] = pRequest->method();
+  env["SCRIPT_NAME"] = std::string("");
+  env["PATH_INFO"] = path;
+  env["QUERY_STRING"] = queryString;
+
+  env["rook.version"] = "1.1-0";
+  env["rook.url_scheme"] = "http";
+
+  Address addr = pRequest->serverAddress();
+  env["SERVER_NAME"] = addr.host;
+  std::ostringstream portstr;
+  portstr << addr.port;
+  env["SERVER_PORT"] = portstr.str();
+
+  std::vector<char> body = pRequest->body();
+  RawVector input = RawVector(body.size());
+  std::copy(body.begin(), body.end(), input.begin());
+  env["httpuv.body"] = input;
+
+  std::map<std::string, std::string, compare_ci> headers = pRequest->headers();
+  for (std::map<std::string, std::string>::iterator it = headers.begin();
+    it != headers.end();
+    it++) {
+    env["HTTP_" + normalizeHeaderName(it->first)] = it->second;
+  }
+}
+
+HttpResponse* listToResponse(HttpRequest* pRequest,
+                             const Rcpp::List& response) {
+  using namespace Rcpp;
+  
+  if (response.isNULL() || response.size() == 0)
+    return NULL;
+
+  int status = Rcpp::as<int>(response["status"]);
+  std::string statusDesc = getStatusDescription(status);
+  
+  List responseHeaders = response["headers"];
+
+  RawVector responseBytes;
+  if (Rf_isString(response["body"]))
+    responseBytes = Function("charToRaw")(response["body"]);
+  else
+    responseBytes = response["body"];
+  // Unnecessary copy
+  std::vector<char> resp(responseBytes.begin(), responseBytes.end());
+
+  // Self-frees when response is written
+  HttpResponse* pResp = new HttpResponse(pRequest, status, statusDesc, resp);
+  CharacterVector headerNames = responseHeaders.names();
+  for (R_len_t i = 0; i < responseHeaders.size(); i++) {
+    pResp->addHeader(
+      std::string((char*)headerNames[i], headerNames[i].size()),
+      Rcpp::as<std::string>(responseHeaders[i]));
+  }
+
+  return pResp;
+}
+
 class RWebApplication : public WebApplication {
 private:
+  Rcpp::Function _onHeaders;
   Rcpp::Function _onRequest;
   Rcpp::Function _onWSOpen;
   Rcpp::Function _onWSMessage;
   Rcpp::Function _onWSClose;
 
 public:
-  RWebApplication(Rcpp::Function onRequest, Rcpp::Function onWSOpen,
-                  Rcpp::Function onWSMessage, Rcpp::Function onWSClose) :
-    _onRequest(onRequest), _onWSOpen(onWSOpen), _onWSMessage(onWSMessage),
-    _onWSClose(onWSClose) {
+  RWebApplication(Rcpp::Function onHeaders, Rcpp::Function onRequest,
+                  Rcpp::Function onWSOpen, Rcpp::Function onWSMessage,
+                  Rcpp::Function onWSClose) :
+    _onHeaders(onHeaders), _onRequest(onRequest), _onWSOpen(onWSOpen),
+    _onWSMessage(onWSMessage), _onWSClose(onWSClose) {
 
   }
 
   virtual ~RWebApplication() {
   }
 
-  virtual HttpResponse* getResponse(HttpRequest* pRequest) {
-    using namespace Rcpp;
-
-    std::string url = pRequest->url();
-    size_t qsIndex = url.find('?');
-    std::string path, queryString;
-    if (qsIndex == std::string::npos)
-      path = url;
-    else {
-      path = url.substr(0, qsIndex);
-      queryString = url.substr(qsIndex);
+  virtual HttpResponse* onHeaders(HttpRequest* pRequest) {
+    if (_onHeaders.isNULL()) {
+      return NULL;
     }
 
-    Environment env = Rcpp::Function("new.env")();
-    env["REQUEST_METHOD"] = pRequest->method();
-    env["SCRIPT_NAME"] = std::string("");
-    env["PATH_INFO"] = path;
-    env["QUERY_STRING"] = queryString;
-
-    env["rook.version"] = "1.1-0";
-    env["rook.url_scheme"] = "http";
-
-    Address addr = pRequest->serverAddress();
-    env["SERVER_NAME"] = addr.host;
-    std::ostringstream portstr;
-    portstr << addr.port;
-    env["SERVER_PORT"] = portstr.str();
-
-    std::vector<char> body = pRequest->body();
-    RawVector input = RawVector(body.size());
-    std::copy(body.begin(), body.end(), input.begin());
-    env["httpuv.body"] = input;
-
-    std::map<std::string, std::string, compare_ci> headers = pRequest->headers();
-    for (std::map<std::string, std::string>::iterator it = headers.begin();
-      it != headers.end();
-      it++) {
-      env["HTTP_" + normalizeHeaderName(it->first)] = it->second;
-    }
-
+    Rcpp::Environment env = Rcpp::Function("new.env")();
+    requestToEnv(pRequest, &env);
     
     R_ignore_SIGPIPE = 0;
-    List response(_onRequest(env));
+    Rcpp::List response(_onHeaders(env));
     R_ignore_SIGPIPE = 1;
     
-    int status = Rcpp::as<int>(response["status"]);
-    std::string statusDesc = getStatusDescription(status);
-    
-    List responseHeaders = response["headers"];
-    
-    RawVector responseBytes;
-    if (Rf_isString(response["body"]))
-      responseBytes = Function("charToRaw")(response["body"]);
-    else
-      responseBytes = response["body"];
-    // Unnecessary copy
-    std::vector<char> resp(responseBytes.begin(), responseBytes.end());
+    return listToResponse(pRequest, response);
+  }
 
-    HttpResponse* pResp = new HttpResponse(pRequest, status, statusDesc, resp);
-    CharacterVector headerNames = responseHeaders.names();
-    for (R_len_t i = 0; i < responseHeaders.size(); i++) {
-      pResp->addHeader(
-        std::string((char*)headerNames[i], headerNames[i].size()),
-        Rcpp::as<std::string>(responseHeaders[i]));
-    }
-
-    return pResp;
+  virtual HttpResponse* getResponse(HttpRequest* pRequest) {
+    Rcpp::Environment env = Rcpp::Function("new.env")();
+    requestToEnv(pRequest, &env);
+    
+    R_ignore_SIGPIPE = 0;
+    Rcpp::List response(_onRequest(env));
+    R_ignore_SIGPIPE = 1;
+    
+    return listToResponse(pRequest, response);
   }
 
   void onWSOpen(WebSocketConnection* pConn) {
@@ -233,13 +266,15 @@ void destroyServer(std::string handle);
 
 // [[Rcpp::export]]
 Rcpp::RObject makeServer(const std::string& host, int port,
-                    Rcpp::Function onRequest, Rcpp::Function onWSOpen,
-                    Rcpp::Function onWSMessage, Rcpp::Function onWSClose) {
+                    Rcpp::Function onHeaders, Rcpp::Function onRequest,
+                    Rcpp::Function onWSOpen, Rcpp::Function onWSMessage,
+                    Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
   // Deleted when owning pHandler is deleted
   RWebApplication* pHandler = 
-    new RWebApplication(onRequest, onWSOpen, onWSMessage, onWSClose);
+    new RWebApplication(onHeaders, onRequest, onWSOpen, onWSMessage,
+                                                                  onWSClose);
   uv_tcp_t* pServer = createServer(
     uv_default_loop(), host.c_str(), port, (WebApplication*)pHandler);
 

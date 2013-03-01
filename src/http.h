@@ -28,6 +28,9 @@ enum Protocol {
 class WebApplication {
 public:
   virtual ~WebApplication() {}
+  virtual HttpResponse* onHeaders(HttpRequest* request) {
+    return NULL;
+  }
   virtual HttpResponse* getResponse(HttpRequest* request) = 0;
   virtual void onWSOpen(WebSocketConnection* conn) = 0;
   virtual void onWSMessage(WebSocketConnection* conn,
@@ -73,6 +76,13 @@ private:
   std::string _lastHeaderField;
   std::vector<char> _body;
   unsigned long _bytesRead;
+  // _ignoreNewData is used in cases where we rejected a request (by sending
+  // a response with a non-100 status code) before its body was received. We
+  // don't want to close the connection because the response might not be
+  // sent yet, but we don't want to parse any more data from this connection.
+  // (You would think uv_stop_read could be called, but it seems to prevent
+  // the response from being written as well.)
+  bool _ignoreNewData;
 
   void trace(const std::string& msg);
 
@@ -80,7 +90,7 @@ public:
   HttpRequest(uv_loop_t* pLoop, WebApplication* pWebApplication,
       Socket* pSocket)
     : _pLoop(pLoop), _pWebApplication(pWebApplication), _pSocket(pSocket),
-      _protocol(HTTP), _bytesRead(0) {
+      _protocol(HTTP), _bytesRead(0), _ignoreNewData(false) {
 
     uv_tcp_init(pLoop, &_handle);
     _handle.data = this;

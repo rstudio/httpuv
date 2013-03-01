@@ -28,17 +28,18 @@ BEGIN_RCPP
 END_RCPP
 }
 // makeServer
-Rcpp::RObject makeServer(const std::string& host, int port, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
-RcppExport SEXP httpuv_makeServer(SEXP hostSEXP, SEXP portSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
+Rcpp::RObject makeServer(const std::string& host, int port, Rcpp::Function onHeaders, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
+RcppExport SEXP httpuv_makeServer(SEXP hostSEXP, SEXP portSEXP, SEXP onHeadersSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     std::string host = Rcpp::as<std::string >(hostSEXP);
     int port = Rcpp::as<int >(portSEXP);
+    Rcpp::Function onHeaders = Rcpp::as<Rcpp::Function >(onHeadersSEXP);
     Rcpp::Function onRequest = Rcpp::as<Rcpp::Function >(onRequestSEXP);
     Rcpp::Function onWSOpen = Rcpp::as<Rcpp::Function >(onWSOpenSEXP);
     Rcpp::Function onWSMessage = Rcpp::as<Rcpp::Function >(onWSMessageSEXP);
     Rcpp::Function onWSClose = Rcpp::as<Rcpp::Function >(onWSCloseSEXP);
-    Rcpp::RObject __result = makeServer(host, port, onRequest, onWSOpen, onWSMessage, onWSClose);
+    Rcpp::RObject __result = makeServer(host, port, onHeaders, onRequest, onWSOpen, onWSMessage, onWSClose);
     return Rcpp::wrap(__result);
 END_RCPP
 }

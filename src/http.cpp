@@ -178,6 +178,40 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
 
 int HttpRequest::_on_headers_complete(http_parser* pParser) {
   trace("on_headers_complete");
+
+  int result = 0;
+
+  HttpResponse* pResp = _pWebApplication->onHeaders(this);
+  if (pResp) {
+    bool bodyExpected = _headers.find("Content-Length") != _headers.end() ||
+      _headers.find("Transfer-Encoding") != _headers.end();
+
+    if (bodyExpected) {
+      // If we're expecting a request body and we're returning a response
+      // prematurely, then add "Connection: close" header to the response and
+      // set a flag to ignore all future reads on this connection.
+
+      pResp->addHeader("Connection", "close");
+
+      // Do not call uv_read_stop, it mysteriously seems to prevent the response
+      // from being written.
+      // uv_read_stop((uv_stream_t*)handle());
+
+      _ignoreNewData = true;
+    }
+    pResp->writeResponse();
+    result = 1;
+  }
+  else {
+    // If the request is Expect: Continue, and the app didn't say otherwise,
+    // then give it what it wants
+    if (_headers.find("Expect") != _headers.end()
+        && _headers["Expect"] == "100-continue") {
+      pResp = new HttpResponse(this, 100, "Continue", std::vector<char>());
+      pResp->writeResponse();
+    }
+  }
+
   // TODO: Allocate body
   return 0;
 }
@@ -229,8 +263,11 @@ void HttpRequest::close() {
 }
 
 void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
-  if (nread > 0) {
+  if (_ignoreNewData) {
+    // do nothing
+  } else if (nread > 0) {
     //std::cerr << nread << " bytes read\n";
+    
     if (_protocol == HTTP) {
       int parsed = http_parser_execute(&_parser, &request_settings(), buf.base, nread);
       if (_parser.upgrade) {
@@ -265,8 +302,11 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
           close();
         }
       } else if (parsed < nread) {
-        fatal_error("on_request_read", "parse error");
-        close();
+        if (!_ignoreNewData) {
+          fatal_error("on_request_read", "parse error");
+          uv_read_stop((uv_stream_t*)handle());
+          close();
+        }
       }
     } else if (_protocol == WebSockets) {
       read(buf.base, nread);
