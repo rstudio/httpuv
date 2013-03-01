@@ -213,7 +213,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
   }
 
   // TODO: Allocate body
-  return 0;
+  return result;
 }
 
 int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) {
