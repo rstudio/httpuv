@@ -30,14 +30,12 @@ InputStream <- setRefClass(
   'InputStream',
   fields = list(
     .conn = 'ANY',
-    .length = 'integer'
+    .length = 'numeric'
   ),
   methods = list(
-    initialize = function(data) {
-      .conn <<- file(open="w+b")
-      .length <<- length(data)
-
-      writeBin(data, .conn)
+    initialize = function(conn, length) {
+      .conn <<- conn
+      .length <<- length
       seek(.conn, 0)
     },
     read_lines = function(n = -1L) {
@@ -55,12 +53,24 @@ InputStream <- setRefClass(
     },
     rewind = function() {
       seek(.conn, 0)
-    },
-    close = function() {
-      base::close(.conn)
     }
   )
 )
+
+NullInputStream <- setRefClass(
+  'NullInputStream',
+  methods = list(
+    read_lines = function(n = -1L) {
+      character()
+    },
+    read = function(l = -1L) {
+      raw()
+    },
+    rewind = function() invisible(),
+    close = function() invisible()
+  )
+)
+nullInputStream <- NullInputStream$new()
 
 #Implementation of Rook error stream
 ErrorStream <- setRefClass(
@@ -75,13 +85,14 @@ ErrorStream <- setRefClass(
   )
 )
 
-rookCall <- function(func, req) {
+rookCall <- function(func, req, data = NULL, dataLength = -1) {
   result <- try({
-    
-    inputStream <- InputStream$new(req$httpuv.body)
-    on.exit(inputStream$close())
+    inputStream <- if(is.null(data))
+      nullInputStream
+    else
+      InputStream$new(data, dataLength)
+
     req$rook.input <- inputStream
-    rm('httpuv.body', envir=req)
     
     req$rook.errors <- ErrorStream$new()
     
@@ -125,7 +136,8 @@ AppWrapper <- setRefClass(
   'AppWrapper',
   fields = list(
     .app = 'ANY',
-    .wsconns = 'environment'
+    .wsconns = 'environment',
+    .bodyData = 'ANY'
   ),
   methods = list(
     initialize = function(app) {
@@ -133,16 +145,25 @@ AppWrapper <- setRefClass(
         .app <<- list(call=app)
       else
         .app <<- app
+      .bodyData <<- NULL
     },
-    getOnHeaders = function() {
+    onHeaders = function(req) {
+      .resetBody()
+
       if (is.null(.app$onHeaders))
         return(NULL)
-      return(function(req) {
-        rookCall(.app$onHeaders, req)
-      })
+
+      rookCall(.app$onHeaders, req)
+    },
+    onBodyData = function(bytes) {
+      if (is.null(.bodyData))
+        .bodyData <<- file(open='w+b', encoding='UTF-8')
+      writeBin(bytes, .bodyData)
     },
     call = function(req) {
-      rookCall(.app$call, req)
+      on.exit(.resetBody())
+      
+      rookCall(.app$call, req, .bodyData, seek(.bodyData))
     },
     onWSOpen = function(handle) {
       ws <- WebSocket$new(handle)
@@ -171,6 +192,12 @@ AppWrapper <- setRefClass(
       rm(list=as.character(handle), pos=.wsconns)
       for (handler in ws$.closeCallbacks) {
         handler()
+      }
+    },
+    .resetBody = function() {
+      if (!is.null(.bodyData)) {
+        close(.bodyData)
+        .bodyData <<- NULL
       }
     }
   )
@@ -291,7 +318,8 @@ startServer <- function(host, port, app) {
   
   appWrapper <- AppWrapper$new(app)
   server <- makeServer(host, port,
-                       appWrapper$getOnHeaders(),
+                       appWrapper$onHeaders,
+                       appWrapper$onBodyData,
                        appWrapper$call,
                        appWrapper$onWSOpen,
                        appWrapper$onWSMessage,

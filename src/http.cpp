@@ -89,10 +89,6 @@ std::map<std::string, std::string, compare_ci> HttpRequest::headers() const {
   return _headers;
 }
 
-std::vector<char> HttpRequest::body() {
-  return _body;
-}
-
 typedef struct {
   uv_write_t writeReq;
   std::vector<char>* pHeader;
@@ -218,9 +214,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
 
 int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) {
   trace("on_body");
-  for (size_t i = 0; i < length; i++) {
-    _body.push_back(*(pAt+i));
-  }
+  _pWebApplication->onBodyData(pAt, length);
   _bytesRead += length;
   return 0;
 }
@@ -263,12 +257,11 @@ void HttpRequest::close() {
 }
 
 void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
-  if (_ignoreNewData) {
-    // do nothing
-  } else if (nread > 0) {
+  if (nread > 0) {
     //std::cerr << nread << " bytes read\n";
-    
-    if (_protocol == HTTP) {
+    if (_ignoreNewData) {
+      // Do nothing
+    } else if (_protocol == HTTP) {
       int parsed = http_parser_execute(&_parser, &request_settings(), buf.base, nread);
       if (_parser.upgrade) {
         char* pData = buf.base + parsed;

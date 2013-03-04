@@ -126,11 +126,6 @@ void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
   portstr << addr.port;
   env["SERVER_PORT"] = portstr.str();
 
-  std::vector<char> body = pRequest->body();
-  RawVector input = RawVector(body.size());
-  std::copy(body.begin(), body.end(), input.begin());
-  env["httpuv.body"] = input;
-
   std::map<std::string, std::string, compare_ci> headers = pRequest->headers();
   for (std::map<std::string, std::string>::iterator it = headers.begin();
     it != headers.end();
@@ -174,18 +169,21 @@ HttpResponse* listToResponse(HttpRequest* pRequest,
 class RWebApplication : public WebApplication {
 private:
   Rcpp::Function _onHeaders;
+  Rcpp::Function _onBodyData;
   Rcpp::Function _onRequest;
   Rcpp::Function _onWSOpen;
   Rcpp::Function _onWSMessage;
   Rcpp::Function _onWSClose;
 
 public:
-  RWebApplication(Rcpp::Function onHeaders, Rcpp::Function onRequest,
-                  Rcpp::Function onWSOpen, Rcpp::Function onWSMessage,
+  RWebApplication(Rcpp::Function onHeaders,
+                  Rcpp::Function onBodyData,
+                  Rcpp::Function onRequest,
+                  Rcpp::Function onWSOpen,
+                  Rcpp::Function onWSMessage,
                   Rcpp::Function onWSClose) :
-    _onHeaders(onHeaders), _onRequest(onRequest), _onWSOpen(onWSOpen),
-    _onWSMessage(onWSMessage), _onWSClose(onWSClose) {
-
+    _onHeaders(onHeaders), _onBodyData(onBodyData), _onRequest(onRequest),
+    _onWSOpen(onWSOpen), _onWSMessage(onWSMessage), _onWSClose(onWSClose) {
   }
 
   virtual ~RWebApplication() {
@@ -204,6 +202,12 @@ public:
     R_ignore_SIGPIPE = 1;
     
     return listToResponse(pRequest, response);
+  }
+
+  virtual void onBodyData(const char* pData, size_t length) {
+    Rcpp::RawVector rawVector(length);
+    std::copy(pData, pData + length, rawVector.begin());
+    _onBodyData(rawVector);
   }
 
   virtual HttpResponse* getResponse(HttpRequest* pRequest) {
@@ -266,15 +270,18 @@ void destroyServer(std::string handle);
 
 // [[Rcpp::export]]
 Rcpp::RObject makeServer(const std::string& host, int port,
-                    Rcpp::Function onHeaders, Rcpp::Function onRequest,
-                    Rcpp::Function onWSOpen, Rcpp::Function onWSMessage,
-                    Rcpp::Function onWSClose) {
+                         Rcpp::Function onHeaders,
+                         Rcpp::Function onBodyData,
+                         Rcpp::Function onRequest,
+                         Rcpp::Function onWSOpen,
+                         Rcpp::Function onWSMessage,
+                         Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
   // Deleted when owning pHandler is deleted
   RWebApplication* pHandler = 
-    new RWebApplication(onHeaders, onRequest, onWSOpen, onWSMessage,
-                                                                  onWSClose);
+    new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
+                        onWSMessage, onWSClose);
   uv_tcp_t* pServer = createServer(
     uv_default_loop(), host.c_str(), port, (WebApplication*)pHandler);
 

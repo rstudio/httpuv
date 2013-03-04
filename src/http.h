@@ -31,6 +31,7 @@ public:
   virtual HttpResponse* onHeaders(HttpRequest* request) {
     return NULL;
   }
+  virtual void onBodyData(const char* data, size_t len) = 0;
   virtual HttpResponse* getResponse(HttpRequest* request) = 0;
   virtual void onWSOpen(WebSocketConnection* conn) = 0;
   virtual void onWSMessage(WebSocketConnection* conn,
@@ -74,7 +75,6 @@ private:
   std::string _url;
   std::map<std::string, std::string, compare_ci> _headers;
   std::string _lastHeaderField;
-  std::vector<char> _body;
   unsigned long _bytesRead;
   // _ignoreNewData is used in cases where we rejected a request (by sending
   // a response with a non-100 status code) before its body was received. We
@@ -112,7 +112,6 @@ public:
   std::string method() const;
   std::string url() const;
   std::map<std::string, std::string, compare_ci> headers() const;
-  std::vector<char> body();
 
   void sendWSFrame(const char* pHeader, size_t headerSize,
                    const char* pData, size_t dataSize);
