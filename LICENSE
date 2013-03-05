@@ -1,6 +1,6 @@
-This file contains license information for externally maintained libraries
-used by httpuv. All other code in httpuv is provided under the terms of the
-license specified in the DESCRIPTION file.
+Included below is license and copyright information for externally maintained
+libraries used by httpuv. All other code in httpuv is copyright RStudio, Inc.
+and is provided under the terms of the GNU General Public License version 3.
 
 
 
