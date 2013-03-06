@@ -1,8 +1,8 @@
 Package: httpuv
 Type: Package
 Title: HTTP and WebSocket server library
-Version: 1.0.2
-Date: 2013-03-04
+Version: 1.0.3
+Date: 2013-03-05
 Author: RStudio, Inc.
 Maintainer: Joe Cheng <joe@rstudio.com>
 Description: httpuv provides low-level socket and protocol support for handling

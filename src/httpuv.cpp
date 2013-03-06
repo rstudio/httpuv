@@ -1,7 +1,10 @@
+#define _FILE_OFFSET_BITS 64
 #include <Rcpp.h>
 #include <stdio.h>
 #include <map>
 #include <string>
+#include <errno.h>
+#include <unistd.h>
 #include <Rinternals.h>
 #undef Realloc
 // Also need to undefine the Free macro
@@ -134,15 +137,81 @@ void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
   }
 }
 
+class FileDataSource : public DataSource {
+  int _fd;
+  off_t _length;
+
+public:
+  FileDataSource() {
+  }
+
+  int initialize(const std::string& path, bool owned) {
+    _fd = open(path.c_str(), O_RDONLY);
+    if (_fd == -1) {
+      REprintf("Error opening file: %d\n", errno);
+      return 1;
+    }
+    else {
+      struct stat info = {0};
+      if (fstat(_fd, &info)) {
+        REprintf("Error opening path: %d\n", errno);
+        ::close(_fd);
+        return 1;
+      }
+      _length = info.st_size;
+
+      if (owned && unlink(path.c_str())) {
+        REprintf("Couldn't delete temp file: %d\n", errno);
+        // It's OK to continue
+      }
+
+      return 0;
+    }
+  }
+
+  uint64_t length() const {
+    return _length;
+  }
+
+  uv_buf_t getData(size_t bytesDesired) {
+    if (bytesDesired == 0)
+      return uv_buf_init(NULL, 0);
+
+    char* buffer = (char*)malloc(bytesDesired);
+    if (!buffer) {
+      throw Rcpp::exception("Couldn't allocate buffer");
+    }
+
+    ssize_t bytesRead = read(_fd, buffer, bytesDesired);
+    if (bytesRead == -1) {
+      REprintf("Error reading: %d\n", errno);
+      free(buffer);
+      throw Rcpp::exception("File read failed");
+    }
+
+    return uv_buf_init(buffer, bytesRead);
+  }
+
+  void freeData(uv_buf_t buffer) {
+    free(buffer.base);
+  }
+
+  void close() {
+    if (_fd != -1)
+      ::close(_fd);
+    _fd = -1;
+  }
+};
+
 class RawVectorDataSource : public DataSource {
   Rcpp::RawVector _vector;
   R_len_t _pos;
 
 public:
-  RawVectorDataSource(Rcpp::RawVector vector) : _vector(vector), _pos(0) {
+  RawVectorDataSource(const Rcpp::RawVector& vector) : _vector(vector), _pos(0) {
   }
 
-  size_t length() const {
+  uint64_t length() const {
     return _vector.size();
   }
 
@@ -157,8 +226,7 @@ public:
       bytes = bytesDesired;
     char* buf = (char*)malloc(bytes);
     if (!buf) {
-      // TODO: Throw out-of-memory exception
-      std::cerr << "OUT OF MEMORY\n";
+      throw Rcpp::exception("Couldn't allocate buffer");
     }
 
     for (size_t i = 0; i < bytes; i++) {
@@ -182,24 +250,40 @@ public:
 HttpResponse* listToResponse(HttpRequest* pRequest,
                              const Rcpp::List& response) {
   using namespace Rcpp;
-  
+
   if (response.isNULL() || response.size() == 0)
     return NULL;
+
+  CharacterVector names = response.names();
 
   int status = Rcpp::as<int>(response["status"]);
   std::string statusDesc = getStatusDescription(status);
   
   List responseHeaders = response["headers"];
 
-  RawVector responseBytes;
-  if (Rf_isString(response["body"]))
-    responseBytes = Function("charToRaw")(response["body"]);
-  else
-    responseBytes = response["body"];
-
   // Self-frees when response is written
+  DataSource* pDataSource = NULL;
+
+  // The response can either contain:
+  // - bodyFile: String value that names the file that should be streamed
+  // - body: Character vector (which is charToRaw-ed) or raw vector, or NULL
+    if (std::find(names.begin(), names.end(), "bodyFile") != names.end()) {
+    FileDataSource* pFDS = new FileDataSource();
+    pFDS->initialize(Rcpp::as<std::string>(response["bodyFile"]),
+        Rcpp::as<bool>(response["bodyFileOwned"]));
+    pDataSource = pFDS;
+  }
+  else if (Rf_isString(response["body"])) {
+    RawVector responseBytes = Function("charToRaw")(response["body"]);
+    pDataSource = new RawVectorDataSource(responseBytes);
+  }
+  else {
+    RawVector responseBytes = response["body"];
+    pDataSource = new RawVectorDataSource(responseBytes);
+  }
+
   HttpResponse* pResp = new HttpResponse(pRequest, status, statusDesc,
-    new RawVectorDataSource(responseBytes));
+                                         pDataSource);
   CharacterVector headerNames = responseHeaders.names();
   for (R_len_t i = 0; i < responseHeaders.size(); i++) {
     pResp->addHeader(

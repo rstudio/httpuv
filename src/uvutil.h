@@ -25,15 +25,20 @@ void throwLastError(uv_loop_t* pLoop,
 
 class WriteOp;
 
+// Abstract class for synchronously streaming known-length data
+// without needing to know where the data comes from.
 class DataSource {
 public:
   virtual ~DataSource() {}
   virtual uint64_t length() const = 0;
   virtual uv_buf_t getData(size_t bytesDesired) = 0;
   virtual void freeData(uv_buf_t buffer) = 0;
-  virtual void close() {}
+  virtual void close() = 0;
 };
 
+// Class for writing a DataSource to a uv_stream_t. Takes care
+// not to buffer too much data in memory (happens when you try
+// to write too much data to a slow uv_stream_t).
 class ExtendedWrite {
   int _activeWrites;
   bool _errored;

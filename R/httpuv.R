@@ -114,7 +114,13 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
     
     if ('file' %in% names(resp$body)) {
       filename <- resp$body[['file']]
-      resp$body <- readBin(filename, raw(), file.info(filename)$size)
+      owned <- resp$body$owned
+      if (is.null(owned))
+        owned <- FALSE
+
+      resp$body <- NULL
+      resp$bodyFile <- filename
+      resp$bodyFileOwned <- owned
     }
     resp
   })
