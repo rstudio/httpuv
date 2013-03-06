@@ -46,7 +46,25 @@ void ExtendedWrite::begin() {
 }
 
 void ExtendedWrite::next() {
-  uv_buf_t buf = _pDataSource->getData(65536);
+  if (_errored) {
+    if (_activeWrites == 0) {
+      _pDataSource->close();
+      onWriteComplete(1);
+    }
+    return;
+  }
+
+  uv_buf_t buf;
+  try {
+    buf = _pDataSource->getData(65536);
+  } catch (Rcpp::exception e) {
+    _errored = true;
+    if (_activeWrites == 0) {
+      _pDataSource->close();
+      onWriteComplete(1);
+    }
+    return;
+  }
   if (buf.len == 0) {
     _pDataSource->freeData(buf);
     if (_activeWrites == 0) {

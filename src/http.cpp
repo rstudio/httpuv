@@ -375,6 +375,7 @@ void HttpResponse::writeResponse() {
 void HttpResponse::onResponseWritten(int status) {
   if (status != 0) {
     REprintf("Error writing response: %d\n", status);
+    _pRequest->close();
     delete this;
     return;
   }

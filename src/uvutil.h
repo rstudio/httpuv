@@ -36,12 +36,14 @@ public:
 
 class ExtendedWrite {
   int _activeWrites;
+  bool _errored;
   uv_stream_t* _pHandle;
   DataSource* _pDataSource;
 
 public:
   ExtendedWrite(uv_stream_t* pHandle, DataSource* pDataSource)
-      : _activeWrites(0), _pHandle(pHandle), _pDataSource(pDataSource) {}
+      : _activeWrites(0), _errored(false), _pHandle(pHandle),
+        _pDataSource(pDataSource) {}
   virtual ~ExtendedWrite() {}
   
   virtual void onWriteComplete(int status) = 0;
