@@ -10,6 +10,7 @@
 #include <http_parser.h>
 
 #include "websockets.h"
+#include "uvutil.h"
 
 struct compare_ci {
   bool operator()(const std::string& a, const std::string& b) const {
@@ -146,12 +147,12 @@ struct HttpResponse {
   std::string _status;
   std::vector<std::pair<std::string, std::string> > _headers;
   std::vector<char> _responseHeader;
-  std::vector<char> _bodyBuf;
+  DataSource* _pBody;
 
 public:
   HttpResponse(HttpRequest* pRequest, int statusCode,
-         const std::string& status, const std::vector<char>& body)
-    : _pRequest(pRequest), _statusCode(statusCode), _status(status), _bodyBuf(body) {
+         const std::string& status, DataSource* pBody)
+    : _pRequest(pRequest), _statusCode(statusCode), _status(status), _pBody(pBody) {
 
   }
 
@@ -160,6 +161,7 @@ public:
 
   void addHeader(const std::string& name, const std::string& value);
   void writeResponse();
+  void onResponseWritten(int status);
 };
 
 #define DECLARE_CALLBACK_1(type, function_name, return_type, type_1) \

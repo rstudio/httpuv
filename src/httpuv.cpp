@@ -134,6 +134,51 @@ void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
   }
 }
 
+class RawVectorDataSource : public DataSource {
+  Rcpp::RawVector _vector;
+  R_len_t _pos;
+
+public:
+  RawVectorDataSource(Rcpp::RawVector vector) : _vector(vector), _pos(0) {
+  }
+
+  size_t length() const {
+    return _vector.size();
+  }
+
+  uv_buf_t getData(size_t bytesDesired) {
+    size_t bytes = _vector.size() - _pos;
+
+    // Are we at the end?
+    if (bytes == 0)
+      return uv_buf_init(NULL, 0);
+
+    if (bytesDesired < bytes)
+      bytes = bytesDesired;
+    char* buf = (char*)malloc(bytes);
+    if (!buf) {
+      // TODO: Throw out-of-memory exception
+      std::cerr << "OUT OF MEMORY\n";
+    }
+
+    for (size_t i = 0; i < bytes; i++) {
+      buf[i] = _vector[_pos + i];
+    }
+
+    _pos += bytes;
+
+    return uv_buf_init(buf, bytes);
+  }
+
+  void freeData(uv_buf_t buffer) {
+    free(buffer.base);
+  }
+
+  void close() {
+    delete this;
+  }
+};
+
 HttpResponse* listToResponse(HttpRequest* pRequest,
                              const Rcpp::List& response) {
   using namespace Rcpp;
@@ -151,11 +196,10 @@ HttpResponse* listToResponse(HttpRequest* pRequest,
     responseBytes = Function("charToRaw")(response["body"]);
   else
     responseBytes = response["body"];
-  // Unnecessary copy
-  std::vector<char> resp(responseBytes.begin(), responseBytes.end());
 
   // Self-frees when response is written
-  HttpResponse* pResp = new HttpResponse(pRequest, status, statusDesc, resp);
+  HttpResponse* pResp = new HttpResponse(pRequest, status, statusDesc,
+    new RawVectorDataSource(responseBytes));
   CharacterVector headerNames = responseHeaders.names();
   for (R_len_t i = 0; i < responseHeaders.size(); i++) {
     pResp->addHeader(

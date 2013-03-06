@@ -27,12 +27,9 @@ http_parser_settings& request_settings() {
 }
 
 void on_response_written(uv_write_t* handle, int status) {
-  if (status != 0) {
-    // TODO: Warn??
-    REprintf("Error writing response: %d\n", status);
-  }
-  delete ((HttpResponse*)handle->data);
+  HttpResponse* pResponse = (HttpResponse*)handle->data;
   free(handle);
+  pResponse->onResponseWritten(status);
 }
 
 uv_buf_t on_alloc(uv_handle_t* handle, size_t suggested_size) {
@@ -203,7 +200,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
     // then give it what it wants
     if (_headers.find("Expect") != _headers.end()
         && _headers["Expect"] == "100-continue") {
-      pResp = new HttpResponse(this, 100, "Continue", std::vector<char>());
+      pResp = new HttpResponse(this, 100, "Continue", NULL);
       pResp->writeResponse();
     }
   }
@@ -273,7 +270,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
 
           // Freed in on_response_written
           HttpResponse* pResp = new HttpResponse(this, 101, "Switching Protocols",
-            std::vector<char>());
+            NULL);
           pResp->addHeader("Upgrade", "websocket");
           pResp->addHeader("Connection", "Upgrade");
           pResp->addHeader(
@@ -332,6 +329,19 @@ void HttpResponse::addHeader(const std::string& name, const std::string& value) 
   _headers.push_back(std::pair<std::string, std::string>(name, value));
 }
 
+class HttpResponseExtendedWrite : public ExtendedWrite {
+  HttpResponse* _pParent;
+public:
+  HttpResponseExtendedWrite(HttpResponse* pParent, uv_stream_t* pHandle,
+                            DataSource* pDataSource) :
+      ExtendedWrite(pHandle, pDataSource), _pParent(pParent) {}
+
+  void onWriteComplete(int status) {
+    delete _pParent;
+    delete this;
+  }
+};
+
 void HttpResponse::writeResponse() {
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
@@ -341,27 +351,41 @@ void HttpResponse::writeResponse() {
      it++) {
     response << it->first << ": " << it->second << "\r\n";
   }
-  response << "Content-Length: " << _bodyBuf.size() << "\r\n";
+  if (_pBody)
+    response << "Content-Length: " << _pBody->length() << "\r\n";
   response << "\r\n";
   std::string responseStr = response.str();
   _responseHeader.assign(responseStr.begin(), responseStr.end());
 
   uv_buf_t headerBuf = uv_buf_init(&_responseHeader[0], _responseHeader.size());
-  uv_buf_t bodyBuf = uv_buf_init(&_bodyBuf[0], _bodyBuf.size());
-  uv_buf_t buffers[] = {headerBuf, bodyBuf};
-
-  // Freed in on_response_written
-  uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));
+  uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t)); 
   memset(pWriteReq, 0, sizeof(uv_write_t));
   pWriteReq->data = this;
 
-  int r = uv_write(pWriteReq, (uv_stream_t*)this->_pRequest->handle(), buffers, 2,
-                   &on_response_written);
+  int r = uv_write(pWriteReq, toStream(_pRequest->handle()), &headerBuf, 1,
+      &on_response_written);
   if (r) {
     _pRequest->fatal_error("uv_write",
                  uv_strerror(uv_last_error(_pRequest->handle()->loop)));
     delete this;
     free(pWriteReq);
+  }
+}
+
+void HttpResponse::onResponseWritten(int status) {
+  if (status != 0) {
+    REprintf("Error writing response: %d\n", status);
+    delete this;
+    return;
+  }
+
+  if (_pBody == NULL) {
+    delete this;
+  }
+  else {
+    HttpResponseExtendedWrite* pResponseWrite = new HttpResponseExtendedWrite(
+        this, toStream(_pRequest->handle()), _pBody);
+    pResponseWrite->begin();
   }
 }
 
