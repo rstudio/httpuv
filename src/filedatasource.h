@@ -1,3 +1,6 @@
+#ifndef FILEDATASOURCE_H
+#define FILEDATASOURCE_H
+
 #include "uvutil.h"
 
 class FileDataSource : public DataSource {
@@ -18,3 +21,5 @@ public:
   void freeData(uv_buf_t buffer);
   void close();
 };
+
+#endif // FILEDATASOURCE_H

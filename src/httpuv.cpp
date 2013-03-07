@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <map>
 #include <string>
+#include <signal.h>
 #include <errno.h>
 #include <Rinternals.h>
 #undef Realloc
@@ -12,14 +13,6 @@
 #include "uvutil.h"
 #include "http.h"
 #include "filedatasource.h"
-
-// TODO: Re. R_ignore_SIGPIPE... there must be a better way!?
-
-#ifndef _WIN32
-extern int R_ignore_SIGPIPE;
-#else
-static int R_ignore_SIGPIPE;
-#endif
 
 std::string normalizeHeaderName(const std::string& name) {
   std::string result = name;
@@ -259,9 +252,7 @@ public:
     Rcpp::Environment env = Rcpp::Function("new.env")();
     requestToEnv(pRequest, &env);
     
-    R_ignore_SIGPIPE = 0;
     Rcpp::List response(_onHeaders(env));
-    R_ignore_SIGPIPE = 1;
     
     return listToResponse(pRequest, response);
   }
@@ -276,39 +267,30 @@ public:
     Rcpp::Environment env = Rcpp::Function("new.env")();
     requestToEnv(pRequest, &env);
     
-    R_ignore_SIGPIPE = 0;
     Rcpp::List response(_onRequest(env));
-    R_ignore_SIGPIPE = 1;
     
     return listToResponse(pRequest, response);
   }
 
   void onWSOpen(WebSocketConnection* pConn) {
-    R_ignore_SIGPIPE = 0;
     _onWSOpen(externalize(pConn));
-    R_ignore_SIGPIPE = 1;
   }
 
   void onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {
-    R_ignore_SIGPIPE = 0;
     if (binary)
       _onWSMessage(externalize(pConn), binary, std::vector<char>(data, data + len));
     else
       _onWSMessage(externalize(pConn), binary, std::string(data, len));
-    R_ignore_SIGPIPE = 1;
   }
   
   void onWSClose(WebSocketConnection* pConn) {
-    R_ignore_SIGPIPE = 0;
     _onWSClose(externalize(pConn));
-    R_ignore_SIGPIPE = 1;
   }
 
 };
 
 // [[Rcpp::export]]
 void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
-  R_ignore_SIGPIPE = 1;
   WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
   if (binary) {
     Rcpp::RawVector raw = Rcpp::as<Rcpp::RawVector>(message);
@@ -317,15 +299,12 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
     std::string str = Rcpp::as<std::string>(message);
     wsc->sendWSMessage(Text, str.c_str(), str.size());
   }
-  R_ignore_SIGPIPE = 0;
 }
 
 // [[Rcpp::export]]
 void closeWS(std::string conn) {
-  R_ignore_SIGPIPE = 1;
   WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
   wsc->closeWS();
-  R_ignore_SIGPIPE = 0;
 }
 
 void destroyServer(std::string handle);
@@ -368,6 +347,25 @@ void stop_loop_timer_cb(uv_timer_t* handle, int status) {
   uv_stop(handle->loop);
 }
 
+class IgnoreSignal {
+  int _signum;
+  sighandler_t _origHandler;
+
+public:
+  IgnoreSignal(int signum) : _signum(signum) {
+#ifndef _WIN32
+    _origHandler = signal(signum, SIG_IGN);
+#endif
+  }
+
+  virtual ~IgnoreSignal() {
+#ifndef _WIN32
+    if (_origHandler != SIG_ERR)
+      signal(_signum, _origHandler);
+#endif
+  }
+};
+
 // Run the libuv default loop for roughly timeoutMillis, then stop
 // [[Rcpp::export]]
 bool run(uint32_t timeoutMillis) {
@@ -391,9 +389,8 @@ bool run(uint32_t timeoutMillis) {
     }
   }
 
-  R_ignore_SIGPIPE = 1;
-  bool result = uv_run(uv_default_loop(), UV_RUN_ONCE);
-  R_ignore_SIGPIPE = 0;
-
-  return result;
+  // Must ignore SIGPIPE when libuv code is running, otherwise unexpectedly
+  // closing connections kill us
+  IgnoreSignal(SIGPIPE);
+  return uv_run(uv_default_loop(), UV_RUN_ONCE);
 }
