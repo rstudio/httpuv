@@ -347,6 +347,8 @@ void stop_loop_timer_cb(uv_timer_t* handle, int status) {
   uv_stop(handle->loop);
 }
 
+#ifndef _WIN32
+// Linux uses sighandler_t and Mac uses sig_t, so define our own
 typedef void (*signal_handler_t)(int);
 
 class IgnoreSignal {
@@ -355,18 +357,15 @@ class IgnoreSignal {
 
 public:
   IgnoreSignal(int signum) : _signum(signum) {
-#ifndef _WIN32
     _origHandler = signal(signum, SIG_IGN);
-#endif
   }
 
   virtual ~IgnoreSignal() {
-#ifndef _WIN32
     if (_origHandler != SIG_ERR)
       signal(_signum, _origHandler);
-#endif
   }
 };
+#endif
 
 // Run the libuv default loop for roughly timeoutMillis, then stop
 // [[Rcpp::export]]
@@ -393,6 +392,8 @@ bool run(uint32_t timeoutMillis) {
 
   // Must ignore SIGPIPE when libuv code is running, otherwise unexpectedly
   // closing connections kill us
+#ifndef _WIN32
   IgnoreSignal(SIGPIPE);
+#endif
   return uv_run(uv_default_loop(), UV_RUN_ONCE);
 }
