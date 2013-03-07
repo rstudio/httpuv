@@ -347,9 +347,11 @@ void stop_loop_timer_cb(uv_timer_t* handle, int status) {
   uv_stop(handle->loop);
 }
 
+typedef void (*signal_handler_t)(int);
+
 class IgnoreSignal {
   int _signum;
-  sighandler_t _origHandler;
+  signal_handler_t _origHandler;
 
 public:
   IgnoreSignal(int signum) : _signum(signum) {
