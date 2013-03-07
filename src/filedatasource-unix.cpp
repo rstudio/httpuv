@@ -2,6 +2,7 @@
 
 #include "filedatasource.h"
 #include <unistd.h>
+#include <errno.h>
 #include <Rcpp/exceptions.h>
 #include <Rinternals.h>
 
