@@ -4,7 +4,6 @@
 #include <map>
 #include <string>
 #include <errno.h>
-#include <unistd.h>
 #include <Rinternals.h>
 #undef Realloc
 // Also need to undefine the Free macro
@@ -12,6 +11,7 @@
 #include <uv.h>
 #include "uvutil.h"
 #include "http.h"
+#include "filedatasource.h"
 
 // TODO: Re. R_ignore_SIGPIPE... there must be a better way!?
 
@@ -137,72 +137,6 @@ void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
   }
 }
 
-class FileDataSource : public DataSource {
-  int _fd;
-  off_t _length;
-
-public:
-  FileDataSource() {
-  }
-
-  int initialize(const std::string& path, bool owned) {
-    _fd = open(path.c_str(), O_RDONLY);
-    if (_fd == -1) {
-      REprintf("Error opening file: %d\n", errno);
-      return 1;
-    }
-    else {
-      struct stat info = {0};
-      if (fstat(_fd, &info)) {
-        REprintf("Error opening path: %d\n", errno);
-        ::close(_fd);
-        return 1;
-      }
-      _length = info.st_size;
-
-      if (owned && unlink(path.c_str())) {
-        REprintf("Couldn't delete temp file: %d\n", errno);
-        // It's OK to continue
-      }
-
-      return 0;
-    }
-  }
-
-  uint64_t length() const {
-    return _length;
-  }
-
-  uv_buf_t getData(size_t bytesDesired) {
-    if (bytesDesired == 0)
-      return uv_buf_init(NULL, 0);
-
-    char* buffer = (char*)malloc(bytesDesired);
-    if (!buffer) {
-      throw Rcpp::exception("Couldn't allocate buffer");
-    }
-
-    ssize_t bytesRead = read(_fd, buffer, bytesDesired);
-    if (bytesRead == -1) {
-      REprintf("Error reading: %d\n", errno);
-      free(buffer);
-      throw Rcpp::exception("File read failed");
-    }
-
-    return uv_buf_init(buffer, bytesRead);
-  }
-
-  void freeData(uv_buf_t buffer) {
-    free(buffer.base);
-  }
-
-  void close() {
-    if (_fd != -1)
-      ::close(_fd);
-    _fd = -1;
-  }
-};
-
 class RawVectorDataSource : public DataSource {
   Rcpp::RawVector _vector;
   R_len_t _pos;
@@ -211,7 +145,7 @@ public:
   RawVectorDataSource(const Rcpp::RawVector& vector) : _vector(vector), _pos(0) {
   }
 
-  uint64_t length() const {
+  uint64_t size() const {
     return _vector.size();
   }
 

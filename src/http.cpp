@@ -352,7 +352,7 @@ void HttpResponse::writeResponse() {
     response << it->first << ": " << it->second << "\r\n";
   }
   if (_pBody)
-    response << "Content-Length: " << _pBody->length() << "\r\n";
+    response << "Content-Length: " << _pBody->size() << "\r\n";
   response << "\r\n";
   std::string responseStr = response.str();
   _responseHeader.assign(responseStr.begin(), responseStr.end());

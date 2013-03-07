@@ -3,7 +3,6 @@
 
 #include <string>
 #include <uv.h>
-#include <Rcpp.h>
 
 inline uv_handle_t* toHandle(uv_timer_t* timer) {
   return (uv_handle_t*)timer;
@@ -30,7 +29,7 @@ class WriteOp;
 class DataSource {
 public:
   virtual ~DataSource() {}
-  virtual uint64_t length() const = 0;
+  virtual uint64_t size() const = 0;
   virtual uv_buf_t getData(size_t bytesDesired) = 0;
   virtual void freeData(uv_buf_t buffer) = 0;
   virtual void close() = 0;
