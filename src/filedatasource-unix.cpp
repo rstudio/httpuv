@@ -1,6 +1,7 @@
 #ifndef _WIN32
 
 #include "filedatasource.h"
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <Rcpp/exceptions.h>
