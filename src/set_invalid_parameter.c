@@ -10,4 +10,10 @@ _invalid_parameter_handler _set_invalid_parameter_handler(_invalid_parameter_han
 	return NULL;
 }
 
+#else
+
+// Need to declare something to avoid "ISO C forbids an empty translation unit"
+// warning when compiling with -pedantic
+typedef int _set_invalid_parameter_dummy;
+
 #endif
