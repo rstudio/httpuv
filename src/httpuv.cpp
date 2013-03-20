@@ -278,7 +278,7 @@ public:
 
   void onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {
     if (binary)
-      _onWSMessage(externalize(pConn), binary, std::vector<char>(data, data + len));
+      _onWSMessage(externalize(pConn), binary, std::vector<uint8_t>(data, data + len));
     else
       _onWSMessage(externalize(pConn), binary, std::string(data, len));
   }
