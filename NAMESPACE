@@ -1,5 +1,6 @@
 export(runServer)
 export(service)
+export(startPipeServer)
 export(startServer)
 export(stopServer)
 export(WebSocket)

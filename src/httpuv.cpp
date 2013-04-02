@@ -310,20 +310,20 @@ void closeWS(std::string conn) {
 void destroyServer(std::string handle);
 
 // [[Rcpp::export]]
-Rcpp::RObject makeServer(const std::string& host, int port,
-                         Rcpp::Function onHeaders,
-                         Rcpp::Function onBodyData,
-                         Rcpp::Function onRequest,
-                         Rcpp::Function onWSOpen,
-                         Rcpp::Function onWSMessage,
-                         Rcpp::Function onWSClose) {
+Rcpp::RObject makeTcpServer(const std::string& host, int port,
+                            Rcpp::Function onHeaders,
+                            Rcpp::Function onBodyData,
+                            Rcpp::Function onRequest,
+                            Rcpp::Function onWSOpen,
+                            Rcpp::Function onWSMessage,
+                            Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
   // Deleted when owning pHandler is deleted
   RWebApplication* pHandler = 
     new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
                         onWSMessage, onWSClose);
-  uv_tcp_t* pServer = createServer(
+  uv_stream_t* pServer = createTcpServer(
     uv_default_loop(), host.c_str(), port, (WebApplication*)pHandler);
 
   if (!pServer) {
@@ -335,8 +335,34 @@ Rcpp::RObject makeServer(const std::string& host, int port,
 }
 
 // [[Rcpp::export]]
+Rcpp::RObject makePipeServer(const std::string& name,
+                             int mask,
+                             Rcpp::Function onHeaders,
+                             Rcpp::Function onBodyData,
+                             Rcpp::Function onRequest,
+                             Rcpp::Function onWSOpen,
+                             Rcpp::Function onWSMessage,
+                             Rcpp::Function onWSClose) {
+
+  using namespace Rcpp;
+  // Deleted when owning pHandler is deleted
+  RWebApplication* pHandler = 
+    new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
+                        onWSMessage, onWSClose);
+  uv_stream_t* pServer = createPipeServer(
+    uv_default_loop(), name.c_str(), mask, (WebApplication*)pHandler);
+
+  if (!pServer) {
+    delete pHandler;
+    return R_NilValue;
+  }
+
+  return Rcpp::wrap(externalize(pServer));
+}
+
+// [[Rcpp::export]]
 void destroyServer(std::string handle) {
-  uv_tcp_t* pServer = internalize<uv_tcp_t>(handle);
+  uv_stream_t* pServer = internalize<uv_stream_t>(handle);
   freeServer(pServer);
 }
 

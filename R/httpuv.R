@@ -318,18 +318,51 @@ WebSocket <- setRefClass(
 #'     The given object can be used to be notified when a message is received from
 #'     the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}
 #'   }
+#'   
+#'   The \code{startPipeServer} variant can be used instead of 
+#'   \code{startServer} to listen on a Unix domain socket or named pipe rather
+#'   than a TCP socket (this is not common).
 #' @seealso \code{\link{runServer}}
+#' @aliases startPipeServer
 #' @export
 startServer <- function(host, port, app) {
   
   appWrapper <- AppWrapper$new(app)
-  server <- makeServer(host, port,
-                       appWrapper$onHeaders,
-                       appWrapper$onBodyData,
-                       appWrapper$call,
-                       appWrapper$onWSOpen,
-                       appWrapper$onWSMessage,
-                       appWrapper$onWSClose)
+  server <- makeTcpServer(host, port,
+                          appWrapper$onHeaders,
+                          appWrapper$onBodyData,
+                          appWrapper$call,
+                          appWrapper$onWSOpen,
+                          appWrapper$onWSMessage,
+                          appWrapper$onWSClose)
+  if (is.null(server)) {
+    stop("Failed to create server")
+  }
+  return(server)
+}
+
+#' @param name A string that indicates the path for the domain socket (on 
+#'   Unix-like systems) or the name of the named pipe (on Windows).
+#' @param mask If non-\code{NULL} and non-negative, this numeric value is used 
+#'   to temporarily modify the process's umask while the domain socket is being 
+#'   created. To ensure that only root can access the domain socket, use 
+#'   \code{strtoi("777", 8)}; or to allow owner and group read/write access, use
+#'   \code{strtoi("117", 8)}. If the value is \code{NULL} then the process's
+#'   umask is left unchanged. (This parameter has no effect on Windows.)
+#' @rdname startServer
+#' @export
+startPipeServer <- function(name, mask, app) {
+  
+  appWrapper <- AppWrapper$new(app)
+  if (is.null(mask))
+    mask <- -1
+  server <- makePipeServer(name, mask,
+                           appWrapper$onHeaders,
+                           appWrapper$onBodyData,
+                           appWrapper$call,
+                           appWrapper$onWSOpen,
+                           appWrapper$onWSMessage,
+                           appWrapper$onWSClose)
   if (is.null(server)) {
     stop("Failed to create server")
   }

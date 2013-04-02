@@ -42,34 +42,36 @@ void HttpRequest::trace(const std::string& msg) {
   //std::cerr << msg << std::endl;
 }
 
-uv_tcp_t* HttpRequest::handle() {
-  return &_handle;
+uv_stream_t* HttpRequest::handle() {
+  return &_handle.stream;
 }
 
 Address HttpRequest::serverAddress() {
   Address address;
 
-  struct sockaddr_in addr = {0};
-  int len = sizeof(sockaddr_in);
-  int r = uv_tcp_getsockname(&_handle, (struct sockaddr*)&addr, &len);
-  if (r) {
-    // TODO: warn?
-    return address;
-  }
+  if (_handle.isTcp) {
+    struct sockaddr_in addr = {0};
+    int len = sizeof(sockaddr_in);
+    int r = uv_tcp_getsockname(&_handle.tcp, (struct sockaddr*)&addr, &len);
+    if (r) {
+      // TODO: warn?
+      return address;
+    }
 
-  if (addr.sin_family != AF_INET) {
-    // TODO: warn
-    return address;
-  }
+    if (addr.sin_family != AF_INET) {
+      // TODO: warn
+      return address;
+    }
 
-  // addrstr is a pointer to static buffer, no need to free
-  char* addrstr = inet_ntoa(addr.sin_addr);
-  if (addrstr)
-    address.host = std::string(addrstr);
-  else {
-    // TODO: warn?
+    // addrstr is a pointer to static buffer, no need to free
+    char* addrstr = inet_ntoa(addr.sin_addr);
+    if (addrstr)
+      address.host = std::string(addrstr);
+    else {
+      // TODO: warn?
+    }
+    address.port = ntohs(addr.sin_port);
   }
-  address.port = ntohs(addr.sin_port);
 
   return address;
 }
@@ -250,7 +252,7 @@ void HttpRequest::close() {
   if (_protocol == WebSockets)
     _pWebApplication->onWSClose(this);
   _pSocket->removeConnection(this);
-  uv_close((uv_handle_t*)&_handle, HttpRequest_on_closed);
+  uv_close(toHandle(&_handle.stream), HttpRequest_on_closed);
 }
 
 void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
@@ -317,7 +319,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
 }
 
 void HttpRequest::handleRequest() {
-  int r = uv_read_start((uv_stream_t*)&_handle, &on_alloc, &HttpRequest_on_request_read);
+  int r = uv_read_start(handle(), &on_alloc, &HttpRequest_on_request_read);
   if (r) {
     uv_err_t err = uv_last_error(_pLoop);
     fatal_error("read_start", uv_strerror(err));
@@ -362,7 +364,7 @@ void HttpResponse::writeResponse() {
   memset(pWriteReq, 0, sizeof(uv_write_t));
   pWriteReq->data = this;
 
-  int r = uv_write(pWriteReq, toStream(_pRequest->handle()), &headerBuf, 1,
+  int r = uv_write(pWriteReq, _pRequest->handle(), &headerBuf, 1,
       &on_response_written);
   if (r) {
     _pRequest->fatal_error("uv_write",
@@ -385,7 +387,7 @@ void HttpResponse::onResponseWritten(int status) {
   }
   else {
     HttpResponseExtendedWrite* pResponseWrite = new HttpResponseExtendedWrite(
-        this, toStream(_pRequest->handle()), _pBody);
+        this, _pRequest->handle(), _pBody);
     pResponseWrite->begin();
   }
 }
@@ -439,7 +441,7 @@ void Socket::destroy() {
     // std::cerr << "Request close on " << *it << std::endl;
     (*it)->close();
   }
-  uv_close((uv_handle_t*)&handle, on_Socket_close);
+  uv_close(toHandle(&handle.stream), on_Socket_close);
 }
 
 void on_Socket_close(uv_handle_t* pHandle) {
@@ -460,7 +462,7 @@ void on_request(uv_stream_t* handle, int status) {
   HttpRequest* req = new HttpRequest(
     handle->loop, pSocket->pWebApplication, pSocket);
 
-  int r = uv_accept(handle, (uv_stream_t*)req->handle());
+  int r = uv_accept(handle, req->handle());
   if (r) {
     uv_err_t err = uv_last_error(handle->loop);
     REprintf("accept: %s\n", uv_strerror(err));
@@ -472,31 +474,63 @@ void on_request(uv_stream_t* handle, int status) {
 
 }
 
-uv_tcp_t* createServer(uv_loop_t* pLoop, const std::string& host, int port,
-  WebApplication* pWebApplication) {
+uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
+  int mask, WebApplication* pWebApplication) {
 
   // Deletes itself when destroy() is called, which occurs in freeServer()
   Socket* pSocket = new Socket();
   // TODO: Handle error
-  uv_tcp_init(pLoop, &pSocket->handle);
-  pSocket->handle.data = pSocket;
+  uv_pipe_init(pLoop, &pSocket->handle.pipe, true);
+  pSocket->handle.isTcp = false;
+  pSocket->handle.stream.data = pSocket;
+  pSocket->pWebApplication = pWebApplication;
+
+  mode_t oldMask = 0;
+  if (mask >= 0)
+    oldMask = umask(mask);
+  int r = uv_pipe_bind(&pSocket->handle.pipe, name.c_str());
+  if (mask >= 0)
+    umask(oldMask);
+
+  if (r) {
+    pSocket->destroy();
+    return NULL;
+  }
+  r = uv_listen((uv_stream_t*)&pSocket->handle.stream, 128, &on_request);
+  if (r) {
+    pSocket->destroy();
+    return NULL;
+  }
+
+  return &pSocket->handle.stream;
+}
+
+uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
+  int port, WebApplication* pWebApplication) {
+
+  // Deletes itself when destroy() is called, which occurs in freeServer()
+  Socket* pSocket = new Socket();
+  // TODO: Handle error
+  uv_tcp_init(pLoop, &pSocket->handle.tcp);
+  pSocket->handle.isTcp = true;
+  pSocket->handle.stream.data = pSocket;
   pSocket->pWebApplication = pWebApplication;
 
   struct sockaddr_in address = uv_ip4_addr(host.c_str(), port);
-  int r = uv_tcp_bind(&pSocket->handle, address);
+  int r = uv_tcp_bind(&pSocket->handle.tcp, address);
   if (r) {
     pSocket->destroy();
     return NULL;
   }
-  r = uv_listen((uv_stream_t*)&pSocket->handle, 128, &on_request);
+  r = uv_listen((uv_stream_t*)&pSocket->handle.stream, 128, &on_request);
   if (r) {
     pSocket->destroy();
     return NULL;
   }
 
-  return &pSocket->handle;
+  return &pSocket->handle.stream;
 }
-void freeServer(uv_tcp_t* pHandle) {
+void freeServer(uv_stream_t* pHandle) {
   uv_loop_t* loop = pHandle->loop;
   Socket* pSocket = (Socket*)pHandle->data;
   pSocket->destroy();

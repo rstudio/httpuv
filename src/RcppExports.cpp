@@ -27,9 +27,9 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// makeServer
-Rcpp::RObject makeServer(const std::string& host, int port, Rcpp::Function onHeaders, Rcpp::Function onBodyData, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
-RcppExport SEXP httpuv_makeServer(SEXP hostSEXP, SEXP portSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
+// makeTcpServer
+Rcpp::RObject makeTcpServer(const std::string& host, int port, Rcpp::Function onHeaders, Rcpp::Function onBodyData, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
+RcppExport SEXP httpuv_makeTcpServer(SEXP hostSEXP, SEXP portSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     std::string host = Rcpp::as<std::string >(hostSEXP);
@@ -40,7 +40,24 @@ BEGIN_RCPP
     Rcpp::Function onWSOpen = Rcpp::as<Rcpp::Function >(onWSOpenSEXP);
     Rcpp::Function onWSMessage = Rcpp::as<Rcpp::Function >(onWSMessageSEXP);
     Rcpp::Function onWSClose = Rcpp::as<Rcpp::Function >(onWSCloseSEXP);
-    Rcpp::RObject __result = makeServer(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose);
+    Rcpp::RObject __result = makeTcpServer(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose);
+    return Rcpp::wrap(__result);
+END_RCPP
+}
+// makePipeServer
+Rcpp::RObject makePipeServer(const std::string& name, int mask, Rcpp::Function onHeaders, Rcpp::Function onBodyData, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
+RcppExport SEXP httpuv_makePipeServer(SEXP nameSEXP, SEXP maskSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    std::string name = Rcpp::as<std::string >(nameSEXP);
+    int mask = Rcpp::as<int >(maskSEXP);
+    Rcpp::Function onHeaders = Rcpp::as<Rcpp::Function >(onHeadersSEXP);
+    Rcpp::Function onBodyData = Rcpp::as<Rcpp::Function >(onBodyDataSEXP);
+    Rcpp::Function onRequest = Rcpp::as<Rcpp::Function >(onRequestSEXP);
+    Rcpp::Function onWSOpen = Rcpp::as<Rcpp::Function >(onWSOpenSEXP);
+    Rcpp::Function onWSMessage = Rcpp::as<Rcpp::Function >(onWSMessageSEXP);
+    Rcpp::Function onWSClose = Rcpp::as<Rcpp::Function >(onWSCloseSEXP);
+    Rcpp::RObject __result = makePipeServer(name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose);
     return Rcpp::wrap(__result);
 END_RCPP
 }
