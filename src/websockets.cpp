@@ -304,11 +304,11 @@ static inline std::string &trim(std::string &s) {
 std::string createHandshakeResponse(std::string key) {
   std::string clear = trim(key) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
   SHA1_CTX ctx;
-  SHA1_Init(&ctx);
-  SHA1_Update(&ctx, (uint8_t*)&clear[0], clear.size());
+  reid_SHA1_Init(&ctx);
+  reid_SHA1_Update(&ctx, (uint8_t*)&clear[0], clear.size());
 
   std::vector<uint8_t> digest(SHA1_DIGEST_SIZE);
-  SHA1_Final(&ctx, &digest[0]);
+  reid_SHA1_Final(&ctx, &digest[0]);
 
   return b64encode(digest);
 }
