@@ -40,9 +40,18 @@ public:
   virtual void onWSClose(WebSocketConnection* conn) = 0;
 };
 
+typedef struct {
+  union {
+    uv_stream_t stream;
+    uv_tcp_t tcp;
+    uv_pipe_t pipe;
+  };
+  bool isTcp;
+} VariantHandle;
+
 class Socket {
 public:
-  uv_tcp_t handle;
+  VariantHandle handle;
   WebApplication* pWebApplication;
   std::vector<HttpRequest*> connections;
 
@@ -69,7 +78,7 @@ class HttpRequest : WebSocketConnection {
 private:
   uv_loop_t* _pLoop;
   WebApplication* _pWebApplication;
-  uv_tcp_t _handle;
+  VariantHandle _handle;
   Socket* _pSocket;
   http_parser _parser;
   Protocol _protocol;
@@ -93,8 +102,9 @@ public:
     : _pLoop(pLoop), _pWebApplication(pWebApplication), _pSocket(pSocket),
       _protocol(HTTP), _bytesRead(0), _ignoreNewData(false) {
 
-    uv_tcp_init(pLoop, &_handle);
-    _handle.data = this;
+    uv_tcp_init(pLoop, &_handle.tcp);
+    _handle.isTcp = true;
+    _handle.stream.data = this;
 
     http_parser_init(&_parser, HTTP_REQUEST);
     _parser.data = this;
@@ -105,7 +115,7 @@ public:
   virtual ~HttpRequest() {
   }
 
-  uv_tcp_t* handle();
+  uv_stream_t* handle();
   Address serverAddress();
 
   void handleRequest();
@@ -183,9 +193,11 @@ DECLARE_CALLBACK_1(HttpRequest, on_closed, void, uv_handle_t*)
 DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, uv_buf_t)
 DECLARE_CALLBACK_2(HttpRequest, on_response_write, void, uv_write_t*, int)
 
-uv_tcp_t* createServer(uv_loop_t* loop, const std::string& host, int port,
+uv_stream_t* createPipeServer(uv_loop_t* loop, const std::string& name,
+  int mask, WebApplication* pWebApplication);
+uv_stream_t* createTcpServer(uv_loop_t* loop, const std::string& host, int port,
   WebApplication* pWebApplication);
-void freeServer(uv_tcp_t* pServer);
+void freeServer(uv_stream_t* pServer);
 bool runNonBlocking(uv_loop_t* loop);
 
 #endif // HTTP_HPP

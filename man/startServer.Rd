@@ -1,8 +1,11 @@
 \name{startServer}
+\alias{startPipeServer}
 \alias{startServer}
 \title{Create an HTTP/WebSocket server}
 \usage{
   startServer(host, port, app)
+
+  startPipeServer(name, mask, app)
 }
 \arguments{
   \item{host}{A string that is a valid IPv4 address that is
@@ -16,6 +19,19 @@
 
   \item{app}{A collection of functions that define your
   application. See Details.}
+
+  \item{name}{A string that indicates the path for the
+  domain socket (on Unix-like systems) or the name of the
+  named pipe (on Windows).}
+
+  \item{mask}{If non-\code{NULL} and non-negative, this
+  numeric value is used to temporarily modify the process's
+  umask while the domain socket is being created. To ensure
+  that only root can access the domain socket, use
+  \code{strtoi("777", 8)}; or to allow owner and group
+  read/write access, use \code{strtoi("117", 8)}. If the
+  value is \code{NULL} then the process's umask is left
+  unchanged. (This parameter has no effect on Windows.)}
 }
 \value{
   A handle for this server that can be passed to
@@ -42,11 +58,22 @@
   request, and return an HTTP response. This method should
   be implemented in accordance with the
   \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
-  specification.} \item{\code{onWSOpen(ws)}}{Called back
-  when a WebSocket connection is established.  The given
-  object can be used to be notified when a message is
-  received from the client, to send messages to the client,
-  etc. See \code{\link{WebSocket}}.} }
+  specification.} \item{\code{onHeaders(req)}}{Optional.
+  Similar to \code{call}, but occurs when headers are
+  received. Return \code{NULL} to continue normal
+  processing of the request, or a Rook response to send
+  that response, stop processing the request, and ask the
+  client to close the connection.  (This can be used to
+  implement upload size limits, for example.)}
+  \item{\code{onWSOpen(ws)}}{Called back when a WebSocket
+  connection is established.  The given object can be used
+  to be notified when a message is received from the
+  client, to send messages to the client, etc. See
+  \code{\link{WebSocket}}.} }
+
+  The \code{startPipeServer} variant can be used instead of
+  \code{startServer} to listen on a Unix domain socket or
+  named pipe rather than a TCP socket (this is not common).
 }
 \seealso{
   \code{\link{runServer}}
