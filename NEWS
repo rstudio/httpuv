@@ -1,0 +1,13 @@
+httpuv 1.0.6
+------------------------------------------------------------------------
+
+* Support listening on pipes (Unix domain sockets have been tested,
+  Windows named pipes have not been tested but may work).
+
+* Fix crash on CentOS 6.4 due to weird interaction with OpenSSL.
+
+
+httpuv 1.0.5
+------------------------------------------------------------------------
+
+* Initial release.
