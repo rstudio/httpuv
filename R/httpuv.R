@@ -171,8 +171,8 @@ AppWrapper <- setRefClass(
       
       rookCall(.app$call, req, .bodyData, seek(.bodyData))
     },
-    onWSOpen = function(handle) {
-      ws <- WebSocket$new(handle)
+    onWSOpen = function(handle, req) {
+      ws <- WebSocket$new(handle, req)
       .wsconns[[as.character(handle)]] <<- ws
       result <- try(.app$onWSOpen(ws))
       
@@ -217,6 +217,16 @@ AppWrapper <- setRefClass(
 #' 
 #' WebSocket objects should never be created directly. They are obtained by
 #' passing an \code{onWSOpen} function to \code{\link{startServer}}.
+#'
+#' \strong{Fields}
+#'
+#'   \describe{
+#'     \item{\code{request}}{
+#'       The Rook request environment that opened the connection. This can be
+#'       used to inspect HTTP headers, for example.
+#'     }
+#'   }
+#'
 #' 
 #' \strong{Methods}
 #' 
@@ -248,11 +258,13 @@ WebSocket <- setRefClass(
   fields = list(
     '.handle' = 'ANY',
     '.messageCallbacks' = 'list',
-    '.closeCallbacks' = 'list'
+    '.closeCallbacks' = 'list',
+    'request' = 'environment'
   ),
   methods = list(
-    initialize = function(handle) {
+    initialize = function(handle, req) {
       .handle <<- handle
+      request <<- req
     },
     onMessage = function(func) {
       .messageCallbacks <<- c(.messageCallbacks, func)

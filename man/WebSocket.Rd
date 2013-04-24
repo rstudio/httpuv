@@ -12,6 +12,12 @@
   are obtained by passing an \code{onWSOpen} function to
   \code{\link{startServer}}.
 
+  \strong{Fields}
+
+  \describe{ \item{\code{request}}{ The Rook request
+  environment that opened the connection. This can be used
+  to inspect HTTP headers, for example.  } }
+
   \strong{Methods}
 
   \describe{ \item{\code{onMessage(func)}}{ Registers a

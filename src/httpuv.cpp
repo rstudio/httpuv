@@ -272,8 +272,10 @@ public:
     return listToResponse(pRequest, response);
   }
 
-  void onWSOpen(WebSocketConnection* pConn) {
-    _onWSOpen(externalize(pConn));
+  void onWSOpen(HttpRequest* pRequest) {
+    Rcpp::Environment env = Rcpp::Function("new.env")();
+    requestToEnv(pRequest, &env);
+    _onWSOpen(externalize(pRequest), env);
   }
 
   void onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {

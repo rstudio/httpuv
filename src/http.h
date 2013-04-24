@@ -34,7 +34,7 @@ public:
   }
   virtual void onBodyData(const char* data, size_t len) = 0;
   virtual HttpResponse* getResponse(HttpRequest* request) = 0;
-  virtual void onWSOpen(WebSocketConnection* conn) = 0;
+  virtual void onWSOpen(HttpRequest* pRequest) = 0;
   virtual void onWSMessage(WebSocketConnection* conn,
                            bool binary, const char* data, size_t len) = 0;
   virtual void onWSClose(WebSocketConnection* conn) = 0;
