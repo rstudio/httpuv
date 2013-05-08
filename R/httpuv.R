@@ -114,9 +114,9 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
     
     if ('file' %in% names(resp$body)) {
       filename <- resp$body[['file']]
-      owned <- resp$body$owned
-      if (is.null(owned))
-        owned <- FALSE
+      owned <- FALSE
+      if ('owned' %in% names(resp$body))
+        owned <- as.logical(resp$body$owned)
 
       resp$body <- NULL
       resp$bodyFile <- filename
