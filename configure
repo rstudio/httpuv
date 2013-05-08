@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# If submodules are not present, init them. This makes it possible to use
+# devtools::install_github. (Thanks to jeroenooms for the idea)
+if [ ! -f src/libuv/README.md ];
+then
+  git submodule update --init
+fi
+
