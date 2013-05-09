@@ -1,7 +1,19 @@
+httpuv 1.0.6.2
+------------------------------------------------------------------------
+
+* Work properly with body=c(file="foo"). Previously this only worked if
+  body was a list, not a character vector.
+
+* R CMD INSTALL will do `git submodule update --init` if necessary.
+
+* When onHeaders() callback returned a body, httpuv was not properly
+  short-circuiting the request.
+
+
 httpuv 1.0.6.1
 ------------------------------------------------------------------------
 
-* Make request available on websocket object
+* Make request available on websocket object.
 
 
 httpuv 1.0.6
