@@ -188,14 +188,16 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
 
       pResp->addHeader("Connection", "close");
 
-      // Do not call uv_read_stop, it mysteriously seems to prevent the response
-      // from being written.
-      // uv_read_stop((uv_stream_t*)handle());
+      uv_read_stop((uv_stream_t*)handle());
 
       _ignoreNewData = true;
     }
     pResp->writeResponse();
-    result = 1;
+    
+    // result = 1 has special meaning to http_parser for this one callback; it
+    // means F_SKIPBODY should be set on the parser. That's not what we want
+    // here; we just want processing to terminate.
+    result = 2;
   }
   else {
     // If the request is Expect: Continue, and the app didn't say otherwise,
