@@ -9,6 +9,9 @@ httpuv 1.0.6.2
 * When onHeaders() callback returned a body, httpuv was not properly
   short-circuiting the request.
 
+* Ignore SIGPIPE permanently. This was still causing crashes under heavy
+  real-world traffic.
+
 
 httpuv 1.0.6.1
 ------------------------------------------------------------------------
