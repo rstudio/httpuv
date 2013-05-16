@@ -284,24 +284,16 @@ void WebSocketConnection::onFrameComplete() {
   _payload.clear();
 }
 
-// trim from start
-static inline std::string &ltrim(std::string &s) {
-  s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-  return s;
-}
-
-// trim from end
-static inline std::string &rtrim(std::string &s) {
-  s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
-  return s;
-}
-
 // trim from both ends
-static inline std::string &trim(std::string &s) {
-  return ltrim(rtrim(s));
+static inline std::string trim(const std::string &s) {
+  size_t start = s.find_first_not_of("\t ");
+  if (start == std::string::npos)
+    return std::string();
+  size_t end = s.find_last_not_of("\t ") + 1;
+  return s.substr(start, end-start);
 }
 
-std::string createHandshakeResponse(std::string key) {
+std::string createHandshakeResponse(const std::string& key) {
   std::string clear = trim(key) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
   SHA1_CTX ctx;
   reid_SHA1_Init(&ctx);
