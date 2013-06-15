@@ -76,6 +76,10 @@ Address HttpRequest::serverAddress() {
   return address;
 }
 
+Rcpp::Environment& HttpRequest::env() {
+  return _env;
+}
+
 std::string HttpRequest::method() const {
   return http_method_str((enum http_method)_parser.method);
 }
@@ -215,7 +219,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
 
 int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) {
   trace("on_body");
-  _pWebApplication->onBodyData(pAt, length);
+  _pWebApplication->onBodyData(this, pAt, length);
   _bytesRead += length;
   return 0;
 }

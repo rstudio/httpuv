@@ -249,33 +249,29 @@ public:
       return NULL;
     }
 
-    Rcpp::Environment env = Rcpp::Function("new.env")();
-    requestToEnv(pRequest, &env);
+    requestToEnv(pRequest, &pRequest->env());
     
-    Rcpp::List response(_onHeaders(env));
+    Rcpp::List response(_onHeaders(pRequest->env()));
     
     return listToResponse(pRequest, response);
   }
 
-  virtual void onBodyData(const char* pData, size_t length) {
+  virtual void onBodyData(HttpRequest* pRequest,
+                          const char* pData, size_t length) {
     Rcpp::RawVector rawVector(length);
     std::copy(pData, pData + length, rawVector.begin());
-    _onBodyData(rawVector);
+    _onBodyData(pRequest->env(), rawVector);
   }
 
   virtual HttpResponse* getResponse(HttpRequest* pRequest) {
-    Rcpp::Environment env = Rcpp::Function("new.env")();
-    requestToEnv(pRequest, &env);
-    
-    Rcpp::List response(_onRequest(env));
+    Rcpp::List response(_onRequest(pRequest->env()));
     
     return listToResponse(pRequest, response);
   }
 
   void onWSOpen(HttpRequest* pRequest) {
-    Rcpp::Environment env = Rcpp::Function("new.env")();
-    requestToEnv(pRequest, &env);
-    _onWSOpen(externalize(pRequest), env);
+    requestToEnv(pRequest, &pRequest->env());
+    _onWSOpen(externalize(pRequest), pRequest->env());
   }
 
   void onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {

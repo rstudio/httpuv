@@ -142,8 +142,7 @@ AppWrapper <- setRefClass(
   'AppWrapper',
   fields = list(
     .app = 'ANY',
-    .wsconns = 'environment',
-    .bodyData = 'ANY'
+    .wsconns = 'environment'
   ),
   methods = list(
     initialize = function(app) {
@@ -151,25 +150,26 @@ AppWrapper <- setRefClass(
         .app <<- list(call=app)
       else
         .app <<- app
-      .bodyData <<- NULL
     },
     onHeaders = function(req) {
-      .resetBody()
-
       if (is.null(.app$onHeaders))
         return(NULL)
 
       rookCall(.app$onHeaders, req)
     },
-    onBodyData = function(bytes) {
-      if (is.null(.bodyData))
-        .bodyData <<- file(open='w+b', encoding='UTF-8')
-      writeBin(bytes, .bodyData)
+    onBodyData = function(req, bytes) {
+      if (is.null(req$.bodyData))
+        req$.bodyData <- file(open='w+b', encoding='UTF-8')
+      writeBin(bytes, req$.bodyData)
     },
     call = function(req) {
-      on.exit(.resetBody())
-      
-      rookCall(.app$call, req, .bodyData, seek(.bodyData))
+      on.exit({
+        if (!is.null(req$.bodyData)) {
+          close(req$.bodyData)
+        }
+        req$.bodyData <- NULL
+      })
+      rookCall(.app$call, req, req$.bodyData, seek(req$.bodyData))
     },
     onWSOpen = function(handle, req) {
       ws <- WebSocket$new(handle, req)
@@ -198,12 +198,6 @@ AppWrapper <- setRefClass(
       rm(list=as.character(handle), pos=.wsconns)
       for (handler in ws$.closeCallbacks) {
         handler()
-      }
-    },
-    .resetBody = function() {
-      if (!is.null(.bodyData)) {
-        close(.bodyData)
-        .bodyData <<- NULL
       }
     }
   )
