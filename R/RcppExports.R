@@ -25,3 +25,7 @@ run <- function(timeoutMillis) {
     .Call('httpuv_run', PACKAGE = 'httpuv', timeoutMillis)
 }
 
+stopLoop <- function() {
+    invisible(.Call('httpuv_stopLoop', PACKAGE = 'httpuv'))
+}
+

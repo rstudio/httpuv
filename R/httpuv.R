@@ -445,8 +445,25 @@ runServer <- function(host, port, app,
   server <- startServer(host, port, app)
   on.exit(stopServer(server))
   
-  while (TRUE) {
+  .globals$stopped <- FALSE
+  while (!.globals$stopped) {
     service(interruptIntervalMs)
     Sys.sleep(0.001)
   }
 }
+
+#' Interrupt httpuv runloop
+#' 
+#' Interrupts the currently running httpuv runloop, meaning
+#' \code{\link{runServer}} or \code{\link{service}} will return control back to
+#' the caller and no further tasks will be processed until those methods are
+#' called again. Note that this may cause in-process uploads or downloads to be
+#' interrupted in mid-request.
+#' 
+#' @export
+interrupt <- function() {
+  stopLoop()
+  .globals$stopped <- TRUE
+}
+
+.globals <- new.env()

@@ -1,6 +1,9 @@
 \name{WebSocket}
 \alias{WebSocket}
 \title{WebSocket object}
+\usage{
+  WebSocket(...)
+}
 \description{
   An object that represents a single WebSocket connection.
   The object can be used to send messages and close the

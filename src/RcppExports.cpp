@@ -81,3 +81,12 @@ BEGIN_RCPP
     return Rcpp::wrap(__result);
 END_RCPP
 }
+// stopLoop
+void stopLoop();
+RcppExport SEXP httpuv_stopLoop() {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    stopLoop();
+    return R_NilValue;
+END_RCPP
+}

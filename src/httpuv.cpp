@@ -401,3 +401,8 @@ bool run(uint32_t timeoutMillis) {
 #endif
   return uv_run(uv_default_loop(), UV_RUN_ONCE);
 }
+
+// [[Rcpp::export]]
+void stopLoop() {
+  uv_stop(uv_default_loop());
+}
