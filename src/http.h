@@ -6,10 +6,12 @@
 #include <iostream>
 #include <vector>
 
+#include <Rcpp.h>
+#undef Realloc
+// Also need to undefine the Free macro
+#undef Free
 #include <uv.h>
 #include <http_parser.h>
-
-#include <Rcpp.h>
 
 #include "websockets.h"
 #include "uvutil.h"
