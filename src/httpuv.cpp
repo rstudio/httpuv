@@ -122,6 +122,12 @@ void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
   portstr << addr.port;
   env["SERVER_PORT"] = portstr.str();
 
+  Address raddr = pRequest->clientAddress();
+  env["REMOTE_ADDR"] = raddr.host;
+  std::ostringstream rportstr;
+  rportstr << raddr.port;
+  env["REMOTE_PORT"] = rportstr.str();
+
   std::map<std::string, std::string, compare_ci> headers = pRequest->headers();
   for (std::map<std::string, std::string>::iterator it = headers.begin();
     it != headers.end();

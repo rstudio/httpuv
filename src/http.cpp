@@ -76,6 +76,36 @@ Address HttpRequest::serverAddress() {
   return address;
 }
 
+Address HttpRequest::clientAddress() {
+  Address address;
+
+  if (_handle.isTcp) {
+    struct sockaddr_in addr = {0};
+    int len = sizeof(sockaddr_in);
+    int r = uv_tcp_getpeername(&_handle.tcp, (struct sockaddr*)&addr, &len);
+    if (r) {
+      // TODO: warn?
+      return address;
+    }
+
+    if (addr.sin_family != AF_INET) {
+      // TODO: warn
+      return address;
+    }
+
+    // addrstr is a pointer to static buffer, no need to free
+    char* addrstr = inet_ntoa(addr.sin_addr);
+    if (addrstr)
+      address.host = std::string(addrstr);
+    else {
+      // TODO: warn?
+    }
+    address.port = ntohs(addr.sin_port);
+  }
+
+  return address;
+}
+
 Rcpp::Environment& HttpRequest::env() {
   return _env;
 }

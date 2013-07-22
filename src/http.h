@@ -124,6 +124,7 @@ public:
   }
 
   uv_stream_t* handle();
+  Address clientAddress();
   Address serverAddress();
   Rcpp::Environment& env();
 
