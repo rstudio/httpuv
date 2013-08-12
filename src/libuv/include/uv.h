@@ -47,7 +47,7 @@ extern "C" {
 
 
 #define UV_VERSION_MAJOR 0
-#define UV_VERSION_MINOR 9
+#define UV_VERSION_MINOR 10
 
 
 #if defined(_MSC_VER) && _MSC_VER < 1600
@@ -229,6 +229,20 @@ typedef enum {
 
 
 /*
+ * Returns the libuv version packed into a single integer. 8 bits are used for
+ * each component, with the patch number stored in the 8 least significant
+ * bits. E.g. for libuv 1.2.3 this would return 0x010203.
+ */
+UV_EXTERN unsigned int uv_version(void);
+
+/*
+ * Returns the libuv version number as a string. For non-release versions
+ * "-pre" is appended, so the version number could be "1.2.3-pre".
+ */
+UV_EXTERN const char* uv_version_string(void);
+
+
+/*
  * This function must be called before any other functions in libuv.
  *
  * All functions besides uv_run() are non-blocking.
@@ -273,15 +287,36 @@ UV_EXTERN void uv_stop(uv_loop_t*);
 UV_EXTERN void uv_ref(uv_handle_t*);
 UV_EXTERN void uv_unref(uv_handle_t*);
 
+/*
+ * Update the event loop's concept of "now". Libuv caches the current time
+ * at the start of the event loop tick in order to reduce the number of
+ * time-related system calls.
+ *
+ * You won't normally need to call this function unless you have callbacks
+ * that block the event loop for longer periods of time, where "longer" is
+ * somewhat subjective but probably on the order of a millisecond or more.
+ */
 UV_EXTERN void uv_update_time(uv_loop_t*);
+
+/*
+ * Return the current timestamp in milliseconds. The timestamp is cached at
+ * the start of the event loop tick, see |uv_update_time()| for details and
+ * rationale.
+ *
+ * The timestamp increases monotonically from some arbitrary point in time.
+ * Don't make assumptions about the starting point, you will only get
+ * disappointed.
+ *
+ * Use uv_hrtime() if you need sub-milliseond granularity.
+ */
 UV_EXTERN uint64_t uv_now(uv_loop_t*);
 
 /*
  * Get backend file descriptor. Only kqueue, epoll and event ports are
  * supported.
  *
- * This can be used in conjunction with uv_run_once() to poll in one thread and
- * run the event loop's event callbacks in another.
+ * This can be used in conjunction with `uv_run(loop, UV_RUN_NOWAIT)` to
+ * poll in one thread and run the event loop's event callbacks in another.
  *
  * Useful for embedding libuv's event loop in another event loop.
  * See test/test-embed.c for an example.
@@ -660,12 +695,12 @@ UV_EXTERN int uv_tcp_keepalive(uv_tcp_t* handle,
                                unsigned int delay);
 
 /*
- * This setting applies to Windows only.
  * Enable/disable simultaneous asynchronous accept requests that are
  * queued by the operating system when listening for new tcp connections.
  * This setting is used to tune a tcp server for the desired performance.
  * Having simultaneous accepts can significantly improve the rate of
- * accepting connections (which is why it is enabled by default).
+ * accepting connections (which is why it is enabled by default) but
+ * may lead to uneven load distribution in multi-process setups.
  */
 UV_EXTERN int uv_tcp_simultaneous_accepts(uv_tcp_t* handle, int enable);
 
@@ -1607,10 +1642,10 @@ UV_EXTERN int uv_fs_fchmod(uv_loop_t* loop, uv_fs_t* req, uv_file file,
     int mode, uv_fs_cb cb);
 
 UV_EXTERN int uv_fs_chown(uv_loop_t* loop, uv_fs_t* req, const char* path,
-    int uid, int gid, uv_fs_cb cb);
+    uv_uid_t uid, uv_gid_t gid, uv_fs_cb cb);
 
 UV_EXTERN int uv_fs_fchown(uv_loop_t* loop, uv_fs_t* req, uv_file file,
-    int uid, int gid, uv_fs_cb cb);
+    uv_uid_t uid, uv_gid_t gid, uv_fs_cb cb);
 
 
 enum uv_fs_event {
@@ -1805,8 +1840,6 @@ UV_EXTERN extern uint64_t uv_hrtime(void);
  * Note that this function works on a best-effort basis: there is no guarantee
  * that libuv can discover all file descriptors that were inherited. In general
  * it does a better job on Windows than it does on unix.
- *
- * TODO(bb): insert snarky remark to annoy bnoordhuis and the folks at joyent.
  */
 UV_EXTERN void uv_disable_stdio_inheritance(void);
 

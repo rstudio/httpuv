@@ -36,6 +36,7 @@
         },
         'xcode_settings': {
           'GCC_OPTIMIZATION_LEVEL': '0',
+          'OTHER_CFLAGS': [ '-Wno-strict-aliasing' ],
         },
         'conditions': [
           ['OS != "win"', {
@@ -132,6 +133,11 @@
       [ 'OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris"', {
         'cflags': [ '-Wall' ],
         'cflags_cc': [ '-fno-rtti', '-fno-exceptions' ],
+        'target_conditions': [
+          ['_type=="static_library"', {
+            'standalone_static_library': 1, # disable thin archive which needs binutils >= 2.19
+          }],
+        ],
         'conditions': [
           [ 'host_arch != target_arch and target_arch=="ia32"', {
             'cflags': [ '-m32' ],
@@ -192,6 +198,11 @@
           }],
         ],
       }],
+     ['OS=="solaris"', {
+       'cflags': [ '-fno-omit-frame-pointer' ],
+       # pull in V8's postmortem metadata
+       'ldflags': [ '-Wl,-z,allextract' ]
+     }],
     ],
   },
 }

@@ -95,9 +95,13 @@ TEST_DECLARE   (shutdown_eof)
 TEST_DECLARE   (callback_stack)
 TEST_DECLARE   (error_message)
 TEST_DECLARE   (timer)
+TEST_DECLARE   (timer_init)
 TEST_DECLARE   (timer_again)
 TEST_DECLARE   (timer_start_twice)
 TEST_DECLARE   (timer_order)
+TEST_DECLARE   (timer_huge_timeout)
+TEST_DECLARE   (timer_huge_repeat)
+TEST_DECLARE   (timer_from_check)
 TEST_DECLARE   (idle_starvation)
 TEST_DECLARE   (loop_handles)
 TEST_DECLARE   (get_loadavg)
@@ -216,6 +220,9 @@ TEST_DECLARE   (spawn_setuid_setgid)
 TEST_DECLARE   (we_get_signal)
 TEST_DECLARE   (we_get_signals)
 TEST_DECLARE   (signal_multiple_loops)
+#endif
+#ifdef __APPLE__
+TEST_DECLARE   (osx_select)
 #endif
 HELPER_DECLARE (tcp4_echo_server)
 HELPER_DECLARE (tcp6_echo_server)
@@ -336,9 +343,13 @@ TASK_LIST_START
   TEST_ENTRY  (error_message)
 
   TEST_ENTRY  (timer)
+  TEST_ENTRY  (timer_init)
   TEST_ENTRY  (timer_again)
   TEST_ENTRY  (timer_start_twice)
   TEST_ENTRY  (timer_order)
+  TEST_ENTRY  (timer_huge_timeout)
+  TEST_ENTRY  (timer_huge_repeat)
+  TEST_ENTRY  (timer_from_check)
 
   TEST_ENTRY  (idle_starvation)
 
@@ -432,6 +443,10 @@ TASK_LIST_START
   TEST_ENTRY  (we_get_signal)
   TEST_ENTRY  (we_get_signals)
   TEST_ENTRY  (signal_multiple_loops)
+#endif
+
+#ifdef __APPLE__
+  TEST_ENTRY (osx_select)
 #endif
 
   TEST_ENTRY  (fs_file_noent)

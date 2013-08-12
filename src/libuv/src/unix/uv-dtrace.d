@@ -19,35 +19,7 @@
  * IN THE SOFTWARE.
  */
 
-#include "uv.h"
-#include "task.h"
-#include <string.h>
-
-
-static void set_title(const char* title) {
-  char buffer[512];
-  uv_err_t err;
-
-  err = uv_get_process_title(buffer, sizeof(buffer));
-  ASSERT(UV_OK == err.code);
-
-  err = uv_set_process_title(title);
-  ASSERT(UV_OK == err.code);
-
-  err = uv_get_process_title(buffer, sizeof(buffer));
-  ASSERT(UV_OK == err.code);
-
-  ASSERT(strcmp(buffer, title) == 0);
-}
-
-
-TEST_IMPL(process_title) {
-#if defined(__sun)
-  RETURN_SKIP("uv_(get|set)_process_title is not implemented.");
-#else
-  /* Check for format string vulnerabilities. */
-  set_title("%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s");
-  set_title("new title");
-  return 0;
-#endif
-}
+provider uv {
+  probe tick__start(void* loop, int mode);
+  probe tick__stop(void* loop, int mode);
+};

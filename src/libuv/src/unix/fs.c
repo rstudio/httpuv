@@ -436,11 +436,14 @@ static ssize_t uv__fs_sendfile(uv_fs_t* req) {
      * non-blocking mode and not all data could be written. If a non-zero
      * number of bytes have been sent, we don't consider it an error.
      */
-    len = 0;
 
 #if defined(__FreeBSD__)
+    len = 0;
     r = sendfile(in_fd, out_fd, req->off, req->len, NULL, &len, 0);
 #else
+    /* The darwin sendfile takes len as an input for the length to send,
+     * so make sure to initialize it with the caller's value. */
+    len = req->len;
     r = sendfile(in_fd, out_fd, req->off, &len, NULL, 0);
 #endif
 
@@ -595,8 +598,8 @@ int uv_fs_chmod(uv_loop_t* loop,
 int uv_fs_chown(uv_loop_t* loop,
                 uv_fs_t* req,
                 const char* path,
-                int uid,
-                int gid,
+                uv_uid_t uid,
+                uv_gid_t gid,
                 uv_fs_cb cb) {
   INIT(CHOWN);
   PATH;
@@ -628,8 +631,8 @@ int uv_fs_fchmod(uv_loop_t* loop,
 int uv_fs_fchown(uv_loop_t* loop,
                  uv_fs_t* req,
                  uv_file file,
-                 int uid,
-                 int gid,
+                 uv_uid_t uid,
+                 uv_gid_t gid,
                  uv_fs_cb cb) {
   INIT(FCHOWN);
   req->file = file;

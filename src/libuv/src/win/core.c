@@ -55,7 +55,7 @@ static void uv_init(void) {
 
   /* Tell the CRT to not exit the application when an invalid parameter is */
   /* passed. The main issue is that invalid FDs will trigger this behavior. */
-#ifdef _WRITE_ABORT_MSG
+#if !defined(__MINGW32__) || __MSVCRT_VERSION__ >= 0x800
   _set_invalid_parameter_handler(uv__crt_invalid_parameter_handler);
 #endif
 
@@ -185,7 +185,6 @@ int uv_backend_timeout(const uv_loop_t* loop) {
 
 
 static void uv_poll(uv_loop_t* loop, int block) {
-  BOOL success;
   DWORD bytes, timeout;
   ULONG_PTR key;
   OVERLAPPED* overlapped;
@@ -197,18 +196,16 @@ static void uv_poll(uv_loop_t* loop, int block) {
     timeout = 0;
   }
 
-  success = GetQueuedCompletionStatus(loop->iocp,
-                                      &bytes,
-                                      &key,
-                                      &overlapped,
-                                      timeout);
+  GetQueuedCompletionStatus(loop->iocp,
+                            &bytes,
+                            &key,
+                            &overlapped,
+                            timeout);
 
   if (overlapped) {
     /* Package was dequeued */
     req = uv_overlapped_to_req(overlapped);
-
     uv_insert_pending_req(loop, req);
-
   } else if (GetLastError() != WAIT_TIMEOUT) {
     /* Serious error */
     uv_fatal_error(GetLastError(), "GetQueuedCompletionStatus");
@@ -230,14 +227,13 @@ static void uv_poll_ex(uv_loop_t* loop, int block) {
     timeout = 0;
   }
 
-  assert(pGetQueuedCompletionStatusEx);
-
   success = pGetQueuedCompletionStatusEx(loop->iocp,
                                          overlappeds,
                                          ARRAY_SIZE(overlappeds),
                                          &count,
                                          timeout,
                                          FALSE);
+
   if (success) {
     for (i = 0; i < count; i++) {
       /* Package was dequeued */

@@ -1,4 +1,13 @@
 {
+  'variables': {
+    'uv_use_dtrace%': 'false',
+    # uv_parent_path is the relative path to libuv in the parent project
+    # this is only relevant when dtrace is enabled and libuv is a child project
+    # as it's necessary to correctly locate the object files for post
+    # processing.
+    'uv_parent_path': '',
+  },
+
   'target_defaults': {
     'conditions': [
       ['OS != "win"', {
@@ -56,6 +65,7 @@
         'src/inet.c',
         'src/uv-common.c',
         'src/uv-common.h',
+        'src/version.c'
       ],
       'conditions': [
         [ 'OS=="win"', {
@@ -114,7 +124,6 @@
             '-pedantic',
             '-Wall',
             '-Wextra',
-            '-Wstrict-aliasing',
             '-Wno-unused-parameter',
           ],
           'sources': [
@@ -155,8 +164,15 @@
             ],
           },
           'conditions': [
-            ['"<(library)" == "shared_library"', {
+            ['library=="shared_library"', {
               'cflags': [ '-fPIC' ],
+            }],
+            ['library=="shared_library" and OS!="mac"', {
+              'link_settings': {
+                # Must correspond with UV_VERSION_MAJOR and UV_VERSION_MINOR
+                # in src/version.c
+                'libraries': [ '-Wl,-soname,libuv.so.0.10' ],
+              },
             }],
           ],
         }],
@@ -167,7 +183,7 @@
           'sources': [
             'src/unix/darwin.c',
             'src/unix/fsevents.c',
-            'src/unix/darwin-proctitle.m',
+            'src/unix/darwin-proctitle.c',
           ],
           'link_settings': {
             'libraries': [
@@ -179,6 +195,11 @@
           'defines': [
             '_DARWIN_USE_64_BIT_INODE=1',
           ]
+        }],
+        [ 'OS!="mac"', {
+          # Enable on all platforms except OS X. The antique gcc/clang that
+          # ships with Xcode emits waaaay too many false positives.
+          'cflags': [ '-Wstrict-aliasing' ],
         }],
         [ 'OS=="linux"', {
           'sources': [
@@ -221,21 +242,16 @@
         }],
         [ 'OS=="freebsd" or OS=="dragonflybsd"', {
           'sources': [ 'src/unix/freebsd.c' ],
-          'link_settings': {
-            'libraries': [
-              '-lkvm',
-            ],
-          },
         }],
         [ 'OS=="openbsd"', {
           'sources': [ 'src/unix/openbsd.c' ],
         }],
         [ 'OS=="netbsd"', {
           'sources': [ 'src/unix/netbsd.c' ],
+        }],
+        [ 'OS in "freebsd dragonflybsd openbsd netbsd".split()', {
           'link_settings': {
-            'libraries': [
-              '-lkvm',
-            ],
+            'libraries': [ '-lkvm' ],
           },
         }],
         [ 'OS in "mac freebsd dragonflybsd openbsd netbsd".split()', {
@@ -243,7 +259,17 @@
         }],
         ['library=="shared_library"', {
           'defines': [ 'BUILDING_UV_SHARED=1' ]
-        }]
+        }],
+        ['uv_use_dtrace=="true"', {
+          'defines': [ 'HAVE_DTRACE=1' ],
+          'dependencies': [ 'uv_dtrace_header' ],
+          'include_dirs': [ '<(SHARED_INTERMEDIATE_DIR)' ],
+          'conditions': [
+            ['OS != "mac"', {
+              'sources': ['src/unix/dtrace.c' ],
+            }],
+          ],
+        }],
       ]
     },
 
@@ -285,6 +311,7 @@
         'test/test-loop-stop.c',
         'test/test-walk-handles.c',
         'test/test-multiple-listen.c',
+        'test/test-osx-select.c',
         'test/test-pass-always.c',
         'test/test-ping-pong.c',
         'test/test-pipe-bind-error.c',
@@ -326,6 +353,7 @@
         'test/test-barrier.c',
         'test/test-condvar.c',
         'test/test-timer-again.c',
+        'test/test-timer-from-check.c',
         'test/test-timer.c',
         'test/test-tty.c',
         'test/test-udp-dgram-too-big.c',
@@ -421,8 +449,48 @@
           'SubSystem': 1, # /subsystem:console
         },
       },
-    }
+    },
+
+    {
+      'target_name': 'uv_dtrace_header',
+      'type': 'none',
+      'conditions': [
+        [ 'uv_use_dtrace=="true"', {
+          'actions': [
+            {
+              'action_name': 'uv_dtrace_header',
+              'inputs': [ 'src/unix/uv-dtrace.d' ],
+              'outputs': [ '<(SHARED_INTERMEDIATE_DIR)/uv-dtrace.h' ],
+              'action': [ 'dtrace', '-h', '-xnolibs', '-s', '<@(_inputs)',
+                '-o', '<@(_outputs)' ],
+            },
+          ],
+        }],
+      ],
+    },
+
+    {
+      'target_name': 'uv_dtrace_provider',
+      'type': 'none',
+      'conditions': [
+        [ 'uv_use_dtrace=="true" and OS!="mac"', {
+          'actions': [
+            {
+              'action_name': 'uv_dtrace_o',
+              'inputs': [
+                'src/unix/uv-dtrace.d',
+                '<(PRODUCT_DIR)/obj.target/libuv/<(uv_parent_path)/src/unix/core.o',
+              ],
+              'outputs': [
+                '<(PRODUCT_DIR)/obj.target/libuv/<(uv_parent_path)/src/unix/dtrace.o',
+              ],
+              'action': [ 'dtrace', '-G', '-xnolibs', '-s', '<@(_inputs)',
+                '-o', '<@(_outputs)' ]
+            }
+          ]
+        } ]
+      ]
+    },
+
   ]
 }
-
-

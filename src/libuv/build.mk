@@ -18,17 +18,21 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-OS ?= $(shell sh -c 'uname -s | tr "[A-Z]" "[a-z]"')
+ifdef PLATFORM
+override PLATFORM := $(shell echo $(PLATFORM) | tr "[A-Z]" "[a-z]")
+else
+PLATFORM = $(shell sh -c 'uname -s | tr "[A-Z]" "[a-z]"')
+endif
 
 CPPFLAGS += -I$(SRCDIR)/include -I$(SRCDIR)/include/uv-private
 
-ifeq (darwin,$(OS))
+ifeq (darwin,$(PLATFORM))
 SOEXT = dylib
 else
 SOEXT = so
 endif
 
-ifneq (,$(findstring mingw,$(OS)))
+ifneq (,$(findstring mingw,$(PLATFORM)))
 include $(SRCDIR)/config-mingw.mk
 else
 include $(SRCDIR)/config-unix.mk
@@ -88,6 +92,7 @@ TESTS= \
 	test/test-loop-stop.o \
 	test/test-multiple-listen.o \
 	test/test-mutexes.o \
+	test/test-osx-select.o \
 	test/test-pass-always.o \
 	test/test-ping-pong.o \
 	test/test-pipe-bind-error.o \
@@ -125,6 +130,7 @@ TESTS= \
 	test/test-threadpool.o \
 	test/test-threadpool-cancel.o \
 	test/test-timer-again.o \
+	test/test-timer-from-check.o \
 	test/test-timer.o \
 	test/test-tty.o \
 	test/test-udp-dgram-too-big.o \
@@ -137,19 +143,15 @@ TESTS= \
 	test/test-util.o \
 	test/test-walk-handles.o \
 
-all: libuv.a
+.PHONY: all bench clean clean-platform distclean test
 
-run-tests$(E): test/run-tests.o test/runner.o $(RUNNER_SRC) $(TESTS) libuv.$(SOEXT)
+run-tests$(E): test/run-tests.o test/runner.o $(RUNNER_SRC) $(TESTS) libuv.a
 	$(CC) $(CPPFLAGS) $(RUNNER_CFLAGS) -o $@ $^ $(RUNNER_LIBS) $(RUNNER_LDFLAGS)
 
-run-benchmarks$(E): test/run-benchmarks.o test/runner.o $(RUNNER_SRC) $(BENCHMARKS) libuv.$(SOEXT)
+run-benchmarks$(E): test/run-benchmarks.o test/runner.o $(RUNNER_SRC) $(BENCHMARKS) libuv.a
 	$(CC) $(CPPFLAGS) $(RUNNER_CFLAGS) -o $@ $^ $(RUNNER_LIBS) $(RUNNER_LDFLAGS)
 
 test/echo.o: test/echo.c test/echo.h
-
-
-.PHONY: clean clean-platform distclean test bench
-
 
 test: run-tests$(E)
 	$(CURDIR)/$<
