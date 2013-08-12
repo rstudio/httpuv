@@ -513,6 +513,10 @@ void on_request(uv_stream_t* handle, int status) {
 uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
   int mask, WebApplication* pWebApplication) {
 
+  // We own pWebApplication. It will be destroyed by the socket but if in
+  // the future we have failure cases that stop execution before we get
+  // that far, we MUST delete pWebApplication ourselves.
+
   // Deletes itself when destroy() is called, which occurs in freeServer()
   Socket* pSocket = new Socket();
   // TODO: Handle error
@@ -543,6 +547,10 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
 
 uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   int port, WebApplication* pWebApplication) {
+
+  // We own pWebApplication. It will be destroyed by the socket but if in
+  // the future we have failure cases that stop execution before we get
+  // that far, we MUST delete pWebApplication ourselves.
 
   // Deletes itself when destroy() is called, which occurs in freeServer()
   Socket* pSocket = new Socket();

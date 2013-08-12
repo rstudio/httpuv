@@ -323,7 +323,8 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
                             Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
-  // Deleted when owning pHandler is deleted
+  // Deleted when owning pServer is deleted. If pServer creation fails,
+  // it's still createTcpServer's responsibility to delete pHandler.
   RWebApplication* pHandler = 
     new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
                         onWSMessage, onWSClose);
@@ -331,7 +332,6 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
     uv_default_loop(), host.c_str(), port, (WebApplication*)pHandler);
 
   if (!pServer) {
-    delete pHandler;
     return R_NilValue;
   }
 
@@ -349,7 +349,8 @@ Rcpp::RObject makePipeServer(const std::string& name,
                              Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
-  // Deleted when owning pHandler is deleted
+  // Deleted when owning pServer is deleted. If pServer creation fails,
+  // it's still createTcpServer's responsibility to delete pHandler.
   RWebApplication* pHandler = 
     new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
                         onWSMessage, onWSClose);
@@ -357,7 +358,6 @@ Rcpp::RObject makePipeServer(const std::string& name,
     uv_default_loop(), name.c_str(), mask, (WebApplication*)pHandler);
 
   if (!pServer) {
-    delete pHandler;
     return R_NilValue;
   }
 
