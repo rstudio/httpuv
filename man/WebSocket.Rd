@@ -4,6 +4,9 @@
 \usage{
   WebSocket(...)
 }
+\arguments{
+  \item{...}{For internal use only.}
+}
 \description{
   An object that represents a single WebSocket connection.
   The object can be used to send messages and close the
@@ -14,15 +17,14 @@
   WebSocket objects should never be created directly. They
   are obtained by passing an \code{onWSOpen} function to
   \code{\link{startServer}}.
-
-  \strong{Fields}
-
+}
+\section{Fields}{
   \describe{ \item{\code{request}}{ The Rook request
   environment that opened the connection. This can be used
   to inspect HTTP headers, for example.  } }
+}
 
-  \strong{Methods}
-
+\section{Methods}{
   \describe{ \item{\code{onMessage(func)}}{ Registers a
   callback function that will be invoked whenever a message
   is received on this connection. The callback function

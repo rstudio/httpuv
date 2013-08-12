@@ -1,3 +1,26 @@
+httpuv 1.1.0
+------------------------------------------------------------------------
+
+* Fix issue #8: Bug in concurrent uploads. 
+
+* Add interrupt() function for stopping the runloop.
+
+* Add REMOTE_ADDR and REMOTE_PORT to request environment.
+
+* Switch from git submodules to git subtree; much easier installation of
+  development builds.
+
+* Upgrade to libuv v0.10.13.
+
+* Fix issue #13: Segfault on successful retry of server creation.
+
+
+httpuv 1.0.6.3
+------------------------------------------------------------------------
+
+* Greatly improved stability under heavy load by ignoring SIGPIPE.
+
+
 httpuv 1.0.6.2
 ------------------------------------------------------------------------
 

@@ -211,8 +211,8 @@ AppWrapper <- setRefClass(
 #' 
 #' WebSocket objects should never be created directly. They are obtained by
 #' passing an \code{onWSOpen} function to \code{\link{startServer}}.
-#'
-#' \strong{Fields}
+#' 
+#' @section Fields:
 #'
 #'   \describe{
 #'     \item{\code{request}}{
@@ -222,7 +222,7 @@ AppWrapper <- setRefClass(
 #'   }
 #'
 #' 
-#' \strong{Methods}
+#' @section Methods:
 #' 
 #'   \describe{
 #'     \item{\code{onMessage(func)}}{
@@ -245,6 +245,8 @@ AppWrapper <- setRefClass(
 #'       Closes the websocket connection.
 #'     }
 #'   }
+#'
+#' @param ... For internal use only.
 #' 
 #' @export
 WebSocket <- setRefClass(
