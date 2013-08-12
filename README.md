@@ -9,16 +9,15 @@ by Joyent, Inc.
 
 ## Installing
 
-The [Rcpp](http://cran.r-project.org/web/packages/Rcpp/index.html) package is required.
+The easiest way to install is with `devtools::install_github`:
 
-Windows users also need to make sure the correct version of [RTools](http://cran.r-project.org/bin/windows/Rtools/) is installed and in the system path. 
+```R
+# install.packages("devtools")
+devtools::install_github("httpuv", "shiny")
+```
 
-```
-git clone https://github.com/rstudio/httpuv
-cd httpuv
-git submodule update --init
-R CMD INSTALL .
-```
+Since httpuv contains C code, you'll need to make sure you're set up to install packages. 
+Follow the instructions at http://www.rstudio.com/ide/docs/packages/prerequisites
 
 <hr/>
 
