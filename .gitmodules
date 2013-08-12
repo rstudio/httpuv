@@ -1,6 +1,0 @@
-[submodule "src/libuv"]
-	path = src/libuv
-	url = https://github.com/rstudio/libuv
-[submodule "src/http-parser"]
-	path = src/http-parser
-	url = https://github.com/joyent/http-parser
