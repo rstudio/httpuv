@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# If submodules are not present, init them.
-if [ ! -f src/libuv/README.md ];
-then
-  git submodule update --init
-fi
-
