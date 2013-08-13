@@ -17,6 +17,7 @@ $(SHLIB): libuv.a http-parser.o sha1.o base64.o
 libuv.a:
 	$(MAKE) --directory=libuv \
 		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" \
+    HAVE_DTRACE=0 \
 		libuv.a
 
 http-parser.o:
@@ -28,4 +29,4 @@ sha1.o:
 	(cd sha1 && $(CC) $(CFLAGS) $(CPICFLAGS) -c sha1.c -o sha1.o)
 
 base64.o:
-	(cd base64 && $(CXX) $(CFLAGS) $(CPICFLAGS) -c base64.cpp -o base64.o)
+	(cd base64 && $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c base64.cpp -o base64.o)
