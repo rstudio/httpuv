@@ -303,7 +303,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
         ssize_t pDataLen = nread - parsed;
 
         if (_headers.find("upgrade") != _headers.end() &&
-            _headers["upgrade"] == std::string("websocket") &&
+            strcasecmp(_headers["upgrade"].c_str(), "websocket") == 0 &&
             _headers.find("sec-websocket-key") != _headers.end()) {
 
           // Freed in on_response_written
