@@ -63,14 +63,14 @@ public:
 };
 
 class WebSocketParser {
-  WebSocketParserCallbacks* _callbacks;
+  WebSocketParserCallbacks* _pCallbacks;
   WSParseState _state;
   std::vector<char> _header;
   uint64_t _bytesLeft;
 
 public:
   WebSocketParser(WebSocketParserCallbacks* callbacks)
-      : _callbacks(callbacks), _state(InHeader) {
+      : _pCallbacks(callbacks), _state(InHeader) {
   }
   virtual ~WebSocketParser() {
   }

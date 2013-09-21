@@ -142,7 +142,7 @@ void WebSocketParser::read(const char* data, size_t len) {
         WSFrameHeader frame(&_header[0], _header.size());
 
         if (frame.isHeaderComplete()) {
-          _callbacks->onHeaderComplete(frame);
+          _pCallbacks->onHeaderComplete(frame);
 
           size_t payloadOffset = frame.headerLength() - startingSize;
           _bytesLeft = frame.payloadLength();
@@ -163,13 +163,13 @@ void WebSocketParser::read(const char* data, size_t len) {
       case InPayload: {
         size_t bytesToConsume = min((uint64_t)len, _bytesLeft);
         _bytesLeft -= bytesToConsume;
-        _callbacks->onPayload(data, bytesToConsume);
+        _pCallbacks->onPayload(data, bytesToConsume);
 
         data += bytesToConsume;
         len -= bytesToConsume;
 
         if (_bytesLeft == 0) {
-          _callbacks->onFrameComplete();
+          _pCallbacks->onFrameComplete();
           
           _state = InHeader;
         }
