@@ -16,12 +16,6 @@
 #include "websockets.h"
 #include "uvutil.h"
 
-struct compare_ci {
-  bool operator()(const std::string& a, const std::string& b) const {
-    return strcasecmp(a.c_str(), b.c_str()) < 0;
-  }
-};
-
 class HttpRequest;
 class HttpResponse;
 
@@ -88,7 +82,7 @@ private:
   http_parser _parser;
   Protocol _protocol;
   std::string _url;
-  std::map<std::string, std::string, compare_ci> _headers;
+  RequestHeaders _headers;
   std::string _lastHeaderField;
   unsigned long _bytesRead;
   Rcpp::Environment _env;
@@ -132,7 +126,7 @@ public:
 
   std::string method() const;
   std::string url() const;
-  std::map<std::string, std::string, compare_ci> headers() const;
+  RequestHeaders headers() const;
 
   void sendWSFrame(const char* pHeader, size_t headerSize,
                    const char* pData, size_t dataSize);
@@ -165,7 +159,7 @@ struct HttpResponse {
   HttpRequest* _pRequest;
   int _statusCode;
   std::string _status;
-  std::vector<std::pair<std::string, std::string> > _headers;
+  ResponseHeaders _headers;
   std::vector<char> _responseHeader;
   DataSource* _pBody;
 

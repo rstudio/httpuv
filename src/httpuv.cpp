@@ -128,8 +128,8 @@ void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
   rportstr << raddr.port;
   env["REMOTE_PORT"] = rportstr.str();
 
-  std::map<std::string, std::string, compare_ci> headers = pRequest->headers();
-  for (std::map<std::string, std::string>::iterator it = headers.begin();
+  RequestHeaders headers = pRequest->headers();
+  for (RequestHeaders::iterator it = headers.begin();
     it != headers.end();
     it++) {
     env["HTTP_" + normalizeHeaderName(it->first)] = it->second;

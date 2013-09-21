@@ -118,7 +118,7 @@ std::string HttpRequest::url() const {
   return _url;
 }
 
-std::map<std::string, std::string, compare_ci> HttpRequest::headers() const {
+RequestHeaders HttpRequest::headers() const {
   return _headers;
 }
 
@@ -384,7 +384,7 @@ void HttpResponse::writeResponse() {
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
   response << "HTTP/1.1 " << _statusCode << " " << _status << "\r\n";
-  for (std::vector<std::pair<std::string, std::string> >::iterator it = _headers.begin();
+  for (ResponseHeaders::iterator it = _headers.begin();
      it != _headers.end();
      it++) {
     response << it->first << ": " << it->second << "\r\n";
