@@ -277,18 +277,18 @@ public:
 
   void onWSOpen(HttpRequest* pRequest) {
     requestToEnv(pRequest, &pRequest->env());
-    _onWSOpen(externalize(pRequest), pRequest->env());
+    _onWSOpen(externalize<WebSocketConnection>(pRequest->websocket()), pRequest->env());
   }
 
   void onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {
     if (binary)
-      _onWSMessage(externalize(pConn), binary, std::vector<uint8_t>(data, data + len));
+      _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::vector<uint8_t>(data, data + len));
     else
-      _onWSMessage(externalize(pConn), binary, std::string(data, len));
+      _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::string(data, len));
   }
   
   void onWSClose(WebSocketConnection* pConn) {
-    _onWSClose(externalize(pConn));
+    _onWSClose(externalize<WebSocketConnection>(pConn));
   }
 
 };
@@ -335,7 +335,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
     return R_NilValue;
   }
 
-  return Rcpp::wrap(externalize(pServer));
+  return Rcpp::wrap(externalize<uv_stream_t>(pServer));
 }
 
 // [[Rcpp::export]]

@@ -72,7 +72,7 @@ struct Address {
   }
 };
 
-class HttpRequest : WebSocketConnection {
+class HttpRequest : WebSocketConnectionCallbacks {
 
 private:
   uv_loop_t* _pLoop;
@@ -86,6 +86,7 @@ private:
   std::string _lastHeaderField;
   unsigned long _bytesRead;
   Rcpp::Environment _env;
+  WebSocketConnection* _pWebSocketConnection;
   // _ignoreNewData is used in cases where we rejected a request (by sending
   // a response with a non-100 status code) before its body was received. We
   // don't want to close the connection because the response might not be
@@ -100,7 +101,8 @@ public:
   HttpRequest(uv_loop_t* pLoop, WebApplication* pWebApplication,
       Socket* pSocket)
     : _pLoop(pLoop), _pWebApplication(pWebApplication), _pSocket(pSocket),
-      _protocol(HTTP), _bytesRead(0), _ignoreNewData(false) {
+      _protocol(HTTP), _bytesRead(0), _ignoreNewData(false),
+      _pWebSocketConnection(new WebSocketConnection(this)) {
 
     uv_tcp_init(pLoop, &_handle.tcp);
     _handle.isTcp = true;
@@ -115,9 +117,11 @@ public:
   }
 
   virtual ~HttpRequest() {
+    delete _pWebSocketConnection;
   }
 
   uv_stream_t* handle();
+  WebSocketConnection* websocket() const { return _pWebSocketConnection; }
   Address clientAddress();
   Address serverAddress();
   Rcpp::Environment& env();

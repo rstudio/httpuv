@@ -190,7 +190,7 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
     &header[0], &headerLength);
   header.resize(headerLength);
 
-  sendWSFrame(&header[0], header.size(), pData, length);
+  _pCallbacks->sendWSFrame(&header[0], header.size(), pData, length);
 }
 
 void WebSocketConnection::closeWS() {
@@ -206,10 +206,11 @@ void WebSocketConnection::closeWS() {
 
   // If close messages have been both sent and received, close socket.
   if (_connState == WS_CLOSE)
-    closeWSSocket();
+    _pCallbacks->closeWSSocket();
 }
 
 void WebSocketConnection::read(const char* data, size_t len) {
+  assert(_pParser);
   _pParser->read(data, len);
 }
 
@@ -240,7 +241,7 @@ void WebSocketConnection::onFrameComplete() {
       case Continuation: {
         std::copy(_payload.begin(), _payload.end(),
           std::back_inserter(_incompleteContentPayload));
-        onWSMessage(_incompleteContentHeader.opcode() == Binary,
+        _pCallbacks->onWSMessage(_incompleteContentHeader.opcode() == Binary,
           &_incompleteContentPayload[0], _incompleteContentPayload.size());
 
         _incompleteContentPayload.clear();
@@ -248,7 +249,7 @@ void WebSocketConnection::onFrameComplete() {
       }
       case Text:
       case Binary: {
-        onWSMessage(_header.opcode() == Binary, &_payload[0], _payload.size());
+        _pCallbacks->onWSMessage(_header.opcode() == Binary, &_payload[0], _payload.size());
         break;
       }
       case Close: {
@@ -262,10 +263,10 @@ void WebSocketConnection::onFrameComplete() {
         }
 
         // TODO: Delay closeWSSocket call until close message is actually sent
-        closeWSSocket();
+        _pCallbacks->closeWSSocket();
 
         // TODO: Use code and status
-        onWSClose(0);
+        _pCallbacks->onWSClose(0);
 
         break;
       }

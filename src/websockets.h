@@ -84,7 +84,18 @@ const WSConnState WS_CLOSE_RECEIVED = 1;
 const WSConnState WS_CLOSE_SENT = 2;
 const WSConnState WS_CLOSE = WS_CLOSE_RECEIVED | WS_CLOSE_SENT;
 
+class WebSocketConnectionCallbacks {
+public:
+  virtual void onWSMessage(bool binary, const char* data, size_t len) = 0;
+  virtual void onWSClose(int code) = 0;
+  // Implementers MUST copy data
+  virtual void sendWSFrame(const char* headerData, size_t headerLength,
+                           const char* pData, size_t dataLength) = 0;
+  virtual void closeWSSocket() = 0;
+};
+
 class WebSocketConnection : WebSocketParserCallbacks {
+  WebSocketConnectionCallbacks* _pCallbacks;
   WebSocketParser* _pParser;
   WSConnState _connState;
   WSFrameHeader _incompleteContentHeader;
@@ -93,8 +104,8 @@ class WebSocketConnection : WebSocketParserCallbacks {
   std::vector<char> _payload;
 
 public:
-  WebSocketConnection() : _connState(WS_OPEN) {
-    _pParser = new WebSocketParser(this);
+  WebSocketConnection(WebSocketConnectionCallbacks* callbacks)
+      : _pCallbacks(callbacks), _connState(WS_OPEN), _pParser(new WebSocketParser(this)) {
   }
   virtual ~WebSocketConnection() {
     delete _pParser;
@@ -105,13 +116,6 @@ public:
   void read(const char* data, size_t len);
 
 protected:
-  virtual void onWSMessage(bool binary, const char* data, size_t len) = 0;
-  virtual void onWSClose(int code) = 0;
-  // Implementers MUST copy data
-  virtual void sendWSFrame(const char* headerData, size_t headerLength,
-                           const char* pData, size_t dataLength) = 0;
-  virtual void closeWSSocket() = 0;
-
   void onHeaderComplete(const WSFrameHeader& header);
   void onPayload(const char* data, size_t len);
   void onFrameComplete();

@@ -267,7 +267,7 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 }
 
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
-  _pWebApplication->onWSMessage(this, binary, data, len);
+  _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
 }
 void HttpRequest::onWSClose(int code) {
   // TODO: Call close() here?
@@ -286,7 +286,7 @@ void HttpRequest::_on_closed(uv_handle_t* handle) {
 void HttpRequest::close() {
   // std::cerr << "Closing handle " << &_handle << std::endl;
   if (_protocol == WebSockets)
-    _pWebApplication->onWSClose(this);
+    _pWebApplication->onWSClose(_pWebSocketConnection);
   _pSocket->removeConnection(this);
   uv_close(toHandle(&_handle.stream), HttpRequest_on_closed);
 }
@@ -322,7 +322,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
           _protocol = WebSockets;
           _pWebApplication->onWSOpen(this);
 
-          read(pData, pDataLen);
+          _pWebSocketConnection->read(pData, pDataLen);
         }
 
         if (_protocol != WebSockets) {
@@ -337,7 +337,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
         }
       }
     } else if (_protocol == WebSockets) {
-      read(buf.base, nread);
+      _pWebSocketConnection->read(buf.base, nread);
     }
   } else if (nread < 0) {
     uv_err_t err = uv_last_error(_pLoop);
