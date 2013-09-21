@@ -7,17 +7,7 @@
 #include <string>
 #include <vector>
 
-enum Opcode {
-  Continuation = 0,
-  Text = 1,
-  Binary = 2,
-  Close = 8,
-  Ping = 9,
-  Pong = 0xA,
-  Reserved = 0xF
-};
-
-const size_t MAX_HEADER_BYTES = 14;
+#include "constants.h"
 
 /* Interprets the bytes that make up a WebSocket frame header.
  * See RFC 6455 Section 5 (especially 5.2) for details on the
@@ -64,29 +54,28 @@ public:
   uint8_t maskingKeyLength() const;
 };
 
-enum WSParseState {
-  InHeader,
-  InPayload
+class WebSocketParserCallbacks {
+public:
+  virtual void onHeaderComplete(const WSFrameHeader& header) = 0;
+  // The data is copied
+  virtual void onPayload(const char* data, size_t len) = 0;
+  virtual void onFrameComplete() = 0;
 };
 
 class WebSocketParser {
+  WebSocketParserCallbacks* _callbacks;
   WSParseState _state;
   std::vector<char> _header;
   uint64_t _bytesLeft;
 
 public:
-  WebSocketParser() : _state(InHeader) {
+  WebSocketParser(WebSocketParserCallbacks* callbacks)
+      : _callbacks(callbacks), _state(InHeader) {
   }
   virtual ~WebSocketParser() {
   }
 
   void read(const char* data, size_t len);
-
-protected:
-  virtual void onHeaderComplete(const WSFrameHeader& header) = 0;
-  // The data is copied
-  virtual void onPayload(const char* data, size_t len) = 0;
-  virtual void onFrameComplete() = 0;
 };
 
 typedef uint8_t WSConnState;
@@ -95,7 +84,8 @@ const WSConnState WS_CLOSE_RECEIVED = 1;
 const WSConnState WS_CLOSE_SENT = 2;
 const WSConnState WS_CLOSE = WS_CLOSE_RECEIVED | WS_CLOSE_SENT;
 
-class WebSocketConnection : public WebSocketParser {
+class WebSocketConnection : WebSocketParserCallbacks {
+  WebSocketParser* _pParser;
   WSConnState _connState;
   WSFrameHeader _incompleteContentHeader;
   WSFrameHeader _header;
@@ -104,12 +94,15 @@ class WebSocketConnection : public WebSocketParser {
 
 public:
   WebSocketConnection() : _connState(WS_OPEN) {
+    _pParser = new WebSocketParser(this);
   }
   virtual ~WebSocketConnection() {
+    delete _pParser;
   }
 
   void sendWSMessage(Opcode opcode, const char* pData, size_t length);
   void closeWS();
+  void read(const char* data, size_t len);
 
 protected:
   virtual void onWSMessage(bool binary, const char* data, size_t len) = 0;
