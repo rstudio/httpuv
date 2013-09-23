@@ -2,7 +2,9 @@
 
 #include <string.h>
 
+extern "C" {
 #include "md5.h"
+}
 
 bool calculateKeyValue(const std::string& key, uint32_t* pResult = NULL) {
   std::string trimmed = trim(key);
