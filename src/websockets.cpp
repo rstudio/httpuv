@@ -9,6 +9,7 @@
 #include <base64.hpp>
 
 #include "websockets-ietf.h"
+#include "websockets-hybi03.h"
 
 template <typename T>
 T min(T a, T b) {
@@ -38,21 +39,11 @@ bool WSFrameHeader::isHeaderComplete() const {
 }
 
 bool WSFrameHeader::fin() const {
-  return read(0, 1) != 0;
+  return _pProto->isFin(read(0, 1));
 }
 Opcode WSFrameHeader::opcode() const {
   uint8_t oc = read(4, 4);
-  switch (oc) {
-  case Continuation:
-  case Text:
-  case Binary:
-  case Close:
-  case Ping:
-  case Pong:
-    return (Opcode)oc;
-  default:
-    return Reserved;
-  }
+  return _pProto->decodeOpcode(oc);
 }
 bool WSFrameHeader::masked() const {
   return read(8, 1) != 0;
@@ -127,7 +118,7 @@ uint8_t WSFrameHeader::maskingKeyLength() const {
   return masked() ? 32 : 0;
 }
 
-void WebSocketParser::read(const char* data, size_t len) {
+void WebSocketParser::read(WebSocketProto* pProto, const char* data, size_t len) {
   while (len > 0) {
     // crude check for underflow
     assert(len < 1000000000000000000);
@@ -141,7 +132,7 @@ void WebSocketParser::read(const char* data, size_t len) {
         std::copy(data, data + min(len, MAX_HEADER_BYTES),
           std::back_inserter(_header));
 
-        WSFrameHeader frame(&_header[0], _header.size());
+        WSFrameHeader frame(pProto, &_header[0], _header.size());
 
         if (frame.isHeaderComplete()) {
           _pCallbacks->onHeaderComplete(frame);
@@ -184,11 +175,37 @@ void WebSocketParser::read(const char* data, size_t len) {
   }
 }
 
+bool WebSocketConnection::accept(const RequestHeaders& requestHeaders,
+                                 const char* pData, size_t len) {
+  assert(!_pProto);
+
+  ScopePtr<WebSocketProto_IETF> ietf(new WebSocketProto_IETF());
+  if (ietf->canHandle(requestHeaders, pData, len)) {
+    _pProto = new WebSocketProto_IETF();
+    return true;
+  }
+
+  ScopePtr<WebSocketProto_HyBi03> hybi03(new WebSocketProto_HyBi03());
+  if (hybi03->canHandle(requestHeaders, pData, len)) {
+    _pProto = new WebSocketProto_HyBi03();
+    return true;
+  }
+  return false;
+}
+
+void WebSocketConnection::handshake(const RequestHeaders& requestHeaders,
+                                    char* pData, size_t len,
+                                    ResponseHeaders* pResponseHeaders,
+                                    std::vector<uint8_t>* pResponse) {
+  assert(_pProto);
+  _pProto->handshake(requestHeaders, pData, len, pResponseHeaders, pResponse);
+}
+
 void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t length) {
   std::vector<char> header(MAX_HEADER_BYTES);
 
   size_t headerLength;
-  createFrameHeader(opcode, false, length, 0,
+  _pProto->createFrameHeader(opcode, false, length, 0,
     &header[0], &headerLength);
   header.resize(headerLength);
 
@@ -213,7 +230,7 @@ void WebSocketConnection::closeWS() {
 
 void WebSocketConnection::read(const char* data, size_t len) {
   assert(_pParser);
-  _pParser->read(data, len);
+  _pParser->read(_pProto, data, len);
 }
 
 void WebSocketConnection::onHeaderComplete(const WSFrameHeader& header) {
@@ -289,53 +306,4 @@ void WebSocketConnection::onFrameComplete() {
   }
 
   _payload.clear();
-}
-
-std::string createHandshakeResponse(const std::string& key) {
-  std::string clear = trim(key) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-  SHA1_CTX ctx;
-  reid_SHA1_Init(&ctx);
-  reid_SHA1_Update(&ctx, (uint8_t*)&clear[0], clear.size());
-
-  std::vector<uint8_t> digest(SHA1_DIGEST_SIZE);
-  reid_SHA1_Final(&ctx, &digest[0]);
-
-  return b64encode(digest);
-}
-
-void createFrameHeader(Opcode opcode, bool mask, size_t payloadSize,
-                       int32_t maskingKey,
-                       char pData[MAX_HEADER_BYTES], size_t* pLen) {
-
-  unsigned char* pBuf = (unsigned char*)pData;
-  unsigned char* pMaskingKey = pBuf + 2;
-
-  pBuf[0] =
-    1 << 7 | // FIN; always true
-    opcode;
-  pBuf[1] = mask ? 1 << 7 : 0;
-  if (payloadSize <= 125) {
-    pBuf[1] |= payloadSize;
-    pMaskingKey = pBuf + 2;
-  }
-  else if (payloadSize <= 65535) {// 2^16-1
-    pBuf[1] |= 126;
-    *((uint16_t*)&pBuf[2]) = (uint16_t)payloadSize;
-    if (!isBigEndian())
-      swapByteOrder(pBuf + 2, pBuf + 4);
-    pMaskingKey = pBuf + 4;
-  }
-  else {
-    pBuf[1] |= 127;
-    *((uint64_t*)&pBuf[2]) = (uint64_t)payloadSize;
-    if (!isBigEndian())
-      swapByteOrder(pBuf + 2, pBuf + 10);
-    pMaskingKey = pBuf + 10;
-  }
-
-  if (mask) {
-    *((int32_t*)pMaskingKey) = maskingKey;
-  }
-
-  *pLen = (pMaskingKey - pBuf) + (mask ? 4 : 0);
 }

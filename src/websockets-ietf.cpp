@@ -4,7 +4,7 @@
 #include <base64.hpp>
 
 bool WebSocketProto_IETF::canHandle(const RequestHeaders& requestHeaders,
-                                    char* pData, size_t len) {
+                                    const char* pData, size_t len) const {
 
   return requestHeaders.find("upgrade") != requestHeaders.end() &&
          strcasecmp(requestHeaders.at("upgrade").c_str(), "websocket") == 0 &&
@@ -12,8 +12,9 @@ bool WebSocketProto_IETF::canHandle(const RequestHeaders& requestHeaders,
 }
 
 void WebSocketProto_IETF::handshake(const RequestHeaders& requestHeaders,
-                                    char* pData, size_t len,
-                                    ResponseHeaders* pResponseHeaders) {
+                                    const char* pData, size_t len,
+                                    ResponseHeaders* pResponseHeaders,
+                                    std::vector<uint8_t>* pResponse) const {
 
   std::string key = requestHeaders.at("sec-websocket-key");
 
@@ -35,39 +36,36 @@ void WebSocketProto_IETF::handshake(const RequestHeaders& requestHeaders,
     std::pair<std::string, std::string>("Sec-WebSocket-Accept", response));
 }
 
-void WebSocketProto_IETF::createFrameHeader(
-    Opcode opcode, bool mask, size_t payloadSize, int32_t maskingKey,
-    char pData[MAX_HEADER_BYTES], size_t* pLen) {
+bool WebSocketProto_IETF::isFin(uint8_t firstBit) const {
+  return firstBit != 0;
+}
 
-  unsigned char* pBuf = (unsigned char*)pData;
-  unsigned char* pMaskingKey = pBuf + 2;
+uint8_t WebSocketProto_IETF::toFin(bool isFin) const {
+  return isFin ? 1 : 0;
+}
 
-  pBuf[0] =
-    1 << 7 | // FIN; always true
-    opcode;
-  pBuf[1] = mask ? 1 << 7 : 0;
-  if (payloadSize <= 125) {
-    pBuf[1] |= payloadSize;
-    pMaskingKey = pBuf + 2;
+Opcode WebSocketProto_IETF::decodeOpcode(uint8_t rawCode) const {
+  switch (rawCode) {
+  case 0:   return Continuation;
+  case 1:   return Text;
+  case 2:   return Binary;
+  case 8:   return Close;
+  case 9:   return Ping;
+  case 0xA: return Pong;
+  case 0xF: return Reserved;
+  default:  return Reserved;
   }
-  else if (payloadSize <= 65535) {// 2^16-1
-    pBuf[1] |= 126;
-    *((uint16_t*)&pBuf[2]) = (uint16_t)payloadSize;
-    if (!isBigEndian())
-      swapByteOrder(pBuf + 2, pBuf + 4);
-    pMaskingKey = pBuf + 4;
-  }
-  else {
-    pBuf[1] |= 127;
-    *((uint64_t*)&pBuf[2]) = (uint64_t)payloadSize;
-    if (!isBigEndian())
-      swapByteOrder(pBuf + 2, pBuf + 10);
-    pMaskingKey = pBuf + 10;
-  }
+}
 
-  if (mask) {
-    *((int32_t*)pMaskingKey) = maskingKey;
+uint8_t WebSocketProto_IETF::encodeOpcode(Opcode opcode) const {
+  switch (opcode) {
+  case Continuation:   return 0;
+  case Text:           return 1;
+  case Binary:         return 2;
+  case Close:          return 8;
+  case Ping:           return 9;
+  case Pong:           return 0xA;
+  case Reserved:       return 0xF;
+  default:             return 0xF; // not expected
   }
-
-  *pLen = (pMaskingKey - pBuf) + (mask ? 4 : 0);
 }

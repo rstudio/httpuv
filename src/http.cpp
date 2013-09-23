@@ -302,20 +302,19 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
         char* pData = buf.base + parsed;
         ssize_t pDataLen = nread - parsed;
 
-        if (_headers.find("upgrade") != _headers.end() &&
-            strcasecmp(_headers["upgrade"].c_str(), "websocket") == 0 &&
-            _headers.find("sec-websocket-key") != _headers.end()) {
-
+        if (_pWebSocketConnection->accept(_headers, pData, pDataLen)) {
           // Freed in on_response_written
+          InMemoryDataSource* pDS = new InMemoryDataSource();
           HttpResponse* pResp = new HttpResponse(this, 101, "Switching Protocols",
-            NULL);
-          pResp->addHeader("Upgrade", "websocket");
-          pResp->addHeader("Connection", "Upgrade");
-          pResp->addHeader(
-            "Sec-WebSocket-Accept",
-            createHandshakeResponse(_headers["sec-websocket-key"]));
-          // TODO: Consult app about supported WS protocol
-          //pResp->addHeader("Sec-WebSocket-Protocol", "");
+            pDS);
+
+          std::vector<uint8_t> body;
+          _pWebSocketConnection->handshake(_headers, pData, pDataLen, pResp->headers(),
+                &body);
+          if (body.size() > 0) {
+            pDS->add(body);
+          }
+          body.empty();
 
           pResp->writeResponse();
 
@@ -361,6 +360,10 @@ void HttpRequest::handleRequest() {
     fatal_error("read_start", uv_strerror(err));
     return;
   }
+}
+
+ResponseHeaders* HttpResponse::headers() {
+  return &_headers;
 }
 
 void HttpResponse::addHeader(const std::string& name, const std::string& value) {

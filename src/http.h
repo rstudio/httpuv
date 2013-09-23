@@ -177,6 +177,8 @@ public:
   virtual ~HttpResponse() {
   }
 
+  ResponseHeaders* headers();
+
   void addHeader(const std::string& name, const std::string& value);
   void writeResponse();
   void onResponseWritten(int status);

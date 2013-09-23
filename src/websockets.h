@@ -16,14 +16,15 @@
  */
 class WSFrameHeader {
   std::vector<char> _data;
+  WebSocketProto* _pProto;
 
 public:
   WSFrameHeader() : _data(MAX_HEADER_BYTES) {
   }
 
   // The data is copied (up to 14 bytes worth)
-  WSFrameHeader(const char* data, size_t len) 
-    : _data(data, data + (std::min(MAX_HEADER_BYTES, len))) {
+  WSFrameHeader(WebSocketProto* pProto, const char* data, size_t len)
+    : _pProto(pProto), _data(data, data + (std::min(MAX_HEADER_BYTES, len))) {
   }
 
   virtual ~WSFrameHeader() {
@@ -76,7 +77,7 @@ public:
   virtual ~WebSocketParser() {
   }
 
-  void read(const char* data, size_t len);
+  void read(WebSocketProto* pProto, const char* data, size_t len);
 };
 
 typedef uint8_t WSConnState;
@@ -115,6 +116,12 @@ public:
     delete _pProto;
   }
 
+  bool accept(const RequestHeaders& requestHeaders, const char* pData, size_t len);
+  void handshake(const RequestHeaders& requestHeaders,
+                 char* pData, size_t len,
+                 ResponseHeaders* pResponseHeaders,
+                 std::vector<uint8_t>* pResponse);
+
   void sendWSMessage(Opcode opcode, const char* pData, size_t length);
   void closeWS();
   void read(const char* data, size_t len);
@@ -124,10 +131,5 @@ protected:
   void onPayload(const char* data, size_t len);
   void onFrameComplete();
 };
-
-std::string createHandshakeResponse(const std::string& key);
-void createFrameHeader(Opcode opcode, bool mask, size_t payloadSize,
-                       int32_t maskingKey,
-                       char ppData[MAX_HEADER_BYTES], size_t* pBytesUsed);
 
 #endif // WEBSOCKETS_HPP
