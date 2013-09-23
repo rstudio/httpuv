@@ -101,8 +101,9 @@ public:
   HttpRequest(uv_loop_t* pLoop, WebApplication* pWebApplication,
       Socket* pSocket)
     : _pLoop(pLoop), _pWebApplication(pWebApplication), _pSocket(pSocket),
-      _protocol(HTTP), _bytesRead(0), _ignoreNewData(false),
-      _pWebSocketConnection(new WebSocketConnection(this)) {
+      _protocol(HTTP), _bytesRead(0),
+      _pWebSocketConnection(new WebSocketConnection(this)),
+      _ignoreNewData(false) {
 
     uv_tcp_init(pLoop, &_handle.tcp);
     _handle.isTcp = true;

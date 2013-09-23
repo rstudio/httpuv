@@ -19,12 +19,12 @@ class WSFrameHeader {
   WebSocketProto* _pProto;
 
 public:
-  WSFrameHeader() : _data(MAX_HEADER_BYTES) {
+  WSFrameHeader() : _data(MAX_HEADER_BYTES), _pProto(NULL) {
   }
 
   // The data is copied (up to 14 bytes worth)
   WSFrameHeader(WebSocketProto* pProto, const char* data, size_t len)
-    : _pProto(pProto), _data(data, data + (std::min(MAX_HEADER_BYTES, len))) {
+    : _data(data, data + (std::min(MAX_HEADER_BYTES, len))), _pProto(pProto) {
   }
 
   virtual ~WSFrameHeader() {
@@ -97,10 +97,10 @@ public:
 };
 
 class WebSocketConnection : WebSocketParserCallbacks {
+  WSConnState _connState;
   WebSocketConnectionCallbacks* _pCallbacks;
   WebSocketParser* _pParser;
   WebSocketProto* _pProto;
-  WSConnState _connState;
   WSFrameHeader _incompleteContentHeader;
   WSFrameHeader _header;
   std::vector<char> _incompleteContentPayload;
@@ -108,7 +108,7 @@ class WebSocketConnection : WebSocketParserCallbacks {
 
 public:
   WebSocketConnection(WebSocketConnectionCallbacks* callbacks)
-      : _pCallbacks(callbacks), _connState(WS_OPEN),
+      : _connState(WS_OPEN), _pCallbacks(callbacks),
         _pParser(new WebSocketParser(this)), _pProto(NULL) {
   }
   virtual ~WebSocketConnection() {

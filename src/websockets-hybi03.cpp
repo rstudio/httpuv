@@ -1,5 +1,7 @@
 #include "websockets-hybi03.h"
 
+#include <string.h>
+
 #include "md5.h"
 
 bool calculateKeyValue(const std::string& key, uint32_t* pResult = NULL) {

@@ -1,6 +1,8 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#include <strings.h>
+
 #include <string>
 #include <map>
 #include <vector>
@@ -57,7 +59,7 @@ protected:
   ~NoCopy() {}
 private:
   NoCopy(const NoCopy&) {}
-  const NoCopy& operator=(const NoCopy&) {}
+  const NoCopy& operator=(const NoCopy& a) { return a; }
 };
 
 // trim from both ends

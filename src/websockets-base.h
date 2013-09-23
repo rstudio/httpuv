@@ -1,6 +1,8 @@
 #ifndef WEBSOCKETS_BASE_H
 #define WEBSOCKETS_BASE_H
 
+#include <stdint.h>
+
 #include "constants.h"
 
 class WebSocketProto {
