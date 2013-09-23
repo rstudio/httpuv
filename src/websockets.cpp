@@ -8,6 +8,8 @@
 #include <sha1.h>
 #include <base64.hpp>
 
+#include "websockets-ietf.h"
+
 template <typename T>
 T min(T a, T b) {
   return (a > b) ? b : a;
@@ -289,15 +291,6 @@ void WebSocketConnection::onFrameComplete() {
   _payload.clear();
 }
 
-// trim from both ends
-static inline std::string trim(const std::string &s) {
-  size_t start = s.find_first_not_of("\t ");
-  if (start == std::string::npos)
-    return std::string();
-  size_t end = s.find_last_not_of("\t ") + 1;
-  return s.substr(start, end-start);
-}
-
 std::string createHandshakeResponse(const std::string& key) {
   std::string clear = trim(key) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
   SHA1_CTX ctx;
@@ -308,29 +301,6 @@ std::string createHandshakeResponse(const std::string& key) {
   reid_SHA1_Final(&ctx, &digest[0]);
 
   return b64encode(digest);
-}
-
-bool isBigEndian() {
-  uint32_t i = 1;
-  return *((uint8_t*)&i) == 0;
-}
-
-// Swaps the byte range [pStart, pEnd)
-void swapByteOrder(unsigned char* pStart, unsigned char* pEnd) {
-  // Easier for callers to use exclusive end but easier to implement
-  // using inclusive end
-  pEnd--;
-
-  while (pStart < pEnd) {
-    
-    unsigned char tmp;
-    tmp = *pStart;
-    *pStart = *pEnd;
-    *pEnd = tmp;
-
-    pStart++;
-    pEnd--;
-  }
 }
 
 void createFrameHeader(Opcode opcode, bool mask, size_t payloadSize,

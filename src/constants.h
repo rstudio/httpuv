@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 enum Opcode {
   Continuation = 0,
@@ -49,5 +50,23 @@ public:
     return _p;
   }
 };
+
+class NoCopy {
+protected:
+  NoCopy() {}
+  ~NoCopy() {}
+private:
+  NoCopy(const NoCopy&) {}
+  const NoCopy& operator=(const NoCopy&) {}
+};
+
+// trim from both ends
+static inline std::string trim(const std::string &s) {
+  size_t start = s.find_first_not_of("\t ");
+  if (start == std::string::npos)
+    return std::string();
+  size_t end = s.find_last_not_of("\t ") + 1;
+  return s.substr(start, end-start);
+}
 
 #endif // CONSTANTS_H

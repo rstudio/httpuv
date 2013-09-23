@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "constants.h"
+#include "websockets-base.h"
 
 /* Interprets the bytes that make up a WebSocket frame header.
  * See RFC 6455 Section 5 (especially 5.2) for details on the
@@ -97,6 +98,7 @@ public:
 class WebSocketConnection : WebSocketParserCallbacks {
   WebSocketConnectionCallbacks* _pCallbacks;
   WebSocketParser* _pParser;
+  WebSocketProto* _pProto;
   WSConnState _connState;
   WSFrameHeader _incompleteContentHeader;
   WSFrameHeader _header;
@@ -105,10 +107,12 @@ class WebSocketConnection : WebSocketParserCallbacks {
 
 public:
   WebSocketConnection(WebSocketConnectionCallbacks* callbacks)
-      : _pCallbacks(callbacks), _connState(WS_OPEN), _pParser(new WebSocketParser(this)) {
+      : _pCallbacks(callbacks), _connState(WS_OPEN),
+        _pParser(new WebSocketParser(this)), _pProto(NULL) {
   }
   virtual ~WebSocketConnection() {
     delete _pParser;
+    delete _pProto;
   }
 
   void sendWSMessage(Opcode opcode, const char* pData, size_t length);
