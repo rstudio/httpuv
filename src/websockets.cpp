@@ -182,12 +182,16 @@ bool WebSocketConnection::accept(const RequestHeaders& requestHeaders,
   ScopePtr<WebSocketProto_IETF> ietf(new WebSocketProto_IETF());
   if (ietf->canHandle(requestHeaders, pData, len)) {
     _pProto = new WebSocketProto_IETF();
+    _header = WSFrameHeader(_pProto);
+    _incompleteContentHeader = WSFrameHeader(_pProto);
     return true;
   }
 
   ScopePtr<WebSocketProto_HyBi03> hybi03(new WebSocketProto_HyBi03());
   if (hybi03->canHandle(requestHeaders, pData, len)) {
     _pProto = new WebSocketProto_HyBi03();
+    _header = WSFrameHeader(_pProto);
+    _incompleteContentHeader = WSFrameHeader(_pProto);
     return true;
   }
   return false;
