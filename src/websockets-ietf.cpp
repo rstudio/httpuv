@@ -11,8 +11,9 @@ bool WebSocketProto_IETF::canHandle(const RequestHeaders& requestHeaders,
          requestHeaders.find("sec-websocket-key") != requestHeaders.end();
 }
 
-void WebSocketProto_IETF::handshake(const RequestHeaders& requestHeaders,
-                                    const char* pData, size_t len,
+void WebSocketProto_IETF::handshake(const std::string& url,
+                                    const RequestHeaders& requestHeaders,
+                                    char** ppData, size_t* pLen,
                                     ResponseHeaders* pResponseHeaders,
                                     std::vector<uint8_t>* pResponse) const {
 

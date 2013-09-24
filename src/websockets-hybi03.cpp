@@ -1,5 +1,6 @@
 #include "websockets-hybi03.h"
 
+#include <assert.h>
 #include <string.h>
 
 extern "C" {
@@ -40,15 +41,20 @@ bool WebSocketProto_HyBi03::canHandle(const RequestHeaders& requestHeaders,
       !calculateKeyValue(requestHeaders.at("sec-websocket-key2"))) {
     return false;
   }
+  if (requestHeaders.find("host") == requestHeaders.end())
+    return false;
 
   return requestHeaders.find("upgrade") != requestHeaders.end() &&
          strcasecmp(requestHeaders.at("upgrade").c_str(), "websocket") == 0;
 }
 
-void WebSocketProto_HyBi03::handshake(const RequestHeaders& requestHeaders,
-                                      const char* pData, size_t len,
+void WebSocketProto_HyBi03::handshake(const std::string& url,
+                                      const RequestHeaders& requestHeaders,
+                                      char** ppData, size_t* pLen,
                                       ResponseHeaders* pResponseHeaders,
                                       std::vector<uint8_t>* pResponse) const {
+
+  assert(*pLen >= 8);
 
   uint32_t key1, key2;
   calculateKeyValue(requestHeaders.at("sec-websocket-key1"), &key1);
@@ -61,7 +67,9 @@ void WebSocketProto_HyBi03::handshake(const RequestHeaders& requestHeaders,
     swapByteOrder(handshake, handshake + 4);
     swapByteOrder(handshake + 4, handshake + 8);
   }
-  memcpy(handshake + 8, pData, 8);
+  memcpy(handshake + 8, *ppData, 8);
+  *ppData += 8;
+  *pLen -= 8;
 
   MD5_CTX ctx;
   MD5_Init(&ctx);
@@ -77,6 +85,10 @@ void WebSocketProto_HyBi03::handshake(const RequestHeaders& requestHeaders,
   else if (requestHeaders.find("origin") != requestHeaders.end())
     origin = requestHeaders.at("origin");
 
+  std::string location("ws://");
+  location += requestHeaders.at("host");
+  location += url;
+
   pResponseHeaders->push_back(
     std::pair<std::string, std::string>("Connection", "Upgrade"));
   pResponseHeaders->push_back(
@@ -84,7 +96,7 @@ void WebSocketProto_HyBi03::handshake(const RequestHeaders& requestHeaders,
   pResponseHeaders->push_back(
     std::pair<std::string, std::string>("Sec-WebSocket-Origin", origin));
   pResponseHeaders->push_back(
-    std::pair<std::string, std::string>("Sec-WebSocket-Location", ""));
+    std::pair<std::string, std::string>("Sec-WebSocket-Location", location));
 }
 
 bool WebSocketProto_HyBi03::isFin(uint8_t firstBit) const {

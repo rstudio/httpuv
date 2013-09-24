@@ -10,6 +10,7 @@
 
 #include "websockets-ietf.h"
 #include "websockets-hybi03.h"
+#include "websockets-hixie76.h"
 
 template <typename T>
 T min(T a, T b) {
@@ -31,24 +32,38 @@ std::string dumpbin(const char* data, size_t len) {
   return output;
 }
 
-bool WSFrameHeader::isHeaderComplete() const {
+bool WSHyBiFrameHeader::isHeaderComplete() const {
   if (_data.size() < 2)
     return false;
 
   return _data.size() >= (size_t)headerLength();
 }
 
-bool WSFrameHeader::fin() const {
+WSFrameHeaderInfo WSHyBiFrameHeader::info() const {
+  WSFrameHeaderInfo inf;
+  inf.fin = fin();
+  inf.opcode = opcode();
+  inf.hasLength = true;
+  inf.masked = masked();
+  if (masked()) {
+    inf.maskingKey.resize(4);
+    maskingKey(&inf.maskingKey[0]);
+  }
+  inf.payloadLength = payloadLength();
+  return inf;
+}
+
+bool WSHyBiFrameHeader::fin() const {
   return _pProto->isFin(read(0, 1));
 }
-Opcode WSFrameHeader::opcode() const {
+Opcode WSHyBiFrameHeader::opcode() const {
   uint8_t oc = read(4, 4);
   return _pProto->decodeOpcode(oc);
 }
-bool WSFrameHeader::masked() const {
+bool WSHyBiFrameHeader::masked() const {
   return read(8, 1) != 0;
 }
-uint64_t WSFrameHeader::payloadLength() const {
+uint64_t WSHyBiFrameHeader::payloadLength() const {
   uint8_t pl = read(9, 7);
   switch (pl) {
     case 126:
@@ -59,7 +74,7 @@ uint64_t WSFrameHeader::payloadLength() const {
       return pl;
   }
 }
-void WSFrameHeader::maskingKey(uint8_t key[4]) const {
+void WSHyBiFrameHeader::maskingKey(uint8_t key[4]) const {
   if (!masked())
     memset(key, 0, 4);
   else {
@@ -69,10 +84,10 @@ void WSFrameHeader::maskingKey(uint8_t key[4]) const {
     key[3] = read(9 + payloadLengthLength() + 24, 8);
   }
 }
-size_t WSFrameHeader::headerLength() const {
+size_t WSHyBiFrameHeader::headerLength() const {
   return (9 + payloadLengthLength() + maskingKeyLength()) / 8;
 }
-uint8_t WSFrameHeader::read(size_t bitOffset, size_t bitWidth) const {
+uint8_t WSHyBiFrameHeader::read(size_t bitOffset, size_t bitWidth) const {
   size_t byteOffset = bitOffset / 8;
   bitOffset = bitOffset % 8;
 
@@ -86,7 +101,7 @@ uint8_t WSFrameHeader::read(size_t bitOffset, size_t bitWidth) const {
   char byte = _data[byteOffset];
   return (byte & mask) >> (8 - bitWidth - bitOffset);
 }
-uint64_t WSFrameHeader::read64(size_t bitOffset, size_t bitWidth) const {
+uint64_t WSHyBiFrameHeader::read64(size_t bitOffset, size_t bitWidth) const {
   assert((bitOffset % 8) == 0);
   assert((bitWidth % 8) == 0);
 
@@ -100,10 +115,10 @@ uint64_t WSFrameHeader::read64(size_t bitOffset, size_t bitWidth) const {
     result <<= 8;
     result += (uint64_t)(unsigned char)_data[byteOffset + i];
   }
-  
+
   return result;
 }
-uint8_t WSFrameHeader::payloadLengthLength() const {
+uint8_t WSHyBiFrameHeader::payloadLengthLength() const {
   uint8_t pll = read(9, 7);
   switch (pll) {
     case 126:
@@ -114,11 +129,27 @@ uint8_t WSFrameHeader::payloadLengthLength() const {
       return 7;
   }
 }
-uint8_t WSFrameHeader::maskingKeyLength() const {
+uint8_t WSHyBiFrameHeader::maskingKeyLength() const {
   return masked() ? 32 : 0;
 }
 
-void WebSocketParser::read(WebSocketProto* pProto, const char* data, size_t len) {
+void WSHyBiParser::handshake(const std::string& url,
+                             const RequestHeaders& requestHeaders,
+                             char** ppData, size_t* pLen,
+                             ResponseHeaders* pResponseHeaders,
+                             std::vector<uint8_t>* pResponse) const {
+  _pProto->handshake(url, requestHeaders, ppData, pLen, pResponseHeaders,
+                     pResponse);
+}
+
+void WSHyBiParser::createFrameHeader(
+                     Opcode opcode, bool mask, size_t payloadSize,
+                     int32_t maskingKey, char pData[], size_t *pLen) const {
+  _pProto->createFrameHeader(opcode, mask, payloadSize, maskingKey,
+                             pData, pLen);
+}
+
+void WSHyBiParser::read(const char* data, size_t len) {
   while (len > 0) {
     // crude check for underflow
     assert(len < 1000000000000000000);
@@ -132,10 +163,10 @@ void WebSocketParser::read(WebSocketProto* pProto, const char* data, size_t len)
         std::copy(data, data + min(len, MAX_HEADER_BYTES),
           std::back_inserter(_header));
 
-        WSFrameHeader frame(pProto, &_header[0], _header.size());
+        WSHyBiFrameHeader frame(_pProto, &_header[0], _header.size());
 
         if (frame.isHeaderComplete()) {
-          _pCallbacks->onHeaderComplete(frame);
+          _pCallbacks->onHeaderComplete(frame.info());
 
           size_t payloadOffset = frame.headerLength() - startingSize;
           _bytesLeft = frame.payloadLength();
@@ -163,7 +194,7 @@ void WebSocketParser::read(WebSocketProto* pProto, const char* data, size_t len)
 
         if (_bytesLeft == 0) {
           _pCallbacks->onFrameComplete();
-          
+
           _state = InHeader;
         }
         break;
@@ -177,39 +208,37 @@ void WebSocketParser::read(WebSocketProto* pProto, const char* data, size_t len)
 
 bool WebSocketConnection::accept(const RequestHeaders& requestHeaders,
                                  const char* pData, size_t len) {
-  assert(!_pProto);
+  assert(!_pParser);
 
   ScopePtr<WebSocketProto_IETF> ietf(new WebSocketProto_IETF());
   if (ietf->canHandle(requestHeaders, pData, len)) {
-    _pProto = new WebSocketProto_IETF();
-    _header = WSFrameHeader(_pProto);
-    _incompleteContentHeader = WSFrameHeader(_pProto);
+    _pParser = new WSHyBiParser(this, new WebSocketProto_IETF());
     return true;
   }
 
   ScopePtr<WebSocketProto_HyBi03> hybi03(new WebSocketProto_HyBi03());
   if (hybi03->canHandle(requestHeaders, pData, len)) {
-    _pProto = new WebSocketProto_HyBi03();
-    _header = WSFrameHeader(_pProto);
-    _incompleteContentHeader = WSFrameHeader(_pProto);
+    _pParser = new WSHixie76Parser(this);
     return true;
   }
   return false;
 }
 
-void WebSocketConnection::handshake(const RequestHeaders& requestHeaders,
-                                    char* pData, size_t len,
+void WebSocketConnection::handshake(const std::string& url,
+                                    const RequestHeaders& requestHeaders,
+                                    char** ppData, size_t* pLen,
                                     ResponseHeaders* pResponseHeaders,
                                     std::vector<uint8_t>* pResponse) {
-  assert(_pProto);
-  _pProto->handshake(requestHeaders, pData, len, pResponseHeaders, pResponse);
+  assert(_pParser);
+  _pParser->handshake(url, requestHeaders, ppData, pLen, pResponseHeaders,
+                      pResponse);
 }
 
 void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t length) {
   std::vector<char> header(MAX_HEADER_BYTES);
 
   size_t headerLength;
-  _pProto->createFrameHeader(opcode, false, length, 0,
+  _pParser->createFrameHeader(opcode, false, length, 0,
     &header[0], &headerLength);
   header.resize(headerLength);
 
@@ -234,37 +263,35 @@ void WebSocketConnection::closeWS() {
 
 void WebSocketConnection::read(const char* data, size_t len) {
   assert(_pParser);
-  _pParser->read(_pProto, data, len);
+  _pParser->read(data, len);
 }
 
-void WebSocketConnection::onHeaderComplete(const WSFrameHeader& header) {
+void WebSocketConnection::onHeaderComplete(const WSFrameHeaderInfo& header) {
   _header = header;
-  if (!header.fin() && header.opcode() != Continuation)
+  if (!header.fin && header.opcode != Continuation)
     _incompleteContentHeader = header;
 }
 void WebSocketConnection::onPayload(const char* data, size_t len) {
   size_t origSize = _payload.size();
   std::copy(data, data + len, std::back_inserter(_payload));
 
-  if (_header.maskingKeyLength() != 0) {
-    uint8_t mask[4];
-    _header.maskingKey(mask);
+  if (_header.masked != 0) {
     for (size_t i = origSize; i < _payload.size(); i++) {
       size_t j = i % 4;
-      _payload[i] = _payload[i] ^ mask[j];
+      _payload[i] = _payload[i] ^ _header.maskingKey[j];
     }
   }
 }
 void WebSocketConnection::onFrameComplete() {
-  if (!_header.fin()) {
+  if (!_header.fin) {
     std::copy(_payload.begin(), _payload.end(),
       std::back_inserter(_incompleteContentPayload));
   } else {
-    switch (_header.opcode()) {
+    switch (_header.opcode) {
       case Continuation: {
         std::copy(_payload.begin(), _payload.end(),
           std::back_inserter(_incompleteContentPayload));
-        _pCallbacks->onWSMessage(_incompleteContentHeader.opcode() == Binary,
+        _pCallbacks->onWSMessage(_incompleteContentHeader.opcode == Binary,
           &_incompleteContentPayload[0], _incompleteContentPayload.size());
 
         _incompleteContentPayload.clear();
@@ -272,7 +299,7 @@ void WebSocketConnection::onFrameComplete() {
       }
       case Text:
       case Binary: {
-        _pCallbacks->onWSMessage(_header.opcode() == Binary, &_payload[0], _payload.size());
+        _pCallbacks->onWSMessage(_header.opcode == Binary, &_payload[0], _payload.size());
         break;
       }
       case Close: {

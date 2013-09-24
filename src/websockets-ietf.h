@@ -12,8 +12,9 @@ public:
   bool canHandle(const RequestHeaders& requestHeaders,
                  const char* pData, size_t len) const;
 
-  void handshake(const RequestHeaders& requestHeaders,
-                 const char* pData, size_t len,
+  void handshake(const std::string& url,
+                 const RequestHeaders& requestHeaders,
+                 char** ppData, size_t* pLen,
                  ResponseHeaders* responseHeaders,
                  std::vector<uint8_t>* pResponse) const;
 

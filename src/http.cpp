@@ -227,7 +227,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
       _ignoreNewData = true;
     }
     pResp->writeResponse();
-    
+
     // result = 1 has special meaning to http_parser for this one callback; it
     // means F_SKIPBODY should be set on the parser. That's not what we want
     // here; we just want processing to terminate.
@@ -300,7 +300,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
       int parsed = http_parser_execute(&_parser, &request_settings(), buf.base, nread);
       if (_parser.upgrade) {
         char* pData = buf.base + parsed;
-        ssize_t pDataLen = nread - parsed;
+        size_t pDataLen = nread - parsed;
 
         if (_pWebSocketConnection->accept(_headers, pData, pDataLen)) {
           // Freed in on_response_written
@@ -309,8 +309,8 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
             pDS);
 
           std::vector<uint8_t> body;
-          _pWebSocketConnection->handshake(_headers, pData, pDataLen, pResp->headers(),
-                &body);
+          _pWebSocketConnection->handshake(_url, _headers, &pData, &pDataLen,
+                                           pResp->headers(), &body);
           if (body.size() > 0) {
             pDS->add(body);
           }
@@ -399,7 +399,7 @@ void HttpResponse::writeResponse() {
   _responseHeader.assign(responseStr.begin(), responseStr.end());
 
   uv_buf_t headerBuf = uv_buf_init(&_responseHeader[0], _responseHeader.size());
-  uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t)); 
+  uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));
   memset(pWriteReq, 0, sizeof(uv_write_t));
   pWriteReq->data = this;
 
@@ -581,7 +581,7 @@ void freeServer(uv_stream_t* pHandle) {
   uv_loop_t* loop = pHandle->loop;
   Socket* pSocket = (Socket*)pHandle->data;
   pSocket->destroy();
-  
+
   runNonBlocking(loop);
 }
 bool runNonBlocking(uv_loop_t* loop) {

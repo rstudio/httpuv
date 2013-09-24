@@ -18,8 +18,9 @@ public:
   // Populate response headers with the appropriate values. This call
   // must not fail, but it will not be called unless canHandle returned
   // true previously, so any validation should be done in canHandle.
-  virtual void handshake(const RequestHeaders& requestHeaders,
-                         const char* pData, size_t len,
+  virtual void handshake(const std::string& url,
+                         const RequestHeaders& requestHeaders,
+                         char** ppData, size_t* pLen,
                          ResponseHeaders* responseHeaders,
                          std::vector<uint8_t>* pResponse) const = 0;
 
