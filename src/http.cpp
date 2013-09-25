@@ -118,7 +118,7 @@ std::string HttpRequest::url() const {
   return _url;
 }
 
-RequestHeaders HttpRequest::headers() const {
+const RequestHeaders& HttpRequest::headers() const {
   return _headers;
 }
 
@@ -315,7 +315,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
 
           std::vector<uint8_t> body;
           _pWebSocketConnection->handshake(_url, _headers, &pData, &pDataLen,
-                                           pResp->headers(), &body);
+                                           &pResp->headers(), &body);
           if (body.size() > 0) {
             pDS->add(body);
           }
@@ -367,8 +367,8 @@ void HttpRequest::handleRequest() {
   }
 }
 
-ResponseHeaders* HttpResponse::headers() {
-  return &_headers;
+ResponseHeaders& HttpResponse::headers() {
+  return _headers;
 }
 
 void HttpResponse::addHeader(const std::string& name, const std::string& value) {
@@ -392,7 +392,7 @@ void HttpResponse::writeResponse() {
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
   response << "HTTP/1.1 " << _statusCode << " " << _status << "\r\n";
-  for (ResponseHeaders::iterator it = _headers.begin();
+  for (ResponseHeaders::const_iterator it = _headers.begin();
      it != _headers.end();
      it++) {
     response << it->first << ": " << it->second << "\r\n";
@@ -489,7 +489,9 @@ void Socket::removeConnection(HttpRequest* request) {
 }
 
 Socket::~Socket() {
-  delete pWebApplication;
+  try {
+    delete pWebApplication;
+  } catch(...) {}
 }
 
 void Socket::destroy() {

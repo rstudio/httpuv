@@ -18,7 +18,7 @@ void WSHixie76Parser::createFrameHeaderFooter(
   pHeaderData[0] = 0;
   *pHeaderLen = 1;
 
-  pFooterData[0] = 0xFF;
+  pFooterData[0] = static_cast<char>(0xFF);
   *pFooterLen = 1;
 }
 

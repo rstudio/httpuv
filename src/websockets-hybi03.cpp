@@ -89,14 +89,10 @@ void WebSocketProto_HyBi03::handshake(const std::string& url,
   location += requestHeaders.at("host");
   location += url;
 
-  pResponseHeaders->push_back(
-    std::pair<std::string, std::string>("Connection", "Upgrade"));
-  pResponseHeaders->push_back(
-    std::pair<std::string, std::string>("Upgrade", "WebSocket"));
-  pResponseHeaders->push_back(
-    std::pair<std::string, std::string>("Sec-WebSocket-Origin", origin));
-  pResponseHeaders->push_back(
-    std::pair<std::string, std::string>("Sec-WebSocket-Location", location));
+  pResponseHeaders->push_back(std::make_pair("Connection", "Upgrade"));
+  pResponseHeaders->push_back(std::make_pair("Upgrade", "WebSocket"));
+  pResponseHeaders->push_back(std::make_pair("Sec-WebSocket-Origin", origin));
+  pResponseHeaders->push_back(std::make_pair("Sec-WebSocket-Location", location));
 }
 
 bool WebSocketProto_HyBi03::isFin(uint8_t firstBit) const {

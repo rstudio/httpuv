@@ -113,12 +113,14 @@ public:
     _parser.data = this;
 
     _pSocket->addConnection(this);
-    
+
     _env = Rcpp::Function("new.env")();
   }
 
   virtual ~HttpRequest() {
-    delete _pWebSocketConnection;
+    try {
+      delete _pWebSocketConnection;
+    } catch (...) {}
   }
 
   uv_stream_t* handle();
@@ -131,7 +133,7 @@ public:
 
   std::string method() const;
   std::string url() const;
-  RequestHeaders headers() const;
+  const RequestHeaders& headers() const;
 
   void sendWSFrame(const char* pHeader, size_t headerSize,
                    const char* pData, size_t dataSize,
@@ -179,7 +181,7 @@ public:
   virtual ~HttpResponse() {
   }
 
-  ResponseHeaders* headers();
+  ResponseHeaders& headers();
 
   void addHeader(const std::string& name, const std::string& value);
   void writeResponse();

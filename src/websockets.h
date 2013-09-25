@@ -112,7 +112,9 @@ public:
       : _pCallbacks(callbacks), _pProto(pProto), _state(InHeader) {
   }
   virtual ~WSHyBiParser() {
-    delete _pProto;
+    try {
+      delete _pProto;
+    } catch(...) {}
   }
 
   void handshake(const std::string& url,
@@ -148,7 +150,7 @@ public:
   virtual void closeWSSocket() = 0;
 };
 
-class WebSocketConnection : WSParserCallbacks {
+class WebSocketConnection : WSParserCallbacks, NoCopy {
   WSConnState _connState;
   WebSocketConnectionCallbacks* _pCallbacks;
   WSParser* _pParser;
@@ -163,7 +165,9 @@ public:
         _pParser(NULL) {
   }
   virtual ~WebSocketConnection() {
-    delete _pParser;
+    try {
+      delete _pParser;
+    } catch(...) {}
   }
 
   bool accept(const RequestHeaders& requestHeaders, const char* pData, size_t len);

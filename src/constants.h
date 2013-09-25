@@ -36,24 +36,6 @@ typedef std::map<std::string, std::string, compare_ci> RequestHeaders;
 
 typedef std::vector<std::pair<std::string, std::string> > ResponseHeaders;
 
-template<class T>
-class ScopePtr {
-  T* _p;
-public:
-  explicit ScopePtr(T* p) : _p(p) {
-  }
-  ~ScopePtr() {
-    delete _p;
-  }
-  T & operator*() const {
-    return *_p;
-  }
-
-  T * operator->() const {
-    return _p;
-  }
-};
-
 class NoCopy {
 protected:
   NoCopy() {}
