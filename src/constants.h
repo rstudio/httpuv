@@ -19,6 +19,7 @@ enum Opcode {
 
 // Maximum possible byte length for WebSocket header
 const size_t MAX_HEADER_BYTES = 14;
+const size_t MAX_FOOTER_BYTES = 1;
 
 enum WSParseState {
   InHeader,

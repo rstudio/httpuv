@@ -134,7 +134,8 @@ public:
   RequestHeaders headers() const;
 
   void sendWSFrame(const char* pHeader, size_t headerSize,
-                   const char* pData, size_t dataSize);
+                   const char* pData, size_t dataSize,
+                   const char* pFooter, size_t footerSize);
   void closeWSSocket();
 
 public:

@@ -29,7 +29,8 @@ private:
   size_t _bytesLeft;
 
 public:
-  WSHixie76Parser(WSParserCallbacks* pCallbacks) : _pCallbacks(pCallbacks) {
+  WSHixie76Parser(WSParserCallbacks* pCallbacks) :
+    _pCallbacks(pCallbacks), _state(H76_START) {
   }
   ~WSHixie76Parser() {}
 
@@ -39,9 +40,12 @@ public:
                  ResponseHeaders* responseHeaders,
                  std::vector<uint8_t>* pResponse) const;
 
-  void createFrameHeader(Opcode opcode, bool mask, size_t payloadSize,
-                         int32_t maskingKey,
-                         char pData[MAX_HEADER_BYTES], size_t* pLen) const;
+  void createFrameHeaderFooter(
+                 Opcode opcode, bool mask, size_t payloadSize,
+                 int32_t maskingKey,
+                 char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
+                 char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen
+                 ) const;
 
   void read(const char* data, size_t len);
 };

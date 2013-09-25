@@ -126,6 +126,7 @@ typedef struct {
   uv_write_t writeReq;
   std::vector<char>* pHeader;
   std::vector<char>* pData;
+  std::vector<char>* pFooter;
 } ws_send_t;
 
 void on_ws_message_sent(uv_write_t* handle, int status) {
@@ -133,22 +134,26 @@ void on_ws_message_sent(uv_write_t* handle, int status) {
   ws_send_t* pSend = (ws_send_t*)handle;
   delete pSend->pHeader;
   delete pSend->pData;
+  delete pSend->pFooter;
   free(pSend);
 }
 
 void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
-                              const char* pData, size_t dataSize) {
+                              const char* pData, size_t dataSize,
+                              const char* pFooter, size_t footerSize) {
   ws_send_t* pSend = (ws_send_t*)malloc(sizeof(ws_send_t));
   memset(pSend, 0, sizeof(ws_send_t));
   pSend->pHeader = new std::vector<char>(pHeader, pHeader + headerSize);
   pSend->pData = new std::vector<char>(pData, pData + dataSize);
+  pSend->pFooter = new std::vector<char>(pFooter, pFooter + footerSize);
 
-  uv_buf_t buffers[2];
+  uv_buf_t buffers[3];
   buffers[0] = uv_buf_init(&(*pSend->pHeader)[0], pSend->pHeader->size());
   buffers[1] = uv_buf_init(&(*pSend->pData)[0], pSend->pData->size());
+  buffers[2] = uv_buf_init(&(*pSend->pFooter)[0], pSend->pFooter->size());
 
   // TODO: Handle return code
-  uv_write(&pSend->writeReq, (uv_stream_t*)handle(), buffers, 2,
+  uv_write(&pSend->writeReq, (uv_stream_t*)handle(), buffers, 3,
            &on_ws_message_sent);
 }
 
@@ -397,6 +402,21 @@ void HttpResponse::writeResponse() {
   response << "\r\n";
   std::string responseStr = response.str();
   _responseHeader.assign(responseStr.begin(), responseStr.end());
+
+  // For Hixie-76 and HyBi-03, it's important that the body be sent immediately,
+  // before any WebSocket traffic is sent from the server
+  if (_statusCode == 101 && _pBody != NULL && _pBody->size() > 0 && _pBody->size() < 256) {
+    uv_buf_t buffer = _pBody->getData(_pBody->size());
+    if (buffer.len > 0) {
+      _responseHeader.reserve(_responseHeader.size() + buffer.len);
+    }
+    _responseHeader.insert(_responseHeader.end(), buffer.base, buffer.base + buffer.len);
+    if (buffer.len == _pBody->size()) {
+      // We used up the body, kill it
+      delete _pBody;
+      _pBody = NULL;
+    }
+  }
 
   uv_buf_t headerBuf = uv_buf_init(&_responseHeader[0], _responseHeader.size());
   uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));

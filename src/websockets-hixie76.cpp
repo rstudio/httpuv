@@ -1,4 +1,5 @@
 #include "websockets-hixie76.h"
+#include <assert.h>
 
 void WSHixie76Parser::handshake(const std::string& url,
                                 const RequestHeaders& requestHeaders,
@@ -9,16 +10,22 @@ void WSHixie76Parser::handshake(const std::string& url,
                     pResponse);
 }
 
-void WSHixie76Parser::createFrameHeader(Opcode opcode, bool mask, size_t payloadSize,
+void WSHixie76Parser::createFrameHeaderFooter(
+                       Opcode opcode, bool mask, size_t payloadSize,
                        int32_t maskingKey,
-                       char pData[MAX_HEADER_BYTES], size_t* pLen) const {
+                       char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
+                       char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen) const {
+  pHeaderData[0] = 0;
+  *pHeaderLen = 1;
 
+  pFooterData[0] = 0xFF;
+  *pFooterLen = 1;
 }
 
+#include <iostream>
 void WSHixie76Parser::read(const char* data, size_t len) {
   if (len == 0)
     return;
-
   for (const char* pos = data; pos < data + len; pos++) {
     uint8_t b = *pos;
 
@@ -45,7 +52,7 @@ void WSHixie76Parser::read(const char* data, size_t len) {
     } else if (_state == H76_IN_TEXT_FRAME) {
 
       const char* endMarker = pos;
-      while (endMarker < (data + len) && *endMarker != 0xFF) {
+      while (endMarker < (data + len) && *endMarker != (char)0xFF) {
         endMarker++;
       }
 
@@ -57,10 +64,17 @@ void WSHixie76Parser::read(const char* data, size_t len) {
         _pCallbacks->onPayload(pos, endMarker - pos);
       }
 
-      if (endMarker == (data + len)) {
-        // We didn't encounter a marker, just consumed all the data.
+      if (endMarker < (data + len)) {
+        assert(*endMarker == (char)0xFF);
+        // We encountered a marker, all done.
         _state = H76_START;
         _pCallbacks->onFrameComplete();
+
+        // Make sure to skip over what we read
+        pos = endMarker;
+      } else {
+        // We didn't encounter a marker, just consumed all the data.
+        return;
       }
 
     } else if (_state == H76_IN_BINARY_OR_CLOSE_FRAME_LENGTH) {

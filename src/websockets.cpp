@@ -142,11 +142,14 @@ void WSHyBiParser::handshake(const std::string& url,
                      pResponse);
 }
 
-void WSHyBiParser::createFrameHeader(
+void WSHyBiParser::createFrameHeaderFooter(
                      Opcode opcode, bool mask, size_t payloadSize,
-                     int32_t maskingKey, char pData[], size_t *pLen) const {
+                     int32_t maskingKey,
+                     char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
+                     char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen
+                     ) const {
   _pProto->createFrameHeader(opcode, mask, payloadSize, maskingKey,
-                             pData, pLen);
+                             pHeaderData, pHeaderLen);
 }
 
 void WSHyBiParser::read(const char* data, size_t len) {
@@ -236,13 +239,20 @@ void WebSocketConnection::handshake(const std::string& url,
 
 void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t length) {
   std::vector<char> header(MAX_HEADER_BYTES);
+  std::vector<char> footer(MAX_FOOTER_BYTES);
 
-  size_t headerLength;
-  _pParser->createFrameHeader(opcode, false, length, 0,
-    &header[0], &headerLength);
+  size_t headerLength = 0;
+  size_t footerLength = 0;
+
+  _pParser->createFrameHeaderFooter(opcode, false, length, 0,
+    &header[0], &headerLength,
+    &footer[0], &footerLength);
   header.resize(headerLength);
+  footer.resize(footerLength);
 
-  _pCallbacks->sendWSFrame(&header[0], header.size(), pData, length);
+  _pCallbacks->sendWSFrame(&header[0], header.size(),
+                           pData, length,
+                           &footer[0], footer.size());
 }
 
 void WebSocketConnection::closeWS() {

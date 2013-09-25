@@ -90,10 +90,12 @@ public:
                          ResponseHeaders* responseHeaders,
                          std::vector<uint8_t>* pResponse) const = 0;
 
-  virtual void createFrameHeader(
+  virtual void createFrameHeaderFooter(
                          Opcode opcode, bool mask, size_t payloadSize,
                          int32_t maskingKey,
-                         char pData[MAX_HEADER_BYTES], size_t* pLen) const = 0;
+                         char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
+                         char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen
+                         ) const = 0;
 
   virtual void read(const char* data, size_t len) = 0;
 };
@@ -119,9 +121,12 @@ public:
                  ResponseHeaders* responseHeaders,
                  std::vector<uint8_t>* pResponse) const;
 
-  void createFrameHeader(Opcode opcode, bool mask, size_t payloadSize,
+  void createFrameHeaderFooter(
+                         Opcode opcode, bool mask, size_t payloadSize,
                          int32_t maskingKey,
-                         char pData[MAX_HEADER_BYTES], size_t* pLen) const;
+                         char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
+                         char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen
+                         ) const;
 
   void read(const char* data, size_t len);
 };
@@ -138,7 +143,8 @@ public:
   virtual void onWSClose(int code) = 0;
   // Implementers MUST copy data
   virtual void sendWSFrame(const char* headerData, size_t headerLength,
-                           const char* pData, size_t dataLength) = 0;
+                           const char* pData, size_t dataLength,
+                           const char* footerData, size_t footerLength) = 0;
   virtual void closeWSSocket() = 0;
 };
 
