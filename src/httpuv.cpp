@@ -95,7 +95,7 @@ T* internalize(std::string serverHandle) {
 
 void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
   using namespace Rcpp;
-  
+
   Environment& env = *pEnv;
 
   std::string url = pRequest->url();
@@ -128,8 +128,8 @@ void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
   rportstr << raddr.port;
   env["REMOTE_PORT"] = rportstr.str();
 
-  std::map<std::string, std::string, compare_ci> headers = pRequest->headers();
-  for (std::map<std::string, std::string>::iterator it = headers.begin();
+  const RequestHeaders& headers = pRequest->headers();
+  for (RequestHeaders::const_iterator it = headers.begin();
     it != headers.end();
     it++) {
     env["HTTP_" + normalizeHeaderName(it->first)] = it->second;
@@ -191,7 +191,7 @@ HttpResponse* listToResponse(HttpRequest* pRequest,
 
   int status = Rcpp::as<int>(response["status"]);
   std::string statusDesc = getStatusDescription(status);
-  
+
   List responseHeaders = response["headers"];
 
   // Self-frees when response is written
@@ -256,9 +256,9 @@ public:
     }
 
     requestToEnv(pRequest, &pRequest->env());
-    
+
     Rcpp::List response(_onHeaders(pRequest->env()));
-    
+
     return listToResponse(pRequest, response);
   }
 
@@ -271,24 +271,24 @@ public:
 
   virtual HttpResponse* getResponse(HttpRequest* pRequest) {
     Rcpp::List response(_onRequest(pRequest->env()));
-    
+
     return listToResponse(pRequest, response);
   }
 
   void onWSOpen(HttpRequest* pRequest) {
     requestToEnv(pRequest, &pRequest->env());
-    _onWSOpen(externalize(pRequest), pRequest->env());
+    _onWSOpen(externalize<WebSocketConnection>(pRequest->websocket()), pRequest->env());
   }
 
   void onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {
     if (binary)
-      _onWSMessage(externalize(pConn), binary, std::vector<uint8_t>(data, data + len));
+      _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::vector<uint8_t>(data, data + len));
     else
-      _onWSMessage(externalize(pConn), binary, std::string(data, len));
+      _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::string(data, len));
   }
-  
+
   void onWSClose(WebSocketConnection* pConn) {
-    _onWSClose(externalize(pConn));
+    _onWSClose(externalize<WebSocketConnection>(pConn));
   }
 
 };
@@ -325,7 +325,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
   using namespace Rcpp;
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
-  RWebApplication* pHandler = 
+  RWebApplication* pHandler =
     new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
                         onWSMessage, onWSClose);
   uv_stream_t* pServer = createTcpServer(
@@ -335,7 +335,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
     return R_NilValue;
   }
 
-  return Rcpp::wrap(externalize(pServer));
+  return Rcpp::wrap(externalize<uv_stream_t>(pServer));
 }
 
 // [[Rcpp::export]]
@@ -351,7 +351,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
   using namespace Rcpp;
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
-  RWebApplication* pHandler = 
+  RWebApplication* pHandler =
     new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
                         onWSMessage, onWSClose);
   uv_stream_t* pServer = createPipeServer(

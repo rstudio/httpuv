@@ -118,7 +118,7 @@ std::string HttpRequest::url() const {
   return _url;
 }
 
-std::map<std::string, std::string, compare_ci> HttpRequest::headers() const {
+const RequestHeaders& HttpRequest::headers() const {
   return _headers;
 }
 
@@ -126,6 +126,7 @@ typedef struct {
   uv_write_t writeReq;
   std::vector<char>* pHeader;
   std::vector<char>* pData;
+  std::vector<char>* pFooter;
 } ws_send_t;
 
 void on_ws_message_sent(uv_write_t* handle, int status) {
@@ -133,22 +134,26 @@ void on_ws_message_sent(uv_write_t* handle, int status) {
   ws_send_t* pSend = (ws_send_t*)handle;
   delete pSend->pHeader;
   delete pSend->pData;
+  delete pSend->pFooter;
   free(pSend);
 }
 
 void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
-                              const char* pData, size_t dataSize) {
+                              const char* pData, size_t dataSize,
+                              const char* pFooter, size_t footerSize) {
   ws_send_t* pSend = (ws_send_t*)malloc(sizeof(ws_send_t));
   memset(pSend, 0, sizeof(ws_send_t));
   pSend->pHeader = new std::vector<char>(pHeader, pHeader + headerSize);
   pSend->pData = new std::vector<char>(pData, pData + dataSize);
+  pSend->pFooter = new std::vector<char>(pFooter, pFooter + footerSize);
 
-  uv_buf_t buffers[2];
+  uv_buf_t buffers[3];
   buffers[0] = uv_buf_init(&(*pSend->pHeader)[0], pSend->pHeader->size());
   buffers[1] = uv_buf_init(&(*pSend->pData)[0], pSend->pData->size());
+  buffers[2] = uv_buf_init(&(*pSend->pFooter)[0], pSend->pFooter->size());
 
   // TODO: Handle return code
-  uv_write(&pSend->writeReq, (uv_stream_t*)handle(), buffers, 2,
+  uv_write(&pSend->writeReq, (uv_stream_t*)handle(), buffers, 3,
            &on_ws_message_sent);
 }
 
@@ -227,7 +232,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
       _ignoreNewData = true;
     }
     pResp->writeResponse();
-    
+
     // result = 1 has special meaning to http_parser for this one callback; it
     // means F_SKIPBODY should be set on the parser. That's not what we want
     // here; we just want processing to terminate.
@@ -267,7 +272,7 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 }
 
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
-  _pWebApplication->onWSMessage(this, binary, data, len);
+  _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
 }
 void HttpRequest::onWSClose(int code) {
   // TODO: Call close() here?
@@ -286,7 +291,7 @@ void HttpRequest::_on_closed(uv_handle_t* handle) {
 void HttpRequest::close() {
   // std::cerr << "Closing handle " << &_handle << std::endl;
   if (_protocol == WebSockets)
-    _pWebApplication->onWSClose(this);
+    _pWebApplication->onWSClose(_pWebSocketConnection);
   _pSocket->removeConnection(this);
   uv_close(toHandle(&_handle.stream), HttpRequest_on_closed);
 }
@@ -300,29 +305,28 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
       int parsed = http_parser_execute(&_parser, &request_settings(), buf.base, nread);
       if (_parser.upgrade) {
         char* pData = buf.base + parsed;
-        ssize_t pDataLen = nread - parsed;
+        size_t pDataLen = nread - parsed;
 
-        if (_headers.find("upgrade") != _headers.end() &&
-            strcasecmp(_headers["upgrade"].c_str(), "websocket") == 0 &&
-            _headers.find("sec-websocket-key") != _headers.end()) {
-
+        if (_pWebSocketConnection->accept(_headers, pData, pDataLen)) {
           // Freed in on_response_written
+          InMemoryDataSource* pDS = new InMemoryDataSource();
           HttpResponse* pResp = new HttpResponse(this, 101, "Switching Protocols",
-            NULL);
-          pResp->addHeader("Upgrade", "websocket");
-          pResp->addHeader("Connection", "Upgrade");
-          pResp->addHeader(
-            "Sec-WebSocket-Accept",
-            createHandshakeResponse(_headers["sec-websocket-key"]));
-          // TODO: Consult app about supported WS protocol
-          //pResp->addHeader("Sec-WebSocket-Protocol", "");
+            pDS);
+
+          std::vector<uint8_t> body;
+          _pWebSocketConnection->handshake(_url, _headers, &pData, &pDataLen,
+                                           &pResp->headers(), &body);
+          if (body.size() > 0) {
+            pDS->add(body);
+          }
+          body.empty();
 
           pResp->writeResponse();
 
           _protocol = WebSockets;
           _pWebApplication->onWSOpen(this);
 
-          read(pData, pDataLen);
+          _pWebSocketConnection->read(pData, pDataLen);
         }
 
         if (_protocol != WebSockets) {
@@ -337,7 +341,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
         }
       }
     } else if (_protocol == WebSockets) {
-      read(buf.base, nread);
+      _pWebSocketConnection->read(buf.base, nread);
     }
   } else if (nread < 0) {
     uv_err_t err = uv_last_error(_pLoop);
@@ -363,6 +367,10 @@ void HttpRequest::handleRequest() {
   }
 }
 
+ResponseHeaders& HttpResponse::headers() {
+  return _headers;
+}
+
 void HttpResponse::addHeader(const std::string& name, const std::string& value) {
   _headers.push_back(std::pair<std::string, std::string>(name, value));
 }
@@ -384,7 +392,7 @@ void HttpResponse::writeResponse() {
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
   response << "HTTP/1.1 " << _statusCode << " " << _status << "\r\n";
-  for (std::vector<std::pair<std::string, std::string> >::iterator it = _headers.begin();
+  for (ResponseHeaders::const_iterator it = _headers.begin();
      it != _headers.end();
      it++) {
     response << it->first << ": " << it->second << "\r\n";
@@ -395,8 +403,23 @@ void HttpResponse::writeResponse() {
   std::string responseStr = response.str();
   _responseHeader.assign(responseStr.begin(), responseStr.end());
 
+  // For Hixie-76 and HyBi-03, it's important that the body be sent immediately,
+  // before any WebSocket traffic is sent from the server
+  if (_statusCode == 101 && _pBody != NULL && _pBody->size() > 0 && _pBody->size() < 256) {
+    uv_buf_t buffer = _pBody->getData(_pBody->size());
+    if (buffer.len > 0) {
+      _responseHeader.reserve(_responseHeader.size() + buffer.len);
+    }
+    _responseHeader.insert(_responseHeader.end(), buffer.base, buffer.base + buffer.len);
+    if (buffer.len == _pBody->size()) {
+      // We used up the body, kill it
+      delete _pBody;
+      _pBody = NULL;
+    }
+  }
+
   uv_buf_t headerBuf = uv_buf_init(&_responseHeader[0], _responseHeader.size());
-  uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t)); 
+  uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));
   memset(pWriteReq, 0, sizeof(uv_write_t));
   pWriteReq->data = this;
 
@@ -466,7 +489,9 @@ void Socket::removeConnection(HttpRequest* request) {
 }
 
 Socket::~Socket() {
-  delete pWebApplication;
+  try {
+    delete pWebApplication;
+  } catch(...) {}
 }
 
 void Socket::destroy() {
@@ -578,7 +603,7 @@ void freeServer(uv_stream_t* pHandle) {
   uv_loop_t* loop = pHandle->loop;
   Socket* pSocket = (Socket*)pHandle->data;
   pSocket->destroy();
-  
+
   runNonBlocking(loop);
 }
 bool runNonBlocking(uv_loop_t* loop) {
