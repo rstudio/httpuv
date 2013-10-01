@@ -13,7 +13,7 @@ The easiest way to install is with `devtools::install_github`:
 
 ```R
 # install.packages("devtools")
-devtools::install_github("httpuv", "shiny")
+devtools::install_github("httpuv", "rstudio")
 ```
 
 Since httpuv contains C code, you'll need to make sure you're set up to install packages. 
