@@ -16,12 +16,6 @@
 #include "websockets.h"
 #include "uvutil.h"
 
-struct compare_ci {
-  bool operator()(const std::string& a, const std::string& b) const {
-    return strcasecmp(a.c_str(), b.c_str()) < 0;
-  }
-};
-
 class HttpRequest;
 class HttpResponse;
 
@@ -78,7 +72,7 @@ struct Address {
   }
 };
 
-class HttpRequest : WebSocketConnection {
+class HttpRequest : WebSocketConnectionCallbacks {
 
 private:
   uv_loop_t* _pLoop;
@@ -88,10 +82,11 @@ private:
   http_parser _parser;
   Protocol _protocol;
   std::string _url;
-  std::map<std::string, std::string, compare_ci> _headers;
+  RequestHeaders _headers;
   std::string _lastHeaderField;
   unsigned long _bytesRead;
   Rcpp::Environment _env;
+  WebSocketConnection* _pWebSocketConnection;
   // _ignoreNewData is used in cases where we rejected a request (by sending
   // a response with a non-100 status code) before its body was received. We
   // don't want to close the connection because the response might not be
@@ -106,7 +101,9 @@ public:
   HttpRequest(uv_loop_t* pLoop, WebApplication* pWebApplication,
       Socket* pSocket)
     : _pLoop(pLoop), _pWebApplication(pWebApplication), _pSocket(pSocket),
-      _protocol(HTTP), _bytesRead(0), _ignoreNewData(false) {
+      _protocol(HTTP), _bytesRead(0),
+      _pWebSocketConnection(new WebSocketConnection(this)),
+      _ignoreNewData(false) {
 
     uv_tcp_init(pLoop, &_handle.tcp);
     _handle.isTcp = true;
@@ -116,14 +113,18 @@ public:
     _parser.data = this;
 
     _pSocket->addConnection(this);
-    
+
     _env = Rcpp::Function("new.env")();
   }
 
   virtual ~HttpRequest() {
+    try {
+      delete _pWebSocketConnection;
+    } catch (...) {}
   }
 
   uv_stream_t* handle();
+  WebSocketConnection* websocket() const { return _pWebSocketConnection; }
   Address clientAddress();
   Address serverAddress();
   Rcpp::Environment& env();
@@ -132,10 +133,11 @@ public:
 
   std::string method() const;
   std::string url() const;
-  std::map<std::string, std::string, compare_ci> headers() const;
+  const RequestHeaders& headers() const;
 
   void sendWSFrame(const char* pHeader, size_t headerSize,
-                   const char* pData, size_t dataSize);
+                   const char* pData, size_t dataSize,
+                   const char* pFooter, size_t footerSize);
   void closeWSSocket();
 
 public:
@@ -165,7 +167,7 @@ struct HttpResponse {
   HttpRequest* _pRequest;
   int _statusCode;
   std::string _status;
-  std::vector<std::pair<std::string, std::string> > _headers;
+  ResponseHeaders _headers;
   std::vector<char> _responseHeader;
   DataSource* _pBody;
 
@@ -178,6 +180,8 @@ public:
 
   virtual ~HttpResponse() {
   }
+
+  ResponseHeaders& headers();
 
   void addHeader(const std::string& name, const std::string& value);
   void writeResponse();

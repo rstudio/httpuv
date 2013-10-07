@@ -38,6 +38,33 @@ public:
   }
 };
 
+uint64_t InMemoryDataSource::size() const {
+  return _buffer.size();
+}
+uv_buf_t InMemoryDataSource::getData(size_t bytesDesired) {
+  size_t bytes = _buffer.size() - _pos;
+  if (bytesDesired < bytes)
+    bytes = bytesDesired;
+
+  uv_buf_t mem;
+  mem.base = bytes > 0 ? reinterpret_cast<char*>(&_buffer[_pos]) : 0;
+  mem.len = bytes;
+
+  _pos += bytes;
+  return mem;
+}
+void InMemoryDataSource::freeData(uv_buf_t buffer) {
+}
+void InMemoryDataSource::close() {
+  _buffer.clear();
+}
+
+void InMemoryDataSource::add(const std::vector<uint8_t>& moreData) {
+  if (_buffer.capacity() < _buffer.size() + moreData.size())
+    _buffer.reserve(_buffer.size() + moreData.size());
+  _buffer.insert(_buffer.end(), moreData.begin(), moreData.end());
+}
+
 static void writecb(uv_write_t* handle, int status) {
   WriteOp* pWriteOp = (WriteOp*)handle->data;
   pWriteOp->end();

@@ -6,5 +6,9 @@
 *.dll
 /eventloop.creator.user*
 *.swp
-
+src/httpuv.config
+src/httpuv.creator
+src/httpuv.creator.user
+src/httpuv.files
+src/httpuv.includes
 .Rproj.user

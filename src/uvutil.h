@@ -2,6 +2,7 @@
 #define UVUTIL_HPP
 
 #include <string>
+#include <vector>
 #include <uv.h>
 
 inline uv_handle_t* toHandle(uv_timer_t* timer) {
@@ -33,6 +34,22 @@ public:
   virtual uv_buf_t getData(size_t bytesDesired) = 0;
   virtual void freeData(uv_buf_t buffer) = 0;
   virtual void close() = 0;
+};
+
+class InMemoryDataSource : public DataSource {
+private:
+  std::vector<uint8_t> _buffer;
+  size_t _pos;
+public:
+  explicit InMemoryDataSource(const std::vector<uint8_t>& buffer = std::vector<uint8_t>())
+    : _buffer(buffer), _pos(0) {}
+  virtual ~InMemoryDataSource() {}
+  uint64_t size() const;
+  uv_buf_t getData(size_t bytesDesired);
+  void freeData(uv_buf_t buffer);
+  void close();
+
+  void add(const std::vector<uint8_t>& moreData);
 };
 
 // Class for writing a DataSource to a uv_stream_t. Takes care
