@@ -1,7 +1,10 @@
-httpuv 1.1.0.99
+httpuv 1.2.0
 ------------------------------------------------------------------------
 
 * Fix IE10 websocket handshake failure.
+
+* Implement hixie-76 version of WebSocket protocol, for Safari 4 and
+  QtWebKit.
 
 
 httpuv 1.1.0
