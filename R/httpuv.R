@@ -152,10 +152,24 @@ AppWrapper <- setRefClass(
         .app <<- app
     },
     onHeaders = function(req) {
-      if (is.null(.app$onHeaders))
-        return(NULL)
+      if (is.list(.app)) {
+        if (is.null(.app$onHeaders))
+          return(NULL)
 
-      rookCall(.app$onHeaders, req)
+        rookCall(.app$onHeaders, req)
+      } else {
+        refdef <- getRefClass(class(.app))
+        if ("onHeaders" %in% refdef$methods()) {
+          rookCall(.app$onHeaders, req)
+        } else if ("onHeaders" %in% names(refdef$fields())) {
+          if (is.null(.app$onHeaders))
+            return(NULL)
+
+          rookCall(.app$onHeaders, req)
+        } else {
+          return(NULL)
+        }
+      }
     },
     onBodyData = function(req, bytes) {
       if (is.null(req$.bodyData))
