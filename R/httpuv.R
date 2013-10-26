@@ -349,6 +349,25 @@ startServer <- function(host, port, app) {
   return(server)
 }
 
+startDaemonizedServer <- function(host, port, app) {
+  if (.Platform$OS.type != "unix")
+    stop("Daemonized servers only supported on UNIX-like environments")
+  
+  server <- startServer(host, port, app)
+  tryCatch({
+    rHandler <- daemonize(port)
+    server <- list(libuvHandler=server, rHandler=rHandler)
+  }, error=function(e) {
+    stopServer(server)
+    stop(e)
+  })
+  return(server)
+}
+
+stopDaemonizedServer <- function(server) {
+  stopServer(server$libuvHandler)
+}
+
 #' @param name A string that indicates the path for the domain socket (on 
 #'   Unix-like systems) or the name of the named pipe (on Windows).
 #' @param mask If non-\code{NULL} and non-negative, this numeric value is used 

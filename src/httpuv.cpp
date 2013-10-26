@@ -412,3 +412,8 @@ bool run(uint32_t timeoutMillis) {
 void stopLoop() {
   uv_stop(uv_default_loop());
 }
+
+// [[Rcpp::export]]
+Rcpp::RObject daemonize(int port) {
+  return R_NilValue;
+}

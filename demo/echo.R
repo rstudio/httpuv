@@ -55,5 +55,9 @@ app <- list(
   }
 )
 
-browseURL("http://localhost:9454/")
-runServer("0.0.0.0", 9454, app, 250)
+#browseURL("http://localhost:9454/")
+#runServer("0.0.0.0", 9454, app, 250)
+
+server <- startDaemonizedServer("0.0.0.0", 9454, app)
+stopDaemonizedServer(server)
+

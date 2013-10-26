@@ -29,3 +29,7 @@ stopLoop <- function() {
     invisible(.Call('httpuv_stopLoop', PACKAGE = 'httpuv'))
 }
 
+daemonize <- function(port) {
+    .Call('httpuv_daemonize', PACKAGE = 'httpuv', port)
+}
+
