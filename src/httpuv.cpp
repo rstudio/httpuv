@@ -413,7 +413,72 @@ void stopLoop() {
   uv_stop(uv_default_loop());
 }
 
-// [[Rcpp::export]]
-Rcpp::RObject daemonize(int port) {
-  return R_NilValue;
+
+#ifndef WIN32
+/*
+ * Daemonizing on unix
+ * 
+ * Uses the R event loop to trigger the libuv default loop. This is a similar mechanism as that used by Rhttpd.
+ * It adds an event listener on the port where the TCP server was created by libuv. This triggers uv_run on the
+ * default loop any time there is an event on the server port. It also adds an event listener to a file descriptor
+ * exposed by the uv_default_loop to trigger uv_run whenever necessary. It uses the non-blocking version
+ * of uv_run (UV_RUN_NOWAIT). 
+ *
+ * Still TODO: Make sure everything is destroyed if R quits.
+ */
+
+#include <R_ext/eventloop.h>
+
+#define UVSERVERACTIVITY 55
+#define UVLOOPACTIVITY 57
+
+void loop_input_handler(void *data) {
+  uv_run(uv_default_loop(), UV_RUN_NOWAIT);
 }
+
+class DaemonizedServer {
+public:
+  uv_stream_t *_pServer;
+  InputHandler *serverHandler;
+  InputHandler *loopHandler;
+
+  DaemonizedServer(uv_stream_t *pServer)
+  : _pServer(pServer) {}
+
+  ~DaemonizedServer() {
+    if (loopHandler) {
+      removeInputHandler(&R_InputHandlers, loopHandler);
+    }
+    
+    if (serverHandler) {
+      removeInputHandler(&R_InputHandlers, serverHandler);
+    }
+
+    if (_pServer) {
+      freeServer(_pServer);
+    }
+  }
+};
+
+
+// [[Rcpp::export]]
+Rcpp::RObject daemonize(std::string handle) {
+  uv_stream_t *pServer = internalize<uv_stream_t >(handle);
+  DaemonizedServer *dServer = new DaemonizedServer(pServer);
+
+  int fd = dServer->_pServer->io_watcher.fd;
+  dServer->serverHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVSERVERACTIVITY);
+
+  fd = uv_backend_fd(uv_default_loop());
+  dServer->loopHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVLOOPACTIVITY);
+
+  return Rcpp::wrap(externalize(dServer));
+}
+
+// [[Rcpp::export]]
+void destroyDaemonizedServer(std::string handle) {
+  DaemonizedServer *dServer = internalize<DaemonizedServer >(handle);
+  delete dServer;
+}
+
+#endif
