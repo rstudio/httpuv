@@ -1,0 +1,19 @@
+\name{rawToBase64}
+\alias{rawToBase64}
+\title{Convert raw vector to Base64-encoded string}
+\usage{
+  rawToBase64(x)
+}
+\arguments{
+  \item{x}{A raw vector.}
+}
+\description{
+  Converts a raw vector to its Base64 encoding as a
+  single-element character vector.
+}
+\examples{
+set.seed(100)
+result <- rawToBase64(as.raw(runif(19, min=0, max=256)))
+stopifnot(identical(result, "TkGNDnd7z16LK5/hR2bDqzRbXA=="))
+}
+

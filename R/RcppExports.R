@@ -29,3 +29,7 @@ stopLoop <- function() {
     invisible(.Call('httpuv_stopLoop', PACKAGE = 'httpuv'))
 }
 
+base64encode <- function(x) {
+    .Call('httpuv_base64encode', PACKAGE = 'httpuv', x)
+}
+

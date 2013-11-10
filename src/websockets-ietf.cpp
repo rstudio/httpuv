@@ -27,7 +27,7 @@ void WebSocketProto_IETF::handshake(const std::string& url,
   std::vector<uint8_t> digest(SHA1_DIGEST_SIZE);
   reid_SHA1_Final(&ctx, &digest[0]);
 
-  std::string response = b64encode(digest);
+  std::string response = b64encode(digest.begin(), digest.end());
 
   pResponseHeaders->push_back(
     std::pair<std::string, std::string>("Connection", "Upgrade"));
