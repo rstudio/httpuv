@@ -414,7 +414,6 @@ void stopLoop() {
 }
 
 
-#ifndef WIN32
 /*
  * Daemonizing on unix
  * 
@@ -463,6 +462,7 @@ public:
 
 // [[Rcpp::export]]
 Rcpp::RObject daemonize(std::string handle) {
+  #ifndef WIN32
   uv_stream_t *pServer = internalize<uv_stream_t >(handle);
   DaemonizedServer *dServer = new DaemonizedServer(pServer);
 
@@ -471,14 +471,20 @@ Rcpp::RObject daemonize(std::string handle) {
 
   fd = uv_backend_fd(uv_default_loop());
   dServer->loopHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVLOOPACTIVITY);
-
+  
   return Rcpp::wrap(externalize(dServer));
+  
+  #else
+  return R_NilValue;
+  #endif
 }
 
 // [[Rcpp::export]]
 void destroyDaemonizedServer(std::string handle) {
+  #ifndef WIN32
   DaemonizedServer *dServer = internalize<DaemonizedServer >(handle);
   delete dServer;
+  #endif
 }
 
-#endif
+
