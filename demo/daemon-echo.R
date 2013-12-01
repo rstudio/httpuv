@@ -1,5 +1,7 @@
 library(httpuv)
 
+.lastMessage <- NULL
+
 app <- list(
   call = function(req) {
     wsUrl = paste(sep='',
@@ -50,12 +52,16 @@ app <- list(
   },
   onWSOpen = function(ws) {
     ws$onMessage(function(binary, message) {
+      .lastMessage <<- message
       ws$send(message)
     })
   }
 )
 
-browseURL("http://localhost:9454/")
-runServer("0.0.0.0", 9454, app, 250)
+server <- startDaemonizedServer("0.0.0.0", 9454, app)
 
+# check the value of .lastMessage after echoing to check it is being updated
+
+# call this after done
+#stopDaemonizedServer(server)
 
