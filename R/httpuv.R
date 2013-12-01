@@ -485,7 +485,7 @@ rawToBase64 <- function(x) {
   base64encode(x)
 }
 
-.globals <- new.env().globals <- new.env()
+.globals <- new.env()
 
 
 #' Create an HTTP/WebSocket daemonized server (only supported in UNIX-like environments)
