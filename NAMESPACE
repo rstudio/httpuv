@@ -1,4 +1,5 @@
 export(interrupt)
+export(rawToBase64)
 export(runServer)
 export(service)
 export(startDaemonizedServer)
