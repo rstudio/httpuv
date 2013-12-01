@@ -128,3 +128,30 @@ BEGIN_RCPP
     return __sexp_result;
 END_RCPP
 }
+// daemonize
+Rcpp::RObject daemonize(std::string handle);
+RcppExport SEXP httpuv_daemonize(SEXP handleSEXP) {
+BEGIN_RCPP
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP );
+        Rcpp::RObject __result = daemonize(handle);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
+END_RCPP
+}
+// destroyDaemonizedServer
+void destroyDaemonizedServer(std::string handle);
+RcppExport SEXP httpuv_destroyDaemonizedServer(SEXP handleSEXP) {
+BEGIN_RCPP
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP );
+        destroyDaemonizedServer(handle);
+    }
+    return R_NilValue;
+END_RCPP
+}
