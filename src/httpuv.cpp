@@ -10,6 +10,7 @@
 // Also need to undefine the Free macro
 #undef Free
 #include <uv.h>
+#include <base64.hpp>
 #include "uvutil.h"
 #include "http.h"
 #include "filedatasource.h"
@@ -413,6 +414,10 @@ void stopLoop() {
   uv_stop(uv_default_loop());
 }
 
+// [[Rcpp::export]]
+std::string base64encode(const Rcpp::RawVector& x) {
+  return b64encode(x.begin(), x.end());
+}
 
 /*
  * Daemonizing on unix

@@ -113,6 +113,21 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// base64encode
+std::string base64encode(const Rcpp::RawVector& x);
+RcppExport SEXP httpuv_base64encode(SEXP xSEXP) {
+BEGIN_RCPP
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< const Rcpp::RawVector& >::type x(xSEXP );
+        std::string __result = base64encode(x);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
+END_RCPP
+}
 // daemonize
 Rcpp::RObject daemonize(std::string handle);
 RcppExport SEXP httpuv_daemonize(SEXP handleSEXP) {
