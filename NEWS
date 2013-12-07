@@ -1,7 +1,14 @@
-httpuv 1.2.0.99
+httpuv 1.2.1.99
 ------------------------------------------------------------------------
 
 * Export base64 encoding function `rawToBase64`.
+
+
+httpuv 1.2.1
+------------------------------------------------------------------------
+
+* Now builds on Solaris 10 (fixed by Dr. Ripley)! GNU make and gcc are
+  required.
 
 
 httpuv 1.2.0
