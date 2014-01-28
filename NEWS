@@ -4,6 +4,12 @@ httpuv 1.2.0.99
 * Export base64 encoding function `rawToBase64`.
 
 
+httpuv 1.2.1
+------------------------------------------------------------------------
+
+* Solaris 10 compatibility fixes (courtesy of Dr. Brian Ripley).
+
+
 httpuv 1.2.0
 ------------------------------------------------------------------------
 
