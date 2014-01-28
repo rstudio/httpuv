@@ -3,6 +3,8 @@ httpuv 1.2.0.99
 
 * Export base64 encoding function `rawToBase64`.
 
+* Compatibility work for Rcpp 0.11.0.
+
 
 httpuv 1.2.1
 ------------------------------------------------------------------------
