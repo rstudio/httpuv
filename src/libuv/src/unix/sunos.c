@@ -28,6 +28,9 @@
 #include <assert.h>
 #include <errno.h>
 
+#define SUNOS_NO_IFADDRS
+
+
 #ifndef SUNOS_NO_IFADDRS
 # include <ifaddrs.h>
 #endif
