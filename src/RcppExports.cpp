@@ -9,13 +9,11 @@ using namespace Rcpp;
 void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message);
 RcppExport SEXP httpuv_sendWSMessage(SEXP connSEXP, SEXP binarySEXP, SEXP messageSEXP) {
 BEGIN_RCPP
-    {
-        Rcpp::RNGScope __rngScope;
-        Rcpp::traits::input_parameter< std::string >::type conn(connSEXP );
-        Rcpp::traits::input_parameter< bool >::type binary(binarySEXP );
-        Rcpp::traits::input_parameter< Rcpp::RObject >::type message(messageSEXP );
-        sendWSMessage(conn, binary, message);
-    }
+    Rcpp::RNGScope __rngScope;
+    std::string conn = Rcpp::as<std::string >(connSEXP);
+    bool binary = Rcpp::as<bool >(binarySEXP);
+    Rcpp::RObject message = Rcpp::as<Rcpp::RObject >(messageSEXP);
+    sendWSMessage(conn, binary, message);
     return R_NilValue;
 END_RCPP
 }
@@ -23,11 +21,9 @@ END_RCPP
 void closeWS(std::string conn);
 RcppExport SEXP httpuv_closeWS(SEXP connSEXP) {
 BEGIN_RCPP
-    {
-        Rcpp::RNGScope __rngScope;
-        Rcpp::traits::input_parameter< std::string >::type conn(connSEXP );
-        closeWS(conn);
-    }
+    Rcpp::RNGScope __rngScope;
+    std::string conn = Rcpp::as<std::string >(connSEXP);
+    closeWS(conn);
     return R_NilValue;
 END_RCPP
 }
@@ -35,55 +31,43 @@ END_RCPP
 Rcpp::RObject makeTcpServer(const std::string& host, int port, Rcpp::Function onHeaders, Rcpp::Function onBodyData, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
 RcppExport SEXP httpuv_makeTcpServer(SEXP hostSEXP, SEXP portSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
 BEGIN_RCPP
-    SEXP __sexp_result;
-    {
-        Rcpp::RNGScope __rngScope;
-        Rcpp::traits::input_parameter< const std::string& >::type host(hostSEXP );
-        Rcpp::traits::input_parameter< int >::type port(portSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onHeaders(onHeadersSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onBodyData(onBodyDataSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onRequest(onRequestSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onWSOpen(onWSOpenSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onWSMessage(onWSMessageSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onWSClose(onWSCloseSEXP );
-        Rcpp::RObject __result = makeTcpServer(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose);
-        PROTECT(__sexp_result = Rcpp::wrap(__result));
-    }
-    UNPROTECT(1);
-    return __sexp_result;
+    Rcpp::RNGScope __rngScope;
+    std::string host = Rcpp::as<std::string >(hostSEXP);
+    int port = Rcpp::as<int >(portSEXP);
+    Rcpp::Function onHeaders = Rcpp::as<Rcpp::Function >(onHeadersSEXP);
+    Rcpp::Function onBodyData = Rcpp::as<Rcpp::Function >(onBodyDataSEXP);
+    Rcpp::Function onRequest = Rcpp::as<Rcpp::Function >(onRequestSEXP);
+    Rcpp::Function onWSOpen = Rcpp::as<Rcpp::Function >(onWSOpenSEXP);
+    Rcpp::Function onWSMessage = Rcpp::as<Rcpp::Function >(onWSMessageSEXP);
+    Rcpp::Function onWSClose = Rcpp::as<Rcpp::Function >(onWSCloseSEXP);
+    Rcpp::RObject __result = makeTcpServer(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose);
+    return Rcpp::wrap(__result);
 END_RCPP
 }
 // makePipeServer
 Rcpp::RObject makePipeServer(const std::string& name, int mask, Rcpp::Function onHeaders, Rcpp::Function onBodyData, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
 RcppExport SEXP httpuv_makePipeServer(SEXP nameSEXP, SEXP maskSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
 BEGIN_RCPP
-    SEXP __sexp_result;
-    {
-        Rcpp::RNGScope __rngScope;
-        Rcpp::traits::input_parameter< const std::string& >::type name(nameSEXP );
-        Rcpp::traits::input_parameter< int >::type mask(maskSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onHeaders(onHeadersSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onBodyData(onBodyDataSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onRequest(onRequestSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onWSOpen(onWSOpenSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onWSMessage(onWSMessageSEXP );
-        Rcpp::traits::input_parameter< Rcpp::Function >::type onWSClose(onWSCloseSEXP );
-        Rcpp::RObject __result = makePipeServer(name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose);
-        PROTECT(__sexp_result = Rcpp::wrap(__result));
-    }
-    UNPROTECT(1);
-    return __sexp_result;
+    Rcpp::RNGScope __rngScope;
+    std::string name = Rcpp::as<std::string >(nameSEXP);
+    int mask = Rcpp::as<int >(maskSEXP);
+    Rcpp::Function onHeaders = Rcpp::as<Rcpp::Function >(onHeadersSEXP);
+    Rcpp::Function onBodyData = Rcpp::as<Rcpp::Function >(onBodyDataSEXP);
+    Rcpp::Function onRequest = Rcpp::as<Rcpp::Function >(onRequestSEXP);
+    Rcpp::Function onWSOpen = Rcpp::as<Rcpp::Function >(onWSOpenSEXP);
+    Rcpp::Function onWSMessage = Rcpp::as<Rcpp::Function >(onWSMessageSEXP);
+    Rcpp::Function onWSClose = Rcpp::as<Rcpp::Function >(onWSCloseSEXP);
+    Rcpp::RObject __result = makePipeServer(name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose);
+    return Rcpp::wrap(__result);
 END_RCPP
 }
 // destroyServer
 void destroyServer(std::string handle);
 RcppExport SEXP httpuv_destroyServer(SEXP handleSEXP) {
 BEGIN_RCPP
-    {
-        Rcpp::RNGScope __rngScope;
-        Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP );
-        destroyServer(handle);
-    }
+    Rcpp::RNGScope __rngScope;
+    std::string handle = Rcpp::as<std::string >(handleSEXP);
+    destroyServer(handle);
     return R_NilValue;
 END_RCPP
 }
@@ -91,25 +75,18 @@ END_RCPP
 bool run(uint32_t timeoutMillis);
 RcppExport SEXP httpuv_run(SEXP timeoutMillisSEXP) {
 BEGIN_RCPP
-    SEXP __sexp_result;
-    {
-        Rcpp::RNGScope __rngScope;
-        Rcpp::traits::input_parameter< uint32_t >::type timeoutMillis(timeoutMillisSEXP );
-        bool __result = run(timeoutMillis);
-        PROTECT(__sexp_result = Rcpp::wrap(__result));
-    }
-    UNPROTECT(1);
-    return __sexp_result;
+    Rcpp::RNGScope __rngScope;
+    uint32_t timeoutMillis = Rcpp::as<uint32_t >(timeoutMillisSEXP);
+    bool __result = run(timeoutMillis);
+    return Rcpp::wrap(__result);
 END_RCPP
 }
 // stopLoop
 void stopLoop();
 RcppExport SEXP httpuv_stopLoop() {
 BEGIN_RCPP
-    {
-        Rcpp::RNGScope __rngScope;
-        stopLoop();
-    }
+    Rcpp::RNGScope __rngScope;
+    stopLoop();
     return R_NilValue;
 END_RCPP
 }
@@ -117,14 +94,9 @@ END_RCPP
 std::string base64encode(const Rcpp::RawVector& x);
 RcppExport SEXP httpuv_base64encode(SEXP xSEXP) {
 BEGIN_RCPP
-    SEXP __sexp_result;
-    {
-        Rcpp::RNGScope __rngScope;
-        Rcpp::traits::input_parameter< const Rcpp::RawVector& >::type x(xSEXP );
-        std::string __result = base64encode(x);
-        PROTECT(__sexp_result = Rcpp::wrap(__result));
-    }
-    UNPROTECT(1);
-    return __sexp_result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::RawVector x = Rcpp::as<Rcpp::RawVector >(xSEXP);
+    std::string __result = base64encode(x);
+    return Rcpp::wrap(__result);
 END_RCPP
 }
