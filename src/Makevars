@@ -13,6 +13,14 @@ endif
 
 PKG_CPPFLAGS = -I./libuv/include -I./http-parser -I./sha1 -I./base64
 
+ifeq ($(UNAME), Darwin)
+  # clang requires -stdlib=libstdc++
+  IS_CLANG := $(shell $(CC) --version | grep -q clang && echo true)
+  ifeq ($(IS_CLANG),true)
+    PKG_CPPFLAGS += -stdlib=libstdc++
+  endif
+endif
+
 
 
 .PHONY: all libuv.a http-parser.o
