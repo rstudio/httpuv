@@ -23,6 +23,8 @@
 #' @author Joe Cheng \email{joe@@rstudio.com}
 #' @keywords package
 #' @useDynLib httpuv
+#' @import methods
+#' @importFrom Rcpp evalCpp
 NULL
 
 # Implementation of Rook input stream
