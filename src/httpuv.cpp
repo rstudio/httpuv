@@ -6,9 +6,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <Rinternals.h>
-#undef Realloc
-// Also need to undefine the Free macro
-#undef Free
+#include "fixup.h"
 #include <uv.h>
 #include <base64.hpp>
 #include "uvutil.h"

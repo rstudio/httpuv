@@ -7,9 +7,7 @@
 #include <vector>
 
 #include <Rcpp.h>
-#undef Realloc
-// Also need to undefine the Free macro
-#undef Free
+#include "fixup.h"
 #include <uv.h>
 #include <http_parser.h>
 

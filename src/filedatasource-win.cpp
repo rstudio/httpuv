@@ -1,8 +1,9 @@
 #ifdef _WIN32
 
 #include "filedatasource.h"
+#include <Rcpp.h>
+#include "fixup.h"
 #include <Windows.h>
-#include <Rcpp/exceptions.h>
 #include <Rinternals.h>
 
 // Windows gets a whole different implementation of FileDataSource

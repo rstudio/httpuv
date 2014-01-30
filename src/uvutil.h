@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <Rcpp.h>
+#include "fixup.h"
 #include <uv.h>
 
 inline uv_handle_t* toHandle(uv_timer_t* timer) {
