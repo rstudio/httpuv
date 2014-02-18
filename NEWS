@@ -1,4 +1,13 @@
-httpuv 1.2.0.99
+httpuv 1.2.3
+------------------------------------------------------------------------
+
+* Require Rcpp 0.11.0. The absence of this requirement made it too easy
+  for Windows and Mac users with Rcpp 0.10 already installed to grab
+  httpuv 1.2.2 binaries from CRAN, which are built against Rcpp 0.11,
+  causing bad crashes due to Rcpp's linkage changes.
+
+
+httpuv 1.2.2
 ------------------------------------------------------------------------
 
 * Export base64 encoding function `rawToBase64`.
