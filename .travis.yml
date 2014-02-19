@@ -1,7 +1,6 @@
 # Sample .travis.yml for R projects.
 #
-# See the r-travis repo and its wiki 
-# at https://github.com/craigcitro/r-travis/wiki
+# See https://github.com/craigcitro/r-travis/wiki
 
 language: c
 
