@@ -418,36 +418,60 @@ std::string base64encode(const Rcpp::RawVector& x) {
 }
 
 /*
- * Daemonizing on unix
+ * Daemonizing
  * 
- * Uses the R event loop to trigger the libuv default loop. This is a similar mechanism as that used by Rhttpd.
+ * On UNIX-like environments: Uses the R event loop to trigger the libuv default loop. This is a similar mechanism as that used by Rhttpd.
  * It adds an event listener on the port where the TCP server was created by libuv. This triggers uv_run on the
  * default loop any time there is an event on the server port. It also adds an event listener to a file descriptor
  * exposed by the uv_default_loop to trigger uv_run whenever necessary. It uses the non-blocking version
- * of uv_run (UV_RUN_NOWAIT). 
+ * of uv_run (UV_RUN_NOWAIT).
  *
- * Still TODO: Make sure everything is destroyed if R quits.
+ * On Windows: creates a thread that runs the libuv default loop. It uses the usual "service" mechanism
+ * on the new thread (it uses the run function defined above). TODO: check synchronization. 
+ *
  */
 
+#ifndef WIN32
 #include <R_ext/eventloop.h>
 
 #define UVSERVERACTIVITY 55
 #define UVLOOPACTIVITY 57
+#endif
 
 void loop_input_handler(void *data) {
+  #ifndef WIN32
   uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+  #else
+  bool res = 1;
+  while (res) {
+    res = run(100);
+    Sleep(1);
+  }
+  #endif
 }
+
+#ifdef WIN32
+static DWORD WINAPI ServerThreadProc(LPVOID lpParameter) {
+  loop_input_handler(lpParameter);
+  return 0;
+}
+#endif
 
 class DaemonizedServer {
 public:
   uv_stream_t *_pServer;
+  #ifndef WIN32
   InputHandler *serverHandler;
   InputHandler *loopHandler;
-
+  #else
+  HANDLE server_thread;
+  #endif
+  
   DaemonizedServer(uv_stream_t *pServer)
   : _pServer(pServer) {}
 
   ~DaemonizedServer() {
+    #ifndef WIN32
     if (loopHandler) {
       removeInputHandler(&R_InputHandlers, loopHandler);
     }
@@ -455,39 +479,51 @@ public:
     if (serverHandler) {
       removeInputHandler(&R_InputHandlers, serverHandler);
     }
-
+    #else 
+      if (server_thread) {
+        DWORD ts = 0;
+        if (GetExitCodeThread(server_thread, &ts) && ts == STILL_ACTIVE)
+          TerminateThread(server_thread, 0);
+        server_thread = 0;
+      }
+    #endif
+    
     if (_pServer) {
       freeServer(_pServer);
     }
   }
+  void setup(){
+  };
 };
-
 
 // [[Rcpp::export]]
 Rcpp::RObject daemonize(std::string handle) {
-  #ifndef WIN32
   uv_stream_t *pServer = internalize<uv_stream_t >(handle);
   DaemonizedServer *dServer = new DaemonizedServer(pServer);
 
-  int fd = dServer->_pServer->io_watcher.fd;
-  dServer->serverHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVSERVERACTIVITY);
+   #ifndef WIN32
+   int fd = pServer->io_watcher.fd;
+   dServer->serverHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVSERVERACTIVITY);
 
-  fd = uv_backend_fd(uv_default_loop());
-  dServer->loopHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVLOOPACTIVITY);
-  
+   fd = uv_backend_fd(uv_default_loop());
+   dServer->loopHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVLOOPACTIVITY);
+   #else
+   if (dServer->server_thread) {
+     DWORD ts = 0;
+     if (GetExitCodeThread(dServer->server_thread, &ts) && ts == STILL_ACTIVE)
+       TerminateThread(dServer->server_thread, 0);
+     dServer->server_thread = 0;
+   }
+   dServer->server_thread = CreateThread(NULL, 0, ServerThreadProc, 0, 0, 0);
+   #endif
+
   return Rcpp::wrap(externalize(dServer));
-  
-  #else
-  return R_NilValue;
-  #endif
 }
 
 // [[Rcpp::export]]
 void destroyDaemonizedServer(std::string handle) {
-  #ifndef WIN32
   DaemonizedServer *dServer = internalize<DaemonizedServer >(handle);
   delete dServer;
-  #endif
 }
 
 

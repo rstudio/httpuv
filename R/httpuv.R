@@ -490,7 +490,7 @@ rawToBase64 <- function(x) {
 .globals <- new.env()
 
 
-#' Create an HTTP/WebSocket daemonized server (only supported in UNIX-like environments)
+#' Create an HTTP/WebSocket daemonized server 
 #' 
 #' Creates an HTTP/WebSocket server on the specified host and port. The server is daemonized
 #' so R interactive sessions are not blocked to handle requests.
@@ -505,8 +505,7 @@ rawToBase64 <- function(x) {
 #' @return A handle for this server that can be passed to
 #'   \code{\link{stopDaemonizedServer}} to shut the server down.
 #'   
-#' @details \code{startDaemonizedServer} binds the specified port, but no connections are 
-#'   actually accepted. In contrast to servers created by \code{\link{startServer}}, calls to \code{\link{service}} 
+#' @details In contrast to servers created by \code{\link{startServer}}, calls to \code{\link{service}} 
 #'   are not needed to accept and handle connections. If the port
 #'   cannot be bound (most likely due to permissions or because it is already
 #'   bound), an error is raised.
@@ -534,9 +533,6 @@ rawToBase64 <- function(x) {
 #' @seealso \code{\link{startServer}}
 #' @export
 startDaemonizedServer <- function(host, port, app) {
-  if (.Platform$OS.type != "unix")
-    stop("Daemonized servers only supported on UNIX-like environments")
-  
   server <- startServer(host, port, app)
   tryCatch({
     server <- daemonize(server)

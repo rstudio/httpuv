@@ -1,6 +1,6 @@
 \name{startDaemonizedServer}
 \alias{startDaemonizedServer}
-\title{Create an HTTP/WebSocket daemonized server (only supported in UNIX-like environments)}
+\title{Create an HTTP/WebSocket daemonized server}
 \usage{
   startDaemonizedServer(host, port, app)
 }
@@ -28,13 +28,11 @@
   sessions are not blocked to handle requests.
 }
 \details{
-  \code{startDaemonizedServer} binds the specified port,
-  but no connections are actually accepted. In contrast to
-  servers created by \code{\link{startServer}}, calls to
-  \code{\link{service}} are not needed to accept and handle
-  connections. If the port cannot be bound (most likely due
-  to permissions or because it is already bound), an error
-  is raised.
+  In contrast to servers created by
+  \code{\link{startServer}}, calls to \code{\link{service}}
+  are not needed to accept and handle connections. If the
+  port cannot be bound (most likely due to permissions or
+  because it is already bound), an error is raised.
 
   The \code{app} parameter is where your application logic
   will be provided to the server. This can be a list,
