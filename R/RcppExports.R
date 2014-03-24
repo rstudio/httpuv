@@ -33,3 +33,11 @@ base64encode <- function(x) {
     .Call('httpuv_base64encode', PACKAGE = 'httpuv', x)
 }
 
+daemonize <- function(handle) {
+    .Call('httpuv_daemonize', PACKAGE = 'httpuv', handle)
+}
+
+destroyDaemonizedServer <- function(handle) {
+    invisible(.Call('httpuv_destroyDaemonizedServer', PACKAGE = 'httpuv', handle))
+}
+
