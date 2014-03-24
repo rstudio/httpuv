@@ -5,7 +5,7 @@
   stopDaemonizedServer(server)
 }
 \arguments{
-  \item{handle}{A handle that was previously returned from
+  \item{server}{A handle that was previously returned from
   \code{\link{startDaemonizedServer}}.}
 }
 \description{

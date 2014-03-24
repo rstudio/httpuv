@@ -15,8 +15,11 @@ Description: httpuv provides low-level socket and protocol support for handling
     which were developed by Joyent, Inc. (See LICENSE file for libuv and
     http-parser license information.)
 License: GPL-3 | file LICENSE
-Depends: R (>= 2.15.1), methods
-Imports: Rcpp (>= 0.11.0)
+Depends:
+    R (>= 2.15.1),
+    methods
+Imports:
+    Rcpp (>= 0.11.0)
 LinkingTo: Rcpp
 URL: https://github.com/rstudio/httpuv
 SystemRequirements: GNU make

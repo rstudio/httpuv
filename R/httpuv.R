@@ -551,7 +551,7 @@ startDaemonizedServer <- function(host, port, app) {
 #' unbinds the port. \strong{Be careful not to call \code{stopDaemonizedServer} more than 
 #' once on a handle, as this will cause the R process to crash!}
 #' 
-#' @param handle A handle that was previously returned from
+#' @param server A handle that was previously returned from
 #'   \code{\link{startDaemonizedServer}}.
 #'   
 #' @export
