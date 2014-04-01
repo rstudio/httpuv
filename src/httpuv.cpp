@@ -440,7 +440,12 @@ std::string base64encode(const Rcpp::RawVector& x) {
 
 void loop_input_handler(void *data) {
   #ifndef WIN32
-  uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+  // this fake loop is here to force
+  // processing events
+  // deals with strange behavior in some Ubuntu installations
+  for (int i=0; i < 5; ++i) {
+    uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+  }
   #else
   bool res = 1;
   while (res) {
