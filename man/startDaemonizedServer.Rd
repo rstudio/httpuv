@@ -1,6 +1,6 @@
 \name{startDaemonizedServer}
 \alias{startDaemonizedServer}
-\title{Create an HTTP/WebSocket daemonized server}
+\title{Create an HTTP/WebSocket daemonized server (experimental)}
 \usage{
   startDaemonizedServer(host, port, app)
 }

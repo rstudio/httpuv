@@ -490,7 +490,7 @@ rawToBase64 <- function(x) {
 .globals <- new.env()
 
 
-#' Create an HTTP/WebSocket daemonized server 
+#' Create an HTTP/WebSocket daemonized server (experimental)
 #' 
 #' Creates an HTTP/WebSocket server on the specified host and port. The server is daemonized
 #' so R interactive sessions are not blocked to handle requests.
