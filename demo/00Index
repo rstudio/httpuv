@@ -1,1 +1,2 @@
 echo    Simple echo server demonstrating WebSockets
+daemon-echo Simple echo server demonstrating daemonized mode
