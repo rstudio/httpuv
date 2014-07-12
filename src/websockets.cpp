@@ -164,7 +164,7 @@ void WSHyBiParser::read(const char* data, size_t len) {
         // the complete header is read. It's possible/likely it also
         // holds part of the payload.
         size_t startingSize = _header.size();
-        std::copy(data, data + min(len, MAX_HEADER_BYTES),
+        std::copy(data, data + min(len, MAX_HEADER_BYTES - startingSize),
           std::back_inserter(_header));
 
         WSHyBiFrameHeader frame(_pProto, &_header[0], _header.size());
@@ -178,8 +178,8 @@ void WSHyBiParser::read(const char* data, size_t len) {
           _state = InPayload;
           _header.clear();
 
-          data += payloadOffset - startingSize;
-          len -= payloadOffset - startingSize;
+          data += payloadOffset;
+          len -= payloadOffset;
         }
         else {
           // All of the data was consumed, but no header
