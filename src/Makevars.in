@@ -1,19 +1,8 @@
 ## Use the R_HOME indirection to support installations of multiple R version
 
-UNAME := $(shell uname)
-
-ifeq ($(UNAME), Darwin)
-FRAMEWORK = -framework CoreServices
-endif
-
-PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` ./libuv/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o $(FRAMEWORK)
-ifeq ($(UNAME), SunOS)
-PKG_LIBS += -lkstat -lsendfile
-endif
-
+PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` ./libuv/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o @EXTRA_LIBS@
 PKG_CPPFLAGS = -I./libuv/include -I./http-parser -I./sha1 -I./base64
-
-
+MAKE = @MAKE@
 
 .PHONY: all libuv.a http-parser.o
 
