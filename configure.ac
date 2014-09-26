@@ -39,7 +39,7 @@ if test x$UNAME = xSunOS ; then
 	EXTRA_LIBS=-lkstat -lsendfile
 fi
 
-if test x$UNAME=xFreeBSD ; then
+if test x$UNAME = xFreeBSD ; then
 	EXTRA_LIBS=-lkvm
 	MAKE=gmake
 fi
