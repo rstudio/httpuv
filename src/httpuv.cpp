@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <map>
 #include <string>
+#include <iomanip>
 #include <signal.h>
 #include <errno.h>
 #include <Rinternals.h>
@@ -531,4 +532,205 @@ void destroyDaemonizedServer(std::string handle) {
   delete dServer;
 }
 
+static std::string allowed = ";,/?:@&=+$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_.!~*'()";
 
+bool isReservedUrlChar(char c) {
+  switch (c) {
+    case ';':
+    case ',':
+    case '/':
+    case '?':
+    case ':':
+    case '@':
+    case '&':
+    case '=':
+    case '+':
+    case '$':
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool needsEscape(char c, bool encodeReserved) {
+  if (c >= 'a' && c <= 'z')
+    return false;
+  if (c >= 'A' && c <= 'Z')
+    return false;
+  if (c >= '0' && c <= '9')
+    return false;
+  if (isReservedUrlChar(c))
+    return encodeReserved;
+  switch (c) {
+    case '-':
+    case '_':
+    case '.':
+    case '!':
+    case '~':
+    case '*':
+    case '\'':
+    case '(':
+    case ')':
+      return false;
+  }
+  return true;
+}
+
+std::string doEncodeURI(std::string value, bool encodeReserved) {
+  std::ostringstream os;
+  os << std::hex << std::uppercase;
+  for (std::string::const_iterator it = value.begin();
+    it != value.end();
+    it++) {
+    
+    if (!needsEscape(*it, encodeReserved)) {
+      os << *it;
+    } else {
+      os << '%' << std::setw(2) << (int)*it;
+    }
+  }
+  return os.str();
+}
+
+//' URI encoding/decoding
+//' 
+//' Encodes/decodes strings using URI encoding/decoding in the same way that web
+//' browsers do. The precise behaviors of these functions can be found at
+//' developer.mozilla.org:
+//' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI}{encodeURI},
+//' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent}{encodeURIComponent},
+//' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI}{decodeURI},
+//' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent}{decodeURIComponent}
+//' 
+//' Intended as a faster replacement for \code{\link[utils]{URLencode}} and
+//' \code{\link[utils]{URLdecode}}.
+//' 
+//' encodeURI differs from encodeURIComponent in that the former will not encode
+//' reserved characters: \code{;,/?:@@&=+$}
+//' 
+//' decodeURI differs from decodeURIComponent in that it will refuse to decode
+//' encoded sequences that decode to a reserved character. (If in doubt, use
+//' decodeURIComponent.)
+//' 
+//' The only way these functions differ from web browsers is in the encoding of
+//' non-ASCII characters. All non-ASCII characters will be escaped byte-by-byte.
+//' If conformant non-ASCII behavior is important, ensure that your input vector
+//' is UTF-8 encoded before calling encodeURI or encodeURIComponent.
+//' 
+//' @param value Character vector to be encoded or decoded.
+//' @return Encoded or decoded character vector of the same length as the
+//'   input value.
+//'
+//' @export
+// [[Rcpp::export]]
+std::vector<std::string> encodeURI(std::vector<std::string> value) {
+  for (std::vector<std::string>::iterator it = value.begin();
+    it != value.end();
+    it++) {
+
+    *it = doEncodeURI(*it, false);
+  }
+  
+  return value;
+}
+
+//' @rdname encodeURI
+//' @export
+// [[Rcpp::export]]
+std::vector<std::string> encodeURIComponent(std::vector<std::string> value) {
+  for (std::vector<std::string>::iterator it = value.begin();
+    it != value.end();
+    it++) {
+
+    *it = doEncodeURI(*it, true);
+  }
+  
+  return value;
+}
+
+int hexToInt(char c) {
+  switch (c) {
+    case '0': return 0;
+    case '1': return 1;
+    case '2': return 2;
+    case '3': return 3;
+    case '4': return 4;
+    case '5': return 5;
+    case '6': return 6;
+    case '7': return 7;
+    case '8': return 8;
+    case '9': return 9;
+    case 'A': case 'a': return 10;
+    case 'B': case 'b': return 11;
+    case 'C': case 'c': return 12;
+    case 'D': case 'd': return 13;
+    case 'E': case 'e': return 14;
+    case 'F': case 'f': return 15;
+    default: return -1;
+  }
+}
+
+std::string doDecodeURI(std::string value, bool component) {
+  std::ostringstream os;
+  for (std::string::const_iterator it = value.begin();
+    it != value.end();
+    it++) {
+    
+    // If there aren't enough characters left for this to be a
+    // valid escape code, just use the character and move on
+    if (it > value.end() - 3) {
+      os << *it;
+      continue;
+    }
+    
+    if (*it == '%') {
+      char hi = *(++it);
+      char lo = *(++it);
+      int iHi = hexToInt(hi);
+      int iLo = hexToInt(lo);
+      if (iHi < 0 || iLo < 0) {
+        // Invalid escape sequence
+        os << '%' << hi << lo;
+        continue;
+      }
+      char c = (char)(iHi << 4 | iLo);
+      if (!component && isReservedUrlChar(c)) {
+        os << '%' << hi << lo;
+      } else {
+        os << c;
+      }
+    } else {
+      os << *it;
+    }
+  }
+  
+  return os.str();
+}
+
+//' @rdname encodeURI
+//' @export
+// [[Rcpp::export]]
+std::vector<std::string> decodeURI(std::vector<std::string> value) {
+  for (std::vector<std::string>::iterator it = value.begin();
+    it != value.end();
+    it++) {
+
+    *it = doDecodeURI(*it, false);
+  }
+  
+  return value;
+}
+
+//' @rdname encodeURI
+//' @export
+// [[Rcpp::export]]
+std::vector<std::string> decodeURIComponent(std::vector<std::string> value) {
+  for (std::vector<std::string>::iterator it = value.begin();
+    it != value.end();
+    it++) {
+
+    *it = doDecodeURI(*it, true);
+  }
+  
+  return value;
+}
