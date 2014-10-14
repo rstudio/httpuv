@@ -41,3 +41,55 @@ destroyDaemonizedServer <- function(handle) {
     invisible(.Call('httpuv_destroyDaemonizedServer', PACKAGE = 'httpuv', handle))
 }
 
+#' URI encoding/decoding
+#' 
+#' Encodes/decodes strings using URI encoding/decoding in the same way that web
+#' browsers do. The precise behaviors of these functions can be found at
+#' developer.mozilla.org:
+#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI}{encodeURI},
+#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent}{encodeURIComponent},
+#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI}{decodeURI},
+#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent}{decodeURIComponent}
+#' 
+#' Intended as a faster replacement for \code{\link[utils]{URLencode}} and
+#' \code{\link[utils]{URLdecode}}.
+#' 
+#' encodeURI differs from encodeURIComponent in that the former will not encode
+#' reserved characters: \code{;,/?:@@&=+$}
+#' 
+#' decodeURI differs from decodeURIComponent in that it will refuse to decode
+#' encoded sequences that decode to a reserved character. (If in doubt, use
+#' decodeURIComponent.)
+#' 
+#' The only way these functions differ from web browsers is in the encoding of
+#' non-ASCII characters. All non-ASCII characters will be escaped byte-by-byte.
+#' If conformant non-ASCII behavior is important, ensure that your input vector
+#' is UTF-8 encoded before calling encodeURI or encodeURIComponent.
+#' 
+#' @param value Character vector to be encoded or decoded.
+#' @return Encoded or decoded character vector of the same length as the
+#'   input value.
+#'
+#' @export
+encodeURI <- function(value) {
+    .Call('httpuv_encodeURI', PACKAGE = 'httpuv', value)
+}
+
+#' @rdname encodeURI
+#' @export
+encodeURIComponent <- function(value) {
+    .Call('httpuv_encodeURIComponent', PACKAGE = 'httpuv', value)
+}
+
+#' @rdname encodeURI
+#' @export
+decodeURI <- function(value) {
+    .Call('httpuv_decodeURI', PACKAGE = 'httpuv', value)
+}
+
+#' @rdname encodeURI
+#' @export
+decodeURIComponent <- function(value) {
+    .Call('httpuv_decodeURIComponent', PACKAGE = 'httpuv', value)
+}
+
