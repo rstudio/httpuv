@@ -9,16 +9,20 @@ by Joyent, Inc.
 
 ## Installing
 
-The easiest way to install is with `devtools::install_github`:
+You can install the stable version from CRAN, or the development version using **devtools**:
 
-```R
-# install.packages("devtools")
-devtools::install_github("httpuv", "rstudio")
+```r
+# install from CRAN
+install.packages("httpuv")
+
+# or if you want to test the development version here
+if (!require("devtools")) install.packages("devtools")
+devtools::install_github("rstudio/httpuv")
 ```
 
 Since httpuv contains C code, you'll need to make sure you're set up to install packages. 
 Follow the instructions at http://www.rstudio.com/ide/docs/packages/prerequisites
 
-<hr/>
+---
 
-&copy; 2013 RStudio, Inc.
+&copy; 2013-2014 RStudio, Inc.
