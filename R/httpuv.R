@@ -441,7 +441,7 @@ stopServer <- function(handle) {
 #'   listened on. Note that on most Unix-like systems including Linux and Mac OS
 #'   X, port numbers smaller than 1025 require root privileges.
 #' @param app A collection of functions that define your application. See 
-#'   Details.
+#'   \code{\link{startServer}}.
 #' @param interruptIntervalMs How often to check for interrupt. The default 
 #'   should be appropriate for most situations.
 #'   
