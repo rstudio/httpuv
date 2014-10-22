@@ -144,7 +144,8 @@ AppWrapper <- setRefClass(
   'AppWrapper',
   fields = list(
     .app = 'ANY',
-    .wsconns = 'environment'
+    .wsconns = 'environment',
+    .supportsOnHeaders = 'logical'
   ),
   methods = list(
     initialize = function(app) {
@@ -152,9 +153,12 @@ AppWrapper <- setRefClass(
         .app <<- list(call=app)
       else
         .app <<- app
+      
+      # .app$onHeaders can error (e.g. if .app is a reference class)
+      .supportsOnHeaders <<- isTRUE(try(!is.null(.app$onHeaders), silent=TRUE))
     },
     onHeaders = function(req) {
-      if (is.null(.app$onHeaders))
+      if (!.supportsOnHeaders)
         return(NULL)
 
       rookCall(.app$onHeaders, req)
