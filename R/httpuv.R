@@ -130,10 +130,11 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
     return(list(
       status=500L,
       headers=list(
-        'Content-Type'='text/plain'
+        'Content-Type'='text/plain; charset=UTF-8'
       ),
-      body=charToRaw(
-        paste("ERROR:", attr(result, "condition")$message, collapse="\n"))
+      body=charToRaw(enc2utf8(
+        paste("ERROR:", attr(result, "condition")$message, collapse="\n")
+      ))
     ))
   } else {
     return(result)
