@@ -17,7 +17,7 @@ http_parser_settings& request_settings() {
   static http_parser_settings settings;
   settings.on_message_begin = HttpRequest_on_message_begin;
   settings.on_url = HttpRequest_on_url;
-  settings.on_status_complete = HttpRequest_on_status_complete;
+  settings.on_status = HttpRequest_on_status;
   settings.on_header_field = HttpRequest_on_header_field;
   settings.on_header_value = HttpRequest_on_header_value;
   settings.on_headers_complete = HttpRequest_on_headers_complete;
@@ -177,8 +177,8 @@ int HttpRequest::_on_url(http_parser* pParser, const char* pAt, size_t length) {
   return 0;
 }
 
-int HttpRequest::_on_status_complete(http_parser* pParser) {
-  trace("on_status_complete");
+int HttpRequest::_on_status(http_parser* pParser, const char* pAt, size_t length) {
+  trace("on_status");
   return 0;
 }
 int HttpRequest::_on_header_field(http_parser* pParser, const char* pAt, size_t length) {
@@ -467,7 +467,7 @@ void HttpResponse::onResponseWritten(int status) {
 
 IMPLEMENT_CALLBACK_1(HttpRequest, on_message_begin, int, http_parser*)
 IMPLEMENT_CALLBACK_3(HttpRequest, on_url, int, http_parser*, const char*, size_t)
-IMPLEMENT_CALLBACK_1(HttpRequest, on_status_complete, int, http_parser*)
+IMPLEMENT_CALLBACK_3(HttpRequest, on_status, int, http_parser*, const char*, size_t)
 IMPLEMENT_CALLBACK_3(HttpRequest, on_header_field, int, http_parser*, const char*, size_t)
 IMPLEMENT_CALLBACK_3(HttpRequest, on_header_value, int, http_parser*, const char*, size_t)
 IMPLEMENT_CALLBACK_1(HttpRequest, on_headers_complete, int, http_parser*)
