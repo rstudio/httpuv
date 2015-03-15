@@ -21,7 +21,7 @@ inline uv_stream_t* toStream(uv_tcp_t* tcp) {
   return (uv_stream_t*)tcp;
 }
 
-void throwLastError(uv_loop_t* pLoop,
+void throwError(int result,
   const std::string& prefix = std::string(),
   const std::string& suffix = std::string());
 
