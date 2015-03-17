@@ -21,7 +21,7 @@ all: $(SHLIB)
 $(SHLIB): libuv.a http-parser.o sha1.o base64.o
 
 libuv.a:
-	(cd libuv && ./configure)
+	(cd libuv && ./autogen.sh && ./configure)
 	$(MAKE) --directory=libuv \
 		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" \
     HAVE_DTRACE=0 \
