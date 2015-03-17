@@ -1,3 +1,9 @@
+httpuv 1.3.3
+------------------------------------------------------------------------
+
+* Require Rcpp 0.11.5. Previous versions do not include the
+  `rcpp_warning_recorder` function.
+
 httpuv 1.3.2
 ------------------------------------------------------------------------
 
