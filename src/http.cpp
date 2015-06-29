@@ -392,13 +392,21 @@ void HttpResponse::writeResponse() {
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
   response << "HTTP/1.1 " << _statusCode << " " << _status << "\r\n";
+  bool hasContentLengthHeader = false;
   for (ResponseHeaders::const_iterator it = _headers.begin();
      it != _headers.end();
      it++) {
     response << it->first << ": " << it->second << "\r\n";
+
+    if (it->first == "Content-Length") {
+      hasContentLengthHeader = true;
+    }
   }
-  if (_pBody)
+
+  if (_pBody && !hasContentLengthHeader) {
     response << "Content-Length: " << _pBody->size() << "\r\n";
+  }
+
   response << "\r\n";
   std::string responseStr = response.str();
   _responseHeader.assign(responseStr.begin(), responseStr.end());
