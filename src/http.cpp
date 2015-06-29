@@ -398,7 +398,7 @@ void HttpResponse::writeResponse() {
      it++) {
     response << it->first << ": " << it->second << "\r\n";
 
-    if (it->first == "Content-Length") {
+    if (strcasecmp(it->first.c_str(), "Content-Length") == 0) {
       hasContentLengthHeader = true;
     }
   }
