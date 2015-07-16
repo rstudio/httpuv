@@ -3,6 +3,9 @@ httpuv 1.3.2.9000
 
 * Error messages are now sent as UTF-8.
 
+* httpuv no longer adds a Content-Length header if one has already been
+  provided. This is for Shiny issue #876.
+
 httpuv 1.3.2
 ------------------------------------------------------------------------
 
