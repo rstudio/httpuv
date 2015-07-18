@@ -461,6 +461,44 @@ runServer <- function(host, port, app,
   }
 }
 
+#' Run a server on a unix socket
+#' 
+#' This is a convenience function that provides a simple way to call 
+#' \code{\link{startPipeServer}}, \code{\link{service}}, and 
+#' \code{\link{stopServer}} in the correct sequence. It does not return unless 
+#' interrupted or an error occurs.
+#' 
+#' If you have multiple hosts and/or ports to listen on, call the individual 
+#' functions instead of \code{runPipeServer}.
+#' 
+#' @param name A string that indicates the path for the domain socket (on 
+#'   Unix-like systems) or the name of the named pipe (on Windows).
+#' @param mask If non-\code{NULL} and non-negative, this numeric value is used 
+#'   to temporarily modify the process's umask while the domain socket is being 
+#'   created. To ensure that only root can access the domain socket, use 
+#'   \code{strtoi("777", 8)}; or to allow owner and group read/write access, use
+#'   \code{strtoi("117", 8)}. If the value is \code{NULL} then the process's
+#'   umask is left unchanged. (This parameter has no effect on Windows.)
+#' @param app A collection of functions that define your application. See 
+#'   \code{\link{startServer}}.
+#' @param interruptIntervalMs How often to check for interrupt. The default 
+#'   should be appropriate for most situations.
+#'   
+#' @seealso \code{\link{startPipeServer}}, \code{\link{service}},
+#'   \code{\link{stopServer}}
+#' @export
+runPipeServer <- function(name, mask, app,
+                      interruptIntervalMs = ifelse(interactive(), 100, 1000)) {
+  server <- startPipeServer(name, mask, app)
+  on.exit(stopServer(server))
+  
+  .globals$stopped <- FALSE
+  while (!.globals$stopped) {
+    service(interruptIntervalMs)
+    Sys.sleep(0.001)
+  }
+}
+
 #' Interrupt httpuv runloop
 #' 
 #' Interrupts the currently running httpuv runloop, meaning
