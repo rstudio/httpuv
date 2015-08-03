@@ -19,7 +19,8 @@ Depends:
     R (>= 2.15.1),
     methods
 Imports:
-    Rcpp (>= 0.11.0)
+    Rcpp (>= 0.11.0),
+    utils
 LinkingTo: Rcpp
 URL: https://github.com/rstudio/httpuv
 SystemRequirements: GNU make
