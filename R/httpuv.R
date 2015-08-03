@@ -25,6 +25,7 @@
 #' @useDynLib httpuv
 #' @import methods
 #' @importFrom Rcpp evalCpp
+#' @importFrom utils packageVersion
 NULL
 
 # Implementation of Rook input stream
