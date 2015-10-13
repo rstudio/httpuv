@@ -13,6 +13,9 @@ endif
 ifeq ($(UNAME), FreeBSD)
 PKG_LIBS += -lkvm
 endif
+ifeq ($(UNAME), OpenBSD)
+PKG_LIBS += -lkvm
+endif
 
 PKG_CPPFLAGS = -I./libuv/include -I./http-parser -I./sha1 -I./base64
 
