@@ -447,6 +447,9 @@ std::string base64encode(const Rcpp::RawVector& x) {
 
 #ifdef WIN32
 #define WM_LIBUV_CALLBACK ( WM_USER + 1 )
+#define THREAD_RUN 0x00
+#define THREAD_DISPOSE 0x01
+
 static HWND message_window;
 static LRESULT CALLBACK LibuvWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 #ifndef HWND_MESSAGE
@@ -472,11 +475,42 @@ public:
   #else
   // the thread used in windows to initiate the libuv loop run
   HANDLE thread;
+  char thread_status;
   #endif
   
   DaemonizedServer(uv_stream_t *pServer)
   : _pServer(pServer), needs_init(1), in_process(0) {}
 
+  #ifdef WIN32
+  // stops thread running triggering libuv loop run
+  void stop_thread() {
+    DBG(Rprintf("called stop_thread\n"));
+    if (!thread) return;
+    
+    // signal thread exit
+    DWORD ts = 0;
+    int ntimes = 10;
+    int i = 0;
+    
+    while (i < ntimes && GetExitCodeThread(thread, &ts) && ts == STILL_ACTIVE) {
+      DBG(Rprintf("setting flag\n"));
+      thread_status |= THREAD_DISPOSE;
+      Sleep(1);
+      i++;
+    }
+    
+    DBG(Rprintf("left the loop, i=%d\n", i));
+    // check if we looped out without exiting thread
+    // and terminate from here (this is not good, but it'here as a stopgap)
+    // have not seen it called in testing
+    if (GetExitCodeThread(thread, &ts) && ts == STILL_ACTIVE) {
+      DBG(Rprintf("have to do this the hard way\n"));
+      TerminateThread(thread, 0);
+    }
+    thread = 0;  
+  }
+  #endif
+  
   ~DaemonizedServer() {
     #ifndef WIN32
     if (loopHandler) {
@@ -487,17 +521,15 @@ public:
       removeInputHandler(&R_InputHandlers, serverHandler);
     }
     #else 
-      if (thread) {
-        DWORD ts = 0;
-        if (GetExitCodeThread(thread, &ts) && ts == STILL_ACTIVE)
-          TerminateThread(thread, 0);
-        thread = 0;
-      }
+    DBG(Rprintf("Destructor: calling stop_thread\n"));
+    stop_thread();
     #endif
     
+    DBG(Rprintf("Destructor: about to call freeServer\n"));
     if (_pServer) {
       freeServer(_pServer);
     }
+    _pServer = NULL;
   }
   
   void setup(){
@@ -509,6 +541,9 @@ public:
     RegisterClass(&wndclass);
     message_window = CreateWindow(window_class, "libuv", 0, 1, 1, 1, 1, HWND_MESSAGE, NULL, instance, NULL);
     DBG(Rprintf("done creating message window\n"));
+    
+    // initialize thread status flag
+    thread_status = THREAD_RUN;
 #endif
     needs_init = 0;
   };
@@ -594,14 +629,15 @@ static DWORD WINAPI LibuvThreadProc(LPVOID lpParameter)
   DaemonizedServer *dServer = (DaemonizedServer *) lpParameter;
   if (!dServer) return 0;
   
-  // FIXME: how about checking thread status to stop the loop?
-  // look at WorkerThreadProc in Rhttpd.c 
-  while (true) {
+  // run the libuv loop as long as thread exit hasn't been triggered
+  while ((dServer->thread_status & THREAD_DISPOSE) == 0) {
     DBG(Rprintf("calling run_libuv from LibuvThreadProc\n"));
     run_libuv(dServer);
     DBG(Rprintf("done run_libuv from LibuvThreadProc\n"));
     Sleep(1);
   }
+  DBG(Rprintf("exited server loop\n"));
+  // returning from this function will exit the thread
   return 0;
 }
 #endif
@@ -635,10 +671,7 @@ Rcpp::RObject daemonize(std::string handle) {
 #else
   // in WIN32 make a thread that calls libuv loop on a loop
   if (dServer->thread) {
-    DWORD ts = 0;
-    if (GetExitCodeThread(dServer->thread, &ts) && ts == STILL_ACTIVE)
-      TerminateThread(dServer->thread, 0);
-    dServer->thread = 0;
+    dServer->stop_thread();
   }
   dServer->thread = CreateThread(NULL, 0, LibuvThreadProc, (LPVOID) dServer, 0, 0);
 #endif
@@ -649,8 +682,16 @@ Rcpp::RObject daemonize(std::string handle) {
 // [[Rcpp::export]]
 void destroyDaemonizedServer(std::string handle) {
   DaemonizedServer *dServer = internalize<DaemonizedServer >(handle);
-  DBG(Rprintf("deleting daemonized server"));
-  delete dServer;
+  if (dServer) {
+    #ifdef WIN32
+    if (dServer->thread) {
+      DBG(Rprintf("Thread is not 0;"));
+    }
+    #endif
+    
+    DBG(Rprintf("deleting daemonized server"));
+    delete dServer;
+  }
 }
 
 //// END OF DAEMONIZATION CODE
