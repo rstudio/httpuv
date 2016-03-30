@@ -449,6 +449,7 @@ std::string base64encode(const Rcpp::RawVector& x) {
 #define WM_LIBUV_CALLBACK ( WM_USER + 1 )
 #define THREAD_RUN 0x00
 #define THREAD_DISPOSE 0x01
+#define THREAD_INITIALIZED 0x02
 
 static HWND message_window;
 static LRESULT CALLBACK LibuvWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -487,23 +488,20 @@ public:
     DBG(Rprintf("called stop_thread\n"));
     if (!thread) return;
     
-    // signal thread exit
-    DWORD ts = 0;
-    int ntimes = 10;
-    int i = 0;
-    
-    while (i < ntimes && GetExitCodeThread(thread, &ts) && ts == STILL_ACTIVE) {
-      DBG(Rprintf("setting flag\n"));
-      thread_status |= THREAD_DISPOSE;
-      Sleep(1);
-      i++;
+    DWORD result;
+    if (GetExitCodeThread(thread, &result) && result == STILL_ACTIVE) {
+      // indicate thread exit on object
+      thread_status = THREAD_DISPOSE;
+      
+      // wait for thread to exit, timeout in 1 sec
+      result = WaitForSingleObject(thread, 1000);
+      DBG(Rprintf("stopped waiting on thread exit. result=%d\n", result));
     }
     
-    DBG(Rprintf("left the loop, i=%d\n", i));
-    // check if we looped out without exiting thread
+    // check if thread didn't exit elegantly
     // and terminate from here (this is not good, but it'here as a stopgap)
     // have not seen it called in testing
-    if (GetExitCodeThread(thread, &ts) && ts == STILL_ACTIVE) {
+    if (GetExitCodeThread(thread, &result) && result == STILL_ACTIVE) {
       DBG(Rprintf("have to do this the hard way\n"));
       TerminateThread(thread, 0);
     }
@@ -543,7 +541,8 @@ public:
     DBG(Rprintf("done creating message window\n"));
     
     // initialize thread status flag
-    thread_status = THREAD_RUN;
+    thread_status = THREAD_INITIALIZED;
+    thread = 0;
 #endif
     needs_init = 0;
   };
@@ -674,6 +673,7 @@ Rcpp::RObject daemonize(std::string handle) {
     dServer->stop_thread();
   }
   dServer->thread = CreateThread(NULL, 0, LibuvThreadProc, (LPVOID) dServer, 0, 0);
+  dServer->thread_status = THREAD_RUN;
 #endif
 
   return Rcpp::wrap(externalize(dServer));
