@@ -14,7 +14,7 @@
 #' demo("echo", package="httpuv")
 #' }
 #' 
-#' @seealso startServer
+#' @seealso \link{startServer}
 #'   
 #' @name httpuv-package
 #' @aliases httpuv
