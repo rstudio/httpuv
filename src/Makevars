@@ -6,7 +6,7 @@ ifeq ($(UNAME), Darwin)
 FRAMEWORK = -framework CoreServices
 endif
 
-PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` ./libuv/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o $(FRAMEWORK)
+PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` ./libuv/.libs/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o $(FRAMEWORK)
 ifeq ($(UNAME), SunOS)
 PKG_LIBS += -lkstat -lsendfile
 endif
@@ -24,10 +24,11 @@ all: $(SHLIB)
 $(SHLIB): libuv.a http-parser.o sha1.o base64.o
 
 libuv.a:
+	(cd libuv && ./autogen.sh && ./configure)
 	$(MAKE) --directory=libuv \
 		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" \
     HAVE_DTRACE=0 \
-		libuv.a
+		clean libuv.la
 
 http-parser.o:
 	$(MAKE) --directory=http-parser \
