@@ -11,7 +11,7 @@ all: $(SHLIB) libuv/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.
 $(SHLIB): libuv/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
 
 libuv/libuv.a:
-	make --directory=libuv \
+	make --directory=libuv --file=Makefile.mingw \
 		CC="$(CC)" AR="$(AR)" RANLIB="$(RANLIB)" SRCDIR=. PLATFORM=mingw libuv.a
 
 http-parser/http_parser.o:

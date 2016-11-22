@@ -65,12 +65,16 @@ TEST_IMPL(tty) {
 
 #else /* unix */
   ttyin_fd = open("/dev/tty", O_RDONLY, 0);
-  if (ttyin_fd < 0)
+  if (ttyin_fd < 0) {
     LOGF("Cannot open /dev/tty as read-only: %s\n", strerror(errno));
+    return TEST_SKIP;
+  }
 
   ttyout_fd = open("/dev/tty", O_WRONLY, 0);
-  if (ttyout_fd < 0)
+  if (ttyout_fd < 0) {
     LOGF("Cannot open /dev/tty as write-only: %s\n", strerror(errno));
+    return TEST_SKIP;
+  }
 #endif
 
   ASSERT(ttyin_fd >= 0);
@@ -91,6 +95,13 @@ TEST_IMPL(tty) {
   ASSERT(r == 0);
 
   printf("width=%d height=%d\n", width, height);
+
+  if (width == 0 && height == 0) {
+   /* Some environments such as containers or Jenkins behave like this
+    * sometimes */
+    MAKE_VALGRIND_HAPPY();
+    return TEST_SKIP;
+  }
 
   /*
    * Is it a safe assumption that most people have terminals larger than

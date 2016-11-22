@@ -142,7 +142,7 @@ public:
   // Callbacks
   virtual int _on_message_begin(http_parser* pParser);
   virtual int _on_url(http_parser* pParser, const char* pAt, size_t length);
-  virtual int _on_status_complete(http_parser* pParser);
+  virtual int _on_status(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_header_field(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_header_value(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_headers_complete(http_parser* pParser);
@@ -155,7 +155,7 @@ public:
   void fatal_error(const char* method, const char* message);
   void _on_closed(uv_handle_t* handle);
   void close();
-  void _on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf);
+  void _on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* buf);
   void _on_response_write(int status);
 
 };
@@ -195,14 +195,14 @@ public:
 
 DECLARE_CALLBACK_1(HttpRequest, on_message_begin, int, http_parser*)
 DECLARE_CALLBACK_3(HttpRequest, on_url, int, http_parser*, const char*, size_t)
-DECLARE_CALLBACK_1(HttpRequest, on_status_complete, int, http_parser*)
+DECLARE_CALLBACK_3(HttpRequest, on_status, int, http_parser*, const char*, size_t)
 DECLARE_CALLBACK_3(HttpRequest, on_header_field, int, http_parser*, const char*, size_t)
 DECLARE_CALLBACK_3(HttpRequest, on_header_value, int, http_parser*, const char*, size_t)
 DECLARE_CALLBACK_1(HttpRequest, on_headers_complete, int, http_parser*)
 DECLARE_CALLBACK_3(HttpRequest, on_body, int, http_parser*, const char*, size_t)
 DECLARE_CALLBACK_1(HttpRequest, on_message_complete, int, http_parser*)
 DECLARE_CALLBACK_1(HttpRequest, on_closed, void, uv_handle_t*)
-DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, uv_buf_t)
+DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, const uv_buf_t*)
 DECLARE_CALLBACK_2(HttpRequest, on_response_write, void, uv_write_t*, int)
 
 uv_stream_t* createPipeServer(uv_loop_t* loop, const std::string& name,

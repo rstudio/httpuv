@@ -1,12 +1,8 @@
 #include "uvutil.h"
 #include <string.h>
 
-void throwLastError(uv_loop_t* pLoop,
-  const std::string& prefix,
-  const std::string& suffix) {
-
-  uv_err_t err = uv_last_error(pLoop);
-  std::string msg = prefix + uv_strerror(err) + suffix;
+void throwError(int result, const std::string& prefix, const std::string& suffix) {
+  std::string msg = prefix + uv_strerror(result) + suffix;
   throw Rcpp::exception(msg.c_str());
 }
 

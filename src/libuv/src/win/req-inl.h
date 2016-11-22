@@ -130,14 +130,13 @@ INLINE static void uv_insert_pending_req(uv_loop_t* loop, uv_req_t* req) {
   } while (0)
 
 
-INLINE static void uv_process_reqs(uv_loop_t* loop) {
+INLINE static int uv_process_reqs(uv_loop_t* loop) {
   uv_req_t* req;
   uv_req_t* first;
   uv_req_t* next;
 
-  if (loop->pending_reqs_tail == NULL) {
-    return;
-  }
+  if (loop->pending_reqs_tail == NULL)
+    return 0;
 
   first = loop->pending_reqs_tail->next_req;
   next = first;
@@ -195,20 +194,8 @@ INLINE static void uv_process_reqs(uv_loop_t* loop) {
         uv_process_poll_req(loop, (uv_poll_t*) req->data, req);
         break;
 
-      case UV_GETADDRINFO:
-        uv_process_getaddrinfo_req(loop, (uv_getaddrinfo_t*) req);
-        break;
-
       case UV_PROCESS_EXIT:
         uv_process_proc_exit(loop, (uv_process_t*) req->data);
-        break;
-
-      case UV_FS:
-        uv_process_fs_req(loop, (uv_fs_t*) req);
-        break;
-
-      case UV_WORK:
-        uv_process_work_req(loop, (uv_work_t*) req);
         break;
 
       case UV_FS_EVENT_REQ:
@@ -219,6 +206,8 @@ INLINE static void uv_process_reqs(uv_loop_t* loop) {
         assert(0);
     }
   }
+
+  return 1;
 }
 
 #endif /* UV_WIN_REQ_INL_H_ */
