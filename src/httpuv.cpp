@@ -427,10 +427,15 @@ std::string base64encode(const Rcpp::RawVector& x) {
  * exposed by the uv_default_loop to trigger uv_run whenever necessary. It uses the non-blocking version
  * of uv_run (UV_RUN_NOWAIT).
  *
- * On Windows: creates a thread that runs the libuv default loop. It uses the usual "service" mechanism
- * on the new thread (it uses the run function defined above). TODO: check synchronization. 
- *
+ * On Windows: creates a thread that initiates a call to run the libuv default loop using non-blocking version of uv_run (UV_RUN_NOWAIT).
+ * It uses the Rhttpd (and s-u's background package) mechanism to enforce synchronization using a dummy message
+ * window so that the libuv loop is run in the main thread not on the newly created thread via a blocking 'SendMessage'
+ * call. 
+ * 
  */
+
+// change this to #define DBG(X) X to print debug messages
+#define DBG(X)
 
 #ifndef WIN32
 #include <R_ext/eventloop.h>
@@ -439,43 +444,71 @@ std::string base64encode(const Rcpp::RawVector& x) {
 #define UVLOOPACTIVITY 57
 #endif
 
-void loop_input_handler(void *data) {
-  #ifndef WIN32
-  // this fake loop is here to force
-  // processing events
-  // deals with strange behavior in some Ubuntu installations
-  for (int i=0; i < 5; ++i) {
-    uv_run(uv_default_loop(), UV_RUN_NOWAIT);
-  }
-  #else
-  bool res = 1;
-  while (res) {
-    res = run(100);
-    Sleep(1);
-  }
-  #endif
-}
 
 #ifdef WIN32
-static DWORD WINAPI ServerThreadProc(LPVOID lpParameter) {
-  loop_input_handler(lpParameter);
-  return 0;
-}
+#define WM_LIBUV_CALLBACK ( WM_USER + 1 )
+#define THREAD_RUN 0x00
+#define THREAD_DISPOSE 0x01
+#define THREAD_INITIALIZED 0x02
+
+static HWND message_window;
+static LRESULT CALLBACK LibuvWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+#ifndef HWND_MESSAGE
+#define HWND_MESSAGE ((HWND)-3)
+#endif
 #endif
 
 class DaemonizedServer {
 public:
+  // the libuv object
   uv_stream_t *_pServer;
+  
+  // some bookeeping flags
+  int needs_init;
+  int in_process;
+  
   #ifndef WIN32
+  // events on the socket trigger libuv loop
   InputHandler *serverHandler;
+  
+  // events on the libuv app itself trigger the loop
   InputHandler *loopHandler;
   #else
-  HANDLE server_thread;
+  // the thread used in windows to initiate the libuv loop run
+  HANDLE thread;
+  char thread_status;
   #endif
   
   DaemonizedServer(uv_stream_t *pServer)
-  : _pServer(pServer) {}
+  : _pServer(pServer), needs_init(1), in_process(0) {}
 
+  #ifdef WIN32
+  // stops thread running triggering libuv loop run
+  void stop_thread() {
+    DBG(Rprintf("called stop_thread\n"));
+    if (!thread) return;
+    
+    DWORD result;
+    if (GetExitCodeThread(thread, &result) && result == STILL_ACTIVE) {
+      // indicate thread exit on object
+      thread_status = THREAD_DISPOSE;
+      
+      // wait for thread to exit, timeout in 1 sec
+      result = WaitForSingleObject(thread, 1000);
+      DBG(Rprintf("stopped waiting on thread exit. result=%d\n", result));
+    }
+    
+    // check if thread didn't exit elegantly
+    // and terminate from here (this is not good, but it'here as a stopgap)
+    // have not seen it called in testing
+    if (GetExitCodeThread(thread, &result) && result == STILL_ACTIVE) {
+      DBG(Rprintf("have to do this the hard way\n"));
+      TerminateThread(thread, 0);
+    }
+    thread = 0;  
+  }
+  #endif
+  
   ~DaemonizedServer() {
     #ifndef WIN32
     if (loopHandler) {
@@ -486,42 +519,162 @@ public:
       removeInputHandler(&R_InputHandlers, serverHandler);
     }
     #else 
-      if (server_thread) {
-        DWORD ts = 0;
-        if (GetExitCodeThread(server_thread, &ts) && ts == STILL_ACTIVE)
-          TerminateThread(server_thread, 0);
-        server_thread = 0;
-      }
+    DBG(Rprintf("Destructor: calling stop_thread\n"));
+    stop_thread();
     #endif
     
+    DBG(Rprintf("Destructor: about to call freeServer\n"));
     if (_pServer) {
       freeServer(_pServer);
     }
+    _pServer = NULL;
   }
+  
   void setup(){
+#ifdef WIN32
+    DBG(Rprintf("setting up message window\n"));
+    HINSTANCE instance = GetModuleHandle(NULL);
+    LPCTSTR window_class = "libuv";
+    WNDCLASS wndclass = { 0, LibuvWindowProc, 0, 0, instance, NULL, 0, 0, NULL, window_class };
+    RegisterClass(&wndclass);
+    message_window = CreateWindow(window_class, "libuv", 0, 1, 1, 1, 1, HWND_MESSAGE, NULL, instance, NULL);
+    DBG(Rprintf("done creating message window\n"));
+    
+    // initialize thread status flag
+    thread_status = THREAD_INITIALIZED;
+    thread = 0;
+#endif
+    needs_init = 0;
   };
 };
+
+#ifdef WIN32
+// this is the windows trickery used to make libuv run on the main thread
+// while having a thread that makes calls to the libuv loop 
+static void run_libuv_main_thread(DaemonizedServer *dServer);
+
+// run_libuv is the name of the function called by input handlers in POSIX systems
+// and by the new thread in windows. Here the function is defined to send a message
+// to the dummy message window that will actually run libuv
+static void run_libuv(DaemonizedServer *dServer)
+{
+  DBG(Rprintf("sending message to window\n"));
+  SendMessage(message_window, WM_LIBUV_CALLBACK, 0, (LPARAM) dServer);
+  DBG(Rprintf("sent message to window\n"));
+}
+
+// in the following, calls to run_libuv in win32 are rewritten to calls
+// to run_libuv_main_thread
+#define run_libuv run_libuv_main_thread
+#endif
+
+// this is function that actually runs the libuv loop
+static void run_libuv_(void *ptr)
+{
+  // this fake loop is here to force
+  // processing events
+  // deals with strange behavior in some Ubuntu installations
+  DBG(Rprintf("ready to run libuv default loop\n"));
+  for (int i=0; i < 5; ++i) {
+    uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+  }
+  DBG(Rprintf("done running libuv default loop\n"));
+}
+
+// the function called (eventually) by the input handler
+// in win32 this definition is rewritten by the preprocessor
+// to define run_libuv_main_thread
+static void run_libuv(DaemonizedServer *dServer)
+{
+  DBG(Rprintf("enterd run_libuv"));
+  // only let it do it's thing one at a time
+  if (dServer->in_process) return;
+  
+  // call the function above
+  dServer->in_process = 1;
+  run_libuv_((void *) dServer);
+  dServer->in_process = 0;
+  
+  DBG(Rprintf("exiting run_libuv"));
+}
+
+#ifdef WIN32
+// remove the win32 rewrite rule
+#undef run_libuv
+#endif
+
+static void libuv_input_handler(void *data);
+
+#ifdef WIN32
+// this is triggered by the SendMessage call in run_libuv
+static LRESULT CALLBACK LibuvWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+  DBG(Rprintf("entered LibuvWindowProc\n"));
+  if (hwnd == message_window && uMsg == WM_LIBUV_CALLBACK) {
+    DaemonizedServer *dServer = (DaemonizedServer *) lParam;
+    // this was defined above using the rewrite rule 
+    // to be the same function called by the inputHandlers in POSIX
+    run_libuv_main_thread(dServer);
+    return 0;
+  }
+  DBG(Rprintf("exiting LibuvWindowProc\n"));
+  return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+// this infinite loop runs on a new thread, it essentially makes the
+// SendMessage call over and over
+static DWORD WINAPI LibuvThreadProc(LPVOID lpParameter)
+{
+  DaemonizedServer *dServer = (DaemonizedServer *) lpParameter;
+  if (!dServer) return 0;
+  
+  // run the libuv loop as long as thread exit hasn't been triggered
+  while ((dServer->thread_status & THREAD_DISPOSE) == 0) {
+    DBG(Rprintf("calling run_libuv from LibuvThreadProc\n"));
+    run_libuv(dServer);
+    DBG(Rprintf("done run_libuv from LibuvThreadProc\n"));
+    Sleep(1);
+  }
+  DBG(Rprintf("exited server loop\n"));
+  // returning from this function will exit the thread
+  return 0;
+}
+#endif
+
+// this may not be needed...
+static void libuv_input_handler(void *data)
+{
+  run_libuv((DaemonizedServer *) data);
+}
 
 // [[Rcpp::export]]
 Rcpp::RObject daemonize(std::string handle) {
   uv_stream_t *pServer = internalize<uv_stream_t >(handle);
   DaemonizedServer *dServer = new DaemonizedServer(pServer);
+  
+  // do initial setup, in WIN32 it creates the message-only window,
+  // in POSIX it doesn't do anything
+  if (dServer->needs_init) { dServer->setup(); }
 
-   #ifndef WIN32
-   int fd = pServer->io_watcher.fd;
-   dServer->serverHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVSERVERACTIVITY);
+#ifndef WIN32
+  // this input handler deals with events on the app socket  
+  // in libuv v1.x this should be replaced by uv_fileno()
+  int fd = pServer->io_watcher.fd;
+  dServer->serverHandler = addInputHandler(R_InputHandlers, fd, &libuv_input_handler, UVSERVERACTIVITY);
+  if (dServer->serverHandler) dServer->serverHandler->userData = dServer;
 
-   fd = uv_backend_fd(uv_default_loop());
-   dServer->loopHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVLOOPACTIVITY);
-   #else
-   if (dServer->server_thread) {
-     DWORD ts = 0;
-     if (GetExitCodeThread(dServer->server_thread, &ts) && ts == STILL_ACTIVE)
-       TerminateThread(dServer->server_thread, 0);
-     dServer->server_thread = 0;
-   }
-   dServer->server_thread = CreateThread(NULL, 0, ServerThreadProc, 0, 0, 0);
-   #endif
+  // this input handler deals with events triggered by the libuv loop itself
+  fd = uv_backend_fd(uv_default_loop());
+  dServer->loopHandler = addInputHandler(R_InputHandlers, fd, &libuv_input_handler, UVLOOPACTIVITY);
+  if (dServer->loopHandler) dServer->loopHandler->userData = dServer;
+#else
+  // in WIN32 make a thread that calls libuv loop on a loop
+  if (dServer->thread) {
+    dServer->stop_thread();
+  }
+  dServer->thread = CreateThread(NULL, 0, LibuvThreadProc, (LPVOID) dServer, 0, 0);
+  dServer->thread_status = THREAD_RUN;
+#endif
 
   return Rcpp::wrap(externalize(dServer));
 }
@@ -529,8 +682,19 @@ Rcpp::RObject daemonize(std::string handle) {
 // [[Rcpp::export]]
 void destroyDaemonizedServer(std::string handle) {
   DaemonizedServer *dServer = internalize<DaemonizedServer >(handle);
-  delete dServer;
+  if (dServer) {
+    #ifdef WIN32
+    if (dServer->thread) {
+      DBG(Rprintf("Thread is not 0;"));
+    }
+    #endif
+    
+    DBG(Rprintf("deleting daemonized server"));
+    delete dServer;
+  }
 }
+
+//// END OF DAEMONIZATION CODE
 
 static std::string allowed = ";,/?:@&=+$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_.!~*'()";
 
