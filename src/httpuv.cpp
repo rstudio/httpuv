@@ -379,7 +379,7 @@ void stop_loop_timer_cb(uv_timer_t* handle, int status) {
 
 // Run the libuv default loop for roughly timeoutMillis, then stop
 // [[Rcpp::export]]
-bool run(uint32_t timeoutMillis) {
+bool run(int timeoutMillis) {
   static uv_timer_t timer_req = {0};
   int r;
 
@@ -405,7 +405,7 @@ bool run(uint32_t timeoutMillis) {
 #ifndef _WIN32
   signal(SIGPIPE, SIG_IGN);
 #endif
-  return uv_run(uv_default_loop(), UV_RUN_ONCE);
+  return uv_run(uv_default_loop(), timeoutMillis == NA_INTEGER ? UV_RUN_NOWAIT : UV_RUN_ONCE);
 }
 
 // [[Rcpp::export]]
