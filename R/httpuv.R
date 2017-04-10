@@ -397,7 +397,7 @@ startPipeServer <- function(name, mask, app) {
 #' 
 #' @param timeoutMs Approximate number of milliseconds to run before returning. 
 #'   If 0, then the function will continually process requests without returning
-#'   unless an error occurs.
+#'   unless an error occurs. If NA, performs a non-blocking run without waiting.
 #'
 #' @examples
 #' \dontrun{

@@ -74,12 +74,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // run
-bool run(uint32_t timeoutMillis);
+bool run(int timeoutMillis);
 RcppExport SEXP httpuv_run(SEXP timeoutMillisSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< uint32_t >::type timeoutMillis(timeoutMillisSEXP);
+    Rcpp::traits::input_parameter< int >::type timeoutMillis(timeoutMillisSEXP);
     __result = Rcpp::wrap(run(timeoutMillis));
     return __result;
 END_RCPP
