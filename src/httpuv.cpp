@@ -1,13 +1,10 @@
 #define _FILE_OFFSET_BITS 64
-#include <Rcpp.h>
+
 #include <stdio.h>
 #include <map>
-#include <string>
 #include <iomanip>
 #include <signal.h>
 #include <errno.h>
-#include <Rinternals.h>
-#include "fixup.h"
 #include <uv.h>
 #include <base64.hpp>
 #include "uvutil.h"

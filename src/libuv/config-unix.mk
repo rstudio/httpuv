@@ -84,7 +84,7 @@ HAVE_DTRACE ?= 1
 ifeq (__clang__,$(shell sh -c "$(CC) -dM -E - </dev/null | grep -ow __clang__"))
 CFLAGS += -Wno-dollar-in-identifier-extension
 endif
-CPPFLAGS += -D_DARWIN_USE_64_BIT_INODE=1
+CPPFLAGS += -D_DARWIN_USE_64_BIT_INODE=1 -Wno-deprecated-declarations
 LDFLAGS += -framework Foundation \
            -framework CoreServices \
            -framework ApplicationServices

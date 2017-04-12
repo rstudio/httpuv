@@ -1,5 +1,8 @@
 ## Use the R_HOME indirection to support installations of multiple R version
 
+# Use C++11 if available
+CXX_STD=CXX11
+
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Darwin)
@@ -8,9 +11,12 @@ endif
 
 PKG_LIBS = ./libuv/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o $(FRAMEWORK)
 ifeq ($(UNAME), SunOS)
-PKG_LIBS += -lkstat -lsendfile
+PKG_LIBS += -lkstat -lsendfile -lsocket
 endif
 ifeq ($(UNAME), FreeBSD)
+PKG_LIBS += -lkvm
+endif
+ifeq ($(UNAME), OpenBSD)
 PKG_LIBS += -lkvm
 endif
 

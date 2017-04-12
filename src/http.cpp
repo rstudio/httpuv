@@ -8,7 +8,6 @@
 #include <iostream>
 #include <sstream>
 
-#include <Rinternals.h>
 
 // TODO: Streaming response body (with chunked transfer encoding)
 // TODO: Fast/easy use of files as response body

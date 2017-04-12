@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <Rcpp.h>
-#include <Rinternals.h>
 
 int FileDataSource::initialize(const std::string& path, bool owned) {
   _fd = open(path.c_str(), O_RDONLY);
