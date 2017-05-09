@@ -1,10 +1,7 @@
 #ifdef _WIN32
 
 #include "filedatasource.h"
-#include <Rcpp.h>
-#include "fixup.h"
 #include <Windows.h>
-#include <Rinternals.h>
 
 // Windows gets a whole different implementation of FileDataSource
 // so we can use FILE_FLAG_DELETE_ON_CLOSE, which is not available

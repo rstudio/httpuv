@@ -1,8 +1,7 @@
 Package: httpuv
 Type: Package
 Title: HTTP and WebSocket Server Library
-Version: 1.3.3
-Date: 2015-08-03
+Version: 1.3.4
 Author: RStudio, Inc.
 Copyright: RStudio, Inc.; Joyent, Inc.; Nginx Inc.; Igor Sysoev; Niels Provos;
     Internet Systems Consortium, Inc.; Alexander Chemeris

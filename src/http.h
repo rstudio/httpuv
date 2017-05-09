@@ -2,12 +2,8 @@
 #define HTTP_HPP
 
 #include <map>
-#include <string>
 #include <iostream>
-#include <vector>
 
-#include <Rcpp.h>
-#include "fixup.h"
 #include <uv.h>
 #include <http_parser.h>
 
@@ -15,7 +11,7 @@
 #include "uvutil.h"
 
 class HttpRequest;
-class HttpResponse;
+struct HttpResponse;
 
 enum Protocol {
   HTTP,

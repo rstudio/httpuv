@@ -3,9 +3,12 @@
 
 #include <string>
 #include <vector>
-#include <Rcpp.h>
-#include "fixup.h"
 #include <uv.h>
+
+/* Prevent naming conflicts for Free() and Calloc() */
+#define R_NO_REMAP
+#define STRICT_R_HEADERS
+#include <Rcpp.h>
 
 inline uv_handle_t* toHandle(uv_timer_t* timer) {
   return (uv_handle_t*)timer;
