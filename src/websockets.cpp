@@ -214,14 +214,14 @@ bool WebSocketConnection::accept(const RequestHeaders& requestHeaders,
                                  const char* pData, size_t len) {
   assert(!_pParser);
 
-  std::auto_ptr<WebSocketProto_IETF> ietf(new WebSocketProto_IETF());
-  if (ietf->canHandle(requestHeaders, pData, len)) {
+  WebSocketProto_IETF ietf;
+  if (ietf.canHandle(requestHeaders, pData, len)) {
     _pParser = new WSHyBiParser(this, new WebSocketProto_IETF());
     return true;
   }
 
-  std::auto_ptr<WebSocketProto_HyBi03> hybi03(new WebSocketProto_HyBi03());
-  if (hybi03->canHandle(requestHeaders, pData, len)) {
+  WebSocketProto_HyBi03 hybi03;
+  if (hybi03.canHandle(requestHeaders, pData, len)) {
     _pParser = new WSHixie76Parser(this);
     return true;
   }
