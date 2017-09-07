@@ -4,6 +4,8 @@
 #include <map>
 #include <iostream>
 
+#include <boost/function.hpp>
+
 #include <uv.h>
 #include <http_parser.h>
 
@@ -26,7 +28,7 @@ public:
   }
   virtual void onBodyData(HttpRequest* pRequest,
                           const char* data, size_t len) = 0;
-  virtual HttpResponse* getResponse(HttpRequest* request) = 0;
+  virtual void getResponse(HttpRequest* request, boost::function<void(HttpResponse*)> callback) = 0;
   virtual void onWSOpen(HttpRequest* pRequest) = 0;
   virtual void onWSMessage(WebSocketConnection* conn,
                            bool binary, const char* data, size_t len) = 0;
@@ -144,6 +146,7 @@ public:
   virtual int _on_headers_complete(http_parser* pParser);
   virtual int _on_body(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_message_complete(http_parser* pParser);
+  virtual void _on_message_complete_complete(HttpResponse* pResponse);
 
   virtual void onWSMessage(bool binary, const char* data, size_t len);
   virtual void onWSClose(int code);

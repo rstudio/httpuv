@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include <boost/bind.hpp>
+
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -263,11 +265,17 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 
   if (!pParser->upgrade) {
     // Deleted in on_response_written
-    HttpResponse* pResp = _pWebApplication->getResponse(this);
-    pResp->writeResponse();
+    _pWebApplication->getResponse(
+      this,
+      boost::bind(&HttpRequest::_on_message_complete_complete, this, _1)
+    );
   }
 
   return 0;
+}
+
+void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
+  pResponse->writeResponse();
 }
 
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {

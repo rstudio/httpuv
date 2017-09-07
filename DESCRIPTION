@@ -21,7 +21,7 @@ Depends:
 Imports:
     Rcpp (>= 0.11.0),
     utils
-LinkingTo: Rcpp
+LinkingTo: Rcpp, BH
 URL: https://github.com/rstudio/httpuv
 SystemRequirements: GNU make
 RoxygenNote: 6.0.1

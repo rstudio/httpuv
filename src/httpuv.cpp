@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <signal.h>
 #include <errno.h>
+#include <boost/function.hpp>
 #include <uv.h>
 #include <base64.hpp>
 #include "uvutil.h"
@@ -266,10 +267,10 @@ public:
     _onBodyData(pRequest->env(), rawVector);
   }
 
-  virtual HttpResponse* getResponse(HttpRequest* pRequest) {
+  virtual void getResponse(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
     Rcpp::List response(_onRequest(pRequest->env()));
 
-    return listToResponse(pRequest, response);
+    callback(listToResponse(pRequest, response));
   }
 
   void onWSOpen(HttpRequest* pRequest) {
