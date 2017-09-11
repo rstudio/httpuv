@@ -248,16 +248,17 @@ public:
   virtual ~RWebApplication() {
   }
 
-  virtual HttpResponse* onHeaders(HttpRequest* pRequest) {
+  virtual void onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
     if (_onHeaders.isNULL()) {
-      return NULL;
+      // TODO: This previous returned NULL. Is this OK?
+      callback(NULL);
+      return;
     }
 
     requestToEnv(pRequest, &pRequest->env());
 
     Rcpp::List response(_onHeaders(pRequest->env()));
-
-    return listToResponse(pRequest, response);
+    callback(listToResponse(pRequest, response));
   }
 
   virtual void onBodyData(HttpRequest* pRequest,
