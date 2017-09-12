@@ -6,11 +6,13 @@
 #include <signal.h>
 #include <errno.h>
 #include <boost/function.hpp>
+#include <boost/bind.hpp>
 #include <uv.h>
 #include <base64.hpp>
 #include "uvutil.h"
 #include "http.h"
 #include "filedatasource.h"
+#include <Rinternals.h>
 
 std::string normalizeHeaderName(const std::string& name) {
   std::string result = name;
@@ -225,6 +227,11 @@ HttpResponse* listToResponse(HttpRequest* pRequest,
   return pResp;
 }
 
+void invokeResponseFun(boost::function<void(HttpResponse*)> fun, HttpRequest* pRequest, Rcpp::List response) {
+  HttpResponse* pResponse = listToResponse(pRequest, response);
+  fun(pResponse);
+};
+
 class RWebApplication : public WebApplication {
 private:
   Rcpp::Function _onHeaders;
@@ -249,6 +256,8 @@ public:
   }
 
   virtual void onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
+    using namespace Rcpp;
+
     if (_onHeaders.isNULL()) {
       // TODO: This previous returned NULL. Is this OK?
       callback(NULL);
@@ -257,8 +266,25 @@ public:
 
     requestToEnv(pRequest, &pRequest->env());
 
-    Rcpp::List response(_onHeaders(pRequest->env()));
-    callback(listToResponse(pRequest, response));
+    // The callback is a pointer to
+    // HttpRequest::_on_headers_complete_complete(), bound to the HttpRequest
+    // object with boost::bind(). We need to be able to invoke the callback from
+    // R. To do this, we'll use invokeResponseFun, and bind the callback and
+    // request object to it. The R code passes in a List object.
+    boost::function<void(List)> * callback_wrapper = new boost::function<void(List)>();
+
+    *callback_wrapper = boost::bind(
+      &invokeResponseFun,
+      callback,
+      pRequest,
+      _1
+    );
+
+    // Wrap the new function in an external pointer so we can send it to R.
+    XPtr< boost::function<void(List)> > callback_xptr(callback_wrapper);
+
+    // Call the R onHeaders() function.
+    _onHeaders(pRequest->env(), callback_xptr);
   }
 
   virtual void onBodyData(HttpRequest* pRequest,
@@ -269,9 +295,20 @@ public:
   }
 
   virtual void getResponse(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
-    Rcpp::List response(_onRequest(pRequest->env()));
+    using namespace Rcpp;
 
-    callback(listToResponse(pRequest, response));
+    boost::function<void(List)> * callback_wrapper = new boost::function<void(List)>();
+
+    *callback_wrapper = boost::bind(
+      &invokeResponseFun,
+      callback,
+      pRequest,
+      _1
+    );
+
+    XPtr< boost::function<void(List)> > callback_xptr(callback_wrapper);
+
+    _onRequest(pRequest->env(), callback_xptr);
   }
 
   void onWSOpen(HttpRequest* pRequest) {
@@ -732,6 +769,15 @@ std::vector<std::string> decodeURIComponent(std::vector<std::string> value) {
   }
   
   return value;
+}
+
+// Given a List and an external pointer to a C++ function that takes a List,
+// invoke the function with the List as the single argument.
+// [[Rcpp::export]]
+void invoke_cpp_callback(Rcpp::List data, SEXP callback_sexp) {
+  Rcpp::XPtr< boost::function<void(Rcpp::List)> > callback_xp(callback_sexp);
+  boost::function<void(Rcpp::List)> callback = *callback_xp;
+  callback(data);
 }
 
 //' Apply the value of .Random.seed to R's internal RNG state
