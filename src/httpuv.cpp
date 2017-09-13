@@ -775,9 +775,16 @@ std::vector<std::string> decodeURIComponent(std::vector<std::string> value) {
 // invoke the function with the List as the single argument.
 // [[Rcpp::export]]
 void invoke_cpp_callback(Rcpp::List data, SEXP callback_sexp) {
-  Rcpp::XPtr< boost::function<void(Rcpp::List)> > callback_xp(callback_sexp);
-  boost::function<void(Rcpp::List)> callback = *callback_xp;
+  if (TYPEOF(callback_sexp) != EXTPTRSXP) {
+     throw Rcpp::exception("Expected external pointer.");
+  }
+  Rcpp::XPtr< boost::function<void(Rcpp::List)> > callback_xptr(callback_sexp);
+  boost::function<void(Rcpp::List)> callback = *callback_xptr;
   callback(data);
+
+  // Clear the external pointer explicitly to make sure the function isn't
+  // accidentally called again.
+  R_ClearExternalPtr(callback_sexp);
 }
 
 //' Apply the value of .Random.seed to R's internal RNG state
