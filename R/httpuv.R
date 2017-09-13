@@ -162,9 +162,9 @@ AppWrapper <- setRefClass(
     onHeaders = function(req, cpp_callback) {
       if (.supportsOnHeaders) {
         rookCall(.app$onHeaders, req) %...>%
-          invoke_cpp_callback(., cpp_callback)
+          invokeCppCallback(., cpp_callback)
       } else {
-        invoke_cpp_callback(NULL, cpp_callback)
+        invokeCppCallback(NULL, cpp_callback)
       }
 
       invisible()
@@ -176,7 +176,7 @@ AppWrapper <- setRefClass(
     },
     call = function(req, cpp_callback) {
       p <- rookCall(.app$call, req, req$.bodyData, seek(req$.bodyData)) %...>%
-        invoke_cpp_callback(., cpp_callback)
+        invokeCppCallback(., cpp_callback)
 
       finally(p, function() {
         if (!is.null(req$.bodyData)) {

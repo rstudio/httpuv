@@ -774,7 +774,7 @@ std::vector<std::string> decodeURIComponent(std::vector<std::string> value) {
 // Given a List and an external pointer to a C++ function that takes a List,
 // invoke the function with the List as the single argument.
 // [[Rcpp::export]]
-void invoke_cpp_callback(Rcpp::List data, SEXP callback_sexp) {
+void invokeCppCallback(Rcpp::List data, SEXP callback_sexp) {
   if (TYPEOF(callback_sexp) != EXTPTRSXP) {
      throw Rcpp::exception("Expected external pointer.");
   }
@@ -782,11 +782,13 @@ void invoke_cpp_callback(Rcpp::List data, SEXP callback_sexp) {
   boost::function<void(Rcpp::List)> callback = *callback_xptr;
   callback(data);
 
+  // We want to clear the external pointer so that the C++ function isn't
+  // accidentally called again. But if we do this, the Xptr's finalizer won't
+  // work correctly because it'll be deleting a NULL pointer. So we have to
+  // delete it explicitly.
+  //
   // Free the callback_wrapper allocated in onHeaders or getResponse.
   delete callback_xptr.get();
-
-  // Clear the external pointer explicitly to make sure the function isn't
-  // accidentally called again.
   R_ClearExternalPtr(callback_sexp);
 }
 
