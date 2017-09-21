@@ -2,43 +2,43 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 sendWSMessage <- function(conn, binary, message) {
-    invisible(.Call('httpuv_sendWSMessage', PACKAGE = 'httpuv', conn, binary, message))
+    invisible(.Call('_httpuv_sendWSMessage', PACKAGE = 'httpuv', conn, binary, message))
 }
 
 closeWS <- function(conn) {
-    invisible(.Call('httpuv_closeWS', PACKAGE = 'httpuv', conn))
+    invisible(.Call('_httpuv_closeWS', PACKAGE = 'httpuv', conn))
 }
 
 makeTcpServer <- function(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose) {
-    .Call('httpuv_makeTcpServer', PACKAGE = 'httpuv', host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose)
+    .Call('_httpuv_makeTcpServer', PACKAGE = 'httpuv', host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose)
 }
 
 makePipeServer <- function(name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose) {
-    .Call('httpuv_makePipeServer', PACKAGE = 'httpuv', name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose)
+    .Call('_httpuv_makePipeServer', PACKAGE = 'httpuv', name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose)
 }
 
 destroyServer <- function(handle) {
-    invisible(.Call('httpuv_destroyServer', PACKAGE = 'httpuv', handle))
+    invisible(.Call('_httpuv_destroyServer', PACKAGE = 'httpuv', handle))
 }
 
 run <- function(timeoutMillis) {
-    .Call('httpuv_run', PACKAGE = 'httpuv', timeoutMillis)
+    .Call('_httpuv_run', PACKAGE = 'httpuv', timeoutMillis)
 }
 
 stopLoop <- function() {
-    invisible(.Call('httpuv_stopLoop', PACKAGE = 'httpuv'))
+    invisible(.Call('_httpuv_stopLoop', PACKAGE = 'httpuv'))
 }
 
 base64encode <- function(x) {
-    .Call('httpuv_base64encode', PACKAGE = 'httpuv', x)
+    .Call('_httpuv_base64encode', PACKAGE = 'httpuv', x)
 }
 
 daemonize <- function(handle) {
-    .Call('httpuv_daemonize', PACKAGE = 'httpuv', handle)
+    .Call('_httpuv_daemonize', PACKAGE = 'httpuv', handle)
 }
 
 destroyDaemonizedServer <- function(handle) {
-    invisible(.Call('httpuv_destroyDaemonizedServer', PACKAGE = 'httpuv', handle))
+    invisible(.Call('_httpuv_destroyDaemonizedServer', PACKAGE = 'httpuv', handle))
 }
 
 #' URI encoding/decoding
@@ -72,25 +72,25 @@ destroyDaemonizedServer <- function(handle) {
 #'
 #' @export
 encodeURI <- function(value) {
-    .Call('httpuv_encodeURI', PACKAGE = 'httpuv', value)
+    .Call('_httpuv_encodeURI', PACKAGE = 'httpuv', value)
 }
 
 #' @rdname encodeURI
 #' @export
 encodeURIComponent <- function(value) {
-    .Call('httpuv_encodeURIComponent', PACKAGE = 'httpuv', value)
+    .Call('_httpuv_encodeURIComponent', PACKAGE = 'httpuv', value)
 }
 
 #' @rdname encodeURI
 #' @export
 decodeURI <- function(value) {
-    .Call('httpuv_decodeURI', PACKAGE = 'httpuv', value)
+    .Call('_httpuv_decodeURI', PACKAGE = 'httpuv', value)
 }
 
 #' @rdname encodeURI
 #' @export
 decodeURIComponent <- function(value) {
-    .Call('httpuv_decodeURIComponent', PACKAGE = 'httpuv', value)
+    .Call('_httpuv_decodeURIComponent', PACKAGE = 'httpuv', value)
 }
 
 #' Apply the value of .Random.seed to R's internal RNG state
@@ -104,6 +104,6 @@ decodeURIComponent <- function(value) {
 #' @keywords internal
 #' @export
 getRNGState <- function() {
-    invisible(.Call('httpuv_getRNGState', PACKAGE = 'httpuv'))
+    invisible(.Call('_httpuv_getRNGState', PACKAGE = 'httpuv'))
 }
 
