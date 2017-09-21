@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // sendWSMessage
 void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message);
-RcppExport SEXP httpuv_sendWSMessage(SEXP connSEXP, SEXP binarySEXP, SEXP messageSEXP) {
+RcppExport SEXP _httpuv_sendWSMessage(SEXP connSEXP, SEXP binarySEXP, SEXP messageSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type conn(connSEXP);
@@ -19,7 +19,7 @@ END_RCPP
 }
 // closeWS
 void closeWS(std::string conn);
-RcppExport SEXP httpuv_closeWS(SEXP connSEXP) {
+RcppExport SEXP _httpuv_closeWS(SEXP connSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type conn(connSEXP);
@@ -29,7 +29,7 @@ END_RCPP
 }
 // makeTcpServer
 Rcpp::RObject makeTcpServer(const std::string& host, int port, Rcpp::Function onHeaders, Rcpp::Function onBodyData, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
-RcppExport SEXP httpuv_makeTcpServer(SEXP hostSEXP, SEXP portSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
+RcppExport SEXP _httpuv_makeTcpServer(SEXP hostSEXP, SEXP portSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -47,7 +47,7 @@ END_RCPP
 }
 // makePipeServer
 Rcpp::RObject makePipeServer(const std::string& name, int mask, Rcpp::Function onHeaders, Rcpp::Function onBodyData, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
-RcppExport SEXP httpuv_makePipeServer(SEXP nameSEXP, SEXP maskSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
+RcppExport SEXP _httpuv_makePipeServer(SEXP nameSEXP, SEXP maskSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -65,7 +65,7 @@ END_RCPP
 }
 // destroyServer
 void destroyServer(std::string handle);
-RcppExport SEXP httpuv_destroyServer(SEXP handleSEXP) {
+RcppExport SEXP _httpuv_destroyServer(SEXP handleSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP);
@@ -75,7 +75,7 @@ END_RCPP
 }
 // run
 bool run(int timeoutMillis);
-RcppExport SEXP httpuv_run(SEXP timeoutMillisSEXP) {
+RcppExport SEXP _httpuv_run(SEXP timeoutMillisSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -86,7 +86,7 @@ END_RCPP
 }
 // stopLoop
 void stopLoop();
-RcppExport SEXP httpuv_stopLoop() {
+RcppExport SEXP _httpuv_stopLoop() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     stopLoop();
@@ -95,7 +95,7 @@ END_RCPP
 }
 // base64encode
 std::string base64encode(const Rcpp::RawVector& x);
-RcppExport SEXP httpuv_base64encode(SEXP xSEXP) {
+RcppExport SEXP _httpuv_base64encode(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -106,7 +106,7 @@ END_RCPP
 }
 // daemonize
 Rcpp::RObject daemonize(std::string handle);
-RcppExport SEXP httpuv_daemonize(SEXP handleSEXP) {
+RcppExport SEXP _httpuv_daemonize(SEXP handleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -117,7 +117,7 @@ END_RCPP
 }
 // destroyDaemonizedServer
 void destroyDaemonizedServer(std::string handle);
-RcppExport SEXP httpuv_destroyDaemonizedServer(SEXP handleSEXP) {
+RcppExport SEXP _httpuv_destroyDaemonizedServer(SEXP handleSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP);
@@ -127,7 +127,7 @@ END_RCPP
 }
 // encodeURI
 std::vector<std::string> encodeURI(std::vector<std::string> value);
-RcppExport SEXP httpuv_encodeURI(SEXP valueSEXP) {
+RcppExport SEXP _httpuv_encodeURI(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -138,7 +138,7 @@ END_RCPP
 }
 // encodeURIComponent
 std::vector<std::string> encodeURIComponent(std::vector<std::string> value);
-RcppExport SEXP httpuv_encodeURIComponent(SEXP valueSEXP) {
+RcppExport SEXP _httpuv_encodeURIComponent(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -149,7 +149,7 @@ END_RCPP
 }
 // decodeURI
 std::vector<std::string> decodeURI(std::vector<std::string> value);
-RcppExport SEXP httpuv_decodeURI(SEXP valueSEXP) {
+RcppExport SEXP _httpuv_decodeURI(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -160,7 +160,7 @@ END_RCPP
 }
 // decodeURIComponent
 std::vector<std::string> decodeURIComponent(std::vector<std::string> value);
-RcppExport SEXP httpuv_decodeURIComponent(SEXP valueSEXP) {
+RcppExport SEXP _httpuv_decodeURIComponent(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -171,7 +171,7 @@ END_RCPP
 }
 // getRNGState
 void getRNGState();
-RcppExport SEXP httpuv_getRNGState() {
+RcppExport SEXP _httpuv_getRNGState() {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     getRNGState();
