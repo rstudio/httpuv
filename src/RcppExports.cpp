@@ -178,3 +178,27 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_httpuv_sendWSMessage", (DL_FUNC) &_httpuv_sendWSMessage, 3},
+    {"_httpuv_closeWS", (DL_FUNC) &_httpuv_closeWS, 1},
+    {"_httpuv_makeTcpServer", (DL_FUNC) &_httpuv_makeTcpServer, 8},
+    {"_httpuv_makePipeServer", (DL_FUNC) &_httpuv_makePipeServer, 8},
+    {"_httpuv_destroyServer", (DL_FUNC) &_httpuv_destroyServer, 1},
+    {"_httpuv_run", (DL_FUNC) &_httpuv_run, 1},
+    {"_httpuv_stopLoop", (DL_FUNC) &_httpuv_stopLoop, 0},
+    {"_httpuv_base64encode", (DL_FUNC) &_httpuv_base64encode, 1},
+    {"_httpuv_daemonize", (DL_FUNC) &_httpuv_daemonize, 1},
+    {"_httpuv_destroyDaemonizedServer", (DL_FUNC) &_httpuv_destroyDaemonizedServer, 1},
+    {"_httpuv_encodeURI", (DL_FUNC) &_httpuv_encodeURI, 1},
+    {"_httpuv_encodeURIComponent", (DL_FUNC) &_httpuv_encodeURIComponent, 1},
+    {"_httpuv_decodeURI", (DL_FUNC) &_httpuv_decodeURI, 1},
+    {"_httpuv_decodeURIComponent", (DL_FUNC) &_httpuv_decodeURIComponent, 1},
+    {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_httpuv(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+}
