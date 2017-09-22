@@ -255,36 +255,16 @@ public:
   virtual ~RWebApplication() {
   }
 
-  virtual void onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
-    using namespace Rcpp;
-
+  virtual HttpResponse* onHeaders(HttpRequest* pRequest) {
     if (_onHeaders.isNULL()) {
-      // TODO: This previous returned NULL. Is this OK?
-      callback(NULL);
-      return;
+      return NULL;
     }
 
     requestToEnv(pRequest, &pRequest->env());
 
-    // The callback is a pointer to
-    // HttpRequest::_on_headers_complete_complete(), bound to the HttpRequest
-    // object with boost::bind(). We need to be able to invoke the callback from
-    // R. To do this, we'll use invokeResponseFun, and bind the callback and
-    // request object to it. The R code passes in a List object.
-    boost::function<void(List)> * callback_wrapper = new boost::function<void(List)>();
+    Rcpp::List response(_onHeaders(pRequest->env()));
 
-    *callback_wrapper = boost::bind(
-      &invokeResponseFun,
-      callback,
-      pRequest,
-      _1
-    );
-
-    // Wrap the new function in an external pointer so we can send it to R.
-    XPtr< boost::function<void(List)> > callback_xptr(callback_wrapper);
-
-    // Call the R onHeaders() function.
-    _onHeaders(pRequest->env(), callback_xptr);
+    return listToResponse(pRequest, response);
   }
 
   virtual void onBodyData(HttpRequest* pRequest,

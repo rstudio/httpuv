@@ -214,18 +214,10 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
 int HttpRequest::_on_headers_complete(http_parser* pParser) {
   trace("on_headers_complete");
 
-  _pWebApplication->onHeaders(
-    this,
-    boost::bind(&HttpRequest::_on_headers_complete_complete, this, _1)
-  );
+  int result = 0;
 
-  return 0;
-}
-
-void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
-  trace("on_headers_complete_complete");
-
-  if (pResponse) {
+  HttpResponse* pResp = _pWebApplication->onHeaders(this);
+  if (pResp) {
     bool bodyExpected = _headers.find("Content-Length") != _headers.end() ||
       _headers.find("Transfer-Encoding") != _headers.end();
 
@@ -234,33 +226,31 @@ void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
       // prematurely, then add "Connection: close" header to the response and
       // set a flag to ignore all future reads on this connection.
 
-      pResponse->addHeader("Connection", "close");
+      pResp->addHeader("Connection", "close");
 
       uv_read_stop((uv_stream_t*)handle());
 
       _ignoreNewData = true;
     }
+    pResp->writeResponse();
 
-    pResponse->writeResponse();
-
-    // TODO: Figure out how to set error condition. Since the result is no
-    // longer returned in _on_headers_complete, we need to simulate the behavior
-    // here:
-    // https://github.com/rstudio/httpuv/blob/master/src/http-parser/http_parser.c#L1570-L1592
-    // // result = 1 has special meaning to http_parser for this one callback; it
-    // // means F_SKIPBODY should be set on the parser. That's not what we want
-    // // here; we just want processing to terminate.
-    // result = 2;
+    // result = 1 has special meaning to http_parser for this one callback; it
+    // means F_SKIPBODY should be set on the parser. That's not what we want
+    // here; we just want processing to terminate.
+    result = 2;
   }
   else {
     // If the request is Expect: Continue, and the app didn't say otherwise,
     // then give it what it wants
     if (_headers.find("Expect") != _headers.end()
         && _headers["Expect"] == "100-continue") {
-      pResponse = new HttpResponse(this, 100, "Continue", NULL);
-      pResponse->writeResponse();
+      pResp = new HttpResponse(this, 100, "Continue", NULL);
+      pResp->writeResponse();
     }
   }
+
+  // TODO: Allocate body
+  return result;
 }
 
 int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) {

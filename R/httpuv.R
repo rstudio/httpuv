@@ -89,8 +89,11 @@ ErrorStream <- setRefClass(
 )
 
 #' @importFrom promises promise then finally %...>% %...!%
-rookCall <- function(func, req, data = NULL, dataLength = -1) {
-  promise(function(resolve, reject) {
+rookCall <- function(func, req, data = NULL, dataLength = -1, async = TRUE) {
+
+  # Break the processing into two parts: first, the computation with func();
+  # second, the preparation of the response object.
+  compute <- function(resolve, reject) {
     inputStream <- if(is.null(data))
       nullInputStream
     else
@@ -108,9 +111,15 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
     if (!is.null(req$HTTP_CONTENT_LENGTH))
       req$CONTENT_LENGTH <- req$HTTP_CONTENT_LENGTH
 
-    resolve(func(req))
+    # When async=TRUE, func() could return a regular value or a promise. If it's
+    # a regular value, it gets passed to the then() callback on the next tick.
+    # If it's a promise, the then() callback will execute when the res promise
+    # resolves.
+    res <- func(req)
+    resolve(res)
+  }
 
-  }) %...>% (function(resp) {
+  prepare_response <- function(resp) {
     if (is.null(resp) || length(resp) == 0)
       return(NULL)
 
@@ -128,8 +137,9 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
       resp$bodyFileOwned <- owned
     }
     resp
+  }
 
-  }) %...!% (function(e) {
+  on_error <- function(e) {
     list(
       status=500L,
       headers=list(
@@ -139,7 +149,20 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
         paste("ERROR:", conditionMessage(e), collapse="\n")
       ))
     )
-  })
+  }
+
+  if (async) {
+    return(promise(compute) %...>% prepare_response %...!% on_error)
+
+  } else {
+    return(tryCatch(
+      {
+        response <- compute(identity)
+        prepare_response(response)
+      },
+      error = on_error
+    ))
+  }
 }
 
 AppWrapper <- setRefClass(
@@ -159,15 +182,11 @@ AppWrapper <- setRefClass(
       # .app$onHeaders can error (e.g. if .app is a reference class)
       .supportsOnHeaders <<- isTRUE(try(!is.null(.app$onHeaders), silent=TRUE))
     },
-    onHeaders = function(req, cpp_callback) {
-      if (.supportsOnHeaders) {
-        rookCall(.app$onHeaders, req) %...>%
-          invokeCppCallback(., cpp_callback)
-      } else {
-        invokeCppCallback(NULL, cpp_callback)
-      }
+    onHeaders = function(req) {
+      if (!.supportsOnHeaders)
+        return(NULL)
 
-      invisible()
+      rookCall(.app$onHeaders, req, async = FALSE)
     },
     onBodyData = function(req, bytes) {
       if (is.null(req$.bodyData))
@@ -175,7 +194,7 @@ AppWrapper <- setRefClass(
       writeBin(bytes, req$.bodyData)
     },
     call = function(req, cpp_callback) {
-      p <- rookCall(.app$call, req, req$.bodyData, seek(req$.bodyData)) %...>%
+      p <- rookCall(.app$call, req, req$.bodyData, seek(req$.bodyData), async = TRUE) %...>%
         invokeCppCallback(., cpp_callback)
 
       finally(p, function() {
