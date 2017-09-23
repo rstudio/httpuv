@@ -564,3 +564,8 @@ startDaemonizedServer <- function(host, port, app) {
 stopDaemonizedServer <- function(server) {
   destroyDaemonizedServer(server)
 }
+
+# Needed so that Rcpp registers the 'httpuv_decodeURIComponent' symbol
+legacy_dummy <- function(value){
+  .Call(httpuv_decodeURIComponent, PACKAGE = "httpuv", value)
+}
