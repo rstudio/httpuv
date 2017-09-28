@@ -583,7 +583,7 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
     if (!needsEscape(*it, encodeReserved)) {
       os << *it;
     } else {
-      os << '%' << std::setw(2) << (int)*it;
+      os << '%' << std::setw(2) << static_cast<unsigned int>(static_cast<unsigned char>(*it));
     }
   }
   return os.str();
