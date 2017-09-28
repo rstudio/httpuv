@@ -20,28 +20,12 @@ ifeq ($(UNAME), OpenBSD)
 PKG_LIBS += -lkvm
 endif
 
-PKG_CPPFLAGS = -I./libuv/include -I./http-parser -I./sha1 -I./base64
+PKG_CPPFLAGS = -I./libuv/include -I./http-parser -I./sha1 -I./base64 $(C_VISIBILITY)
 
+$(SHLIB): libuv/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
 
-
-.PHONY: all libuv.a http-parser.o
-
-all: $(SHLIB)
-$(SHLIB): libuv.a http-parser.o sha1.o base64.o
-
-libuv.a:
+libuv/libuv.a:
 	$(MAKE) --directory=libuv \
-		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" \
+		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" \
     HAVE_DTRACE=0 \
 		libuv.a
-
-http-parser.o:
-	$(MAKE) --directory=http-parser \
-		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" \
-		http_parser.o
-
-sha1.o:
-	(cd sha1 && $(CC) $(CFLAGS) $(CPICFLAGS) -c sha1.c -o sha1.o)
-
-base64.o:
-	(cd base64 && $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c base64.cpp -o base64.o)
