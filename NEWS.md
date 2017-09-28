@@ -75,7 +75,7 @@ httpuv 1.1.0
 ============
 
 
-* Fix issue #8: Bug in concurrent uploads. 
+* Fix issue #8: Bug in concurrent uploads.
 
 * Add `interrupt()` function for stopping the runloop.
 
