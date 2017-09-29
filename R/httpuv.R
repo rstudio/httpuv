@@ -87,12 +87,12 @@ ErrorStream <- setRefClass(
   )
 )
 
-#' @importFrom promises promise then finally %...>% %...!%
-rookCall <- function(func, req, data = NULL, dataLength = -1, async = TRUE) {
+#' @importFrom promises promise then finally is.promise %...>% %...!%
+rookCall <- function(func, req, data = NULL, dataLength = -1) {
 
   # Break the processing into two parts: first, the computation with func();
   # second, the preparation of the response object.
-  compute <- function(resolve, reject) {
+  compute <- function() {
     inputStream <- if(is.null(data))
       nullInputStream
     else
@@ -110,12 +110,8 @@ rookCall <- function(func, req, data = NULL, dataLength = -1, async = TRUE) {
     if (!is.null(req$HTTP_CONTENT_LENGTH))
       req$CONTENT_LENGTH <- req$HTTP_CONTENT_LENGTH
 
-    # When async=TRUE, func() could return a regular value or a promise. If it's
-    # a regular value, it gets passed to the then() callback on the next tick.
-    # If it's a promise, the then() callback will execute when the res promise
-    # resolves.
-    res <- func(req)
-    resolve(res)
+    # func() may return a regular value or a promise.
+    func(req)
   }
 
   prepare_response <- function(resp) {
@@ -150,17 +146,22 @@ rookCall <- function(func, req, data = NULL, dataLength = -1, async = TRUE) {
     )
   }
 
-  if (async) {
-    return(promise(compute) %...>% prepare_response %...!% on_error)
+  # First, run the compute function. If it errored, return error response.
+  # Then check if it returned a promise. If so, promisify the next step.
+  # If not, run the next step immediately.
+  compute_error <- NULL
+  response <- tryCatch(
+    compute(),
+    error = function(e) compute_error <<- e
+  )
+  if (!is.null(compute_error)) {
+    return(on_error(compute_error))
+  }
 
+  if (is.promise(response)) {
+    response %...>% prepare_response %...!% on_error
   } else {
-    return(tryCatch(
-      {
-        response <- compute(identity)
-        prepare_response(response)
-      },
-      error = on_error
-    ))
+    tryCatch(prepare_response(response), error = on_error)
   }
 }
 
@@ -185,7 +186,7 @@ AppWrapper <- setRefClass(
       if (!.supportsOnHeaders)
         return(NULL)
 
-      rookCall(.app$onHeaders, req, async = FALSE)
+      rookCall(.app$onHeaders, req)
     },
     onBodyData = function(req, bytes) {
       if (is.null(req$.bodyData))
@@ -193,15 +194,30 @@ AppWrapper <- setRefClass(
       writeBin(bytes, req$.bodyData)
     },
     call = function(req, cpp_callback) {
-      p <- rookCall(.app$call, req, req$.bodyData, seek(req$.bodyData), async = TRUE) %...>%
-        invokeCppCallback(., cpp_callback)
+      # The cpp_callback is an external pointer to a C++ function that writes
+      # the response.
 
-      finally(p, function() {
+      resp <- rookCall(.app$call, req, req$.bodyData, seek(req$.bodyData))
+      # Note: rookCall() should never throw error because all the work is
+      # wrapped in tryCatch().
+
+      clean_up <- function() {
         if (!is.null(req$.bodyData)) {
           close(req$.bodyData)
         }
         req$.bodyData <- NULL
-      })
+      }
+
+      if (is.promise(resp)) {
+        # Slower path if resp is a promise
+        resp <- resp %...>% invokeCppCallback(., cpp_callback)
+        finally(resp, clean_up)
+
+      } else {
+        # Fast path if resp is a regular value
+        on.exit(clean_up())
+        invokeCppCallback(resp, cpp_callback)
+      }
 
       invisible()
     },
