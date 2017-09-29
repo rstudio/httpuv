@@ -25,7 +25,6 @@
 #' @useDynLib httpuv
 #' @import methods
 #' @importFrom Rcpp evalCpp
-#' @importFrom utils packageVersion
 NULL
 
 # Implementation of Rook input stream
@@ -103,7 +102,7 @@ rookCall <- function(func, req, data = NULL, dataLength = -1, async = TRUE) {
 
     req$rook.errors <- ErrorStream$new()
 
-    req$httpuv.version <- packageVersion('httpuv')
+    req$httpuv.version <- httpuv_version()
 
     # These appear to be required for Rook multipart parsing to work
     if (!is.null(req$HTTP_CONTENT_TYPE))
