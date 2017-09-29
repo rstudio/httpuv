@@ -207,6 +207,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_encodeURIComponent", (DL_FUNC) &_httpuv_encodeURIComponent, 1},
     {"_httpuv_decodeURI", (DL_FUNC) &_httpuv_decodeURI, 1},
     {"_httpuv_decodeURIComponent", (DL_FUNC) &_httpuv_decodeURIComponent, 1},
+    {"_httpuv_invokeCppCallback", (DL_FUNC) &_httpuv_invokeCppCallback, 2},
     {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
     {"httpuv_decodeURIComponent",       (DL_FUNC) &httpuv_decodeURIComponent,       1},
     {NULL, NULL, 0}
