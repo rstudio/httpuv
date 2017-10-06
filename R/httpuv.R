@@ -428,16 +428,19 @@ startPipeServer <- function(name, mask, app) {
 }
 
 #' Process requests
-#' 
+#'
 #' Process HTTP requests and WebSocket messages. Even if a server exists, no
 #' requests are serviced unless and until \code{service} is called.
-#' 
+#'
 #' Note that while \code{service} is waiting for a new request, the process is
 #' not interruptible using normal R means (Esc, Ctrl+C, etc.). If being
-#' interruptible is a requirement, then call \code{service} in a while loop
-#' with a very short but non-zero \code{\link{Sys.sleep}} during each iteration.
-#' 
-#' @param timeoutMs Approximate number of milliseconds to run before returning. 
+#' interruptible is a requirement, then call \code{service} in a while loop with
+#' a very short but non-zero \code{\link{Sys.sleep}} during each iteration.
+#'
+#' This function calls \code{\link[later]{run_now}()}, so if your application
+#' schedules any \code{\link[later]{later}} callbacks, they will be invoked.
+#'
+#' @param timeoutMs Approximate number of milliseconds to run before returning.
 #'   If 0, then the function will continually process requests without returning
 #'   unless an error occurs. If NA, performs a non-blocking run without waiting.
 #'
@@ -448,7 +451,7 @@ startPipeServer <- function(name, mask, app) {
 #'   Sys.sleep(0.001)
 #' }
 #' }
-#' 
+#'
 #' @export
 service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
   run(timeoutMs)
