@@ -7,7 +7,7 @@
 service(timeoutMs = ifelse(interactive(), 100, 1000))
 }
 \arguments{
-\item{timeoutMs}{Approximate number of milliseconds to run before returning. 
+\item{timeoutMs}{Approximate number of milliseconds to run before returning.
 If 0, then the function will continually process requests without returning
 unless an error occurs. If NA, performs a non-blocking run without waiting.}
 }
@@ -18,8 +18,11 @@ requests are serviced unless and until \code{service} is called.
 \details{
 Note that while \code{service} is waiting for a new request, the process is
 not interruptible using normal R means (Esc, Ctrl+C, etc.). If being
-interruptible is a requirement, then call \code{service} in a while loop
-with a very short but non-zero \code{\link{Sys.sleep}} during each iteration.
+interruptible is a requirement, then call \code{service} in a while loop with
+a very short but non-zero \code{\link{Sys.sleep}} during each iteration.
+
+This function calls \code{\link[later]{run_now}()}, so if your application
+schedules any \code{\link[later]{later}} callbacks, they will be invoked.
 }
 \examples{
 \dontrun{

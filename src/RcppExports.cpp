@@ -169,6 +169,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// invokeCppCallback
+void invokeCppCallback(Rcpp::List data, SEXP callback_sexp);
+RcppExport SEXP _httpuv_invokeCppCallback(SEXP dataSEXP, SEXP callback_sexpSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type callback_sexp(callback_sexpSEXP);
+    invokeCppCallback(data, callback_sexp);
+    return R_NilValue;
+END_RCPP
+}
 // getRNGState
 void getRNGState();
 RcppExport SEXP _httpuv_getRNGState() {
@@ -196,6 +207,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_encodeURIComponent", (DL_FUNC) &_httpuv_encodeURIComponent, 1},
     {"_httpuv_decodeURI", (DL_FUNC) &_httpuv_decodeURI, 1},
     {"_httpuv_decodeURIComponent", (DL_FUNC) &_httpuv_decodeURIComponent, 1},
+    {"_httpuv_invokeCppCallback", (DL_FUNC) &_httpuv_invokeCppCallback, 2},
     {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
     {"httpuv_decodeURIComponent",       (DL_FUNC) &httpuv_decodeURIComponent,       1},
     {NULL, NULL, 0}

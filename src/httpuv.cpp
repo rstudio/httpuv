@@ -5,11 +5,14 @@
 #include <iomanip>
 #include <signal.h>
 #include <errno.h>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 #include <uv.h>
 #include <base64.hpp>
 #include "uvutil.h"
 #include "http.h"
 #include "filedatasource.h"
+#include <Rinternals.h>
 
 std::string normalizeHeaderName(const std::string& name) {
   std::string result = name;
@@ -224,6 +227,11 @@ HttpResponse* listToResponse(HttpRequest* pRequest,
   return pResp;
 }
 
+void invokeResponseFun(boost::function<void(HttpResponse*)> fun, HttpRequest* pRequest, Rcpp::List response) {
+  HttpResponse* pResponse = listToResponse(pRequest, response);
+  fun(pResponse);
+};
+
 class RWebApplication : public WebApplication {
 private:
   Rcpp::Function _onHeaders;
@@ -266,10 +274,21 @@ public:
     _onBodyData(pRequest->env(), rawVector);
   }
 
-  virtual HttpResponse* getResponse(HttpRequest* pRequest) {
-    Rcpp::List response(_onRequest(pRequest->env()));
+  virtual void getResponse(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
+    using namespace Rcpp;
 
-    return listToResponse(pRequest, response);
+    boost::function<void(List)> * callback_wrapper = new boost::function<void(List)>();
+
+    *callback_wrapper = boost::bind(
+      &invokeResponseFun,
+      callback,
+      pRequest,
+      _1
+    );
+
+    XPtr< boost::function<void(List)> > callback_xptr(callback_wrapper);
+
+    _onRequest(pRequest->env(), callback_xptr);
   }
 
   void onWSOpen(HttpRequest* pRequest) {
@@ -730,6 +749,28 @@ std::vector<std::string> decodeURIComponent(std::vector<std::string> value) {
   }
   
   return value;
+}
+
+// Given a List and an external pointer to a C++ function that takes a List,
+// invoke the function with the List as the single argument. This also clears
+// the external pointer so that the C++ function can't be called again.
+// [[Rcpp::export]]
+void invokeCppCallback(Rcpp::List data, SEXP callback_sexp) {
+  if (TYPEOF(callback_sexp) != EXTPTRSXP) {
+     throw Rcpp::exception("Expected external pointer.");
+  }
+  Rcpp::XPtr< boost::function<void(Rcpp::List)> > callback_xptr(callback_sexp);
+  boost::function<void(Rcpp::List)> callback = *callback_xptr;
+  callback(data);
+
+  // We want to clear the external pointer to make sure that the C++ function
+  // can't get called again by accident. But if we do this, the Xptr's finalizer
+  // won't work correctly because it'll be deleting a NULL pointer. So we have
+  // to delete it explicitly before clearing the external pointer.
+  //
+  // Free the callback_wrapper allocated in onHeaders or getResponse.
+  delete callback_xptr.get();
+  R_ClearExternalPtr(callback_sexp);
 }
 
 //' Apply the value of .Random.seed to R's internal RNG state

@@ -20,8 +20,11 @@ Depends:
     methods
 Imports:
     Rcpp (>= 0.11.0),
-    utils
-LinkingTo: Rcpp
+    utils,
+    promises
+Remotes:
+    rstudio/promises
+LinkingTo: Rcpp, BH
 URL: https://github.com/rstudio/httpuv
 SystemRequirements: GNU make
 RoxygenNote: 6.0.1

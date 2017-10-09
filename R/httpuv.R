@@ -25,7 +25,6 @@
 #' @useDynLib httpuv
 #' @import methods
 #' @importFrom Rcpp evalCpp
-#' @importFrom utils packageVersion
 NULL
 
 # Implementation of Rook input stream
@@ -88,33 +87,40 @@ ErrorStream <- setRefClass(
   )
 )
 
+#' @importFrom promises promise then finally is.promise %...>% %...!%
 rookCall <- function(func, req, data = NULL, dataLength = -1) {
-  result <- try({
+
+  # Break the processing into two parts: first, the computation with func();
+  # second, the preparation of the response object.
+  compute <- function() {
     inputStream <- if(is.null(data))
       nullInputStream
     else
       InputStream$new(data, dataLength)
 
     req$rook.input <- inputStream
-    
+
     req$rook.errors <- ErrorStream$new()
-    
-    req$httpuv.version <- packageVersion('httpuv')
-    
+
+    req$httpuv.version <- httpuv_version()
+
     # These appear to be required for Rook multipart parsing to work
     if (!is.null(req$HTTP_CONTENT_TYPE))
       req$CONTENT_TYPE <- req$HTTP_CONTENT_TYPE
     if (!is.null(req$HTTP_CONTENT_LENGTH))
       req$CONTENT_LENGTH <- req$HTTP_CONTENT_LENGTH
-    
-    resp <- func(req)
 
+    # func() may return a regular value or a promise.
+    func(req)
+  }
+
+  prepare_response <- function(resp) {
     if (is.null(resp) || length(resp) == 0)
       return(NULL)
-    
+
     # Coerce all headers to character
     resp$headers <- lapply(resp$headers, paste)
-    
+
     if ('file' %in% names(resp$body)) {
       filename <- resp$body[['file']]
       owned <- FALSE
@@ -126,19 +132,36 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
       resp$bodyFileOwned <- owned
     }
     resp
-  })
-  if (inherits(result, 'try-error')) {
-    return(list(
+  }
+
+  on_error <- function(e) {
+    list(
       status=500L,
       headers=list(
         'Content-Type'='text/plain; charset=UTF-8'
       ),
       body=charToRaw(enc2utf8(
-        paste("ERROR:", attr(result, "condition")$message, collapse="\n")
+        paste("ERROR:", conditionMessage(e), collapse="\n")
       ))
-    ))
+    )
+  }
+
+  # First, run the compute function. If it errored, return error response.
+  # Then check if it returned a promise. If so, promisify the next step.
+  # If not, run the next step immediately.
+  compute_error <- NULL
+  response <- tryCatch(
+    compute(),
+    error = function(e) compute_error <<- e
+  )
+  if (!is.null(compute_error)) {
+    return(on_error(compute_error))
+  }
+
+  if (is.promise(response)) {
+    response %...>% prepare_response %...!% on_error
   } else {
-    return(result)
+    tryCatch(prepare_response(response), error = on_error)
   }
 }
 
@@ -155,7 +178,7 @@ AppWrapper <- setRefClass(
         .app <<- list(call=app)
       else
         .app <<- app
-      
+
       # .app$onHeaders can error (e.g. if .app is a reference class)
       .supportsOnHeaders <<- isTRUE(try(!is.null(.app$onHeaders), silent=TRUE))
     },
@@ -170,20 +193,39 @@ AppWrapper <- setRefClass(
         req$.bodyData <- file(open='w+b', encoding='UTF-8')
       writeBin(bytes, req$.bodyData)
     },
-    call = function(req) {
-      on.exit({
+    call = function(req, cpp_callback) {
+      # The cpp_callback is an external pointer to a C++ function that writes
+      # the response.
+
+      resp <- rookCall(.app$call, req, req$.bodyData, seek(req$.bodyData))
+      # Note: rookCall() should never throw error because all the work is
+      # wrapped in tryCatch().
+
+      clean_up <- function() {
         if (!is.null(req$.bodyData)) {
           close(req$.bodyData)
         }
         req$.bodyData <- NULL
-      })
-      rookCall(.app$call, req, req$.bodyData, seek(req$.bodyData))
+      }
+
+      if (is.promise(resp)) {
+        # Slower path if resp is a promise
+        resp <- resp %...>% invokeCppCallback(., cpp_callback)
+        finally(resp, clean_up)
+
+      } else {
+        # Fast path if resp is a regular value
+        on.exit(clean_up())
+        invokeCppCallback(resp, cpp_callback)
+      }
+
+      invisible()
     },
     onWSOpen = function(handle, req) {
       ws <- WebSocket$new(handle, req)
       .wsconns[[as.character(handle)]] <<- ws
       result <- try(.app$onWSOpen(ws))
-      
+
       # If an unexpected error happened, just close up
       if (inherits(result, 'try-error')) {
         # TODO: Close code indicating error?
@@ -386,16 +428,19 @@ startPipeServer <- function(name, mask, app) {
 }
 
 #' Process requests
-#' 
+#'
 #' Process HTTP requests and WebSocket messages. Even if a server exists, no
 #' requests are serviced unless and until \code{service} is called.
-#' 
+#'
 #' Note that while \code{service} is waiting for a new request, the process is
 #' not interruptible using normal R means (Esc, Ctrl+C, etc.). If being
-#' interruptible is a requirement, then call \code{service} in a while loop
-#' with a very short but non-zero \code{\link{Sys.sleep}} during each iteration.
-#' 
-#' @param timeoutMs Approximate number of milliseconds to run before returning. 
+#' interruptible is a requirement, then call \code{service} in a while loop with
+#' a very short but non-zero \code{\link{Sys.sleep}} during each iteration.
+#'
+#' This function calls \code{\link[later]{run_now}()}, so if your application
+#' schedules any \code{\link[later]{later}} callbacks, they will be invoked.
+#'
+#' @param timeoutMs Approximate number of milliseconds to run before returning.
 #'   If 0, then the function will continually process requests without returning
 #'   unless an error occurs. If NA, performs a non-blocking run without waiting.
 #'
@@ -406,10 +451,11 @@ startPipeServer <- function(name, mask, app) {
 #'   Sys.sleep(0.001)
 #' }
 #' }
-#' 
+#'
 #' @export
 service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
   run(timeoutMs)
+  later::run_now()
 }
 
 #' Stop a running server
