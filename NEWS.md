@@ -1,5 +1,7 @@
-httpuv 1.3.5.9000
+httpuv 1.3.5.9001
 =================
+
+* httpuv can now handle request callbacks asynchronously. ([#80](https://github.com/rstudio/httpuv/pull/80))
 
 * Let Rcpp handle symbol registration. ([#85](https://github.com/rstudio/httpuv/pull/85))
 
