@@ -441,8 +441,10 @@ startPipeServer <- function(name, mask, app) {
 #' schedules any \code{\link[later]{later}} callbacks, they will be invoked.
 #'
 #' @param timeoutMs Approximate number of milliseconds to run before returning.
-#'   If 0, then the function will continually process requests without returning
-#'   unless an error occurs. If NA, performs a non-blocking run without waiting.
+#'   It will return after an I/O event occurs, or after the timeout duration has
+#'   elapsed. If 0, then the function will continually process requests without
+#'   returning unless an error occurs. If NA, performs a non-blocking run
+#'   without waiting.
 #'
 #' @examples
 #' \dontrun{

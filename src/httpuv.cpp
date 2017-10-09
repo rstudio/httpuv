@@ -393,7 +393,8 @@ void stop_loop_timer_cb(uv_timer_t* handle, int status) {
   uv_stop(handle->loop);
 }
 
-// Run the libuv default loop for roughly timeoutMillis, then stop
+// Run the libuv default loop until an I/O event occurs, or for up to
+// timeoutMillis, then stop.
 // [[Rcpp::export]]
 bool run(int timeoutMillis) {
   static uv_timer_t timer_req = {0};
