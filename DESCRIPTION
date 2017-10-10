@@ -21,7 +21,8 @@ Depends:
 Imports:
     Rcpp (>= 0.11.0),
     utils,
-    promises
+    promises,
+    later
 Remotes:
     rstudio/promises
 LinkingTo: Rcpp, BH
