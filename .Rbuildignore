@@ -7,3 +7,4 @@
 /\.so$
 /\.dll$
 ^\.travis\.yml$
+^appveyor\.yml$
