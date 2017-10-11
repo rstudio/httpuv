@@ -9,7 +9,7 @@ ifeq ($(UNAME), Darwin)
 FRAMEWORK = -framework CoreServices
 endif
 
-PKG_LIBS = ./libuv/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o $(FRAMEWORK)
+PKG_LIBS = ./libuv/.libs/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o $(FRAMEWORK)
 ifeq ($(UNAME), SunOS)
 PKG_LIBS += -lkstat -lsendfile -lsocket
 endif
@@ -22,10 +22,12 @@ endif
 
 PKG_CPPFLAGS = -I./libuv/include -I./http-parser -I./sha1 -I./base64 $(C_VISIBILITY)
 
-$(SHLIB): libuv/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
+$(SHLIB): libuv/.libs/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
 
-libuv/libuv.a:
+libuv/Makefile:
+	(cd libuv && sh autogen.sh && ./configure)
+
+libuv/.libs/libuv.a: libuv/Makefile
 	$(MAKE) --directory=libuv \
 		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" \
-    HAVE_DTRACE=0 \
-		libuv.a
+    HAVE_DTRACE=0
