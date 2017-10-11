@@ -30,6 +30,8 @@ sRtlNtStatusToDosError pRtlNtStatusToDosError;
 sNtDeviceIoControlFile pNtDeviceIoControlFile;
 sNtQueryInformationFile pNtQueryInformationFile;
 sNtSetInformationFile pNtSetInformationFile;
+sNtQueryVolumeInformationFile pNtQueryVolumeInformationFile;
+sNtQueryDirectoryFile pNtQueryDirectoryFile;
 sNtQuerySystemInformation pNtQuerySystemInformation;
 
 
@@ -38,23 +40,23 @@ sGetQueuedCompletionStatusEx pGetQueuedCompletionStatusEx;
 sSetFileCompletionNotificationModes pSetFileCompletionNotificationModes;
 sCreateSymbolicLinkW pCreateSymbolicLinkW;
 sCancelIoEx pCancelIoEx;
-sInitializeSRWLock pInitializeSRWLock;
-sAcquireSRWLockShared pAcquireSRWLockShared;
-sAcquireSRWLockExclusive pAcquireSRWLockExclusive;
-sTryAcquireSRWLockShared pTryAcquireSRWLockShared;
-sTryAcquireSRWLockExclusive pTryAcquireSRWLockExclusive;
-sReleaseSRWLockShared pReleaseSRWLockShared;
-sReleaseSRWLockExclusive pReleaseSRWLockExclusive;
 sInitializeConditionVariable pInitializeConditionVariable;
 sSleepConditionVariableCS pSleepConditionVariableCS;
 sSleepConditionVariableSRW pSleepConditionVariableSRW;
 sWakeAllConditionVariable pWakeAllConditionVariable;
 sWakeConditionVariable pWakeConditionVariable;
+sCancelSynchronousIo pCancelSynchronousIo;
+sGetFinalPathNameByHandleW pGetFinalPathNameByHandleW;
 
 
-void uv_winapi_init() {
+/* Powrprof.dll function pointer */
+sPowerRegisterSuspendResumeNotification pPowerRegisterSuspendResumeNotification;
+
+
+void uv_winapi_init(void) {
   HMODULE ntdll_module;
   HMODULE kernel32_module;
+  HMODULE powrprof_module;
 
   ntdll_module = GetModuleHandleA("ntdll.dll");
   if (ntdll_module == NULL) {
@@ -68,13 +70,6 @@ void uv_winapi_init() {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
-  pNtQueryInformationFile = (sNtQueryInformationFile) GetProcAddress(
-      ntdll_module,
-      "NtQueryInformationFile");
-  if (pNtQueryInformationFile == NULL) {
-    uv_fatal_error(GetLastError(), "GetProcAddress");
-  }
-
   pNtDeviceIoControlFile = (sNtDeviceIoControlFile) GetProcAddress(
       ntdll_module,
       "NtDeviceIoControlFile");
@@ -82,10 +77,29 @@ void uv_winapi_init() {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
+  pNtQueryInformationFile = (sNtQueryInformationFile) GetProcAddress(
+      ntdll_module,
+      "NtQueryInformationFile");
+  if (pNtQueryInformationFile == NULL) {
+    uv_fatal_error(GetLastError(), "GetProcAddress");
+  }
+
   pNtSetInformationFile = (sNtSetInformationFile) GetProcAddress(
       ntdll_module,
       "NtSetInformationFile");
   if (pNtSetInformationFile == NULL) {
+    uv_fatal_error(GetLastError(), "GetProcAddress");
+  }
+
+  pNtQueryVolumeInformationFile = (sNtQueryVolumeInformationFile)
+      GetProcAddress(ntdll_module, "NtQueryVolumeInformationFile");
+  if (pNtQueryVolumeInformationFile == NULL) {
+    uv_fatal_error(GetLastError(), "GetProcAddress");
+  }
+
+  pNtQueryDirectoryFile = (sNtQueryDirectoryFile)
+      GetProcAddress(ntdll_module, "NtQueryDirectoryFile");
+  if (pNtQueryVolumeInformationFile == NULL) {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
@@ -114,27 +128,6 @@ void uv_winapi_init() {
   pCancelIoEx = (sCancelIoEx)
     GetProcAddress(kernel32_module, "CancelIoEx");
 
-  pInitializeSRWLock = (sInitializeSRWLock)
-    GetProcAddress(kernel32_module, "InitializeSRWLock");
-
-  pAcquireSRWLockShared = (sAcquireSRWLockShared)
-    GetProcAddress(kernel32_module, "AcquireSRWLockShared");
-
-  pAcquireSRWLockExclusive = (sAcquireSRWLockExclusive)
-    GetProcAddress(kernel32_module, "AcquireSRWLockExclusive");
-
-  pTryAcquireSRWLockShared = (sTryAcquireSRWLockShared)
-    GetProcAddress(kernel32_module, "TryAcquireSRWLockShared");
-
-  pTryAcquireSRWLockExclusive = (sTryAcquireSRWLockExclusive)
-    GetProcAddress(kernel32_module, "TryAcquireSRWLockExclusive");
-
-  pReleaseSRWLockShared = (sReleaseSRWLockShared)
-    GetProcAddress(kernel32_module, "ReleaseSRWLockShared");
-
-  pReleaseSRWLockExclusive = (sReleaseSRWLockExclusive)
-    GetProcAddress(kernel32_module, "ReleaseSRWLockExclusive");
-
   pInitializeConditionVariable = (sInitializeConditionVariable)
     GetProcAddress(kernel32_module, "InitializeConditionVariable");
 
@@ -149,4 +142,18 @@ void uv_winapi_init() {
 
   pWakeConditionVariable = (sWakeConditionVariable)
     GetProcAddress(kernel32_module, "WakeConditionVariable");
+
+  pCancelSynchronousIo = (sCancelSynchronousIo)
+    GetProcAddress(kernel32_module, "CancelSynchronousIo");
+
+  pGetFinalPathNameByHandleW = (sGetFinalPathNameByHandleW)
+    GetProcAddress(kernel32_module, "GetFinalPathNameByHandleW");
+
+
+  powrprof_module = LoadLibraryA("powrprof.dll");
+  if (powrprof_module != NULL) {
+    pPowerRegisterSuspendResumeNotification = (sPowerRegisterSuspendResumeNotification)
+      GetProcAddress(powrprof_module, "PowerRegisterSuspendResumeNotification");
+  }
+
 }

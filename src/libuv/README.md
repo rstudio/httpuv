@@ -1,118 +1,332 @@
-# libuv
+![libuv][libuv_banner]
 
-libuv is a new platform layer for Node. Its purpose is to abstract IOCP on
-Windows and epoll/kqueue/event ports/etc. on Unix systems. We intend to
-eventually contain all platform differences in this library.
+## Overview
 
-http://nodejs.org/
+libuv is a multi-platform support library with a focus on asynchronous I/O. It
+was primarily developed for use by [Node.js][], but it's also
+used by [Luvit](http://luvit.io/), [Julia](http://julialang.org/),
+[pyuv](https://github.com/saghul/pyuv), and [others](https://github.com/libuv/libuv/wiki/Projects-that-use-libuv).
 
-## Features
+## Feature highlights
 
- * Non-blocking TCP sockets
+ * Full-featured event loop backed by epoll, kqueue, IOCP, event ports.
 
- * Non-blocking named pipes
+ * Asynchronous TCP and UDP sockets
 
- * UDP
+ * Asynchronous DNS resolution
 
- * Timers
+ * Asynchronous file and file system operations
 
- * Child process spawning
+ * File system events
 
- * Asynchronous DNS via `uv_getaddrinfo`.
+ * ANSI escape code controlled TTY
 
- * Asynchronous file system APIs `uv_fs_*`
+ * IPC with socket sharing, using Unix domain sockets or named pipes (Windows)
 
- * High resolution time `uv_hrtime`
+ * Child processes
 
- * Current executable path look up `uv_exepath`
+ * Thread pool
 
- * Thread pool scheduling `uv_queue_work`
+ * Signal handling
 
- * ANSI escape code controlled TTY `uv_tty_t`
+ * High resolution clock
 
- * File system events Currently supports inotify, `ReadDirectoryChangesW`
-   and kqueue. Event ports in the near future.
-   `uv_fs_event_t`
+ * Threading and synchronization primitives
 
- * IPC and socket sharing between processes `uv_write2`
+## Versioning
+
+Starting with version 1.0.0 libuv follows the [semantic versioning](http://semver.org/)
+scheme. The API change and backwards compatibility rules are those indicated by
+SemVer. libuv will keep a stable ABI across major releases.
+
+The ABI/API changes can be tracked [here](http://abi-laboratory.pro/tracker/timeline/libuv/).
+
+## Licensing
+
+libuv is licensed under the MIT license. Check the [LICENSE file](LICENSE).
+The documentation is licensed under the CC BY 4.0 license. Check the [LICENSE-docs file](LICENSE-docs).
 
 ## Community
 
+ * [Support](https://github.com/libuv/help)
  * [Mailing list](http://groups.google.com/group/libuv)
+ * [IRC chatroom (#libuv@irc.freenode.org)](http://webchat.freenode.net?channels=libuv&uio=d4)
 
 ## Documentation
 
- * [include/uv.h](https://github.com/joyent/libuv/blob/master/include/uv.h)
-   &mdash; API documentation in the form of detailed header comments.
- * [An Introduction to libuv](http://nikhilm.github.com/uvbook/) &mdash; An
-   overview of libuv with tutorials.
- * [LXJS 2012 talk](http://www.youtube.com/watch?v=nGn60vDSxQ4) - High-level
-   introductory talk about libuv.
- * [Tests and benchmarks](https://github.com/joyent/libuv/tree/master/test) -
-   API specification and usage examples.
+### Official documentation
+
+Located in the docs/ subdirectory. It uses the [Sphinx](http://sphinx-doc.org/)
+framework, which makes it possible to build the documentation in multiple
+formats.
+
+Show different supported building options:
+
+```bash
+$ make help
+```
+
+Build documentation as HTML:
+
+```bash
+$ make html
+```
+
+Build documentation as HTML and live reload it when it changes (this requires
+sphinx-autobuild to be installed and is only supported on Unix):
+
+```bash
+$ make livehtml
+```
+
+Build documentation as man pages:
+
+```bash
+$ make man
+```
+
+Build documentation as ePub:
+
+```bash
+$ make epub
+```
+
+NOTE: Windows users need to use make.bat instead of plain 'make'.
+
+Documentation can be browsed online [here](http://docs.libuv.org).
+
+The [tests and benchmarks](https://github.com/libuv/libuv/tree/master/test)
+also serve as API specification and usage examples.
+
+### Other resources
+
+ * [LXJS 2012 talk](http://www.youtube.com/watch?v=nGn60vDSxQ4)
+   &mdash; High-level introductory talk about libuv.
+ * [libuv-dox](https://github.com/thlorenz/libuv-dox)
+   &mdash; Documenting types and methods of libuv, mostly by reading uv.h.
+ * [learnuv](https://github.com/thlorenz/learnuv)
+   &mdash; Learn uv for fun and profit, a self guided workshop to libuv.
+
+These resources are not handled by libuv maintainers and might be out of
+date. Please verify it before opening new issues.
+
+## Downloading
+
+libuv can be downloaded either from the
+[GitHub repository](https://github.com/libuv/libuv)
+or from the [downloads site](http://dist.libuv.org/dist/).
+
+Starting with libuv 1.7.0, binaries for Windows are also provided. This is to
+be considered EXPERIMENTAL.
+
+Before verifying the git tags or signature files, importing the relevant keys
+is necessary. Key IDs are listed in the
+[MAINTAINERS](https://github.com/libuv/libuv/blob/master/MAINTAINERS.md)
+file, but are also available as git blob objects for easier use.
+
+Importing a key the usual way:
+
+```bash
+$ gpg --keyserver pool.sks-keyservers.net --recv-keys AE9BC059
+```
+
+Importing a key from a git blob object:
+
+```bash
+$ git show pubkey-saghul | gpg --import
+```
+
+### Verifying releases
+
+Git tags are signed with the developer's key, they can be verified as follows:
+
+```bash
+$ git verify-tag v1.6.1
+```
+
+Starting with libuv 1.7.0, the tarballs stored in the
+[downloads site](http://dist.libuv.org/dist/) are signed and an accompanying
+signature file sit alongside each. Once both the release tarball and the
+signature file are downloaded, the file can be verified as follows:
+
+```bash
+$ gpg --verify libuv-1.7.0.tar.gz.sign
+```
 
 ## Build Instructions
 
-For GCC (including MinGW) there are two methods building: via normal
-makefiles or via GYP. GYP is a meta-build system which can generate MSVS,
-Makefile, and XCode backends. It is best used for integration into other
-projects.  The old system is using plain GNU Makefiles.
+For GCC there are two build methods: via autotools or via [GYP][].
+GYP is a meta-build system which can generate MSVS, Makefile, and XCode
+backends. It is best used for integration into other projects.
 
-To build via Makefile simply execute:
+To build with autotools:
 
-    make
+```bash
+$ sh autogen.sh
+$ ./configure
+$ make
+$ make check
+$ make install
+```
 
-MinGW users should run this instead:
+### Windows
 
-    make PLATFORM=mingw
+Prerequisites:
 
-Out-of-tree builds are supported:
+* [Python 2.6 or 2.7][] as it is required
+  by [GYP][].
+  If python is not in your path, set the environment variable `PYTHON` to its
+  location. For example: `set PYTHON=C:\Python27\python.exe`
+* One of:
+  * [Visual C++ Build Tools][]
+  * [Visual Studio 2015 Update 3][], all editions
+    including the Community edition (remember to select
+    "Common Tools for Visual C++ 2015" feature during installation).
+  * [Visual Studio 2017][], any edition (including the Build Tools SKU).
+    **Required Components:** "MSbuild", "VC++ 2017 v141 toolset" and one of the
+    Windows SDKs (10 or 8.1).
+* Basic Unix tools required for some tests,
+  [Git for Windows][] includes Git Bash
+  and tools which can be included in the global `PATH`.
 
-    make builddir_name=/path/to/builddir
+To build, launch a git shell (e.g. Cmd or PowerShell), run `vcbuild.bat`
+(to build with VS2017 you need to explicitly add a `vs2017` argument),
+which will checkout the GYP code into `build/gyp`, generate `uv.sln`
+as well as the necesery related project files, and start building.
 
-To build with Visual Studio run the vcbuild.bat file which will
-checkout the GYP code into build/gyp and generate the uv.sln and
-related files.
-
-Windows users can also build from cmd-line using msbuild.  This is
-done by running vcbuild.bat from Visual Studio command prompt.
-
-To have GYP generate build script for another system, make sure that
-you have Python 2.6 or 2.7 installed, then checkout GYP into the
-project tree manually:
-
-    mkdir -p build
-    svn co http://gyp.googlecode.com/svn/trunk build/gyp
+```console
+> vcbuild
+```
 
 Or:
 
-    mkdir -p build
-    git clone https://git.chromium.org/external/gyp.git build/gyp
+```console
+> vcbuild vs2017
+```
 
-Unix users run
+To run the tests:
 
-    ./gyp_uv -f make
-    make -C out
+```console
+> vcbuild test
+```
 
-Macintosh users run
+To see all the options that could passed to `vcbuild`:
 
-    ./gyp_uv -f xcode
-    xcodebuild -project uv.xcodeproj -configuration Release -target All
+```console
+> vcbuild help
+vcbuild.bat [debug/release] [test/bench] [clean] [noprojgen] [nobuild] [vs2017] [x86/x64] [static/shared]
+Examples:
+  vcbuild.bat              : builds debug build
+  vcbuild.bat test         : builds debug build and runs tests
+  vcbuild.bat release bench: builds release build and runs benchmarks
+```
+
+
+### Unix
+
+For Debug builds (recommended) run:
+
+```bash
+$ ./gyp_uv.py -f make
+$ make -C out
+```
+
+For Release builds run:
+
+```bash
+$ ./gyp_uv.py -f make
+$ BUILDTYPE=Release make -C out
+```
+
+Run `./gyp_uv.py -f make -Dtarget_arch=x32` to build [x32][] binaries.
+
+### OS X
+
+Run:
+
+```bash
+$ ./gyp_uv.py -f xcode
+$ xcodebuild -ARCHS="x86_64" -project uv.xcodeproj \
+     -configuration Release -target All
+```
+
+Using Homebrew:
+
+```bash
+$ brew install --HEAD libuv
+```
+
+Note to OS X users:
+
+Make sure that you specify the architecture you wish to build for in the
+"ARCHS" flag. You can specify more than one by delimiting with a space
+(e.g. "x86_64 i386").
+
+### Android
+
+Run:
+
+```bash
+$ source ./android-configure NDK_PATH gyp [API_LEVEL]
+$ make -C out
+```
+
+The default API level is 24, but a different one can be selected as follows:
+
+```bash
+$ source ./android-configure ~/android-ndk-r15b gyp 21
+$ make -C out
+```
 
 Note for UNIX users: compile your project with `-D_LARGEFILE_SOURCE` and
 `-D_FILE_OFFSET_BITS=64`. GYP builds take care of that automatically.
 
-Note for Linux users: compile your project with `-D_GNU_SOURCE` when you
-include `uv.h`. GYP builds take care of that automatically. If you use
-autotools, add a `AC_GNU_SOURCE` declaration to your `configure.ac`.
+### Using Ninja
+
+To use ninja for build on ninja supported platforms, run:
+
+```bash
+$ ./gyp_uv.py -f ninja
+$ ninja -C out/Debug     #for debug build OR
+$ ninja -C out/Release
+```
+
+
+### Running tests
+
+Run:
+
+```bash
+$ ./gyp_uv.py -f make
+$ make -C out
+$ ./out/Debug/run-tests
+```
 
 ## Supported Platforms
 
-Microsoft Windows operating systems since Windows XP SP2. It can be built
-with either Visual Studio or MinGW.
+Check the [SUPPORTED_PLATFORMS file](SUPPORTED_PLATFORMS.md).
 
-Linux 2.6 using the GCC toolchain.
+### AIX Notes
 
-MacOS using the GCC or XCode toolchain.
+AIX support for filesystem events requires the non-default IBM `bos.ahafs`
+package to be installed.  This package provides the AIX Event Infrastructure
+that is detected by `autoconf`.
+[IBM documentation](http://www.ibm.com/developerworks/aix/library/au-aix_event_infrastructure/)
+describes the package in more detail.
 
-Solaris 121 and later using GCC toolchain.
+AIX support for filesystem events is not compiled when building with `gyp`.
+
+## Patches
+
+See the [guidelines for contributing][].
+
+[node.js]: http://nodejs.org/
+[GYP]: http://code.google.com/p/gyp/
+[guidelines for contributing]: https://github.com/libuv/libuv/blob/master/CONTRIBUTING.md
+[libuv_banner]: https://raw.githubusercontent.com/libuv/libuv/master/img/banner.png
+[x32]: https://en.wikipedia.org/wiki/X32_ABI
+[Python 2.6 or 2.7]: https://www.python.org/downloads/
+[Visual C++ Build Tools]: http://landinghub.visualstudio.com/visual-cpp-build-tools
+[Visual Studio 2015 Update 3]: https://www.visualstudio.com/vs/older-downloads/
+[Visual Studio 2017]: https://www.visualstudio.com/downloads/
+[Git for Windows]: http://git-scm.com/download/win

@@ -1,4 +1,5 @@
-/* Copyright Joyent, Inc. and other Node contributors. All rights reserved.
+/* Copyright libuv project contributors. All rights reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
@@ -21,68 +22,33 @@
 #include "uv.h"
 #include "internal.h"
 
-#include <assert.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <errno.h>
+#include <sys/sysinfo.h>
 #include <unistd.h>
-#include <time.h>
 
-#undef NANOSEC
-#define NANOSEC ((uint64_t) 1e9)
+int uv_uptime(double* uptime) {
+  struct sysinfo info;
 
+  if (sysinfo(&info) < 0)
+    return -errno;
 
-int uv__platform_loop_init(uv_loop_t* loop, int default_loop) {
+  *uptime = info.uptime;
   return 0;
 }
 
-
-void uv__platform_loop_delete(uv_loop_t* loop) {
+int uv_resident_set_memory(size_t* rss) {
+  /* FIXME: read /proc/meminfo? */
+  *rss = 0;
+  return UV_ENOSYS;
 }
 
-
-uint64_t uv__hrtime(void) {
-  struct timespec ts;
-  clock_gettime(CLOCK_MONOTONIC, &ts);
-  return (((uint64_t) ts.tv_sec) * NANOSEC + ts.tv_nsec);
+int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
+  /* FIXME: read /proc/stat? */
+  *cpu_infos = NULL;
+  *count = 0;
+  return UV_ENOSYS;
 }
 
-
-void uv_loadavg(double avg[3]) {
-  /* Unsupported as of cygwin 1.7.7 */
-  avg[0] = avg[1] = avg[2] = 0;
-}
-
-
-int uv_exepath(char* buffer, size_t* size) {
-  if (!buffer || !size) {
-    return -1;
-  }
-
-  *size = readlink("/proc/self/exe", buffer, *size - 1);
-  if (*size <= 0) return -1;
-  buffer[*size] = '\0';
-  return 0;
-}
-
-uint64_t uv_get_free_memory(void) {
-  return (uint64_t) sysconf(_SC_PAGESIZE) * sysconf(_SC_AVPHYS_PAGES);
-}
-
-uint64_t uv_get_total_memory(void) {
-  return (uint64_t) sysconf(_SC_PAGESIZE) * sysconf(_SC_PHYS_PAGES);
-}
-
-int uv_fs_event_init(uv_loop_t* loop,
-                     uv_fs_event_t* handle,
-                     const char* filename,
-                     uv_fs_event_cb cb,
-                     int flags) {
-  uv__set_sys_error(loop, ENOSYS);
-  return -1;
-}
-
-
-void uv__fs_event_close(uv_fs_event_t* handle) {
-  assert(0 && "implement me");
+void uv_free_cpu_info(uv_cpu_info_t* cpu_infos, int count) {
+  (void)cpu_infos;
+  (void)count;
 }

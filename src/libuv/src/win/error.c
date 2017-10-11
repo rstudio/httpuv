@@ -21,9 +21,9 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <malloc.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "uv.h"
 #include "internal.h"
@@ -58,16 +58,20 @@ void uv_fatal_error(const int errorno, const char* syscall) {
     LocalFree(buf);
   }
 
-  *((char*)NULL) = 0xff; /* Force debug break */
+  DebugBreak();
   abort();
 }
 
 
-uv_err_code uv_translate_sys_error(int sys_errno) {
+int uv_translate_sys_error(int sys_errno) {
+  if (sys_errno <= 0) {
+    return sys_errno;  /* If < 0 then it's already a libuv error. */
+  }
+
   switch (sys_errno) {
-    case ERROR_SUCCESS:                     return UV_OK;
     case ERROR_NOACCESS:                    return UV_EACCES;
     case WSAEACCES:                         return UV_EACCES;
+    case ERROR_ELEVATION_REQUIRED:          return UV_EACCES;
     case ERROR_ADDRESS_ALREADY_ASSOCIATED:  return UV_EADDRINUSE;
     case WSAEADDRINUSE:                     return UV_EADDRINUSE;
     case WSAEADDRNOTAVAIL:                  return UV_EADDRNOTAVAIL;
@@ -117,6 +121,7 @@ uv_err_code uv_translate_sys_error(int sys_errno) {
     case ERROR_OPEN_FAILED:                 return UV_EIO;
     case ERROR_SETMARK_DETECTED:            return UV_EIO;
     case ERROR_SIGNAL_REFUSED:              return UV_EIO;
+    case WSAEISCONN:                        return UV_EISCONN;
     case ERROR_CANT_RESOLVE_FILENAME:       return UV_ELOOP;
     case ERROR_TOO_MANY_OPEN_FILES:         return UV_EMFILE;
     case WSAEMFILE:                         return UV_EMFILE;
@@ -125,9 +130,11 @@ uv_err_code uv_translate_sys_error(int sys_errno) {
     case ERROR_NETWORK_UNREACHABLE:         return UV_ENETUNREACH;
     case WSAENETUNREACH:                    return UV_ENETUNREACH;
     case WSAENOBUFS:                        return UV_ENOBUFS;
+    case ERROR_BAD_PATHNAME:                return UV_ENOENT;
     case ERROR_DIRECTORY:                   return UV_ENOENT;
     case ERROR_FILE_NOT_FOUND:              return UV_ENOENT;
     case ERROR_INVALID_NAME:                return UV_ENOENT;
+    case ERROR_INVALID_DRIVE:               return UV_ENOENT;
     case ERROR_INVALID_REPARSE_DATA:        return UV_ENOENT;
     case ERROR_MOD_NOT_FOUND:               return UV_ENOENT;
     case ERROR_PATH_NOT_FOUND:              return UV_ENOENT;
@@ -158,7 +165,7 @@ uv_err_code uv_translate_sys_error(int sys_errno) {
     case WSAETIMEDOUT:                      return UV_ETIMEDOUT;
     case ERROR_NOT_SAME_DEVICE:             return UV_EXDEV;
     case ERROR_INVALID_FUNCTION:            return UV_EISDIR;
+    case ERROR_META_EXPANSION_TOO_LONG:     return UV_E2BIG;
     default:                                return UV_UNKNOWN;
   }
 }
-
