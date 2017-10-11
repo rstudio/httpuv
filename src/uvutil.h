@@ -24,6 +24,15 @@ inline uv_stream_t* toStream(uv_tcp_t* tcp) {
   return (uv_stream_t*)tcp;
 }
 
+inline int ipFamily(const std::string& ip) {
+  struct sockaddr_in sa;
+  uv_err_t result = uv_inet_pton(AF_INET6, ip.c_str(), &(sa.sin_addr));
+  if (result.code == UV_OK) {
+    return AF_INET6;
+  }
+  return AF_INET;
+}
+
 void throwLastError(uv_loop_t* pLoop,
   const std::string& prefix = std::string(),
   const std::string& suffix = std::string());

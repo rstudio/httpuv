@@ -600,8 +600,14 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   pSocket->handle.stream.data = pSocket;
   pSocket->pWebApplication = pWebApplication;
 
-  struct sockaddr_in address = uv_ip4_addr(host.c_str(), port);
-  int r = uv_tcp_bind(&pSocket->handle.tcp, address);
+  int r = 1;
+  if (ipFamily(host) == AF_INET6) {
+    struct sockaddr_in6 address = uv_ip6_addr(host.c_str(), port);
+    r = uv_tcp_bind6(&pSocket->handle.tcp, address);
+  } else {
+    struct sockaddr_in address = uv_ip4_addr(host.c_str(), port);
+    r = uv_tcp_bind(&pSocket->handle.tcp, address);
+  }
   if (r) {
     pSocket->destroy();
     return NULL;
