@@ -8,3 +8,4 @@
 /\.dll$
 ^\.travis\.yml$
 ^appveyor\.yml$
+^src/libuv/.github$

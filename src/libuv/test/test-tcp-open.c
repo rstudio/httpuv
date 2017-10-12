@@ -71,10 +71,24 @@ static uv_os_sock_t create_tcp_socket(void) {
 }
 
 
-static uv_buf_t alloc_cb(uv_handle_t* handle, size_t suggested_size) {
+static void close_socket(uv_os_sock_t sock) {
+  int r;
+#ifdef _WIN32
+  r = closesocket(sock);
+#else
+  r = close(sock);
+#endif
+  ASSERT(r == 0);
+}
+
+
+static void alloc_cb(uv_handle_t* handle,
+                     size_t suggested_size,
+                     uv_buf_t* buf) {
   static char slab[65536];
-  ASSERT(suggested_size <= sizeof slab);
-  return uv_buf_init(slab, sizeof slab);
+  ASSERT(suggested_size <= sizeof(slab));
+  buf->base = slab;
+  buf->len = sizeof(slab);
 }
 
 
@@ -93,15 +107,15 @@ static void shutdown_cb(uv_shutdown_t* req, int status) {
 }
 
 
-static void read_cb(uv_stream_t* tcp, ssize_t nread, uv_buf_t buf) {
+static void read_cb(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf) {
   ASSERT(tcp != NULL);
 
   if (nread >= 0) {
     ASSERT(nread == 4);
-    ASSERT(memcmp("PING", buf.base, nread) == 0);
+    ASSERT(memcmp("PING", buf->base, nread) == 0);
   }
   else {
-    ASSERT(uv_last_error(uv_default_loop()).code == UV_EOF);
+    ASSERT(nread == UV_EOF);
     printf("GOT EOF\n");
     uv_close((uv_handle_t*)tcp, close_cb);
   }
@@ -112,8 +126,7 @@ static void write_cb(uv_write_t* req, int status) {
   ASSERT(req != NULL);
 
   if (status) {
-    uv_err_t err = uv_last_error(uv_default_loop());
-    fprintf(stderr, "uv_write error: %s\n", uv_strerror(err));
+    fprintf(stderr, "uv_write error: %s\n", uv_strerror(status));
     ASSERT(0);
   }
 
@@ -146,10 +159,12 @@ static void connect_cb(uv_connect_t* req, int status) {
 
 
 TEST_IMPL(tcp_open) {
-  struct sockaddr_in addr = uv_ip4_addr("127.0.0.1", TEST_PORT);
+  struct sockaddr_in addr;
   uv_tcp_t client;
   uv_os_sock_t sock;
   int r;
+
+  ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &addr));
 
   startup();
   sock = create_tcp_socket();
@@ -160,13 +175,100 @@ TEST_IMPL(tcp_open) {
   r = uv_tcp_open(&client, sock);
   ASSERT(r == 0);
 
-  r = uv_tcp_connect(&connect_req, &client, addr, connect_cb);
+  r = uv_tcp_connect(&connect_req,
+                     &client,
+                     (const struct sockaddr*) &addr,
+                     connect_cb);
   ASSERT(r == 0);
 
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
   ASSERT(shutdown_cb_called == 1);
   ASSERT(connect_cb_called == 1);
+  ASSERT(write_cb_called == 1);
+  ASSERT(close_cb_called == 1);
+
+  MAKE_VALGRIND_HAPPY();
+  return 0;
+}
+
+
+TEST_IMPL(tcp_open_twice) {
+  uv_tcp_t client;
+  uv_os_sock_t sock1, sock2;
+  int r;
+
+  startup();
+  sock1 = create_tcp_socket();
+  sock2 = create_tcp_socket();
+
+  r = uv_tcp_init(uv_default_loop(), &client);
+  ASSERT(r == 0);
+
+  r = uv_tcp_open(&client, sock1);
+  ASSERT(r == 0);
+
+  r = uv_tcp_open(&client, sock2);
+  ASSERT(r == UV_EBUSY);
+  close_socket(sock2);
+
+  uv_close((uv_handle_t*) &client, NULL);
+  uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+
+  MAKE_VALGRIND_HAPPY();
+  return 0;
+}
+
+
+TEST_IMPL(tcp_open_bound) {
+  struct sockaddr_in addr;
+  uv_tcp_t server;
+  uv_os_sock_t sock;
+
+  startup();
+  sock = create_tcp_socket();
+
+  ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &addr));
+
+  ASSERT(0 == uv_tcp_init(uv_default_loop(), &server));
+
+  ASSERT(0 == bind(sock, (struct sockaddr*) &addr, sizeof(addr)));
+
+  ASSERT(0 == uv_tcp_open(&server, sock));
+
+  ASSERT(0 == uv_listen((uv_stream_t*) &server, 128, NULL));
+
+  MAKE_VALGRIND_HAPPY();
+  return 0;
+}
+
+
+TEST_IMPL(tcp_open_connected) {
+  struct sockaddr_in addr;
+  uv_tcp_t client;
+  uv_os_sock_t sock;
+  uv_buf_t buf = uv_buf_init("PING", 4);
+
+  ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &addr));
+
+  startup();
+  sock = create_tcp_socket();
+
+  ASSERT(0 == connect(sock, (struct sockaddr*) &addr,  sizeof(addr)));
+
+  ASSERT(0 == uv_tcp_init(uv_default_loop(), &client));
+
+  ASSERT(0 == uv_tcp_open(&client, sock));
+
+  ASSERT(0 == uv_write(&write_req, (uv_stream_t*) &client, &buf, 1, write_cb));
+
+  ASSERT(0 == uv_shutdown(&shutdown_req, (uv_stream_t*) &client, shutdown_cb));
+
+  ASSERT(0 == uv_read_start((uv_stream_t*) &client, alloc_cb, read_cb));
+
+  uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+
+  ASSERT(shutdown_cb_called == 1);
   ASSERT(write_cb_called == 1);
   ASSERT(close_cb_called == 1);
 

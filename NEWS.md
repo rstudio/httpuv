@@ -1,5 +1,7 @@
-httpuv 1.3.5.9001
+httpuv 1.3.5.9002
 =================
+
+* Upgraded to libuv 1.15.0. ([#91](https://github.com/rstudio/httpuv/pull/91))
 
 * httpuv can now handle request callbacks asynchronously. ([#80](https://github.com/rstudio/httpuv/pull/80))
 

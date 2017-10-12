@@ -1,28 +1,18 @@
 # Use C++11 if available
 CXX_STD=CXX11
 
-## Use the R_HOME indirection to support installations of multiple R version
-PKG_LIBS = ./libuv/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o -lWs2_32 -lkernel32 -lpsapi -liphlpapi
+PKG_LIBS = ./libuv/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o \
+	-lpthread -lws2_32 -lkernel32 -lpsapi -liphlpapi -lshell32 -luserenv
 
 PKG_CPPFLAGS += -I./libuv/include -I./http-parser -I./sha1 -I./base64 -D_WIN32_WINNT=0x0600
 CFLAGS += -D_WIN32_WINNT=0x0600
 
-.PHONY: all libuv/libuv.a http-parser/http_parser.o
+# Additional flags for libuv borrowed from libuv/Makefile.mingw
+LIBUV_CFLAGS = -Iinclude -Isrc -Isrc/win -DWIN32_LEAN_AND_MEAN
 
-all: $(SHLIB) libuv/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
 $(SHLIB): libuv/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
 
 libuv/libuv.a:
-	make --directory=libuv \
-		CC="$(CC)" AR="$(AR)" RANLIB="$(RANLIB)" SRCDIR=. PLATFORM=mingw libuv.a
-
-http-parser/http_parser.o:
-	make --directory=http-parser \
-		CC="$(CC)" CFLAGS="$(ALL_CFLAGS)" \
-		SRCDIR=. http_parser.o
-
-sha1/sha1.o: sha1/sha1.c sha1/sha1.h
-	(cd sha1 && $(CC) $(CFLAGS) $(CPICFLAGS) -c sha1.c -o sha1.o)
-
-base64/base64.o: base64/base64.cpp base64/base64.hpp
-	(cd base64 && $(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c base64.cpp -o base64.o)
+	$(MAKE) --directory=libuv -f Makefile.mingw \
+		CC="$(CC)" CFLAGS="$(CFLAGS) $(LIBUV_CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" \
+		AR="$(AR)" RANLIB="$(RANLIB)" HAVE_DTRACE=0

@@ -33,10 +33,10 @@ void on_response_written(uv_write_t* handle, int status) {
   pResponse->onResponseWritten(status);
 }
 
-uv_buf_t on_alloc(uv_handle_t* handle, size_t suggested_size) {
+void on_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
   // Freed in HttpRequest::_on_request_read
   void* result = malloc(suggested_size);
-  return uv_buf_init((char*)result, suggested_size);
+  *buf = uv_buf_init((char*)result, suggested_size);
 }
 
 void HttpRequest::trace(const std::string& msg) {
@@ -303,15 +303,15 @@ void HttpRequest::close() {
   uv_close(toHandle(&_handle.stream), HttpRequest_on_closed);
 }
 
-void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
+void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* buf) {
   if (nread > 0) {
     //std::cerr << nread << " bytes read\n";
     if (_ignoreNewData) {
       // Do nothing
     } else if (_protocol == HTTP) {
-      int parsed = http_parser_execute(&_parser, &request_settings(), buf.base, nread);
+      int parsed = http_parser_execute(&_parser, &request_settings(), buf->base, nread);
       if (_parser.upgrade) {
-        char* pData = buf.base + parsed;
+        char* pData = buf->base + parsed;
         size_t pDataLen = nread - parsed;
 
         if (_pWebSocketConnection->accept(_headers, pData, pDataLen)) {
@@ -348,13 +348,12 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
         }
       }
     } else if (_protocol == WebSockets) {
-      _pWebSocketConnection->read(buf.base, nread);
+      _pWebSocketConnection->read(buf->base, nread);
     }
   } else if (nread < 0) {
-    uv_err_t err = uv_last_error(_pLoop);
-    if (err.code == UV_EOF /*|| err.code == UV_ECONNRESET*/) {
+    if (nread == UV_EOF /*|| err.code == UV_ECONNRESET*/) {
     } else {
-      fatal_error("on_request_read", uv_strerror(err));
+      fatal_error("on_request_read", uv_strerror(nread));
     }
     close();
   } else {
@@ -362,14 +361,13 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf) {
     // decides it doesn't need it after all
   }
 
-  free(buf.base);
+  free(buf->base);
 }
 
 void HttpRequest::handleRequest() {
   int r = uv_read_start(handle(), &on_alloc, &HttpRequest_on_request_read);
   if (r) {
-    uv_err_t err = uv_last_error(_pLoop);
-    fatal_error("read_start", uv_strerror(err));
+    fatal_error("read_start", uv_strerror(r));
     return;
   }
 }
@@ -441,8 +439,7 @@ void HttpResponse::writeResponse() {
   int r = uv_write(pWriteReq, _pRequest->handle(), &headerBuf, 1,
       &on_response_written);
   if (r) {
-    _pRequest->fatal_error("uv_write",
-                 uv_strerror(uv_last_error(_pRequest->handle()->loop)));
+    _pRequest->fatal_error("uv_write", uv_strerror(r));
     delete this;
     free(pWriteReq);
   }
@@ -489,7 +486,7 @@ IMPLEMENT_CALLBACK_1(HttpRequest, on_headers_complete, int, http_parser*)
 IMPLEMENT_CALLBACK_3(HttpRequest, on_body, int, http_parser*, const char*, size_t)
 IMPLEMENT_CALLBACK_1(HttpRequest, on_message_complete, int, http_parser*)
 IMPLEMENT_CALLBACK_1(HttpRequest, on_closed, void, uv_handle_t*)
-IMPLEMENT_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, uv_buf_t)
+IMPLEMENT_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, const uv_buf_t*)
 
 void on_Socket_close(uv_handle_t* pHandle);
 
@@ -525,9 +522,8 @@ void on_Socket_close(uv_handle_t* pHandle) {
 }
 
 void on_request(uv_stream_t* handle, int status) {
-  if (status == -1) {
-    uv_err_t err = uv_last_error(handle->loop);
-    REprintf("connection error: %s\n", uv_strerror(err));
+  if (status) {
+    REprintf("connection error: %s\n", uv_strerror(status));
     return;
   }
 
@@ -540,8 +536,7 @@ void on_request(uv_stream_t* handle, int status) {
 
   int r = uv_accept(handle, req->handle());
   if (r) {
-    uv_err_t err = uv_last_error(handle->loop);
-    REprintf("accept: %s\n", uv_strerror(err));
+    REprintf("accept: %s\n", uv_strerror(r));
     delete req;
     return;
   }
@@ -600,8 +595,13 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   pSocket->handle.stream.data = pSocket;
   pSocket->pWebApplication = pWebApplication;
 
-  struct sockaddr_in address = uv_ip4_addr(host.c_str(), port);
-  int r = uv_tcp_bind(&pSocket->handle.tcp, address);
+  struct sockaddr_in address = {0};
+  int r = uv_ip4_addr(host.c_str(), port, &address);
+  if (r) {
+    pSocket->destroy();
+    return NULL;
+  }
+  r = uv_tcp_bind(&pSocket->handle.tcp, (sockaddr*)&address, 0);
   if (r) {
     pSocket->destroy();
     return NULL;

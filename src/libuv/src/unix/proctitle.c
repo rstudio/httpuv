@@ -48,14 +48,20 @@ char** uv_setup_args(int argc, char** argv) {
   for (i = 0; i < argc; i++)
     size += strlen(argv[i]) + 1;
 
+#if defined(__MVS__)
+  /* argv is not adjacent. So just use argv[0] */
+  process_title.str = argv[0];
+  process_title.len = strlen(argv[0]);
+#else
   process_title.str = argv[0];
   process_title.len = argv[argc - 1] + strlen(argv[argc - 1]) - argv[0];
   assert(process_title.len + 1 == size);  /* argv memory should be adjacent. */
+#endif
 
   /* Add space for the argv pointers. */
   size += (argc + 1) * sizeof(char*);
 
-  new_argv = malloc(size);
+  new_argv = uv__malloc(size);
   if (new_argv == NULL)
     return argv;
   args_mem = new_argv;
@@ -74,30 +80,34 @@ char** uv_setup_args(int argc, char** argv) {
 }
 
 
-uv_err_t uv_set_process_title(const char* title) {
+int uv_set_process_title(const char* title) {
   if (process_title.len == 0)
-    return uv_ok_;
+    return 0;
 
   /* No need to terminate, byte after is always '\0'. */
   strncpy(process_title.str, title, process_title.len);
   uv__set_process_title(title);
 
-  return uv_ok_;
+  return 0;
 }
 
 
-uv_err_t uv_get_process_title(char* buffer, size_t size) {
-  if (process_title.len > 0)
-    strncpy(buffer, process_title.str, size);
-  else if (size > 0)
-    buffer[0] = '\0';
+int uv_get_process_title(char* buffer, size_t size) {
+  if (buffer == NULL || size == 0)
+    return -EINVAL;
+  else if (size <= process_title.len)
+    return -ENOBUFS;
 
-  return uv_ok_;
+  if (process_title.len != 0)
+    memcpy(buffer, process_title.str, process_title.len + 1);
+
+  buffer[process_title.len] = '\0';
+
+  return 0;
 }
 
 
-__attribute__((destructor))
-static void free_args_mem(void) {
-  free(args_mem);  /* Keep valgrind happy. */
+UV_DESTRUCTOR(static void free_args_mem(void)) {
+  uv__free(args_mem);  /* Keep valgrind happy. */
   args_mem = NULL;
 }

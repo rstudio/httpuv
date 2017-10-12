@@ -154,12 +154,12 @@ public:
   void fatal_error(const char* method, const char* message);
   void _on_closed(uv_handle_t* handle);
   void close();
-  void _on_request_read(uv_stream_t*, ssize_t nread, uv_buf_t buf);
+  void _on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* buf);
   void _on_response_write(int status);
 
 };
 
-struct HttpResponse {
+class HttpResponse {
 
   HttpRequest* _pRequest;
   int _statusCode;
@@ -201,7 +201,7 @@ DECLARE_CALLBACK_1(HttpRequest, on_headers_complete, int, http_parser*)
 DECLARE_CALLBACK_3(HttpRequest, on_body, int, http_parser*, const char*, size_t)
 DECLARE_CALLBACK_1(HttpRequest, on_message_complete, int, http_parser*)
 DECLARE_CALLBACK_1(HttpRequest, on_closed, void, uv_handle_t*)
-DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, uv_buf_t)
+DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, const uv_buf_t*)
 DECLARE_CALLBACK_2(HttpRequest, on_response_write, void, uv_write_t*, int)
 
 uv_stream_t* createPipeServer(uv_loop_t* loop, const std::string& name,
