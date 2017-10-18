@@ -13,7 +13,7 @@
 #include "uvutil.h"
 
 class HttpRequest;
-struct HttpResponse;
+class HttpResponse;
 
 enum Protocol {
   HTTP,
