@@ -140,7 +140,7 @@ public:
   // Callbacks
   virtual int _on_message_begin(http_parser* pParser);
   virtual int _on_url(http_parser* pParser, const char* pAt, size_t length);
-  virtual int _on_status_complete(http_parser* pParser);
+  virtual int _on_status(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_header_field(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_header_value(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_headers_complete(http_parser* pParser);
@@ -194,7 +194,7 @@ public:
 
 DECLARE_CALLBACK_1(HttpRequest, on_message_begin, int, http_parser*)
 DECLARE_CALLBACK_3(HttpRequest, on_url, int, http_parser*, const char*, size_t)
-DECLARE_CALLBACK_1(HttpRequest, on_status_complete, int, http_parser*)
+DECLARE_CALLBACK_3(HttpRequest, on_status, int, http_parser*, const char*, size_t)
 DECLARE_CALLBACK_3(HttpRequest, on_header_field, int, http_parser*, const char*, size_t)
 DECLARE_CALLBACK_3(HttpRequest, on_header_value, int, http_parser*, const char*, size_t)
 DECLARE_CALLBACK_1(HttpRequest, on_headers_complete, int, http_parser*)
