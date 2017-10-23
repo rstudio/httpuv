@@ -60,6 +60,7 @@ do {                                                                 \
 #define UPDATE_STATE(V) p_state = (enum state) (V);
 #define RETURN(V)                                                    \
 do {                                                                 \
+  parser->is_running = 0;                                            \
   parser->state = CURRENT_STATE();                                   \
   return (V);                                                        \
 } while (0);
@@ -339,6 +340,12 @@ enum state
   , s_chunk_size_almost_done
 
   , s_headers_almost_done
+
+  /* When the (async) on_headers function has been called but we're still
+   * waiting for a response. */
+  , s_wait_for_on_headers_completed
+  , s_on_headers_completed
+
   , s_headers_done
 
   /* Important: 's_headers_done' must be the last 'header' state. All
@@ -647,6 +654,13 @@ size_t http_parser_execute (http_parser *parser,
   enum state p_state = (enum state) parser->state;
   const unsigned int lenient = parser->lenient_http_headers;
 
+  /* Check for re-entrant calls to this function. */
+  if (parser->is_running) {
+    SET_ERRNO(HPE_REENTRANT_CALL);
+    goto error;
+  }
+  parser->is_running = 1;
+
   /* We're in an error state. Don't bother doing anything. */
   if (HTTP_PARSER_ERRNO(parser) != HPE_OK) {
     return 0;
@@ -706,6 +720,12 @@ size_t http_parser_execute (http_parser *parser,
       COUNT_HEADER_SIZE(1);
 
 reexecute:
+
+    /* Waiting for on_headers processing to finish. Don't do anything. */
+    if (CURRENT_STATE() == s_wait_for_on_headers_completed) {
+      RETURN(p - data);
+    }
+
     switch (CURRENT_STATE()) {
 
       case s_dead:
@@ -1791,14 +1811,47 @@ reexecute:
           goto error;
         }
 
-        UPDATE_STATE(s_headers_done);
-
         /* Set this here so that on_headers_complete() callbacks can see it */
         parser->upgrade =
           ((parser->flags & (F_UPGRADE | F_CONNECTION_UPGRADE)) ==
            (F_UPGRADE | F_CONNECTION_UPGRADE) ||
            parser->method == HTTP_CONNECT);
 
+        if (settings->on_headers_complete) {
+          /* Update the internal and externally-visible state. */
+          UPDATE_STATE(s_wait_for_on_headers_completed);
+          parser->waiting_for_headers_completed = 1;
+
+
+          /* If on_headers_complete is async, then we'll let the external code
+           * set the result in parser->headers_status, and advance the state to
+           * s_on_headers_completed by calling http_parser_on_headers_completed().
+           * If it is synchronous, then save the result and advance the state
+           * here.
+           */
+          if (settings->is_async_on_headers_complete) {
+            settings->on_headers_complete(parser);
+
+          } else {
+            parser->headers_status = settings->on_headers_complete(parser);
+            UPDATE_STATE(s_on_headers_completed);
+          }
+
+        } else {
+          UPDATE_STATE(s_headers_done);
+        }
+
+        REEXECUTE();
+      }
+
+      /* We enter this state in one of two ways: If on_headers_complete()
+       * is asynchronous, then external code sets the value of
+       * parser->headers_status, calls http_parser_on_headers_completed(),
+       * and then calls http_parser_exec() again. If it is synchronous, then
+       * we get here by just continuing to parse data.
+       */
+      case s_on_headers_completed:
+      {
         /* Here we call the headers_complete callback. This is somewhat
          * different than other callbacks because if the user returns 1, we
          * will interpret that as saying that this message has no body. This
@@ -1809,9 +1862,15 @@ reexecute:
          * we have to simulate it by handling a change in errno below.
          */
         if (settings->on_headers_complete) {
-          switch (settings->on_headers_complete(parser)) {
+          switch (parser->headers_status) {
             case 0:
               break;
+
+            /* This case indicates that the application has decided that, after
+             * processing the headers, it's done with the http parser.
+             */
+            case 3:
+              RETURN(p - data + 1);
 
             case 2:
               parser->upgrade = 1;
@@ -1829,6 +1888,8 @@ reexecute:
         if (HTTP_PARSER_ERRNO(parser) != HPE_OK) {
           RETURN(p - data);
         }
+
+        UPDATE_STATE(s_headers_done);
 
         REEXECUTE();
       }
@@ -2090,6 +2151,14 @@ error:
   RETURN(p - data);
 }
 
+void http_parser_on_headers_completed(http_parser *parser) {
+  /* We unfortunately have to set the state in two places. parser->state is
+   * used internally by the parser, and parser->waiting_for_headers_completed
+   * externally visible.
+   */
+  parser->state = s_on_headers_completed;
+  parser->waiting_for_headers_completed = 0;
+}
 
 /* Does the parser need to see an EOF to find the end of the message? */
 int
@@ -2150,12 +2219,18 @@ http_parser_init (http_parser *parser, enum http_parser_type t)
   parser->type = t;
   parser->state = (t == HTTP_REQUEST ? s_start_req : (t == HTTP_RESPONSE ? s_start_res : s_start_req_or_res));
   parser->http_errno = HPE_OK;
+
+  parser->is_running = 0;
+  parser->waiting_for_headers_completed = 0;
+  parser->headers_status = -1;
 }
 
 void
 http_parser_settings_init(http_parser_settings *settings)
 {
   memset(settings, 0, sizeof(*settings));
+  /* Default is to expect synchronous on_headers_complete. */
+  settings->is_async_on_headers_complete = 0;
 }
 
 const char *

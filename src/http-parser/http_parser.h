@@ -178,6 +178,7 @@ enum flags
   XX(CB_chunk_complete, "the on_chunk_complete callback failed")     \
                                                                      \
   /* Parsing-related errors */                                       \
+  XX(REENTRANT_CALL, "re-entrant call to http_parser_execute")       \
   XX(INVALID_EOF_STATE, "stream ended at an unexpected time")        \
   XX(HEADER_OVERFLOW,                                                \
      "too many header bytes seen; overflow detected")                \
@@ -247,6 +248,23 @@ struct http_parser {
 
   /** PUBLIC **/
   void *data; /* A pointer to get hook to the "connection" or "socket" object */
+
+
+  /** ADDED FOR ASYNC on_headers_complete **/
+  /* If there's a on_headers_complete callback, 1 means the parser is
+   * waiting for it to indicate that it's finished by calling
+   * http_parser_on_headers_completed(), then call http_parser_execute()
+   * to continue parsing. */
+  int waiting_for_headers_completed;
+  /* The status code set by the application code after processing the
+   * headers. Initial value is -1. After headers have been processed, it should
+   * be 0, 1, or 2. This is the value that would be returned by
+   * on_headers_complete() if it is synchronous.*/
+  int headers_status;
+  /* Default 0; http_parser_exec() sets this to 1, and uses it to check for
+   * re-entrant calls.
+   */
+  int is_running;
 };
 
 
@@ -264,6 +282,11 @@ struct http_parser_settings {
    */
   http_cb      on_chunk_header;
   http_cb      on_chunk_complete;
+
+  /* If 0, on_headers_complete is expected to be synchronous and return a
+   * meaningful result. If 1, it is expected to be async, and return 0
+   * immediately. */
+  int          is_async_on_headers_complete;
 };
 
 
@@ -324,6 +347,8 @@ size_t http_parser_execute(http_parser *parser,
                            const char *data,
                            size_t len);
 
+/* Tells the parser that the on_headers stuff is finished. */
+void http_parser_on_headers_completed(http_parser *parser);
 
 /* If http_should_keep_alive() in the on_headers_complete or
  * on_message_complete callback returns 0, then this should be
