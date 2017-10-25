@@ -27,4 +27,4 @@ Follow the instructions at http://www.rstudio.com/ide/docs/packages/prerequisite
 
 ---
 
-&copy; 2013-2014 RStudio, Inc.
+&copy; 2013-2017 RStudio, Inc.
