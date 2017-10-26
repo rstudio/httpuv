@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <later_api.h>
 
 #include <boost/bind.hpp>
 
@@ -22,6 +23,7 @@ http_parser_settings& request_settings() {
   settings.on_header_field = HttpRequest_on_header_field;
   settings.on_header_value = HttpRequest_on_header_value;
   settings.on_headers_complete = HttpRequest_on_headers_complete;
+  settings.is_async_on_headers_complete = 1;
   settings.on_body = HttpRequest_on_body;
   settings.on_message_complete = HttpRequest_on_message_complete;
   return settings;
@@ -41,6 +43,26 @@ void on_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
 
 void HttpRequest::trace(const std::string& msg) {
   //std::cerr << msg << std::endl;
+}
+
+// Does a header field `name` exist?
+bool HttpRequest::_hasHeader(const std::string& name) const {
+  return _headers.find(name) != _headers.end();
+}
+
+// Does a header field `name` exist and have a particular value? If ci is
+// true, do a case-insensitive comparison of the value (fields are always
+// case- insensitive.)
+bool HttpRequest::_hasHeader(const std::string& name, const std::string& value, bool ci) const {
+  RequestHeaders::const_iterator item = _headers.find(name);
+  if (item == _headers.end())
+    return false;
+
+  if (ci) {
+    return strcasecmp(item->second.c_str(), value.c_str()) == 0;
+  } else {
+    return item->second == value;
+  }
 }
 
 uv_stream_t* HttpRequest::handle() {
@@ -211,47 +233,81 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
   return 0;
 }
 
+// This should be called from the main thread.
+void HttpRequest::_call_r_on_headers() {
+  this->_pWebApplication->onHeaders(
+    this,
+    boost::bind(&HttpRequest::_on_headers_complete_complete, this, _1)
+  );
+}
+
+// This wrapper function is needed to use HttpRequest::_call_r_on_headers with
+// later(). That method can't be passed to later(), but this function can.
+void call_r_on_headers_wrapper(void* data) {
+  HttpRequest* req = reinterpret_cast<HttpRequest*>(data);
+  req->_call_r_on_headers();
+}
+
+// This is called after http-parser has finished parsing the request headers.
+// It uses later() to schedule the user's R onHeaders() function. Always
+// returns 0. Normally 0 indicates success for http-parser, while 1 and 2
+// indicate errors or other conditions, but since we're processing the header
+// asynchronously, we don't know at this point if there has been an error. If
+// one of those conditions occurs, we'll set it later, but before we call
+// http_parser_execute() again.
 int HttpRequest::_on_headers_complete(http_parser* pParser) {
   trace("on_headers_complete");
 
+  later::later(call_r_on_headers_wrapper, this, 0);
+
+  return 0;
+}
+
+// This is called after the user's R onHeaders() function has finished. It can
+// write a response, if onHeaders() wants that. It also sets a status code for
+// http-parser.
+void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
+  trace("on_headers_complete_complete");
   int result = 0;
 
-  HttpResponse* pResp = _pWebApplication->onHeaders(this);
-  if (pResp) {
-    bool bodyExpected = _headers.find("Content-Length") != _headers.end() ||
-      _headers.find("Transfer-Encoding") != _headers.end();
+  if (pResponse) {
+    bool bodyExpected = _hasHeader("Content-Length") || _hasHeader("Transfer-Encoding");
 
     if (bodyExpected) {
       // If we're expecting a request body and we're returning a response
       // prematurely, then add "Connection: close" header to the response and
       // set a flag to ignore all future reads on this connection.
 
-      pResp->addHeader("Connection", "close");
+      pResponse->addHeader("Connection", "close");
 
       uv_read_stop((uv_stream_t*)handle());
 
       _ignoreNewData = true;
     }
-    pResp->writeResponse();
+    pResponse->writeResponse();
 
     // result = 1 has special meaning to http_parser for this one callback; it
     // means F_SKIPBODY should be set on the parser. That's not what we want
-    // here; we just want processing to terminate.
-    result = 2;
+    // here; we just want processing to terminate, which we indicate with
+    // result = 3.
+    result = 3;
   }
   else {
     // If the request is Expect: Continue, and the app didn't say otherwise,
     // then give it what it wants
-    if (_headers.find("Expect") != _headers.end()
-        && _headers["Expect"] == "100-continue") {
-      pResp = new HttpResponse(this, 100, "Continue", NULL);
-      pResp->writeResponse();
+    if (_hasHeader("Expect", "100-continue")) {
+      pResponse = new HttpResponse(this, 100, "Continue", NULL);
+      pResponse->writeResponse();
     }
   }
 
-  // TODO: Allocate body
-  return result;
+  // Tell the parser what the result was and that it can move on.
+  http_parser_headers_completed(&(this->_parser), result);
+
+  // Continue parsing any data that went into the request buffer.
+  this->_parse_http_data_from_buffer();
 }
+
 
 int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) {
   trace("on_body");
@@ -303,50 +359,73 @@ void HttpRequest::close() {
   uv_close(toHandle(&_handle.stream), HttpRequest_on_closed);
 }
 
+void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
+  int parsed = http_parser_execute(&_parser, &request_settings(), buffer, n);
+
+  if (http_parser_waiting_for_headers_completed(&_parser)) {
+    // If we're waiting for the header response, just store the data in the
+    // buffer.
+    _requestBuffer.insert(_requestBuffer.end(), buffer + parsed, buffer + n);
+
+  } else if (_parser.upgrade) {
+    char* pData = buffer + parsed;
+    size_t pDataLen = n - parsed;
+
+    if (_pWebSocketConnection->accept(_headers, pData, pDataLen)) {
+      // Freed in on_response_written
+      InMemoryDataSource* pDS = new InMemoryDataSource();
+      HttpResponse* pResp = new HttpResponse(this, 101, "Switching Protocols",
+        pDS);
+
+      std::vector<uint8_t> body;
+      _pWebSocketConnection->handshake(_url, _headers, &pData, &pDataLen,
+                                       &pResp->headers(), &body);
+      if (body.size() > 0) {
+        pDS->add(body);
+      }
+      body.empty();
+
+      pResp->writeResponse();
+
+      _protocol = WebSockets;
+      _pWebApplication->onWSOpen(this);
+
+      _pWebSocketConnection->read(pData, pDataLen);
+    }
+
+    if (_protocol != WebSockets) {
+      // TODO: Write failure
+      close();
+    }
+  } else if (parsed < n) {
+    if (!_ignoreNewData) {
+      fatal_error(
+        "on_request_read",
+        http_errno_description(HTTP_PARSER_ERRNO(&_parser))
+      );
+      uv_read_stop((uv_stream_t*)handle());
+      close();
+    }
+  }
+}
+
+void HttpRequest::_parse_http_data_from_buffer() {
+  // Copy contents of _requestBuffer, then clear _requestBuffer, because it
+  // might be written to in _parse_http_data().
+  std::vector<char> req_buffer = _requestBuffer;
+  _requestBuffer.clear();
+
+  this->_parse_http_data(&req_buffer[0], req_buffer.size());
+}
+
 void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* buf) {
   if (nread > 0) {
     //std::cerr << nread << " bytes read\n";
     if (_ignoreNewData) {
       // Do nothing
     } else if (_protocol == HTTP) {
-      int parsed = http_parser_execute(&_parser, &request_settings(), buf->base, nread);
-      if (_parser.upgrade) {
-        char* pData = buf->base + parsed;
-        size_t pDataLen = nread - parsed;
+      this->_parse_http_data(buf->base, nread);
 
-        if (_pWebSocketConnection->accept(_headers, pData, pDataLen)) {
-          // Freed in on_response_written
-          InMemoryDataSource* pDS = new InMemoryDataSource();
-          HttpResponse* pResp = new HttpResponse(this, 101, "Switching Protocols",
-            pDS);
-
-          std::vector<uint8_t> body;
-          _pWebSocketConnection->handshake(_url, _headers, &pData, &pDataLen,
-                                           &pResp->headers(), &body);
-          if (body.size() > 0) {
-            pDS->add(body);
-          }
-          body.empty();
-
-          pResp->writeResponse();
-
-          _protocol = WebSockets;
-          _pWebApplication->onWSOpen(this);
-
-          _pWebSocketConnection->read(pData, pDataLen);
-        }
-
-        if (_protocol != WebSockets) {
-          // TODO: Write failure
-          close();
-        }
-      } else if (parsed < nread) {
-        if (!_ignoreNewData) {
-          fatal_error("on_request_read", "parse error");
-          uv_read_stop((uv_stream_t*)handle());
-          close();
-        }
-      }
     } else if (_protocol == WebSockets) {
       _pWebSocketConnection->read(buf->base, nread);
     }

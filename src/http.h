@@ -23,9 +23,7 @@ enum Protocol {
 class WebApplication {
 public:
   virtual ~WebApplication() {}
-  virtual HttpResponse* onHeaders(HttpRequest* pRequest) {
-    return NULL;
-  }
+  virtual void onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) = 0;
   virtual void onBodyData(HttpRequest* pRequest,
                           const char* data, size_t len) = 0;
   virtual void getResponse(HttpRequest* request, boost::function<void(HttpResponse*)> callback) = 0;
@@ -93,6 +91,17 @@ private:
 
   void trace(const std::string& msg);
 
+  bool _hasHeader(const std::string& name) const;
+  bool _hasHeader(const std::string& name, const std::string& value, bool ci = false) const;
+
+  void _parse_http_data(char* buf, const ssize_t n);
+  // Parse data that has been stored in the buffer.
+  void _parse_http_data_from_buffer();
+
+  // For buffering the incoming HTTP request when data comes in while waiting
+  // for R to process headers.
+  std::vector<char> _requestBuffer;
+
 public:
   HttpRequest(uv_loop_t* pLoop, WebApplication* pWebApplication,
       Socket* pSocket)
@@ -144,6 +153,8 @@ public:
   virtual int _on_header_field(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_header_value(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_headers_complete(http_parser* pParser);
+  virtual void _call_r_on_headers();
+  virtual void _on_headers_complete_complete(HttpResponse* pResponse);
   virtual int _on_body(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_message_complete(http_parser* pParser);
   virtual void _on_message_complete_complete(HttpResponse* pResponse);

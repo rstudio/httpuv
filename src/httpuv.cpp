@@ -255,16 +255,17 @@ public:
   virtual ~RWebApplication() {
   }
 
-  virtual HttpResponse* onHeaders(HttpRequest* pRequest) {
+  virtual void onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
     if (_onHeaders.isNULL()) {
-      return NULL;
+      callback(NULL);
     }
 
     requestToEnv(pRequest, &pRequest->env());
 
+    // Call the R onHeaders function
     Rcpp::List response(_onHeaders(pRequest->env()));
 
-    return listToResponse(pRequest, response);
+    callback(listToResponse(pRequest, response));
   }
 
   virtual void onBodyData(HttpRequest* pRequest,
