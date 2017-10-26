@@ -100,7 +100,7 @@ private:
 
   // For buffering the incoming HTTP request when data comes in while waiting
   // for R to process headers.
-  std::string _requestBuffer;
+  std::vector<char> _requestBuffer;
 
 public:
   HttpRequest(uv_loop_t* pLoop, WebApplication* pWebApplication,

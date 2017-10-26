@@ -244,7 +244,7 @@ void HttpRequest::_call_r_on_headers() {
 // This wrapper function is needed to use HttpRequest::_call_r_on_headers with
 // later(). That method can't be passed to later(), but this function can.
 void call_r_on_headers_wrapper(void* data) {
-  HttpRequest* req = (HttpRequest*) data;
+  HttpRequest* req = reinterpret_cast<HttpRequest*>(data);
   req->_call_r_on_headers();
 }
 
@@ -301,11 +301,8 @@ void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
     }
   }
 
-  // Tell the parser what the result was.
-  this->_parser.headers_status = result;
-
-  // Tell the http parser it can move on.
-  http_parser_on_headers_completed(&(this->_parser));
+  // Tell the parser what the result was and that it can move on.
+  http_parser_headers_completed(&(this->_parser), result);
 
   // Continue parsing any data that went into the request buffer.
   this->_parse_http_data_from_buffer();
@@ -365,10 +362,10 @@ void HttpRequest::close() {
 void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
   int parsed = http_parser_execute(&_parser, &request_settings(), buffer, n);
 
-  if (_parser.waiting_for_headers_completed) {
+  if (http_parser_waiting_for_headers_completed(&_parser)) {
     // If we're waiting for the header response, just store the data in the
     // buffer.
-    _requestBuffer.append(buffer + parsed, n - parsed);
+    _requestBuffer.insert(_requestBuffer.end(), buffer + parsed, buffer + n);
 
   } else if (_parser.upgrade) {
     char* pData = buffer + parsed;
@@ -413,10 +410,9 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
 }
 
 void HttpRequest::_parse_http_data_from_buffer() {
-  // First create a non-const char* from _requestBuffer.
-  std::vector<char> req_buffer(_requestBuffer.begin(), _requestBuffer.end());
-
-  // Clear the _requestBuffer. It might be written to in _parse_http_data().
+  // Copy contents of _requestBuffer, then clear _requestBuffer, because it
+  // might be written to in _parse_http_data().
+  std::vector<char> req_buffer = _requestBuffer;
   _requestBuffer.clear();
 
   this->_parse_http_data(&req_buffer[0], req_buffer.size());

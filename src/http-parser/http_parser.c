@@ -344,6 +344,8 @@ enum state
   /* When the (async) on_headers function has been called but we're still
    * waiting for a response. */
   , s_wait_for_on_headers_completed
+  /* After the (async) on_headers function has finished processing, and has
+   * set a result value. */
   , s_on_headers_completed
 
   , s_headers_done
@@ -1818,10 +1820,7 @@ reexecute:
            parser->method == HTTP_CONNECT);
 
         if (settings->on_headers_complete) {
-          /* Update the internal and externally-visible state. */
           UPDATE_STATE(s_wait_for_on_headers_completed);
-          parser->waiting_for_headers_completed = 1;
-
 
           /* If on_headers_complete is async, then we'll let the external code
            * set the result in parser->headers_status, and advance the state to
@@ -2151,13 +2150,19 @@ error:
   RETURN(p - data);
 }
 
-void http_parser_on_headers_completed(http_parser *parser) {
-  /* We unfortunately have to set the state in two places. parser->state is
-   * used internally by the parser, and parser->waiting_for_headers_completed
-   * externally visible.
-   */
+int http_parser_waiting_for_headers_completed(http_parser *parser) {
+  return parser->state == s_wait_for_on_headers_completed;
+}
+
+void http_parser_headers_completed(http_parser *parser, int status) {
+  if (parser->is_running) {
+    /* If this function is being called when http_parser_execute is still on
+     * the call stack, something has gone wrong.
+     */
+    assert(0 && "Called http_parser_set_headers_result inside of http_parser_execute");
+  }
+  parser->headers_status = status;
   parser->state = s_on_headers_completed;
-  parser->waiting_for_headers_completed = 0;
 }
 
 /* Does the parser need to see an EOF to find the end of the message? */
@@ -2221,7 +2226,6 @@ http_parser_init (http_parser *parser, enum http_parser_type t)
   parser->http_errno = HPE_OK;
 
   parser->is_running = 0;
-  parser->waiting_for_headers_completed = 0;
   parser->headers_status = -1;
 }
 

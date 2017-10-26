@@ -251,11 +251,6 @@ struct http_parser {
 
 
   /** ADDED FOR ASYNC on_headers_complete **/
-  /* If there's a on_headers_complete callback, 1 means the parser is
-   * waiting for it to indicate that it's finished by calling
-   * http_parser_on_headers_completed(), then call http_parser_execute()
-   * to continue parsing. */
-  int waiting_for_headers_completed;
   /* The status code set by the application code after processing the
    * headers. Initial value is -1. After headers have been processed, it should
    * be 0, 1, or 2. This is the value that would be returned by
@@ -347,8 +342,17 @@ size_t http_parser_execute(http_parser *parser,
                            const char *data,
                            size_t len);
 
-/* Tells the parser that the on_headers stuff is finished. */
-void http_parser_on_headers_completed(http_parser *parser);
+/* Return 1 if the parser is in the s_wait_for_on_headers_completed state,
+ * 0 otherwise. */
+int http_parser_waiting_for_headers_completed(http_parser *parser);
+
+/* This function is used when on_headers_complete() is an async function.
+ * Tells the parser that the on_headers stuff is finished. Need to pass it a
+ * status value, 0, 1, 2, or 3. This value is the same as what would be
+ * returned by the on_headers_complete() function when it is a synchronous
+ * function.
+ */
+void http_parser_headers_completed(http_parser *parser, int status);
 
 /* If http_should_keep_alive() in the on_headers_complete or
  * on_message_complete callback returns 0, then this should be
