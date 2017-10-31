@@ -272,12 +272,18 @@ void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
 
   if (pResponse) {
     bool bodyExpected = _hasHeader("Content-Length") || _hasHeader("Transfer-Encoding");
+    bool shouldKeepAlive = http_should_keep_alive(&_parser);
 
-    if (bodyExpected) {
-      // If we're expecting a request body and we're returning a response
-      // prematurely, then add "Connection: close" header to the response and
-      // set a flag to ignore all future reads on this connection.
-
+    // There are two reasons we might want to send a message and close:
+    // 1. If we're expecting a request body and we're returning a response
+    // prematurely.
+    // 2. If the parser's http_should_keep_alive() returns 0. This can happen
+    // when a HTTP 1.1 request has "Connection: close". Similarly, a HTTP 1.0
+    // request has that behavior as the default.
+    //
+    // In these cases, add "Connection: close" header to the response and
+    // set a flag to ignore all future reads on this connection.
+    if (bodyExpected || !shouldKeepAlive) {
       pResponse->addHeader("Connection", "close");
 
       uv_read_stop((uv_stream_t*)handle());
@@ -331,6 +337,14 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 }
 
 void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
+  if (!http_should_keep_alive(&_parser)) {
+    pResponse->addHeader("Connection", "close");
+
+    uv_read_stop((uv_stream_t*)handle());
+
+    _ignoreNewData = true;
+  }
+
   pResponse->writeResponse();
 }
 
@@ -400,7 +414,7 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
   } else if (parsed < n) {
     if (!_ignoreNewData) {
       fatal_error(
-        "on_request_read",
+        "_parse_http_data",
         http_errno_description(HTTP_PARSER_ERRNO(&_parser))
       );
       uv_read_stop((uv_stream_t*)handle());

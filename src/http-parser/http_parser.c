@@ -978,6 +978,11 @@ reexecute:
         if (ch == CR || ch == LF)
           break;
         parser->flags = 0;
+        /* Set headers_status in the s_start_req state, not just in
+         * http_parser_init(), because there can be multiple requests on a
+         * single connection, and we need to reset headers_status each time.
+         */
+        parser->headers_status = -1;
         parser->content_length = ULLONG_MAX;
 
         if (UNLIKELY(!IS_ALPHA(ch))) {
@@ -1869,6 +1874,10 @@ reexecute:
              * processing the headers, it's done with the http parser.
              */
             case 3:
+              /* If this is a keep-alive connection, we need to reset the state
+               * so that the parser can accept more messages.
+               */
+              UPDATE_STATE(NEW_MESSAGE());
               RETURN(p - data + 1);
 
             case 2:
