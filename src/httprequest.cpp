@@ -112,7 +112,11 @@ Address HttpRequest::clientAddress() {
 }
 
 Rcpp::Environment& HttpRequest::env() {
-  return _env;
+  if (_env == NULL) {
+    // TODO: delete this later
+    _env = new Rcpp::Environment(Rcpp::Function("new.env")());
+  }
+  return *_env;
 }
 
 std::string HttpRequest::method() const {
@@ -215,19 +219,33 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
   return 0;
 }
 
-// This should be called from the main thread.
+// Runs on main thread.
 void HttpRequest::_call_r_on_headers() {
+  trace("_call_r_on_headers");
+
   this->_pWebApplication->onHeaders(
     this,
-    boost::bind(&HttpRequest::_on_headers_complete_complete, this, _1)
+    boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, this, _1)
   );
 }
 
 // This wrapper function is needed to use HttpRequest::_call_r_on_headers with
 // later(). That method can't be passed to later(), but this function can.
+// Runs on the main thread because it's scheduled by later().
 void call_r_on_headers_wrapper(void* data) {
   HttpRequest* req = reinterpret_cast<HttpRequest*>(data);
   req->_call_r_on_headers();
+}
+
+// This is a wrapper that is called on the main thread. It puts an item on the
+// write queue and signals to the background thread that there's something there.
+void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse) {
+  boost::function<void (void)> cb(
+    boost::bind(&HttpRequest::_on_headers_complete_complete, this, pResponse)
+  );
+
+  write_queue.push(cb);
+  uv_async_send(&async_writer);
 }
 
 // This is called after http-parser has finished parsing the request headers.
@@ -247,7 +265,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
 
 // This is called after the user's R onHeaders() function has finished. It can
 // write a response, if onHeaders() wants that. It also sets a status code for
-// http-parser.
+// http-parser and then re-executes the parser. Runs on the background thread.
 void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
   trace("on_headers_complete_complete");
   int result = 0;

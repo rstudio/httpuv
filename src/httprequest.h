@@ -11,7 +11,7 @@
 #include "socket.h"
 #include "webapplication.h"
 #include "httpresponse.h"
-
+#include "queue.h"
 
 enum Protocol {
   HTTP,
@@ -32,7 +32,6 @@ private:
   RequestHeaders _headers;
   std::string _lastHeaderField;
   unsigned long _bytesRead;
-  Rcpp::Environment _env;
   WebSocketConnection* _pWebSocketConnection;
   // _ignoreNewData is used in cases where we rejected a request (by sending
   // a response with a non-100 status code) before its body was received. We
@@ -40,6 +39,7 @@ private:
   // sent yet, but we don't want to parse any more data from this connection.
   // (You would think uv_stop_read could be called, but it seems to prevent
   // the response from being written as well.)
+  Rcpp::Environment* _env;
   bool _ignoreNewData;
 
   void trace(const std::string& msg);
@@ -61,6 +61,7 @@ public:
     : _pLoop(pLoop), _pWebApplication(pWebApplication), _pSocket(pSocket),
       _protocol(HTTP), _bytesRead(0),
       _pWebSocketConnection(new WebSocketConnection(this)),
+      _env(NULL),
       _ignoreNewData(false) {
 
     uv_tcp_init(pLoop, &_handle.tcp);
@@ -71,8 +72,6 @@ public:
     _parser.data = this;
 
     _pSocket->addConnection(this);
-
-    _env = Rcpp::Function("new.env")();
   }
 
   virtual ~HttpRequest() {
@@ -107,6 +106,7 @@ public:
   virtual int _on_header_value(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_headers_complete(http_parser* pParser);
   virtual void _call_r_on_headers();
+  virtual void _schedule_on_headers_complete_complete(HttpResponse* pResponse);
   virtual void _on_headers_complete_complete(HttpResponse* pResponse);
   virtual int _on_body(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_message_complete(http_parser* pParser);

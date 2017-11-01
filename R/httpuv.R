@@ -399,6 +399,25 @@ startServer <- function(host, port, app) {
   return(server)
 }
 
+#' @export
+startBackgroundServer <- function(host, port, app) {
+
+  appWrapper <- AppWrapper$new(app)
+  server <- makeBackgroundTcpServer(
+    host, port,
+    appWrapper$onHeaders,
+    appWrapper$onBodyData,
+    appWrapper$call,
+    appWrapper$onWSOpen,
+    appWrapper$onWSMessage,
+    appWrapper$onWSClose
+  )
+  if (is.null(server)) {
+    stop("Failed to create server")
+  }
+  return(server)
+}
+
 #' @param name A string that indicates the path for the domain socket (on 
 #'   Unix-like systems) or the name of the named pipe (on Windows).
 #' @param mask If non-\code{NULL} and non-negative, this numeric value is used 

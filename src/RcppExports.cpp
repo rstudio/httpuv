@@ -45,6 +45,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// makeBackgroundTcpServer
+Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port, Rcpp::Function onHeaders, Rcpp::Function onBodyData, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
+RcppExport SEXP _httpuv_makeBackgroundTcpServer(SEXP hostSEXP, SEXP portSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type host(hostSEXP);
+    Rcpp::traits::input_parameter< int >::type port(portSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Function >::type onHeaders(onHeadersSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Function >::type onBodyData(onBodyDataSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Function >::type onRequest(onRequestSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Function >::type onWSOpen(onWSOpenSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Function >::type onWSMessage(onWSMessageSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Function >::type onWSClose(onWSCloseSEXP);
+    rcpp_result_gen = Rcpp::wrap(makeBackgroundTcpServer(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose));
+    return rcpp_result_gen;
+END_RCPP
+}
 // makePipeServer
 Rcpp::RObject makePipeServer(const std::string& name, int mask, Rcpp::Function onHeaders, Rcpp::Function onBodyData, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
 RcppExport SEXP _httpuv_makePipeServer(SEXP nameSEXP, SEXP maskSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
@@ -196,6 +214,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_sendWSMessage", (DL_FUNC) &_httpuv_sendWSMessage, 3},
     {"_httpuv_closeWS", (DL_FUNC) &_httpuv_closeWS, 1},
     {"_httpuv_makeTcpServer", (DL_FUNC) &_httpuv_makeTcpServer, 8},
+    {"_httpuv_makeBackgroundTcpServer", (DL_FUNC) &_httpuv_makeBackgroundTcpServer, 8},
     {"_httpuv_makePipeServer", (DL_FUNC) &_httpuv_makePipeServer, 8},
     {"_httpuv_destroyServer", (DL_FUNC) &_httpuv_destroyServer, 1},
     {"_httpuv_run", (DL_FUNC) &_httpuv_run, 1},

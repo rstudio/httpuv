@@ -28,5 +28,5 @@ Remotes:
 LinkingTo: Rcpp, BH, later
 URL: https://github.com/rstudio/httpuv
 SystemRequirements: GNU make
-RoxygenNote: 6.0.1
+RoxygenNote: 6.0.1.9000
 Suggests: testthat

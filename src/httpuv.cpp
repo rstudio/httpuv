@@ -12,13 +12,19 @@
 #include "uvutil.h"
 #include "webapplication.h"
 #include "http.h"
+#include "queue.h"
 #include <Rinternals.h>
 
+
+uv_thread_t *io_thread_id = NULL;
+uv_async_t async_writer;
+queue< boost::function<void (void)> > write_queue;
 
 // The uv loop that we'll use. Should be accessed via get_io_loop().
 uv_loop_t io_loop;
 bool io_loop_initialized = false;
 uv_loop_t* get_io_loop() {
+  // TODO: Use mutex here
   if (!io_loop_initialized) {
     uv_loop_init(&io_loop);
     io_loop_initialized = true;
@@ -69,7 +75,74 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
   if (!pServer) {
     return R_NilValue;
   }
+  
+  return Rcpp::wrap(externalize<uv_stream_t>(pServer));
+}
 
+void write_result(uv_async_t *handle) {
+  //TODO:
+  // * More efficient locking. See:
+  //   https://www.justsoftwaresolutions.co.uk/threading/implementing-a-thread-safe-queue-using-condition-variables.html
+  // * Put this into the same class as the queue?
+  write_queue.lock();
+
+  while (write_queue.size() > 0) {
+    boost::function<void (void)> cb = write_queue.front();
+    cb();
+    write_queue.pop();
+  }
+
+  write_queue.unlock();
+}
+
+void io_thread(void* data) {
+  write_queue = queue< boost::function<void (void)> >();
+
+  // uv_stream_t* pServer = static_cast<uv_stream_t*>(data);
+
+  // Set up async communcation channels
+  uv_async_init(get_io_loop(), &async_writer, write_result);
+
+  uv_run(get_io_loop(), UV_RUN_DEFAULT);
+
+  // TODO: Clean up pServer and other stuff?
+}
+
+// [[Rcpp::export]]
+Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port,
+                            Rcpp::Function onHeaders,
+                            Rcpp::Function onBodyData,
+                            Rcpp::Function onRequest,
+                            Rcpp::Function onWSOpen,
+                            Rcpp::Function onWSMessage,
+                            Rcpp::Function onWSClose) {
+
+  using namespace Rcpp;
+  // Deleted when owning pServer is deleted. If pServer creation fails,
+  // it's still createTcpServer's responsibility to delete pHandler.
+  RWebApplication* pHandler =
+    new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
+                        onWSMessage, onWSClose);
+
+  uv_stream_t* pServer = createTcpServer(
+    get_io_loop(), host.c_str(), port, (WebApplication*)pHandler
+  );
+
+  if (!pServer) {
+    return R_NilValue;
+  }
+
+  io_thread_id = (uv_thread_t *) malloc(sizeof(uv_thread_t));
+
+  int ret = uv_thread_create(io_thread_id, io_thread, pServer);
+
+  if (ret != 0) {
+    // TODO: free memory
+    Rcpp::stop(std::string("Error: ") + uv_strerror(ret));
+  }
+  // TODO: Check for error value
+
+  // Return thread id instead?
   return Rcpp::wrap(externalize<uv_stream_t>(pServer));
 }
 
