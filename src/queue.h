@@ -4,71 +4,56 @@
 // A thread-safe queue, using threading constructs from libuv.
 
 #include <queue>
+#include "guard.h"
 
 template <typename T>
 class queue {
 
 private:
-    std::queue<T> q;
-    uv_mutex_t mutex;
+  std::queue<T> q;
 
 public:
-    queue();
+  queue();
 
-    void push(const T&);
-    T& front();
-    void pop();
-    int size();
+  void push(const T&);
+  T& front();
+  void pop();
+  int size();
 
-    void lock();
-    void unlock();
+  uv_mutex_t mutex;
 };
 
 
 template <typename T>
 queue<T>::queue() {
-    q = std::queue<T>();
-    uv_mutex_init_recursive(&mutex);
+  uv_mutex_init_recursive(&mutex);
+  q = std::queue<T>();
 }
 
 template <typename T>
 void queue<T>::push(const T& item) {
-    lock();
-    q.push(item);
-    unlock();
+  guard guard(mutex);
+  q.push(item);
 }
 
 template <typename T>
 T& queue<T>::front() {
-    lock();
-    T& item = q.front();
-    unlock();
-    return item;
+  guard guard(mutex);
+  T& item = q.front();
+  return item;
 }
 
 template <typename T>
 void queue<T>::pop() {
-    lock();
-    q.pop();
-    unlock();
+  guard guard(mutex);
+  q.pop();
 }
 
 template <typename T>
 int queue<T>::size() {
-    // TODO: Need guard instead
-    // lock();
-    return q.size();
-    // unlock();
+  guard guard(mutex);
+  return q.size();
 }
 
-template <typename T>
-void queue<T>::lock() {
-    uv_mutex_lock(&mutex);
-}
-
-template <typename T>
-void queue<T>::unlock() {
-    uv_mutex_unlock(&mutex);
-}
 
 #endif // QUEUE_HPP

@@ -13,6 +13,7 @@
 #include "webapplication.h"
 #include "http.h"
 #include "queue.h"
+#include "guard.h"
 #include <Rinternals.h>
 
 
@@ -79,20 +80,26 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
   return Rcpp::wrap(externalize<uv_stream_t>(pServer));
 }
 
-void write_result(uv_async_t *handle) {
-  //TODO:
-  // * More efficient locking. See:
-  //   https://www.justsoftwaresolutions.co.uk/threading/implementing-a-thread-safe-queue-using-condition-variables.html
-  // * Put this into the same class as the queue?
-  write_queue.lock();
+void flush_write_queue(uv_async_t *handle) {
+  boost::function<void (void)> cb;
 
-  while (write_queue.size() > 0) {
-    boost::function<void (void)> cb = write_queue.front();
+  while (1) {
+    // Do queue operations inside this guarded scope, but we'll execute the
+    // callback outside of the scope, since it doesn't need to be protected,
+    // and this will make it possible for the other thread to do queue
+    // operations while we're invoking the callback.
+    {
+      guard guard(write_queue.mutex);
+      if (write_queue.size() == 0) {
+        break;
+      }
+
+      cb = write_queue.front();
+      write_queue.pop();
+    }
+
     cb();
-    write_queue.pop();
   }
-
-  write_queue.unlock();
 }
 
 void io_thread(void* data) {
@@ -101,7 +108,7 @@ void io_thread(void* data) {
   // uv_stream_t* pServer = static_cast<uv_stream_t*>(data);
 
   // Set up async communcation channels
-  uv_async_init(get_io_loop(), &async_writer, write_result);
+  uv_async_init(get_io_loop(), &async_writer, flush_write_queue);
 
   uv_run(get_io_loop(), UV_RUN_DEFAULT);
 
