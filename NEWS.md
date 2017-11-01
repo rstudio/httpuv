@@ -5,7 +5,7 @@ httpuv 1.3.5.9002
 
 * Upgraded to http-parser 2.7.1. ([#93](https://github.com/rstudio/httpuv/pull/93))
 
-* httpuv can now handle request callbacks asynchronously. ([#80](https://github.com/rstudio/httpuv/pull/80))
+* httpuv can now handle request callbacks asynchronously. ([#80](https://github.com/rstudio/httpuv/pull/80), ([#97](https://github.com/rstudio/httpuv/pull/97)))
 
 * Let Rcpp handle symbol registration. ([#85](https://github.com/rstudio/httpuv/pull/85))
 
