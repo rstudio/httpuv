@@ -110,6 +110,8 @@ public:
   virtual void _on_headers_complete_complete(HttpResponse* pResponse);
   virtual int _on_body(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_message_complete(http_parser* pParser);
+  virtual void _call_r_on_message();
+  virtual void _schedule_on_message_complete_complete(HttpResponse* pResponse);
   virtual void _on_message_complete_complete(HttpResponse* pResponse);
 
   virtual void onWSMessage(bool binary, const char* data, size_t len);

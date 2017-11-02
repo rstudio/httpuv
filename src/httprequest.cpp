@@ -322,20 +322,50 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
   return 0;
 }
 
-int HttpRequest::_on_message_complete(http_parser* pParser) {
-  trace("on_message_complete");
+// Runs on main thread.
+void HttpRequest::_call_r_on_message() {
+  trace("_call_r_on_message");
 
-  if (!pParser->upgrade) {
+  if (!_parser.upgrade) {
     // Deleted in on_response_written
     _pWebApplication->getResponse(
       this,
-      boost::bind(&HttpRequest::_on_message_complete_complete, this, _1)
+      boost::bind(&HttpRequest::_schedule_on_message_complete_complete, this, _1)
     );
   }
+}
+
+// Runs on main thread.
+// This wrapper function is needed to use HttpRequest::_call_r_on_headers with
+// later(). That method can't be passed to later(), but this function can.
+// Runs on the main thread because it's scheduled by later().
+void call_r_on_message_wrapper(void* data) {
+  HttpRequest* req = reinterpret_cast<HttpRequest*>(data);
+  req->_call_r_on_message();
+}
+
+// Runs on background thread.
+int HttpRequest::_on_message_complete(http_parser* pParser) {
+  trace("on_message_complete");
+
+  later::later(call_r_on_message_wrapper, this, 0);
 
   return 0;
 }
 
+// Runs on the main thread. This is a wrapper that an item on the write queue
+// and signals to the background thread that there's something there.
+void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse) {
+  boost::function<void (void)> cb(
+    boost::bind(&HttpRequest::_on_message_complete_complete, this, pResponse)
+  );
+
+  // TODO: Put these together into one function.
+  write_queue.push(cb);
+  uv_async_send(&async_writer);
+}
+
+// Runs on the background thread.
 void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
   if (!http_should_keep_alive(&_parser)) {
     pResponse->closeAfterWritten();
