@@ -272,13 +272,19 @@ void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
 
   if (pResponse) {
     bool bodyExpected = _hasHeader("Content-Length") || _hasHeader("Transfer-Encoding");
+    bool shouldKeepAlive = http_should_keep_alive(&_parser);
 
-    if (bodyExpected) {
-      // If we're expecting a request body and we're returning a response
-      // prematurely, then add "Connection: close" header to the response and
-      // set a flag to ignore all future reads on this connection.
-
-      pResponse->addHeader("Connection", "close");
+    // There are two reasons we might want to send a message and close:
+    // 1. If we're expecting a request body and we're returning a response
+    // prematurely.
+    // 2. If the parser's http_should_keep_alive() returns 0. This can happen
+    // when a HTTP 1.1 request has "Connection: close". Similarly, a HTTP 1.0
+    // request has that behavior as the default.
+    //
+    // In these cases, add "Connection: close" header to the response and
+    // set a flag to ignore all future reads on this connection.
+    if (bodyExpected || !shouldKeepAlive) {
+      pResponse->closeAfterWritten();
 
       uv_read_stop((uv_stream_t*)handle());
 
@@ -331,6 +337,14 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 }
 
 void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
+  if (!http_should_keep_alive(&_parser)) {
+    pResponse->closeAfterWritten();
+
+    uv_read_stop((uv_stream_t*)handle());
+
+    _ignoreNewData = true;
+  }
+
   pResponse->writeResponse();
 }
 
@@ -400,7 +414,7 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
   } else if (parsed < n) {
     if (!_ignoreNewData) {
       fatal_error(
-        "on_request_read",
+        "_parse_http_data",
         http_errno_description(HTTP_PARSER_ERRNO(&_parser))
       );
       uv_read_stop((uv_stream_t*)handle());
@@ -459,6 +473,23 @@ void HttpResponse::addHeader(const std::string& name, const std::string& value) 
   _headers.push_back(std::pair<std::string, std::string>(name, value));
 }
 
+// Set a header to a particular value. If the header already exists, delete
+// it, and add the header with the new value. The new header will be the last
+// item.
+void HttpResponse::setHeader(const std::string& name, const std::string& value) {
+  // Look for existing header with same name, and delete if present
+  ResponseHeaders::iterator it = _headers.begin();
+  while (it != _headers.end()) {
+    if (strcasecmp(it->first.c_str(), name.c_str()) == 0) {
+      it = _headers.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  addHeader(name, value);
+}
+
 class HttpResponseExtendedWrite : public ExtendedWrite {
   HttpResponse* _pParent;
 public:
@@ -467,7 +498,7 @@ public:
       ExtendedWrite(pHandle, pDataSource), _pParent(pParent) {}
 
   void onWriteComplete(int status) {
-    delete _pParent;
+    _pParent->destroy();
     delete this;
   }
 };
@@ -519,7 +550,7 @@ void HttpResponse::writeResponse() {
       &on_response_written);
   if (r) {
     _pRequest->fatal_error("uv_write", uv_strerror(r));
-    delete this;
+    destroy();
     free(pWriteReq);
   }
 }
@@ -527,13 +558,12 @@ void HttpResponse::writeResponse() {
 void HttpResponse::onResponseWritten(int status) {
   if (status != 0) {
     REprintf("Error writing response: %d\n", status);
-    _pRequest->close();
-    delete this;
+    destroy(true);  // Force close
     return;
   }
 
   if (_pBody == NULL) {
-    delete this;
+    destroy();
   }
   else {
     HttpResponseExtendedWrite* pResponseWrite = new HttpResponseExtendedWrite(
@@ -542,6 +572,22 @@ void HttpResponse::onResponseWritten(int status) {
   }
 }
 
+// This sets a flag so that the connection is closed after the response is
+// written. It also adds a "Connection: close" header to the response.
+void HttpResponse::closeAfterWritten() {
+  setHeader("Connection", "close");
+  _closeAfterWritten = true;
+}
+
+// A wrapper function that closes the HttpRequest's connection if
+// closeAfterWritten() has been called or if forceClose is true, and then
+// deletes this.
+void HttpResponse::destroy(bool forceClose) {
+  if (forceClose || _closeAfterWritten) {
+    _pRequest->close();
+  }
+  delete this;
+}
 
 #define IMPLEMENT_CALLBACK_1(type, function_name, return_type, type_1) \
   return_type type##_##function_name(type_1 arg1) { \

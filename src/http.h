@@ -178,6 +178,7 @@ class HttpResponse {
   ResponseHeaders _headers;
   std::vector<char> _responseHeader;
   DataSource* _pBody;
+  bool _closeAfterWritten;
 
 public:
   HttpResponse(HttpRequest* pRequest, int statusCode,
@@ -192,8 +193,11 @@ public:
   ResponseHeaders& headers();
 
   void addHeader(const std::string& name, const std::string& value);
+  void setHeader(const std::string& name, const std::string& value);
   void writeResponse();
   void onResponseWritten(int status);
+  void closeAfterWritten();
+  void destroy(bool forceClose = false);
 };
 
 #define DECLARE_CALLBACK_1(type, function_name, return_type, type_1) \

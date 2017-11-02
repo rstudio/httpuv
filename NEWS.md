@@ -7,6 +7,8 @@ httpuv 1.3.5.9002
 
 * httpuv can now handle request callbacks asynchronously. ([#80](https://github.com/rstudio/httpuv/pull/80), ([#97](https://github.com/rstudio/httpuv/pull/97)))
 
+* Fixed [#72](https://github.com/rstudio/httpuv/issues/72): httpuv previously did not close connections that had the `Connection: close` header, or were HTTP 1.0 (without `Connection: keep-alive`). ([#99](https://github.com/rstudio/httpuv/pull/99))
+
 * Let Rcpp handle symbol registration. ([#85](https://github.com/rstudio/httpuv/pull/85))
 
 * Hide internal symbols from shared library on supported platforms. This reduces the risk of conflicts with other packages bundling libuv. ([#85](https://github.com/rstudio/httpuv/pull/85))
