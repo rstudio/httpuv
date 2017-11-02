@@ -183,7 +183,8 @@ class HttpResponse {
 public:
   HttpResponse(HttpRequest* pRequest, int statusCode,
          const std::string& status, DataSource* pBody)
-    : _pRequest(pRequest), _statusCode(statusCode), _status(status), _pBody(pBody) {
+    : _pRequest(pRequest), _statusCode(statusCode), _status(status), _pBody(pBody),
+      _closeAfterWritten(false) {
 
   }
 
