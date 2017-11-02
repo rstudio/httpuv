@@ -475,8 +475,7 @@ startPipeServer <- function(name, mask, app) {
 #'
 #' @export
 service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
-  run(timeoutMs)
-  later::run_now()
+  later::run_now(timeoutMs / 1000)
 }
 
 #' Stop a running server
@@ -519,8 +518,8 @@ stopServer <- function(handle) {
 #' @export
 runServer <- function(host, port, app,
                       interruptIntervalMs = ifelse(interactive(), 100, 1000)) {
-  server <- startServer(host, port, app)
-  on.exit(stopServer(server))
+  server <- startBackgroundServer(host, port, app)
+  # on.exit(stopServer(server))
   
   .globals$stopped <- FALSE
   while (!.globals$stopped) {
