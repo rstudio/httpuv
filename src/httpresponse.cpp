@@ -134,6 +134,7 @@ void HttpResponse::closeAfterWritten() {
 // closeAfterWritten() has been called or if forceClose is true, and then
 // deletes this.
 void HttpResponse::destroy(bool forceClose) {
+  ASSERT_BACKGROUND_THREAD()
   if (forceClose || _closeAfterWritten) {
     _pRequest->close();
   }

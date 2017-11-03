@@ -41,6 +41,6 @@ public:
 
 
 extern queue< boost::function<void (void)> > write_queue;
-extern uv_async_t async_writer;
+extern uv_async_t async_flush_write_queue;
 
 #endif

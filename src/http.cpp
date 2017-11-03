@@ -109,12 +109,12 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   return &pSocket->handle.stream;
 }
 void freeServer(uv_stream_t* pHandle) {
-  uv_loop_t* loop = pHandle->loop;
+  // uv_loop_t* loop = pHandle->loop;
   Socket* pSocket = (Socket*)pHandle->data;
   pSocket->destroy();
 
-  runNonBlocking(loop);
+  // runNonBlocking(loop);
 }
-bool runNonBlocking(uv_loop_t* loop) {
-  return uv_run(loop, UV_RUN_NOWAIT);
-}
+// bool runNonBlocking(uv_loop_t* loop) {
+//   return uv_run(loop, UV_RUN_NOWAIT);
+// }

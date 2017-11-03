@@ -226,6 +226,10 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
   return 0;
 }
 
+// ============================================================================
+// Headers complete
+// ============================================================================
+
 void HttpRequest::_call_r_on_headers() {
   ASSERT_MAIN_THREAD()
   trace("_call_r_on_headers");
@@ -254,7 +258,7 @@ void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse
   );
 
   write_queue.push(cb);
-  uv_async_send(&async_writer);
+  uv_async_send(&async_flush_write_queue);
 }
 
 // This is called after http-parser has finished parsing the request headers.
@@ -326,6 +330,10 @@ void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
 }
 
 
+// ============================================================================
+// Main message body
+// ============================================================================
+
 int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) {
   ASSERT_BACKGROUND_THREAD()
   trace("on_body");
@@ -333,6 +341,7 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
   _bytesRead += length;
   return 0;
 }
+
 
 void HttpRequest::_call_r_on_message() {
   ASSERT_MAIN_THREAD()
@@ -375,7 +384,7 @@ void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse
 
   // TODO: Put these together into one function.
   write_queue.push(cb);
-  uv_async_send(&async_writer);
+  uv_async_send(&async_flush_write_queue);
 }
 
 void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
@@ -392,10 +401,31 @@ void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
 }
 
 
+// ============================================================================
+// Incoming websocket messages
+// ============================================================================
+
+void HttpRequest::_call_r_on_ws_message(WSMessageIncoming* msg) {
+  ASSERT_MAIN_THREAD()
+  trace("_call_r_on_ws_message");
+
+  _pWebApplication->onWSMessage(_pWebSocketConnection, msg->binary,
+                                &(msg->data)[0], msg->len);
+  delete msg;
+}
+
+void call_on_ws_message_wrapper(void* data) {
+  ASSERT_MAIN_THREAD()
+  WSMessageIncoming* msg = reinterpret_cast<WSMessageIncoming*>(data);
+  msg->req->_call_r_on_ws_message(msg);
+}
+
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
-  //TODO: Schedule this with later
-  _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
+  WSMessageIncoming* msg = new WSMessageIncoming(this, binary, data, len);
+  later::later(call_on_ws_message_wrapper, msg, 0);
+
+  // _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
 }
 void HttpRequest::onWSClose(int code) {
   // TODO: Call close() here?
@@ -406,18 +436,67 @@ void HttpRequest::fatal_error(const char* method, const char* message) {
   REprintf("ERROR: [%s] %s\n", method, message);
 }
 
+
+// ============================================================================
+// Closing connection
+// ============================================================================
+
 void HttpRequest::_on_closed(uv_handle_t* handle) {
   // printf("Closed\n");
   delete this;
 }
 
 void HttpRequest::close() {
+  ASSERT_BACKGROUND_THREAD()
   // std::cerr << "Closing handle " << &_handle << std::endl;
-  if (_protocol == WebSockets)
-    _pWebApplication->onWSClose(_pWebSocketConnection);
+  if (_protocol == WebSockets) {
+    // TODO: Re-instate this but run it on the main thread
+    // _pWebApplication->onWSClose(_pWebSocketConnection);
+  }
   _pSocket->removeConnection(this);
   uv_close(toHandle(&_handle.stream), HttpRequest_on_closed);
 }
+
+
+// ============================================================================
+// Open websocket
+// ============================================================================
+
+void HttpRequest::_call_r_on_ws_open() {
+  ASSERT_MAIN_THREAD()
+  trace("_call_r_on_ws_open");
+
+  this->_pWebApplication->onWSOpen(this);
+
+
+  // TODO: Don't reuse requestBuffer?
+  std::vector<char> req_buffer = _requestBuffer;
+  _requestBuffer.clear();
+
+  // Run on background thread
+  boost::function<void (void)> cb(
+    boost::bind(&WebSocketConnection::read,
+      _pWebSocketConnection,
+      &req_buffer[0],
+      req_buffer.size()
+    )
+  );
+  write_queue.push(cb);
+  uv_async_send(&async_flush_write_queue);
+
+  // this->_pWebSocketConnection->read(&req_buffer[0], req_buffer.size());
+}
+
+void call_on_ws_open_wrapper(void* data) {
+  ASSERT_MAIN_THREAD()
+  HttpRequest* req = reinterpret_cast<HttpRequest*>(data);
+  req->_call_r_on_ws_open();
+}
+
+
+// ============================================================================
+// Parse incoming data
+// ============================================================================
 
 void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
   ASSERT_BACKGROUND_THREAD()
@@ -449,9 +528,11 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
       pResp->writeResponse();
 
       _protocol = WebSockets;
-      _pWebApplication->onWSOpen(this);
 
-      _pWebSocketConnection->read(pData, pDataLen);
+      // TODO: Don't reuse requestBuffer?
+      _requestBuffer.insert(_requestBuffer.end(), pData, pData + pDataLen);
+
+      later::later(call_on_ws_open_wrapper, this, 0);
     }
 
     if (_protocol != WebSockets) {

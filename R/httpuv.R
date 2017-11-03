@@ -519,7 +519,7 @@ stopServer <- function(handle) {
 runServer <- function(host, port, app,
                       interruptIntervalMs = ifelse(interactive(), 100, 1000)) {
   server <- startBackgroundServer(host, port, app)
-  # on.exit(stopServer(server))
+  on.exit(stopServer(server))
   
   .globals$stopped <- FALSE
   while (!.globals$stopped) {

@@ -19,6 +19,25 @@ enum Protocol {
 };
 
 
+class WSMessageIncoming {
+public:
+  WSMessageIncoming(HttpRequest* req, bool binary, const char* data, size_t len)
+    : req(req),
+      binary(binary),
+      // Need to copy the data because it needs a longer lifetime than the
+      // caller.
+      data(data, data + len),
+      len(len)
+  {
+  }
+
+  HttpRequest* req;
+  bool binary;
+  std::vector<char> data;
+  size_t len;
+};
+
+
 class HttpRequest : WebSocketConnectionCallbacks {
 
 private:
@@ -95,6 +114,17 @@ public:
                    const char* pFooter, size_t footerSize);
   void closeWSSocket();
 
+
+  void _call_r_on_ws_open();
+  void _call_r_on_ws_message(WSMessageIncoming* message);
+  void _call_r_on_headers();
+  void _schedule_on_headers_complete_complete(HttpResponse* pResponse);
+  void _on_headers_complete_complete(HttpResponse* pResponse);
+  void _call_r_on_message();
+  void _schedule_on_message_complete_complete(HttpResponse* pResponse);
+  void _on_message_complete_complete(HttpResponse* pResponse);
+
+
 public:
   // Callbacks
   virtual int _on_message_begin(http_parser* pParser);
@@ -103,14 +133,8 @@ public:
   virtual int _on_header_field(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_header_value(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_headers_complete(http_parser* pParser);
-  virtual void _call_r_on_headers();
-  virtual void _schedule_on_headers_complete_complete(HttpResponse* pResponse);
-  virtual void _on_headers_complete_complete(HttpResponse* pResponse);
   virtual int _on_body(http_parser* pParser, const char* pAt, size_t length);
   virtual int _on_message_complete(http_parser* pParser);
-  virtual void _call_r_on_message();
-  virtual void _schedule_on_message_complete_complete(HttpResponse* pResponse);
-  virtual void _on_message_complete_complete(HttpResponse* pResponse);
 
   virtual void onWSMessage(bool binary, const char* data, size_t len);
   virtual void onWSClose(int code);

@@ -1,4 +1,5 @@
 #include "websockets.h"
+#include "debug.h"
 #include <assert.h>
 
 #include <algorithm>
@@ -139,6 +140,7 @@ void WSHyBiParser::handshake(const std::string& url,
                              char** ppData, size_t* pLen,
                              ResponseHeaders* pResponseHeaders,
                              std::vector<uint8_t>* pResponse) const {
+  ASSERT_BACKGROUND_THREAD()
   _pProto->handshake(url, requestHeaders, ppData, pLen, pResponseHeaders,
                      pResponse);
 }
@@ -154,6 +156,7 @@ void WSHyBiParser::createFrameHeaderFooter(
 }
 
 void WSHyBiParser::read(const char* data, size_t len) {
+  ASSERT_BACKGROUND_THREAD()
   while (len > 0) {
     // crude check for underflow
     assert(len < 1000000000000000000);
@@ -212,6 +215,7 @@ void WSHyBiParser::read(const char* data, size_t len) {
 
 bool WebSocketConnection::accept(const RequestHeaders& requestHeaders,
                                  const char* pData, size_t len) {
+  ASSERT_BACKGROUND_THREAD()
   assert(!_pParser);
 
   WebSocketProto_IETF ietf;
@@ -233,12 +237,14 @@ void WebSocketConnection::handshake(const std::string& url,
                                     char** ppData, size_t* pLen,
                                     ResponseHeaders* pResponseHeaders,
                                     std::vector<uint8_t>* pResponse) {
+  ASSERT_BACKGROUND_THREAD()
   assert(_pParser);
   _pParser->handshake(url, requestHeaders, ppData, pLen, pResponseHeaders,
                       pResponse);
 }
 
 void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t length) {
+  ASSERT_BACKGROUND_THREAD()
   std::vector<char> header(MAX_HEADER_BYTES);
   std::vector<char> footer(MAX_FOOTER_BYTES);
 
@@ -257,6 +263,7 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
 }
 
 void WebSocketConnection::closeWS() {
+  ASSERT_BACKGROUND_THREAD()
   // If we have already sent a close message, do nothing. It's especially
   // important that we don't call closeWSSocket twice, this might lead to
   // a crash as we (eventually) might double-free the Socket object.
@@ -273,16 +280,19 @@ void WebSocketConnection::closeWS() {
 }
 
 void WebSocketConnection::read(const char* data, size_t len) {
+  ASSERT_BACKGROUND_THREAD()
   assert(_pParser);
   _pParser->read(data, len);
 }
 
 void WebSocketConnection::onHeaderComplete(const WSFrameHeaderInfo& header) {
+  ASSERT_BACKGROUND_THREAD()
   _header = header;
   if (!header.fin && header.opcode != Continuation)
     _incompleteContentHeader = header;
 }
 void WebSocketConnection::onPayload(const char* data, size_t len) {
+  ASSERT_BACKGROUND_THREAD()
   size_t origSize = _payload.size();
   std::copy(data, data + len, std::back_inserter(_payload));
 
@@ -294,6 +304,7 @@ void WebSocketConnection::onPayload(const char* data, size_t len) {
   }
 }
 void WebSocketConnection::onFrameComplete() {
+  ASSERT_BACKGROUND_THREAD()
   if (!_header.fin) {
     std::copy(_payload.begin(), _payload.end(),
       std::back_inserter(_incompleteContentPayload));

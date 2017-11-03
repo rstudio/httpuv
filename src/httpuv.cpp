@@ -18,8 +18,13 @@
 #include <Rinternals.h>
 
 
+// ============================================================================
+// Background thread and I/O event loop
+// ============================================================================
+
 uv_thread_t *io_thread_id = NULL;
-uv_async_t async_writer;
+uv_async_t async_flush_write_queue;
+uv_async_t async_stop_io_thread;
 queue< boost::function<void (void)> > write_queue;
 
 // The uv loop that we'll use. Should be accessed via get_io_loop().
@@ -35,50 +40,8 @@ uv_loop_t* get_io_loop() {
   return &io_loop;
 }
 
-
-// [[Rcpp::export]]
-void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
-  WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
-  if (binary) {
-    Rcpp::RawVector raw = Rcpp::as<Rcpp::RawVector>(message);
-    wsc->sendWSMessage(Binary, reinterpret_cast<char*>(&raw[0]), raw.size());
-  } else {
-    std::string str = Rcpp::as<std::string>(message);
-    wsc->sendWSMessage(Text, str.c_str(), str.size());
-  }
-}
-
-// [[Rcpp::export]]
-void closeWS(std::string conn) {
-  WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
-  wsc->closeWS();
-}
-
-void destroyServer(std::string handle);
-
-// [[Rcpp::export]]
-Rcpp::RObject makeTcpServer(const std::string& host, int port,
-                            Rcpp::Function onHeaders,
-                            Rcpp::Function onBodyData,
-                            Rcpp::Function onRequest,
-                            Rcpp::Function onWSOpen,
-                            Rcpp::Function onWSMessage,
-                            Rcpp::Function onWSClose) {
-
-  using namespace Rcpp;
-  // Deleted when owning pServer is deleted. If pServer creation fails,
-  // it's still createTcpServer's responsibility to delete pHandler.
-  RWebApplication* pHandler =
-    new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
-                        onWSMessage, onWSClose);
-  uv_stream_t* pServer = createTcpServer(
-    get_io_loop(), host.c_str(), port, (WebApplication*)pHandler);
-
-  if (!pServer) {
-    return R_NilValue;
-  }
-  
-  return Rcpp::wrap(externalize<uv_stream_t>(pServer));
+void close_handle_cb(uv_handle_t* handle, void* arg) {
+  uv_close(handle, NULL);
 }
 
 void flush_write_queue(uv_async_t *handle) {
@@ -104,20 +67,112 @@ void flush_write_queue(uv_async_t *handle) {
   }
 }
 
+void stop_io_thread(uv_async_t *handle) {
+  uv_stop(get_io_loop());
+}
+
 void io_thread(void* data) {
   ASSERT_BACKGROUND_THREAD()
   write_queue = queue< boost::function<void (void)> >();
 
   // uv_stream_t* pServer = static_cast<uv_stream_t*>(data);
 
-  // Set up async communcation channels
-  uv_async_init(get_io_loop(), &async_writer, flush_write_queue);
+  // Set up async communication channels
+  uv_async_init(get_io_loop(), &async_flush_write_queue, flush_write_queue);
+  uv_async_init(get_io_loop(), &async_stop_io_thread, flush_write_queue);
 
   uv_run(get_io_loop(), UV_RUN_DEFAULT);
+
+  uv_walk(get_io_loop(), close_handle_cb, NULL);
+  uv_run(get_io_loop(), UV_RUN_ONCE);
+  uv_loop_close(get_io_loop());
+  free(get_io_loop());
+  // io_loop = NULL;
 
   // TODO: Clean up pServer and other stuff?
 }
 
+
+// ============================================================================
+// Outgoing websocket messages
+// ============================================================================
+
+// [[Rcpp::export]]
+void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
+  ASSERT_MAIN_THREAD()
+  WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
+
+  if (binary) {
+    Rcpp::RawVector raw = Rcpp::as<Rcpp::RawVector>(message);
+
+    boost::function<void (void)> cb(
+      boost::bind(&WebSocketConnection::sendWSMessage, wsc,
+        Binary,
+        // TODO: Need to copy this
+        reinterpret_cast<char*>(&raw[0]),
+        raw.size()
+      )
+    );
+
+    write_queue.push(cb);
+    uv_async_send(&async_flush_write_queue);
+
+
+    // wsc->sendWSMessage(Binary, reinterpret_cast<char*>(&raw[0]), raw.size());
+
+  } else {
+    std::string str = Rcpp::as<std::string>(message);
+
+    boost::function<void (void)> cb(
+      boost::bind(&WebSocketConnection::sendWSMessage, wsc,
+        Text,
+        str.c_str(),
+        str.size()
+      )
+    );
+
+    write_queue.push(cb);
+    uv_async_send(&async_flush_write_queue);
+
+    // wsc->sendWSMessage(Text, str.c_str(), str.size());
+  }
+
+}
+
+// [[Rcpp::export]]
+void closeWS(std::string conn) {
+  ASSERT_MAIN_THREAD()
+  WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
+  wsc->closeWS();
+}
+
+
+void destroyServer(std::string handle);
+
+// [[Rcpp::export]]
+Rcpp::RObject makeTcpServer(const std::string& host, int port,
+                            Rcpp::Function onHeaders,
+                            Rcpp::Function onBodyData,
+                            Rcpp::Function onRequest,
+                            Rcpp::Function onWSOpen,
+                            Rcpp::Function onWSMessage,
+                            Rcpp::Function onWSClose) {
+
+  using namespace Rcpp;
+  // Deleted when owning pServer is deleted. If pServer creation fails,
+  // it's still createTcpServer's responsibility to delete pHandler.
+  RWebApplication* pHandler =
+    new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
+                        onWSMessage, onWSClose);
+  uv_stream_t* pServer = createTcpServer(
+    get_io_loop(), host.c_str(), port, (WebApplication*)pHandler);
+
+  if (!pServer) {
+    return R_NilValue;
+  }
+
+  return Rcpp::wrap(externalize<uv_stream_t>(pServer));
+}
 // [[Rcpp::export]]
 Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port,
                             Rcpp::Function onHeaders,
@@ -129,6 +184,13 @@ Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port,
 
   using namespace Rcpp;
   REGISTER_MAIN_THREAD()
+
+  if (io_thread_id != NULL) {
+    Rcpp::stop("Must call stopServer() before creating new background server.");
+  }
+
+// TODO: 
+//       Add a function for killing running httpuv background server
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
@@ -188,6 +250,19 @@ Rcpp::RObject makePipeServer(const std::string& name,
 void destroyServer(std::string handle) {
   uv_stream_t* pServer = internalize<uv_stream_t>(handle);
   freeServer(pServer);
+
+  if (io_thread_id == NULL)
+    return;
+
+  uv_async_send(&async_stop_io_thread);
+
+
+  // TODO: Figure out why this hangs if called immediately after startBackgroundServer:
+  // s <- startBackgroundServer()
+  // stopServer(s)
+  uv_thread_join(io_thread_id);
+  free(io_thread_id);
+  io_thread_id = NULL;
 }
 
 void dummy_close_cb(uv_handle_t* handle) {
@@ -201,6 +276,7 @@ void stop_loop_timer_cb(uv_timer_t* handle) {
 // timeoutMillis, then stop.
 // [[Rcpp::export]]
 bool run(int timeoutMillis) {
+  ASSERT_MAIN_THREAD()
   static uv_timer_t timer_req = {0};
   int r;
 
