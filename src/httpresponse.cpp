@@ -1,10 +1,12 @@
 #include "httpresponse.h"
 #include "httprequest.h"
 #include "constants.h"
+#include "debug.h"
 #include <uv.h>
 
 
 void on_response_written(uv_write_t* handle, int status) {
+  ASSERT_BACKGROUND_THREAD()
   HttpResponse* pResponse = (HttpResponse*)handle->data;
   free(handle);
   pResponse->onResponseWritten(status);
@@ -50,6 +52,7 @@ public:
 };
 
 void HttpResponse::writeResponse() {
+  ASSERT_BACKGROUND_THREAD()
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
   response << "HTTP/1.1 " << _statusCode << " " << _status << "\r\n";
@@ -102,7 +105,9 @@ void HttpResponse::writeResponse() {
 }
 
 void HttpResponse::onResponseWritten(int status) {
+  ASSERT_BACKGROUND_THREAD()
   if (status != 0) {
+    // TODO: Not safe on background thread
     REprintf("Error writing response: %d\n", status);
     destroy(true);  // Force close
     return;

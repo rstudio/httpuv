@@ -2,6 +2,7 @@
 #include "httprequest.h"
 #include "httpresponse.h"
 #include "socket.h"
+#include "debug.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -14,6 +15,7 @@
 // TODO: Fast/easy use of files as response body
 
 void on_request(uv_stream_t* handle, int status) {
+  ASSERT_BACKGROUND_THREAD()
   if (status) {
     REprintf("connection error: %s\n", uv_strerror(status));
     return;

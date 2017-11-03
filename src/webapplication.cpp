@@ -3,6 +3,7 @@
 #include "webapplication.h"
 #include "httprequest.h"
 #include "http.h"
+#include "debug.h"
 
 
 std::string normalizeHeaderName(const std::string& name) {
@@ -72,6 +73,7 @@ const std::string& getStatusDescription(int code) {
 
 
 void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
+  ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
   Environment& env = *pEnv;
@@ -158,8 +160,8 @@ public:
   }
 };
 
-HttpResponse* listToResponse(HttpRequest* pRequest,
-                             const Rcpp::List& response) {
+HttpResponse* listToResponse(HttpRequest* pRequest, const Rcpp::List& response) {
+  ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
   if (response.isNULL() || response.size() == 0)
@@ -206,12 +208,14 @@ HttpResponse* listToResponse(HttpRequest* pRequest,
 }
 
 void invokeResponseFun(boost::function<void(HttpResponse*)> fun, HttpRequest* pRequest, Rcpp::List response) {
+  ASSERT_MAIN_THREAD()
   HttpResponse* pResponse = listToResponse(pRequest, response);
   fun(pResponse);
 };
 
 
 void RWebApplication::onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
+  ASSERT_MAIN_THREAD()
   if (_onHeaders.isNULL()) {
     callback(NULL);
   }
@@ -226,12 +230,14 @@ void RWebApplication::onHeaders(HttpRequest* pRequest, boost::function<void(Http
 
 void RWebApplication::onBodyData(HttpRequest* pRequest,
                         const char* pData, size_t length) {
+  ASSERT_MAIN_THREAD()
   Rcpp::RawVector rawVector(length);
   std::copy(pData, pData + length, rawVector.begin());
   _onBodyData(pRequest->env(), rawVector);
 }
 
 void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
+  ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
   boost::function<void(List)> * callback_wrapper = new boost::function<void(List)>();
@@ -249,11 +255,13 @@ void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(Ht
 }
 
 void RWebApplication::onWSOpen(HttpRequest* pRequest) {
+  ASSERT_MAIN_THREAD()
   requestToEnv(pRequest, &pRequest->env());
   _onWSOpen(externalize<WebSocketConnection>(pRequest->websocket()), pRequest->env());
 }
 
 void RWebApplication::onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {
+  ASSERT_MAIN_THREAD()
   if (binary)
     _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::vector<uint8_t>(data, data + len));
   else
@@ -261,5 +269,6 @@ void RWebApplication::onWSMessage(WebSocketConnection* pConn, bool binary, const
 }
 
 void RWebApplication::onWSClose(WebSocketConnection* pConn) {
+  ASSERT_MAIN_THREAD()
   _onWSClose(externalize<WebSocketConnection>(pConn));
 }

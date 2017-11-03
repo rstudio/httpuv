@@ -42,8 +42,6 @@ private:
   Rcpp::Environment* _env;
   bool _ignoreNewData;
 
-  void trace(const std::string& msg);
-
   bool _hasHeader(const std::string& name) const;
   bool _hasHeader(const std::string& name, const std::string& value, bool ci = false) const;
 

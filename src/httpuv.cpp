@@ -14,6 +14,7 @@
 #include "http.h"
 #include "queue.h"
 #include "guard.h"
+#include "debug.h"
 #include <Rinternals.h>
 
 
@@ -81,6 +82,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 }
 
 void flush_write_queue(uv_async_t *handle) {
+  ASSERT_BACKGROUND_THREAD()
   boost::function<void (void)> cb;
 
   while (1) {
@@ -103,6 +105,7 @@ void flush_write_queue(uv_async_t *handle) {
 }
 
 void io_thread(void* data) {
+  ASSERT_BACKGROUND_THREAD()
   write_queue = queue< boost::function<void (void)> >();
 
   // uv_stream_t* pServer = static_cast<uv_stream_t*>(data);
@@ -125,6 +128,8 @@ Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port,
                             Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
+  REGISTER_MAIN_THREAD()
+
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
   RWebApplication* pHandler =

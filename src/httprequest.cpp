@@ -2,6 +2,8 @@
 #include <boost/bind.hpp>
 #include <later_api.h>
 #include "httprequest.h"
+#include "debug.h"
+
 
 http_parser_settings& request_settings() {
   static http_parser_settings settings;
@@ -18,13 +20,10 @@ http_parser_settings& request_settings() {
 }
 
 void on_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
+  ASSERT_BACKGROUND_THREAD()
   // Freed in HttpRequest::_on_request_read
   void* result = malloc(suggested_size);
   *buf = uv_buf_init((char*)result, suggested_size);
-}
-
-void HttpRequest::trace(const std::string& msg) {
-  //std::cerr << msg << std::endl;
 }
 
 // Does a header field `name` exist?
@@ -112,6 +111,7 @@ Address HttpRequest::clientAddress() {
 }
 
 Rcpp::Environment& HttpRequest::env() {
+  ASSERT_MAIN_THREAD()
   if (_env == NULL) {
     // TODO: delete this later
     _env = new Rcpp::Environment(Rcpp::Function("new.env")());
@@ -139,6 +139,7 @@ typedef struct {
 } ws_send_t;
 
 void on_ws_message_sent(uv_write_t* handle, int status) {
+  ASSERT_BACKGROUND_THREAD()
   // TODO: Handle error if status != 0
   ws_send_t* pSend = (ws_send_t*)handle;
   delete pSend->pHeader;
@@ -150,6 +151,7 @@ void on_ws_message_sent(uv_write_t* handle, int status) {
 void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
                               const char* pData, size_t dataSize,
                               const char* pFooter, size_t footerSize) {
+  ASSERT_BACKGROUND_THREAD()
   ws_send_t* pSend = (ws_send_t*)malloc(sizeof(ws_send_t));
   memset(pSend, 0, sizeof(ws_send_t));
   pSend->pHeader = new std::vector<char>(pHeader, pHeader + headerSize);
@@ -172,28 +174,33 @@ void HttpRequest::closeWSSocket() {
 
 
 int HttpRequest::_on_message_begin(http_parser* pParser) {
+  ASSERT_BACKGROUND_THREAD()
   trace("on_message_begin");
   _headers.clear();
   return 0;
 }
 
 int HttpRequest::_on_url(http_parser* pParser, const char* pAt, size_t length) {
+  ASSERT_BACKGROUND_THREAD()
   trace("on_url");
   _url = std::string(pAt, length);
   return 0;
 }
 
 int HttpRequest::_on_status(http_parser* pParser, const char* pAt, size_t length) {
+  ASSERT_BACKGROUND_THREAD()
   trace("on_status");
   return 0;
 }
 int HttpRequest::_on_header_field(http_parser* pParser, const char* pAt, size_t length) {
+  ASSERT_BACKGROUND_THREAD()
   trace("on_header_field");
   std::copy(pAt, pAt + length, std::back_inserter(_lastHeaderField));
   return 0;
 }
 
 int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t length) {
+  ASSERT_BACKGROUND_THREAD()
   trace("on_header_value");
 
   std::string value(pAt, length);
@@ -219,8 +226,8 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
   return 0;
 }
 
-// Runs on main thread.
 void HttpRequest::_call_r_on_headers() {
+  ASSERT_MAIN_THREAD()
   trace("_call_r_on_headers");
 
   this->_pWebApplication->onHeaders(
@@ -233,6 +240,7 @@ void HttpRequest::_call_r_on_headers() {
 // later(). That method can't be passed to later(), but this function can.
 // Runs on the main thread because it's scheduled by later().
 void call_r_on_headers_wrapper(void* data) {
+  ASSERT_MAIN_THREAD()
   HttpRequest* req = reinterpret_cast<HttpRequest*>(data);
   req->_call_r_on_headers();
 }
@@ -240,6 +248,7 @@ void call_r_on_headers_wrapper(void* data) {
 // This is a wrapper that is called on the main thread. It puts an item on the
 // write queue and signals to the background thread that there's something there.
 void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse) {
+  ASSERT_MAIN_THREAD()
   boost::function<void (void)> cb(
     boost::bind(&HttpRequest::_on_headers_complete_complete, this, pResponse)
   );
@@ -256,6 +265,7 @@ void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse
 // one of those conditions occurs, we'll set it later, but before we call
 // http_parser_execute() again.
 int HttpRequest::_on_headers_complete(http_parser* pParser) {
+  ASSERT_BACKGROUND_THREAD()
   trace("on_headers_complete");
 
   later::later(call_r_on_headers_wrapper, this, 0);
@@ -267,6 +277,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
 // write a response, if onHeaders() wants that. It also sets a status code for
 // http-parser and then re-executes the parser. Runs on the background thread.
 void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
+  ASSERT_BACKGROUND_THREAD()
   trace("on_headers_complete_complete");
   int result = 0;
 
@@ -316,14 +327,15 @@ void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
 
 
 int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) {
+  ASSERT_BACKGROUND_THREAD()
   trace("on_body");
   _pWebApplication->onBodyData(this, pAt, length);
   _bytesRead += length;
   return 0;
 }
 
-// Runs on main thread.
 void HttpRequest::_call_r_on_message() {
+  ASSERT_MAIN_THREAD()
   trace("_call_r_on_message");
 
   if (!_parser.upgrade) {
@@ -335,17 +347,17 @@ void HttpRequest::_call_r_on_message() {
   }
 }
 
-// Runs on main thread.
 // This wrapper function is needed to use HttpRequest::_call_r_on_headers with
 // later(). That method can't be passed to later(), but this function can.
 // Runs on the main thread because it's scheduled by later().
 void call_r_on_message_wrapper(void* data) {
+  ASSERT_MAIN_THREAD()
   HttpRequest* req = reinterpret_cast<HttpRequest*>(data);
   req->_call_r_on_message();
 }
 
-// Runs on background thread.
 int HttpRequest::_on_message_complete(http_parser* pParser) {
+  ASSERT_BACKGROUND_THREAD()
   trace("on_message_complete");
 
   later::later(call_r_on_message_wrapper, this, 0);
@@ -353,9 +365,10 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
   return 0;
 }
 
-// Runs on the main thread. This is a wrapper that an item on the write queue
-// and signals to the background thread that there's something there.
+// This is a wrapper that an item on the write queue and signals to the
+// background thread that there's something there.
 void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse) {
+  ASSERT_MAIN_THREAD()
   boost::function<void (void)> cb(
     boost::bind(&HttpRequest::_on_message_complete_complete, this, pResponse)
   );
@@ -365,8 +378,8 @@ void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse
   uv_async_send(&async_writer);
 }
 
-// Runs on the background thread.
 void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
+  ASSERT_BACKGROUND_THREAD()
   if (!http_should_keep_alive(&_parser)) {
     pResponse->closeAfterWritten();
 
@@ -378,7 +391,10 @@ void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
   pResponse->writeResponse();
 }
 
+
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
+  ASSERT_BACKGROUND_THREAD()
+  //TODO: Schedule this with later
   _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
 }
 void HttpRequest::onWSClose(int code) {
@@ -404,6 +420,7 @@ void HttpRequest::close() {
 }
 
 void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
+  ASSERT_BACKGROUND_THREAD()
   int parsed = http_parser_execute(&_parser, &request_settings(), buffer, n);
 
   if (http_parser_waiting_for_headers_completed(&_parser)) {
@@ -454,6 +471,7 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
 }
 
 void HttpRequest::_parse_http_data_from_buffer() {
+  ASSERT_BACKGROUND_THREAD()
   // Copy contents of _requestBuffer, then clear _requestBuffer, because it
   // might be written to in _parse_http_data().
   std::vector<char> req_buffer = _requestBuffer;
@@ -463,6 +481,7 @@ void HttpRequest::_parse_http_data_from_buffer() {
 }
 
 void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* buf) {
+  ASSERT_BACKGROUND_THREAD()
   if (nread > 0) {
     //std::cerr << nread << " bytes read\n";
     if (_ignoreNewData) {
@@ -488,6 +507,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* 
 }
 
 void HttpRequest::handleRequest() {
+  ASSERT_BACKGROUND_THREAD()
   int r = uv_read_start(handle(), &on_alloc, &HttpRequest_on_request_read);
   if (r) {
     fatal_error("read_start", uv_strerror(r));
