@@ -1,5 +1,5 @@
-#ifndef HTTP_HPP
-#define HTTP_HPP
+#ifndef HTTPREQUEST_HPP
+#define HTTPREQUEST_HPP
 
 #include <map>
 #include <iostream>
@@ -8,63 +8,16 @@
 
 #include <uv.h>
 #include <http_parser.h>
+#include "socket.h"
+#include "webapplication.h"
+#include "httpresponse.h"
 
-#include "websockets.h"
-#include "uvutil.h"
-
-class HttpRequest;
-class HttpResponse;
 
 enum Protocol {
   HTTP,
   WebSockets
 };
 
-class WebApplication {
-public:
-  virtual ~WebApplication() {}
-  virtual void onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) = 0;
-  virtual void onBodyData(HttpRequest* pRequest,
-                          const char* data, size_t len) = 0;
-  virtual void getResponse(HttpRequest* request, boost::function<void(HttpResponse*)> callback) = 0;
-  virtual void onWSOpen(HttpRequest* pRequest) = 0;
-  virtual void onWSMessage(WebSocketConnection* conn,
-                           bool binary, const char* data, size_t len) = 0;
-  virtual void onWSClose(WebSocketConnection* conn) = 0;
-};
-
-typedef struct {
-  union {
-    uv_stream_t stream;
-    uv_tcp_t tcp;
-    uv_pipe_t pipe;
-  };
-  bool isTcp;
-} VariantHandle;
-
-class Socket {
-public:
-  VariantHandle handle;
-  WebApplication* pWebApplication;
-  std::vector<HttpRequest*> connections;
-
-  Socket() {
-  }
-
-  void addConnection(HttpRequest* request);
-  void removeConnection(HttpRequest* request);
-
-  virtual ~Socket();
-  virtual void destroy();
-};
-
-struct Address {
-  std::string host;
-  unsigned short port;
-
-  Address() : port(0) {
-  }
-};
 
 class HttpRequest : WebSocketConnectionCallbacks {
 
@@ -170,36 +123,6 @@ public:
 
 };
 
-class HttpResponse {
-
-  HttpRequest* _pRequest;
-  int _statusCode;
-  std::string _status;
-  ResponseHeaders _headers;
-  std::vector<char> _responseHeader;
-  DataSource* _pBody;
-  bool _closeAfterWritten;
-
-public:
-  HttpResponse(HttpRequest* pRequest, int statusCode,
-         const std::string& status, DataSource* pBody)
-    : _pRequest(pRequest), _statusCode(statusCode), _status(status), _pBody(pBody),
-      _closeAfterWritten(false) {
-
-  }
-
-  virtual ~HttpResponse() {
-  }
-
-  ResponseHeaders& headers();
-
-  void addHeader(const std::string& name, const std::string& value);
-  void setHeader(const std::string& name, const std::string& value);
-  void writeResponse();
-  void onResponseWritten(int status);
-  void closeAfterWritten();
-  void destroy(bool forceClose = false);
-};
 
 #define DECLARE_CALLBACK_1(type, function_name, return_type, type_1) \
   return_type type##_##function_name(type_1 arg1);
@@ -220,11 +143,4 @@ DECLARE_CALLBACK_1(HttpRequest, on_closed, void, uv_handle_t*)
 DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, const uv_buf_t*)
 DECLARE_CALLBACK_2(HttpRequest, on_response_write, void, uv_write_t*, int)
 
-uv_stream_t* createPipeServer(uv_loop_t* loop, const std::string& name,
-  int mask, WebApplication* pWebApplication);
-uv_stream_t* createTcpServer(uv_loop_t* loop, const std::string& host, int port,
-  WebApplication* pWebApplication);
-void freeServer(uv_stream_t* pServer);
-bool runNonBlocking(uv_loop_t* loop);
-
-#endif // HTTP_HPP
+#endif // HTTPREQUEST_HPP
