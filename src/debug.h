@@ -1,17 +1,11 @@
 #ifndef DEBUG_HPP
 #define DEBUG_HPP
 
-
-// Uncomment this line to enable extra checks that functions are being called
-// from the correct thread.
-#define DEBUG_THREAD
+// See the Makevars file to see how to compile with various debugging settings.
 
 #ifdef DEBUG_THREAD
 #include <assert.h>
 #include <uv.h>
-
-// So that assert() works
-#undef NDEBUG
 
 extern uv_thread_t __main_thread__;
 
@@ -29,8 +23,6 @@ extern uv_thread_t __main_thread__;
 #endif // DEBUG_THREAD
 
 
-// Uncomment this line to print out tracing messages.
-// #define DEBUG_TRACE
 #include <string>
 void trace(const std::string& msg);
 
