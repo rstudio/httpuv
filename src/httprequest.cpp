@@ -2,6 +2,7 @@
 #include <boost/bind.hpp>
 #include <later_api.h>
 #include "httprequest.h"
+#include "callback.h"
 #include "debug.h"
 
 
@@ -230,37 +231,6 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
 // Headers complete
 // ============================================================================
 
-void HttpRequest::_call_r_on_headers() {
-  ASSERT_MAIN_THREAD()
-  trace("_call_r_on_headers");
-
-  this->_pWebApplication->onHeaders(
-    this,
-    boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, this, _1)
-  );
-}
-
-// This wrapper function is needed to use HttpRequest::_call_r_on_headers with
-// later(). That method can't be passed to later(), but this function can.
-// Runs on the main thread because it's scheduled by later().
-void call_r_on_headers_wrapper(void* data) {
-  ASSERT_MAIN_THREAD()
-  HttpRequest* req = reinterpret_cast<HttpRequest*>(data);
-  req->_call_r_on_headers();
-}
-
-// This is a wrapper that is called on the main thread. It puts an item on the
-// write queue and signals to the background thread that there's something there.
-void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse) {
-  ASSERT_MAIN_THREAD()
-  boost::function<void (void)> cb(
-    boost::bind(&HttpRequest::_on_headers_complete_complete, this, pResponse)
-  );
-
-  write_queue.push(cb);
-  uv_async_send(&async_flush_write_queue);
-}
-
 // This is called after http-parser has finished parsing the request headers.
 // It uses later() to schedule the user's R onHeaders() function. Always
 // returns 0. Normally 0 indicates success for http-parser, while 1 and 2
@@ -272,9 +242,37 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
   trace("on_headers_complete");
 
-  later::later(call_r_on_headers_wrapper, this, 0);
+  boost::function<void(HttpResponse*)> schedule_bg_callback =
+    boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, this, _1);
+
+  BoostFunctionCallback* webapp_on_headers_callback = new BoostFunctionCallback(
+    boost::bind(
+      &WebApplication::onHeaders,
+      _pWebApplication,
+      this,
+      schedule_bg_callback
+    )
+  );
+
+  // Use later to schedule _pWebApplication->onHeaders(this, schedule_bg_callback)
+  // to run on the main thread. That function in turn calls
+  // this->_schedule_on_headers_complete_complete.
+  later::later(invoke_callback, (void*)webapp_on_headers_callback, 0);
 
   return 0;
+}
+
+// This is called at the end of WebApplication::onHeaders(). It puts an item
+// on the write queue and signals to the background thread that there's
+// something there.
+void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse) {
+  ASSERT_MAIN_THREAD()
+  boost::function<void (void)> cb(
+    boost::bind(&HttpRequest::_on_headers_complete_complete, this, pResponse)
+  );
+
+  write_queue.push(cb);
+  uv_async_send(&async_flush_write_queue);
 }
 
 // This is called after the user's R onHeaders() function has finished. It can
@@ -342,40 +340,35 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
   return 0;
 }
 
-
-void HttpRequest::_call_r_on_message() {
-  ASSERT_MAIN_THREAD()
-  trace("_call_r_on_message");
-
-  if (!_parser.upgrade) {
-    // Deleted in on_response_written
-    _pWebApplication->getResponse(
-      this,
-      boost::bind(&HttpRequest::_schedule_on_message_complete_complete, this, _1)
-    );
-  }
-}
-
-// This wrapper function is needed to use HttpRequest::_call_r_on_headers with
-// later(). That method can't be passed to later(), but this function can.
-// Runs on the main thread because it's scheduled by later().
-void call_r_on_message_wrapper(void* data) {
-  ASSERT_MAIN_THREAD()
-  HttpRequest* req = reinterpret_cast<HttpRequest*>(data);
-  req->_call_r_on_message();
-}
-
 int HttpRequest::_on_message_complete(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
   trace("on_message_complete");
 
-  later::later(call_r_on_message_wrapper, this, 0);
+  if (pParser->upgrade)
+    return 0;
+
+  boost::function<void(HttpResponse*)> schedule_bg_callback =
+    boost::bind(&HttpRequest::_schedule_on_message_complete_complete, this, _1);
+
+  BoostFunctionCallback* webapp_get_response_callback = new BoostFunctionCallback(
+    boost::bind(
+      &WebApplication::getResponse,
+      _pWebApplication,
+      this,
+      schedule_bg_callback
+    )
+  );
+
+  // Use later to schedule _pWebApplication->getResponse(this, schedule_bg_callback)
+  // to run on the main thread. That function in turn calls
+  // this->_schedule_on_message_complete_complete.
+  later::later(invoke_callback, (void*)webapp_get_response_callback, 0);
 
   return 0;
 }
 
-// This is a wrapper that an item on the write queue and signals to the
-// background thread that there's something there.
+// This is called at the end of WebApplication::getResponse(). It puts an item on the
+// write queue and signals to the background thread that there's something there.
 void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse) {
   ASSERT_MAIN_THREAD()
   boost::function<void (void)> cb(
