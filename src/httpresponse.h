@@ -3,7 +3,6 @@
 
 #include "uvutil.h"
 #include "constants.h"
-#include "queue.h"
 #include <boost/function.hpp>
 
 class HttpRequest;
@@ -39,8 +38,5 @@ public:
   void destroy(bool forceClose = false);
 };
 
-
-extern queue< boost::function<void (void)> > write_queue;
-extern uv_async_t async_flush_write_queue;
 
 #endif

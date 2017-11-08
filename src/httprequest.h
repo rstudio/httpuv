@@ -10,8 +10,8 @@
 #include <http_parser.h>
 #include "socket.h"
 #include "webapplication.h"
+#include "writequeue.h"
 #include "httpresponse.h"
-#include "queue.h"
 
 enum Protocol {
   HTTP,
@@ -166,5 +166,9 @@ DECLARE_CALLBACK_1(HttpRequest, on_message_complete, int, http_parser*)
 DECLARE_CALLBACK_1(HttpRequest, on_closed, void, uv_handle_t*)
 DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, const uv_buf_t*)
 DECLARE_CALLBACK_2(HttpRequest, on_response_write, void, uv_write_t*, int)
+
+
+extern WriteQueue* write_queue;
+
 
 #endif // HTTPREQUEST_HPP

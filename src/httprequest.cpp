@@ -3,6 +3,7 @@
 #include <later_api.h>
 #include "httprequest.h"
 #include "callback.h"
+#include "deleteobj.h"
 #include "debug.h"
 
 
@@ -132,48 +133,6 @@ const RequestHeaders& HttpRequest::headers() const {
   return _headers;
 }
 
-typedef struct {
-  uv_write_t writeReq;
-  std::vector<char>* pHeader;
-  std::vector<char>* pData;
-  std::vector<char>* pFooter;
-} ws_send_t;
-
-void on_ws_message_sent(uv_write_t* handle, int status) {
-  ASSERT_BACKGROUND_THREAD()
-  // TODO: Handle error if status != 0
-  ws_send_t* pSend = (ws_send_t*)handle;
-  delete pSend->pHeader;
-  delete pSend->pData;
-  delete pSend->pFooter;
-  free(pSend);
-}
-
-void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
-                              const char* pData, size_t dataSize,
-                              const char* pFooter, size_t footerSize) {
-  ASSERT_BACKGROUND_THREAD()
-  ws_send_t* pSend = (ws_send_t*)malloc(sizeof(ws_send_t));
-  memset(pSend, 0, sizeof(ws_send_t));
-  pSend->pHeader = new std::vector<char>(pHeader, pHeader + headerSize);
-  pSend->pData = new std::vector<char>(pData, pData + dataSize);
-  pSend->pFooter = new std::vector<char>(pFooter, pFooter + footerSize);
-
-  uv_buf_t buffers[3];
-  buffers[0] = uv_buf_init(&(*pSend->pHeader)[0], pSend->pHeader->size());
-  buffers[1] = uv_buf_init(&(*pSend->pData)[0], pSend->pData->size());
-  buffers[2] = uv_buf_init(&(*pSend->pFooter)[0], pSend->pFooter->size());
-
-  // TODO: Handle return code
-  uv_write(&pSend->writeReq, (uv_stream_t*)handle(), buffers, 3,
-           &on_ws_message_sent);
-}
-
-void HttpRequest::closeWSSocket() {
-  close();
-}
-
-
 int HttpRequest::_on_message_begin(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
   trace("on_message_begin");
@@ -267,12 +226,12 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
 // something there.
 void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse) {
   ASSERT_MAIN_THREAD()
+
   boost::function<void (void)> cb(
     boost::bind(&HttpRequest::_on_headers_complete_complete, this, pResponse)
   );
 
-  write_queue.push(cb);
-  uv_async_send(&async_flush_write_queue);
+  write_queue->push(cb);
 }
 
 // This is called after the user's R onHeaders() function has finished. It can
@@ -371,17 +330,17 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 // write queue and signals to the background thread that there's something there.
 void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse) {
   ASSERT_MAIN_THREAD()
+
   boost::function<void (void)> cb(
     boost::bind(&HttpRequest::_on_message_complete_complete, this, pResponse)
   );
 
-  // TODO: Put these together into one function.
-  write_queue.push(cb);
-  uv_async_send(&async_flush_write_queue);
+  write_queue->push(cb);
 }
 
 void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
   ASSERT_BACKGROUND_THREAD()
+  trace("_on_message_complete_complete");
   if (!http_should_keep_alive(&_parser)) {
     pResponse->closeAfterWritten();
 
@@ -431,6 +390,52 @@ void HttpRequest::fatal_error(const char* method, const char* message) {
 
 
 // ============================================================================
+// Outgoing websocket messages
+// ============================================================================
+
+typedef struct {
+  uv_write_t writeReq;
+  std::vector<char>* pHeader;
+  std::vector<char>* pData;
+  std::vector<char>* pFooter;
+} ws_send_t;
+
+void on_ws_message_sent(uv_write_t* handle, int status) {
+  ASSERT_BACKGROUND_THREAD()
+  // TODO: Handle error if status != 0
+  ws_send_t* pSend = (ws_send_t*)handle;
+  delete pSend->pHeader;
+  delete pSend->pData;
+  delete pSend->pFooter;
+  free(pSend);
+}
+
+void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
+                              const char* pData, size_t dataSize,
+                              const char* pFooter, size_t footerSize) {
+  ASSERT_BACKGROUND_THREAD()
+  ws_send_t* pSend = (ws_send_t*)malloc(sizeof(ws_send_t));
+  memset(pSend, 0, sizeof(ws_send_t));
+  pSend->pHeader = new std::vector<char>(pHeader, pHeader + headerSize);
+  pSend->pData = new std::vector<char>(pData, pData + dataSize);
+  pSend->pFooter = new std::vector<char>(pFooter, pFooter + footerSize);
+
+  uv_buf_t buffers[3];
+  buffers[0] = uv_buf_init(&(*pSend->pHeader)[0], pSend->pHeader->size());
+  buffers[1] = uv_buf_init(&(*pSend->pData)[0], pSend->pData->size());
+  buffers[2] = uv_buf_init(&(*pSend->pFooter)[0], pSend->pFooter->size());
+
+  // TODO: Handle return code
+  uv_write(&pSend->writeReq, (uv_stream_t*)handle(), buffers, 3,
+           &on_ws_message_sent);
+}
+
+void HttpRequest::closeWSSocket() {
+  close();
+}
+
+
+// ============================================================================
 // Closing connection
 // ============================================================================
 
@@ -461,23 +466,22 @@ void HttpRequest::_call_r_on_ws_open() {
 
   this->_pWebApplication->onWSOpen(this);
 
-
   // TODO: Don't reuse requestBuffer?
-  std::vector<char> req_buffer = _requestBuffer;
+  std::vector<char>* req_buffer = new std::vector<char>(_requestBuffer);
   _requestBuffer.clear();
 
   // Run on background thread
   boost::function<void (void)> cb(
     boost::bind(&WebSocketConnection::read,
       _pWebSocketConnection,
-      &req_buffer[0],
-      req_buffer.size()
+      &(*req_buffer)[0],
+      req_buffer->size()
     )
   );
-  write_queue.push(cb);
-  uv_async_send(&async_flush_write_queue);
 
-  // this->_pWebSocketConnection->read(&req_buffer[0], req_buffer.size());
+  write_queue->push(cb);
+  // Free req_buffer after data is written
+  write_queue->push(boost::bind(delete_obj, req_buffer));
 }
 
 void call_on_ws_open_wrapper(void* data) {

@@ -12,8 +12,8 @@
 #include "uvutil.h"
 #include "webapplication.h"
 #include "http.h"
-#include "queue.h"
-#include "guard.h"
+#include "writequeue.h"
+#include "deleteobj.h"
 #include "debug.h"
 #include <Rinternals.h>
 
@@ -23,9 +23,8 @@
 // ============================================================================
 
 uv_thread_t *io_thread_id = NULL;
-uv_async_t async_flush_write_queue;
 uv_async_t async_stop_io_thread;
-queue< boost::function<void (void)> > write_queue;
+WriteQueue* write_queue;
 
 // The uv loop that we'll use. Should be accessed via get_io_loop().
 uv_loop_t io_loop;
@@ -44,50 +43,29 @@ void close_handle_cb(uv_handle_t* handle, void* arg) {
   uv_close(handle, NULL);
 }
 
-void flush_write_queue(uv_async_t *handle) {
-  ASSERT_BACKGROUND_THREAD()
-  boost::function<void (void)> cb;
-
-  while (1) {
-    // Do queue operations inside this guarded scope, but we'll execute the
-    // callback outside of the scope, since it doesn't need to be protected,
-    // and this will make it possible for the other thread to do queue
-    // operations while we're invoking the callback.
-    {
-      guard guard(write_queue.mutex);
-      if (write_queue.size() == 0) {
-        break;
-      }
-
-      cb = write_queue.front();
-      write_queue.pop();
-    }
-
-    cb();
-  }
-}
-
 void stop_io_thread(uv_async_t *handle) {
+  trace("stop_io_thread");
   uv_stop(get_io_loop());
 }
 
 void io_thread(void* data) {
   ASSERT_BACKGROUND_THREAD()
-  write_queue = queue< boost::function<void (void)> >();
+
+  write_queue = new WriteQueue(get_io_loop());
 
   // uv_stream_t* pServer = static_cast<uv_stream_t*>(data);
 
   // Set up async communication channels
-  uv_async_init(get_io_loop(), &async_flush_write_queue, flush_write_queue);
-  uv_async_init(get_io_loop(), &async_stop_io_thread, flush_write_queue);
+  uv_async_init(get_io_loop(), &async_stop_io_thread, stop_io_thread);
 
   uv_run(get_io_loop(), UV_RUN_DEFAULT);
 
+  trace("io_loop stopped");
+
+  // Cleanup stuff
   uv_walk(get_io_loop(), close_handle_cb, NULL);
   uv_run(get_io_loop(), UV_RUN_ONCE);
   uv_loop_close(get_io_loop());
-  free(get_io_loop());
-  // io_loop = NULL;
 
   // TODO: Clean up pServer and other stuff?
 }
@@ -102,41 +80,33 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
   ASSERT_MAIN_THREAD()
   WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
 
-  if (binary) {
-    Rcpp::RawVector raw = Rcpp::as<Rcpp::RawVector>(message);
+  Opcode mode;
+  SEXP msg_sexp;
+  std::vector<char>* str;
 
-    boost::function<void (void)> cb(
-      boost::bind(&WebSocketConnection::sendWSMessage, wsc,
-        Binary,
-        // TODO: Need to copy this
-        reinterpret_cast<char*>(&raw[0]),
-        raw.size()
-      )
-    );
-
-    write_queue.push(cb);
-    uv_async_send(&async_flush_write_queue);
-
-
-    // wsc->sendWSMessage(Binary, reinterpret_cast<char*>(&raw[0]), raw.size());
+  // Efficiently copy message into a new vector<char>. There's probably a
+  // cleaner way to do this.
+   if (binary) {
+    mode = Binary;
+    msg_sexp = Rcpp::as<SEXP>(message);
+    str = new std::vector<char>(RAW(msg_sexp), RAW(msg_sexp) + Rf_length(msg_sexp));
 
   } else {
-    std::string str = Rcpp::as<std::string>(message);
-
-    boost::function<void (void)> cb(
-      boost::bind(&WebSocketConnection::sendWSMessage, wsc,
-        Text,
-        str.c_str(),
-        str.size()
-      )
-    );
-
-    write_queue.push(cb);
-    uv_async_send(&async_flush_write_queue);
-
-    // wsc->sendWSMessage(Text, str.c_str(), str.size());
+    mode = Text;
+    msg_sexp = STRING_ELT(message, 0);
+    str = new std::vector<char>(CHAR(msg_sexp), CHAR(msg_sexp) + Rf_length(msg_sexp));
   }
 
+  boost::function<void (void)> cb(
+    boost::bind(&WebSocketConnection::sendWSMessage, wsc,
+      mode,
+      &(*str)[0],
+      str->size()
+    )
+  );
+
+  write_queue->push(cb);
+  write_queue->push(boost::bind(delete_obj, str)); // Free str after data is written
 }
 
 // [[Rcpp::export]]
