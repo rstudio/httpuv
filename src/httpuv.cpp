@@ -49,7 +49,7 @@ void stop_io_thread(uv_async_t *handle) {
 }
 
 void io_thread(void* data) {
-  ASSERT_BACKGROUND_THREAD()
+  REGISTER_BACKGROUND_THREAD()
 
   write_queue = new WriteQueue(get_io_loop());
 

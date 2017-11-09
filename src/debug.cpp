@@ -4,6 +4,7 @@
 
 #ifdef DEBUG_THREAD
 uv_thread_t __main_thread__;
+uv_thread_t __background_thread__;
 #endif
 
 
