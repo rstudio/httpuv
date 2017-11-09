@@ -22,15 +22,19 @@
 // Background thread and I/O event loop
 // ============================================================================
 
+WriteQueue* write_queue;
+
 uv_thread_t *io_thread_id = NULL;
 uv_async_t async_stop_io_thread;
-WriteQueue* write_queue;
 
 // The uv loop that we'll use. Should be accessed via get_io_loop().
 uv_loop_t io_loop;
 bool io_loop_initialized = false;
+
 uv_loop_t* get_io_loop() {
-  // TODO: Use mutex here
+  // The first time this is called, it initializes the loop. The first call is
+  // always from the main thread (not from multiple threads) so we don't need
+  // to lock for this operation.
   if (!io_loop_initialized) {
     uv_loop_init(&io_loop);
     io_loop_initialized = true;
@@ -113,7 +117,12 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
 void closeWS(std::string conn) {
   ASSERT_MAIN_THREAD()
   WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
-  wsc->closeWS();
+
+  // Schedule on background thread:
+  // wsc->closeWS();
+  write_queue->push(
+    boost::bind(&WebSocketConnection::closeWS, wsc)
+  );
 }
 
 

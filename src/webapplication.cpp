@@ -209,6 +209,9 @@ HttpResponse* listToResponse(HttpRequest* pRequest, const Rcpp::List& response) 
 
 void invokeResponseFun(boost::function<void(HttpResponse*)> fun, HttpRequest* pRequest, Rcpp::List response) {
   ASSERT_MAIN_THREAD()
+  // new HttpResponse object. The callback will invoke
+  // HttpResponse->writeResponse(), which adds a callback to destroy(), which
+  // deletes the object.
   HttpResponse* pResponse = listToResponse(pRequest, response);
   fun(pResponse);
 };
@@ -225,7 +228,11 @@ void RWebApplication::onHeaders(HttpRequest* pRequest, boost::function<void(Http
   // Call the R onHeaders function
   Rcpp::List response(_onHeaders(pRequest->env()));
 
-  callback(listToResponse(pRequest, response));
+  // new HttpResponse object. The callback will invoke
+  // HttpResponse->writeResponse(), which adds a callback to destroy(), which
+  // deletes the object.
+  HttpResponse* pResponse = listToResponse(pRequest, response);
+  callback(pResponse);
 }
 
 void RWebApplication::onBodyData(HttpRequest* pRequest,
@@ -242,6 +249,8 @@ void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(Ht
 
   boost::function<void(List)> * callback_wrapper = new boost::function<void(List)>();
 
+  // Pass callback to R:
+  // invokeResponseFun(callback, pRequest, _1)
   *callback_wrapper = boost::bind(
     &invokeResponseFun,
     callback,
@@ -251,6 +260,8 @@ void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(Ht
 
   XPtr< boost::function<void(List)> > callback_xptr(callback_wrapper);
 
+  // Call the R call() function, and pass it the callback xptr so it can
+  // asynchronously pass data back to C++.
   _onRequest(pRequest->env(), callback_xptr);
 }
 

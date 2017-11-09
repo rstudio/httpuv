@@ -133,6 +133,10 @@ const RequestHeaders& HttpRequest::headers() const {
   return _headers;
 }
 
+// ============================================================================
+// Miscellaneous callbacks for http parser
+// ============================================================================
+
 int HttpRequest::_on_message_begin(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
   trace("on_message_begin");
@@ -201,8 +205,9 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
   trace("on_headers_complete");
 
-  boost::function<void(HttpResponse*)> schedule_bg_callback =
-    boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, this, _1);
+  boost::function<void(HttpResponse*)> schedule_bg_callback(
+    boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, this, _1)
+  );
 
   BoostFunctionCallback* webapp_on_headers_callback = new BoostFunctionCallback(
     boost::bind(
@@ -313,8 +318,9 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
   if (pParser->upgrade)
     return 0;
 
-  boost::function<void(HttpResponse*)> schedule_bg_callback =
-    boost::bind(&HttpRequest::_schedule_on_message_complete_complete, this, _1);
+  boost::function<void(HttpResponse*)> schedule_bg_callback(
+    boost::bind(&HttpRequest::_schedule_on_message_complete_complete, this, _1)
+  );
 
   BoostFunctionCallback* webapp_get_response_callback = new BoostFunctionCallback(
     boost::bind(
@@ -449,7 +455,8 @@ void HttpRequest::closeWSSocket() {
 // Closing connection
 // ============================================================================
 
-
+// Because these functions always run in the same thread, there's no need for
+// locking.
 // TODO: Replace these constructs with something simpler and more robust
 void HttpRequest::_increment_reference() {
   ASSERT_BACKGROUND_THREAD()
@@ -481,9 +488,13 @@ void HttpRequest::close() {
   // std::cerr << "Closing handle " << &_handle << std::endl;
 
   if (_is_closing) {
+    trace("close() called twice on HttpRequest object");
+    // Shouldn't get here, but just in case close() gets called twice
+    // (probably via a scheduled callback), don't do the closing machinery
+    // twice.
     _on_closed(NULL);
+    return;
   }
-
   _is_closing = true;
 
   if (_protocol == WebSockets) {
