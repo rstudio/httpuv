@@ -381,7 +381,10 @@ void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
 
-  // TODO: copy data?
+  // Copy data because the source data is deleted right after calling this
+  // function.
+  std::vector<char>* buf = new std::vector<char>(data, data + len);
+
   // Schedule:
   // _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
   BoostFunctionCallback* on_ws_message_callback = new BoostFunctionCallback(
@@ -390,11 +393,18 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
       _pWebApplication,
       _pWebSocketConnection,
       binary,
-      data,
+      &(*buf)[0],
       len
     )
   );
   later::later(invoke_callback, (void*)on_ws_message_callback, 0);
+
+  // Schedule for after on_ws_message_callback:
+  // delete_obj(buf)
+  BoostFunctionCallback* delete_buf = new BoostFunctionCallback(
+    boost::bind(delete_obj, buf)
+  );
+  later::later(invoke_callback, (void*)delete_buf, 0);
 }
 
 void HttpRequest::onWSClose(int code) {
