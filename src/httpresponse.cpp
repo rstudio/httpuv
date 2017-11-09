@@ -107,8 +107,7 @@ void HttpResponse::writeResponse() {
 void HttpResponse::onResponseWritten(int status) {
   ASSERT_BACKGROUND_THREAD()
   if (status != 0) {
-    // TODO: Not safe on background thread
-    REprintf("Error writing response: %d\n", status);
+    fprintf(stderr, "Error writing response: %d\n", status);
     destroy(true);  // Force close
     return;
   }
