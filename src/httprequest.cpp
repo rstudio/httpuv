@@ -115,7 +115,7 @@ Address HttpRequest::clientAddress() {
 Rcpp::Environment& HttpRequest::env() {
   ASSERT_MAIN_THREAD()
   if (_env == NULL) {
-    // TODO: delete this later
+    // Deleted in destructor
     _env = new Rcpp::Environment(Rcpp::Function("new.env")());
   }
   return *_env;
@@ -377,6 +377,7 @@ void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
 // Incoming websocket messages
 // ============================================================================
 
+// Called from WebSocketConnection::onFrameComplete
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
 

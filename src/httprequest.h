@@ -83,6 +83,7 @@ public:
   virtual ~HttpRequest() {
     try {
       delete _pWebSocketConnection;
+      delete _env;
     } catch (...) {}
   }
 
