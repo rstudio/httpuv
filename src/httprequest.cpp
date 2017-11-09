@@ -218,6 +218,8 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
   // this->_schedule_on_headers_complete_complete.
   later::later(invoke_callback, (void*)webapp_on_headers_callback, 0);
 
+  _increment_reference();
+
   return 0;
 }
 
@@ -240,6 +242,11 @@ void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse
 void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
   ASSERT_BACKGROUND_THREAD()
   trace("on_headers_complete_complete");
+
+  if (!_decrement_reference()) {
+    return;
+  }
+
   int result = 0;
 
   if (pResponse) {
@@ -323,6 +330,8 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
   // this->_schedule_on_message_complete_complete.
   later::later(invoke_callback, (void*)webapp_get_response_callback, 0);
 
+  _increment_reference();
+
   return 0;
 }
 
@@ -341,6 +350,11 @@ void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse
 void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
   ASSERT_BACKGROUND_THREAD()
   trace("_on_message_complete_complete");
+
+  if (!_decrement_reference()) {
+    return;
+  }
+
   if (!http_should_keep_alive(&_parser)) {
     pResponse->closeAfterWritten();
 
@@ -439,14 +453,43 @@ void HttpRequest::closeWSSocket() {
 // Closing connection
 // ============================================================================
 
+
+// TODO: Replace these constructs with something simpler and more robust
+void HttpRequest::_increment_reference() {
+  ASSERT_BACKGROUND_THREAD()
+  _ref_count++;
+  trace("_increment_reference:" + std::to_string(_ref_count));
+}
+
+bool HttpRequest::_decrement_reference() {
+  ASSERT_BACKGROUND_THREAD()
+  trace("_decrement_reference:" + std::to_string(_ref_count - 1));
+
+  if (--_ref_count == 0) {
+    trace("deleting HttpRequest object");
+
+    delete this;
+    return false;
+  }
+
+  return true;
+}
+
 void HttpRequest::_on_closed(uv_handle_t* handle) {
   // printf("Closed\n");
-  delete this;
+  _decrement_reference();
 }
 
 void HttpRequest::close() {
   ASSERT_BACKGROUND_THREAD()
   // std::cerr << "Closing handle " << &_handle << std::endl;
+
+  if (_is_closing) {
+    _on_closed(NULL);
+  }
+
+  _is_closing = true;
+
   if (_protocol == WebSockets) {
     // Schedule:
     // _pWebApplication->onWSClose(_pWebSocketConnection)

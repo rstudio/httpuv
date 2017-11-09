@@ -61,6 +61,12 @@ private:
   Rcpp::Environment* _env;
   bool _ignoreNewData;
 
+  // TODO: Need a simpler, more robust construct for this
+  int _ref_count;
+  bool _is_closing;
+  void _increment_reference();
+  bool _decrement_reference();
+
   bool _hasHeader(const std::string& name) const;
   bool _hasHeader(const std::string& name, const std::string& value, bool ci = false) const;
 
@@ -79,7 +85,9 @@ public:
       _protocol(HTTP), _bytesRead(0),
       _pWebSocketConnection(new WebSocketConnection(this)),
       _env(NULL),
-      _ignoreNewData(false) {
+      _ignoreNewData(false),
+      _ref_count(1),
+      _is_closing(false) {
 
     uv_tcp_init(pLoop, &_handle.tcp);
     _handle.isTcp = true;
