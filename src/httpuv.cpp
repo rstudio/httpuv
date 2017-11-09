@@ -57,8 +57,6 @@ void io_thread(void* data) {
 
   write_queue = new WriteQueue(get_io_loop());
 
-  // uv_stream_t* pServer = static_cast<uv_stream_t*>(data);
-
   // Set up async communication channels
   uv_async_init(get_io_loop(), &async_stop_io_thread, stop_io_thread);
 
@@ -70,8 +68,6 @@ void io_thread(void* data) {
   uv_walk(get_io_loop(), close_handle_cb, NULL);
   uv_run(get_io_loop(), UV_RUN_ONCE);
   uv_loop_close(get_io_loop());
-
-  // TODO: Clean up pServer and other stuff?
 }
 
 
@@ -125,8 +121,6 @@ void closeWS(std::string conn) {
   );
 }
 
-
-void destroyServer(std::string handle);
 
 // [[Rcpp::export]]
 Rcpp::RObject makeTcpServer(const std::string& host, int port,
@@ -187,13 +181,14 @@ Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port,
 
   io_thread_id = (uv_thread_t *) malloc(sizeof(uv_thread_t));
 
-  int ret = uv_thread_create(io_thread_id, io_thread, pServer);
+  int ret = uv_thread_create(io_thread_id, io_thread, NULL);
 
   if (ret != 0) {
-    // TODO: free memory
+    free(io_thread_id);
+    io_thread_id = NULL;
+
     Rcpp::stop(std::string("Error: ") + uv_strerror(ret));
   }
-  // TODO: Check for error value
 
   // Return thread id instead?
   return Rcpp::wrap(externalize<uv_stream_t>(pServer));
@@ -242,6 +237,8 @@ void destroyServer(std::string handle) {
   uv_thread_join(io_thread_id);
   free(io_thread_id);
   io_thread_id = NULL;
+
+  delete pServer;
 }
 
 void dummy_close_cb(uv_handle_t* handle) {

@@ -537,7 +537,8 @@ void HttpRequest::_call_r_on_ws_open() {
 
   this->_pWebApplication->onWSOpen(this);
 
-  // TODO: Don't reuse requestBuffer?
+  // _requestBuffer is likely empty at this point, but copy its contents and
+  // _pass along just in case.
   std::vector<char>* req_buffer = new std::vector<char>(_requestBuffer);
   _requestBuffer.clear();
 
@@ -592,7 +593,6 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
 
       _protocol = WebSockets;
 
-      // TODO: Don't reuse requestBuffer?
       _requestBuffer.insert(_requestBuffer.end(), pData, pData + pDataLen);
 
       // Schedule on main thread:

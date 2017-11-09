@@ -250,12 +250,7 @@ void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(Ht
   // Pass callback to R:
   // invokeResponseFun(callback, pRequest, _1)
   boost::function<void(List)>* callback_wrapper = new boost::function<void(List)>(
-    boost::bind(
-      &invokeResponseFun,
-      callback,
-      pRequest,
-      _1
-    )
+    boost::bind(invokeResponseFun, callback, pRequest, _1)
   );
 
   XPtr< boost::function<void(List)> > callback_xptr(callback_wrapper);
