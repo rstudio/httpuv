@@ -19,25 +19,6 @@ enum Protocol {
 };
 
 
-class WSMessageIncoming {
-public:
-  WSMessageIncoming(HttpRequest* req, bool binary, const char* data, size_t len)
-    : req(req),
-      binary(binary),
-      // Need to copy the data because it needs a longer lifetime than the
-      // caller.
-      data(data, data + len),
-      len(len)
-  {
-  }
-
-  HttpRequest* req;
-  bool binary;
-  std::vector<char> data;
-  size_t len;
-};
-
-
 class HttpRequest : WebSocketConnectionCallbacks {
 
 private:
@@ -124,11 +105,8 @@ public:
 
 
   void _call_r_on_ws_open();
-  void _call_r_on_ws_message(WSMessageIncoming* message);
-  void _call_r_on_headers();
   void _schedule_on_headers_complete_complete(HttpResponse* pResponse);
   void _on_headers_complete_complete(HttpResponse* pResponse);
-  void _call_r_on_message();
   void _schedule_on_message_complete_complete(HttpResponse* pResponse);
   void _on_message_complete_complete(HttpResponse* pResponse);
 

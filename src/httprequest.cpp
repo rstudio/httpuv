@@ -371,32 +371,28 @@ void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
 // Incoming websocket messages
 // ============================================================================
 
-void HttpRequest::_call_r_on_ws_message(WSMessageIncoming* msg) {
-  ASSERT_MAIN_THREAD()
-  trace("_call_r_on_ws_message");
-
-  _pWebApplication->onWSMessage(_pWebSocketConnection, msg->binary,
-                                &(msg->data)[0], msg->len);
-  delete msg;
-}
-
-void call_on_ws_message_wrapper(void* data) {
-  ASSERT_MAIN_THREAD()
-  WSMessageIncoming* msg = reinterpret_cast<WSMessageIncoming*>(data);
-  msg->req->_call_r_on_ws_message(msg);
-}
-
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
-  WSMessageIncoming* msg = new WSMessageIncoming(this, binary, data, len);
-  later::later(call_on_ws_message_wrapper, msg, 0);
 
+  // TODO: copy data?
+  // Schedule:
   // _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
+  BoostFunctionCallback* on_ws_message_callback = new BoostFunctionCallback(
+    boost::bind(
+      &WebApplication::onWSMessage,
+      _pWebApplication,
+      _pWebSocketConnection,
+      binary,
+      data,
+      len
+    )
+  );
+  later::later(invoke_callback, (void*)on_ws_message_callback, 0);
 }
+
 void HttpRequest::onWSClose(int code) {
   // TODO: Call close() here?
 }
-
 
 void HttpRequest::fatal_error(const char* method, const char* message) {
   fprintf(stderr, "ERROR: [%s] %s\n", method, message);
@@ -523,7 +519,8 @@ void HttpRequest::_call_r_on_ws_open() {
   std::vector<char>* req_buffer = new std::vector<char>(_requestBuffer);
   _requestBuffer.clear();
 
-  // Run on background thread
+  // Schedule on background thread:
+  // _pWebSocketConnection->read(&(*req_buffer)[0], req_buffer->size())
   boost::function<void (void)> cb(
     boost::bind(&WebSocketConnection::read,
       _pWebSocketConnection,
@@ -535,12 +532,6 @@ void HttpRequest::_call_r_on_ws_open() {
   write_queue->push(cb);
   // Free req_buffer after data is written
   write_queue->push(boost::bind(delete_obj, req_buffer));
-}
-
-void call_on_ws_open_wrapper(void* data) {
-  ASSERT_MAIN_THREAD()
-  HttpRequest* req = reinterpret_cast<HttpRequest*>(data);
-  req->_call_r_on_ws_open();
 }
 
 
@@ -582,7 +573,12 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
       // TODO: Don't reuse requestBuffer?
       _requestBuffer.insert(_requestBuffer.end(), pData, pData + pDataLen);
 
-      later::later(call_on_ws_open_wrapper, this, 0);
+      // Schedule on main thread:
+      // this->_call_r_on_ws_open()
+      BoostFunctionCallback* call_r_on_ws_open_callback = new BoostFunctionCallback(
+        boost::bind(&HttpRequest::_call_r_on_ws_open, this)
+      );
+      later::later(invoke_callback, (void*)call_r_on_ws_open_callback, 0);
     }
 
     if (_protocol != WebSockets) {
