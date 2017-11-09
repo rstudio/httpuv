@@ -448,10 +448,20 @@ void HttpRequest::close() {
   ASSERT_BACKGROUND_THREAD()
   // std::cerr << "Closing handle " << &_handle << std::endl;
   if (_protocol == WebSockets) {
-    // TODO: Re-instate this but run it on the main thread
-    // _pWebApplication->onWSClose(_pWebSocketConnection);
+    // Schedule:
+    // _pWebApplication->onWSClose(_pWebSocketConnection)
+    BoostFunctionCallback* on_ws_close_callback = new BoostFunctionCallback(
+      boost::bind(
+        &WebApplication::onWSClose,
+        _pWebApplication,
+        _pWebSocketConnection
+      )
+    );
+    later::later(invoke_callback, (void*)on_ws_close_callback, 0);
   }
+
   _pSocket->removeConnection(this);
+
   uv_close(toHandle(&_handle.stream), HttpRequest_on_closed);
 }
 
