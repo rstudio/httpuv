@@ -4,6 +4,7 @@
 #include "httprequest.h"
 #include "http.h"
 #include "debug.h"
+#include <Rinternals.h>
 
 
 std::string normalizeHeaderName(const std::string& name) {
@@ -253,7 +254,7 @@ void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(Ht
     boost::bind(invokeResponseFun, callback, pRequest, _1)
   );
 
-  XPtr< boost::function<void(List)> > callback_xptr(callback_wrapper);
+  SEXP callback_xptr = R_MakeExternalPtr(callback_wrapper, R_NilValue, R_NilValue);
 
   // Call the R call() function, and pass it the callback xptr so it can
   // asynchronously pass data back to C++.

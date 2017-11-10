@@ -3,7 +3,6 @@
 #include <later_api.h>
 #include "httprequest.h"
 #include "callback.h"
-#include "deleteobj.h"
 #include "debug.h"
 
 
@@ -397,14 +396,11 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
       len
     )
   );
-  later::later(invoke_callback, (void*)on_ws_message_callback, 0);
+  later::later(invoke_callback, on_ws_message_callback, 0);
 
   // Schedule for after on_ws_message_callback:
-  // delete_obj(buf)
-  BoostFunctionCallback* delete_buf = new BoostFunctionCallback(
-    boost::bind(delete_obj, buf)
-  );
-  later::later(invoke_callback, (void*)delete_buf, 0);
+  // delete_vector_char(buf)
+  later::later(delete_vector_char, buf, 0);
 }
 
 void HttpRequest::onWSClose(int code) {
@@ -554,7 +550,7 @@ void HttpRequest::_call_r_on_ws_open() {
 
   write_queue->push(cb);
   // Free req_buffer after data is written
-  write_queue->push(boost::bind(delete_obj, req_buffer));
+  write_queue->push(boost::bind(delete_vector_char, req_buffer));
 }
 
 

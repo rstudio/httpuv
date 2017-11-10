@@ -97,8 +97,8 @@ decodeURIComponent <- function(value) {
     .Call('_httpuv_decodeURIComponent', PACKAGE = 'httpuv', value)
 }
 
-invokeCppCallback <- function(data, callback_sexp) {
-    invisible(.Call('_httpuv_invokeCppCallback', PACKAGE = 'httpuv', data, callback_sexp))
+invokeCppCallback <- function(data, callback_xptr) {
+    invisible(.Call('_httpuv_invokeCppCallback', PACKAGE = 'httpuv', data, callback_xptr))
 }
 
 #' Apply the value of .Random.seed to R's internal RNG state

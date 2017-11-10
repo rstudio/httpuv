@@ -13,7 +13,6 @@
 #include "webapplication.h"
 #include "http.h"
 #include "writequeue.h"
-#include "deleteobj.h"
 #include "debug.h"
 #include <Rinternals.h>
 
@@ -106,7 +105,7 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
   );
 
   write_queue->push(cb);
-  write_queue->push(boost::bind(delete_obj, str)); // Free str after data is written
+  write_queue->push(boost::bind(delete_vector_char, str)); // Free str after data is written
 }
 
 // [[Rcpp::export]]
@@ -612,22 +611,22 @@ std::vector<std::string> decodeURIComponent(std::vector<std::string> value) {
 // invoke the function with the List as the single argument. This also clears
 // the external pointer so that the C++ function can't be called again.
 // [[Rcpp::export]]
-void invokeCppCallback(Rcpp::List data, SEXP callback_sexp) {
-  if (TYPEOF(callback_sexp) != EXTPTRSXP) {
+void invokeCppCallback(Rcpp::List data, SEXP callback_xptr) {
+  ASSERT_MAIN_THREAD()
+
+  if (TYPEOF(callback_xptr) != EXTPTRSXP) {
      throw Rcpp::exception("Expected external pointer.");
   }
-  Rcpp::XPtr< boost::function<void(Rcpp::List)> > callback_xptr(callback_sexp);
-  boost::function<void(Rcpp::List)> callback = *callback_xptr;
-  callback(data);
+  boost::function<void(Rcpp::List)>* callback_wrapper =
+    (boost::function<void(Rcpp::List)>*)(R_ExternalPtrAddr(callback_xptr));
+
+  (*callback_wrapper)(data);
 
   // We want to clear the external pointer to make sure that the C++ function
-  // can't get called again by accident. But if we do this, the Xptr's finalizer
-  // won't work correctly because it'll be deleting a NULL pointer. So we have
-  // to delete it explicitly before clearing the external pointer.
-  //
-  // Free the callback_wrapper allocated in onHeaders or getResponse.
-  delete callback_xptr.get();
-  R_ClearExternalPtr(callback_sexp);
+  // can't get called again by accident. Also delete the heap-allocated
+  // boost::function.
+  delete callback_wrapper;
+  R_ClearExternalPtr(callback_xptr);
 }
 
 //' Apply the value of .Random.seed to R's internal RNG state

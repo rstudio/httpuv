@@ -188,13 +188,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // invokeCppCallback
-void invokeCppCallback(Rcpp::List data, SEXP callback_sexp);
-RcppExport SEXP _httpuv_invokeCppCallback(SEXP dataSEXP, SEXP callback_sexpSEXP) {
+void invokeCppCallback(Rcpp::List data, SEXP callback_xptr);
+RcppExport SEXP _httpuv_invokeCppCallback(SEXP dataSEXP, SEXP callback_xptrSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type callback_sexp(callback_sexpSEXP);
-    invokeCppCallback(data, callback_sexp);
+    Rcpp::traits::input_parameter< SEXP >::type callback_xptr(callback_xptrSEXP);
+    invokeCppCallback(data, callback_xptr);
     return R_NilValue;
 END_RCPP
 }
