@@ -87,14 +87,17 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
   // cleaner way to do this.
    if (binary) {
     mode = Binary;
-    msg_sexp = Rcpp::as<SEXP>(message);
+    msg_sexp = PROTECT(Rcpp::as<SEXP>(message));
     str = new std::vector<char>(RAW(msg_sexp), RAW(msg_sexp) + Rf_length(msg_sexp));
+    UNPROTECT(1);
 
   } else {
     mode = Text;
-    msg_sexp = STRING_ELT(message, 0);
+    msg_sexp = PROTECT(STRING_ELT(message, 0));
     str = new std::vector<char>(CHAR(msg_sexp), CHAR(msg_sexp) + Rf_length(msg_sexp));
+    UNPROTECT(1);
   }
+
 
   boost::function<void (void)> cb(
     boost::bind(&WebSocketConnection::sendWSMessage, wsc,

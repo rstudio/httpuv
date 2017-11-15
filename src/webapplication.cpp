@@ -254,11 +254,12 @@ void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(Ht
     boost::bind(invokeResponseFun, callback, pRequest, _1)
   );
 
-  SEXP callback_xptr = R_MakeExternalPtr(callback_wrapper, R_NilValue, R_NilValue);
+  SEXP callback_xptr = PROTECT(R_MakeExternalPtr(callback_wrapper, R_NilValue, R_NilValue));
 
   // Call the R call() function, and pass it the callback xptr so it can
   // asynchronously pass data back to C++.
   _onRequest(pRequest->env(), callback_xptr);
+  UNPROTECT(1);
 }
 
 void RWebApplication::onWSOpen(HttpRequest* pRequest) {
