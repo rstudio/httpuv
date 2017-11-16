@@ -1,6 +1,7 @@
 #ifndef UVUTIL_HPP
 #define UVUTIL_HPP
 
+#include "debug.h"
 #include <string>
 #include <vector>
 #include <uv.h>
@@ -24,10 +25,6 @@ inline uv_stream_t* toStream(uv_tcp_t* tcp) {
   return (uv_stream_t*)tcp;
 }
 
-void throwError(int err,
-  const std::string& prefix = std::string(),
-  const std::string& suffix = std::string());
-
 class WriteOp;
 
 // Abstract class for synchronously streaming known-length data
@@ -48,6 +45,14 @@ private:
 public:
   explicit InMemoryDataSource(const std::vector<uint8_t>& buffer = std::vector<uint8_t>())
     : _buffer(buffer), _pos(0) {}
+
+  explicit InMemoryDataSource(const Rcpp::RawVector& rawVector)
+    : _buffer(rawVector.size()), _pos(0) 
+  {
+    ASSERT_MAIN_THREAD()
+    std::copy(rawVector.begin(), rawVector.end(), _buffer.begin());
+  }
+
   virtual ~InMemoryDataSource() {}
   uint64_t size() const;
   uv_buf_t getData(size_t bytesDesired);

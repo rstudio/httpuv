@@ -17,6 +17,15 @@
 #include <Rinternals.h>
 
 
+void throwError(int err,
+  const std::string& prefix = std::string(),
+  const std::string& suffix = std::string())
+{
+  ASSERT_MAIN_THREAD()
+  std::string msg = prefix + uv_strerror(err) + suffix;
+  throw Rcpp::exception(msg.c_str());
+}
+
 // ============================================================================
 // Background thread and I/O event loop
 // ============================================================================

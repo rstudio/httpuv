@@ -117,49 +117,6 @@ void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
   }
 }
 
-class RawVectorDataSource : public DataSource {
-  Rcpp::RawVector _vector;
-  R_len_t _pos;
-
-public:
-  RawVectorDataSource(const Rcpp::RawVector& vector) : _vector(vector), _pos(0) {
-  }
-
-  uint64_t size() const {
-    return _vector.size();
-  }
-
-  uv_buf_t getData(size_t bytesDesired) {
-    size_t bytes = _vector.size() - _pos;
-
-    // Are we at the end?
-    if (bytes == 0)
-      return uv_buf_init(NULL, 0);
-
-    if (bytesDesired < bytes)
-      bytes = bytesDesired;
-    char* buf = (char*)malloc(bytes);
-    if (!buf) {
-      throw Rcpp::exception("Couldn't allocate buffer");
-    }
-
-    for (size_t i = 0; i < bytes; i++) {
-      buf[i] = _vector[_pos + i];
-    }
-
-    _pos += bytes;
-
-    return uv_buf_init(buf, bytes);
-  }
-
-  void freeData(uv_buf_t buffer) {
-    free(buffer.base);
-  }
-
-  void close() {
-    delete this;
-  }
-};
 
 HttpResponse* listToResponse(HttpRequest* pRequest, const Rcpp::List& response) {
   ASSERT_MAIN_THREAD()
@@ -181,7 +138,7 @@ HttpResponse* listToResponse(HttpRequest* pRequest, const Rcpp::List& response) 
   // The response can either contain:
   // - bodyFile: String value that names the file that should be streamed
   // - body: Character vector (which is charToRaw-ed) or raw vector, or NULL
-    if (std::find(names.begin(), names.end(), "bodyFile") != names.end()) {
+  if (std::find(names.begin(), names.end(), "bodyFile") != names.end()) {
     FileDataSource* pFDS = new FileDataSource();
     pFDS->initialize(Rcpp::as<std::string>(response["bodyFile"]),
         Rcpp::as<bool>(response["bodyFileOwned"]));
@@ -189,11 +146,11 @@ HttpResponse* listToResponse(HttpRequest* pRequest, const Rcpp::List& response) 
   }
   else if (Rf_isString(response["body"])) {
     RawVector responseBytes = Function("charToRaw")(response["body"]);
-    pDataSource = new RawVectorDataSource(responseBytes);
+    pDataSource = new InMemoryDataSource(responseBytes);
   }
   else {
     RawVector responseBytes = response["body"];
-    pDataSource = new RawVectorDataSource(responseBytes);
+    pDataSource = new InMemoryDataSource(responseBytes);
   }
 
   HttpResponse* pResp = new HttpResponse(pRequest, status, statusDesc,
@@ -215,7 +172,7 @@ void invokeResponseFun(boost::function<void(HttpResponse*)> fun, HttpRequest* pR
   // deletes the object.
   HttpResponse* pResponse = listToResponse(pRequest, response);
   fun(pResponse);
-};
+}
 
 
 void RWebApplication::onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
