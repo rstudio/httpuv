@@ -113,10 +113,16 @@ Address HttpRequest::clientAddress() {
 
 Rcpp::Environment& HttpRequest::env() {
   ASSERT_MAIN_THREAD()
+  using namespace Rcpp;
+
   if (_env == NULL) {
+    Environment base(R_BaseEnv);
+    Function new_env = as<Function>(base["new.env"]);
+
     // Deleted in destructor
-    _env = new Rcpp::Environment(Rcpp::Function("new.env")());
+    _env = new Environment(new_env(_["parent"] = R_EmptyEnv));
   }
+
   return *_env;
 }
 
