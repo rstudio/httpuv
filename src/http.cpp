@@ -81,7 +81,7 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   // the future we have failure cases that stop execution before we get
   // that far, we MUST delete pWebApplication ourselves.
 
-  // Deletes itself when destroy() is called, which occurs in freeServer()
+  // Deletes itself when destroy() is called, in io_thread()
   Socket* pSocket = new Socket();
   // TODO: Handle error
   uv_tcp_init(pLoop, &pSocket->handle.tcp);
@@ -108,13 +108,9 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
 
   return &pSocket->handle.stream;
 }
+
+
 void freeServer(uv_stream_t* pHandle) {
-  // uv_loop_t* loop = pHandle->loop;
   Socket* pSocket = (Socket*)pHandle->data;
   pSocket->destroy();
-
-  // runNonBlocking(loop);
 }
-// bool runNonBlocking(uv_loop_t* loop) {
-//   return uv_run(loop, UV_RUN_NOWAIT);
-// }

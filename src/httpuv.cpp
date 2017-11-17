@@ -52,6 +52,7 @@ uv_loop_t* get_io_loop() {
 }
 
 void close_handle_cb(uv_handle_t* handle, void* arg) {
+  ASSERT_BACKGROUND_THREAD()
   uv_close(handle, NULL);
 }
 
@@ -62,6 +63,7 @@ void stop_io_thread(uv_async_t *handle) {
 
 void io_thread(void* data) {
   REGISTER_BACKGROUND_THREAD()
+  uv_stream_t* pServer = reinterpret_cast<uv_stream_t*>(data);
 
   write_queue = new WriteQueue(get_io_loop());
 
@@ -73,9 +75,13 @@ void io_thread(void* data) {
   trace("io_loop stopped");
 
   // Cleanup stuff
+  freeServer(pServer);
+  uv_run(get_io_loop(), UV_RUN_ONCE);
+  // Close any remaining handles
   uv_walk(get_io_loop(), close_handle_cb, NULL);
   uv_run(get_io_loop(), UV_RUN_ONCE);
   uv_loop_close(get_io_loop());
+  io_loop_initialized = false;
 }
 
 
@@ -173,9 +179,6 @@ Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port,
     Rcpp::stop("Must call stopServer() before creating new background server.");
   }
 
-// TODO: 
-//       Add a function for killing running httpuv background server
-
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
   RWebApplication* pHandler =
@@ -192,7 +195,7 @@ Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port,
 
   io_thread_id = (uv_thread_t *) malloc(sizeof(uv_thread_t));
 
-  int ret = uv_thread_create(io_thread_id, io_thread, NULL);
+  int ret = uv_thread_create(io_thread_id, io_thread, pServer);
 
   if (ret != 0) {
     free(io_thread_id);
@@ -233,23 +236,16 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
 // [[Rcpp::export]]
 void destroyServer(std::string handle) {
-  uv_stream_t* pServer = internalize<uv_stream_t>(handle);
-  freeServer(pServer);
+  ASSERT_MAIN_THREAD()
 
   if (io_thread_id == NULL)
     return;
 
   uv_async_send(&async_stop_io_thread);
 
-
-  // TODO: Figure out why this hangs if called immediately after startBackgroundServer:
-  // s <- startBackgroundServer()
-  // stopServer(s)
   uv_thread_join(io_thread_id);
   free(io_thread_id);
   io_thread_id = NULL;
-
-  delete pServer;
 }
 
 void dummy_close_cb(uv_handle_t* handle) {

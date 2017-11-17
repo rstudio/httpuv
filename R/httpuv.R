@@ -524,7 +524,6 @@ runServer <- function(host, port, app,
   .globals$stopped <- FALSE
   while (!.globals$stopped) {
     service(interruptIntervalMs)
-    Sys.sleep(0.001)
   }
 }
 
@@ -538,7 +537,6 @@ runServer <- function(host, port, app,
 #' 
 #' @export
 interrupt <- function() {
-  stopLoop()
   .globals$stopped <- TRUE
 }
 
