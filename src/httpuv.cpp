@@ -323,50 +323,10 @@ void stopAllServers() {
   io_thread_running = false;
 }
 
-void dummy_close_cb(uv_handle_t* handle) {
-}
-
 void stop_loop_timer_cb(uv_timer_t* handle) {
   uv_stop(handle->loop);
 }
 
-// Run the libuv default loop until an I/O event occurs, or for up to
-// timeoutMillis, then stop.
-// [[Rcpp::export]]
-bool run(int timeoutMillis) {
-  ASSERT_MAIN_THREAD()
-  static uv_timer_t timer_req = {0};
-  int r;
-
-  if (!timer_req.loop) {
-    r = uv_timer_init(get_io_loop(), &timer_req);
-    if (r) {
-      throwError(r,
-          "Failed to initialize libuv timeout timer: ");
-    }
-  }
-
-  if (timeoutMillis > 0) {
-    uv_timer_stop(&timer_req);
-    r = uv_timer_start(&timer_req, &stop_loop_timer_cb, timeoutMillis, 0);
-    if (r) {
-      throwError(r,
-          "Failed to start libuv timeout timer: ");
-    }
-  }
-
-  // Must ignore SIGPIPE when libuv code is running, otherwise unexpectedly
-  // closing connections kill us
-#ifndef _WIN32
-  signal(SIGPIPE, SIG_IGN);
-#endif
-  return uv_run(get_io_loop(), timeoutMillis == NA_INTEGER ? UV_RUN_NOWAIT : UV_RUN_ONCE);
-}
-
-// [[Rcpp::export]]
-void stopLoop() {
-  uv_stop(get_io_loop());
-}
 
 // [[Rcpp::export]]
 std::string base64encode(const Rcpp::RawVector& x) {
@@ -405,7 +365,7 @@ void loop_input_handler(void *data) {
   #else
   bool res = 1;
   while (res) {
-    res = run(100);
+    // res = run(100);
     Sleep(1);
   }
   #endif
@@ -486,6 +446,11 @@ void destroyDaemonizedServer(std::string handle) {
   DaemonizedServer *dServer = internalize<DaemonizedServer >(handle);
   delete dServer;
 }
+
+
+// ============================================================================
+// Miscellaneous utility functions
+// ============================================================================
 
 static std::string allowed = ";,/?:@&=+$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_.!~*'()";
 

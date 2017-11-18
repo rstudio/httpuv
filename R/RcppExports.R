@@ -40,14 +40,6 @@ stopAllServers <- function() {
     invisible(.Call('_httpuv_stopAllServers', PACKAGE = 'httpuv'))
 }
 
-run <- function(timeoutMillis) {
-    .Call('_httpuv_run', PACKAGE = 'httpuv', timeoutMillis)
-}
-
-stopLoop <- function() {
-    invisible(.Call('_httpuv_stopLoop', PACKAGE = 'httpuv'))
-}
-
 base64encode <- function(x) {
     .Call('_httpuv_base64encode', PACKAGE = 'httpuv', x)
 }
