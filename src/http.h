@@ -26,6 +26,8 @@ uv_stream_t* createPipeServer(uv_loop_t* loop, const std::string& name,
   int mask, WebApplication* pWebApplication);
 uv_stream_t* createTcpServer(uv_loop_t* loop, const std::string& host, int port,
   WebApplication* pWebApplication);
+void createTcpServerSync(uv_loop_t* loop, const std::string& host, int port,
+  WebApplication* pWebApplication, uv_stream_t** pServer, uv_barrier_t* blocker);
 void freeServer(uv_stream_t* pServer);
 bool runNonBlocking(uv_loop_t* loop);
 

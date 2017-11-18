@@ -21,8 +21,23 @@ makePipeServer <- function(name, mask, onHeaders, onBodyData, onRequest, onWSOpe
     .Call('_httpuv_makePipeServer', PACKAGE = 'httpuv', name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose)
 }
 
-destroyServer <- function(handle) {
-    invisible(.Call('_httpuv_destroyServer', PACKAGE = 'httpuv', handle))
+#' Stop a running server
+#' 
+#' Given a handle that was returned from a previous invocation of 
+#' \code{\link{startServer}}, closes all open connections for that server and 
+#' unbinds the port. \strong{Be careful not to call \code{stopServer} more than 
+#' once on a handle, as this will cause the R process to crash!}
+#' 
+#' @param handle A handle that was previously returned from
+#'   \code{\link{startServer}}.
+#'   
+#' @export
+stopServer <- function(handle) {
+    invisible(.Call('_httpuv_stopServer', PACKAGE = 'httpuv', handle))
+}
+
+stopAllServers <- function() {
+    invisible(.Call('_httpuv_stopAllServers', PACKAGE = 'httpuv'))
 }
 
 run <- function(timeoutMillis) {

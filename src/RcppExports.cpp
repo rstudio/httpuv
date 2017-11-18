@@ -81,13 +81,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// destroyServer
-void destroyServer(std::string handle);
-RcppExport SEXP _httpuv_destroyServer(SEXP handleSEXP) {
+// stopServer
+void stopServer(std::string handle);
+RcppExport SEXP _httpuv_stopServer(SEXP handleSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP);
-    destroyServer(handle);
+    stopServer(handle);
+    return R_NilValue;
+END_RCPP
+}
+// stopAllServers
+void stopAllServers();
+RcppExport SEXP _httpuv_stopAllServers() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    stopAllServers();
     return R_NilValue;
 END_RCPP
 }
@@ -216,9 +225,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_makeTcpServer", (DL_FUNC) &_httpuv_makeTcpServer, 8},
     {"_httpuv_makeBackgroundTcpServer", (DL_FUNC) &_httpuv_makeBackgroundTcpServer, 8},
     {"_httpuv_makePipeServer", (DL_FUNC) &_httpuv_makePipeServer, 8},
-    {"_httpuv_destroyServer", (DL_FUNC) &_httpuv_destroyServer, 1},
     {"_httpuv_run", (DL_FUNC) &_httpuv_run, 1},
     {"_httpuv_stopLoop", (DL_FUNC) &_httpuv_stopLoop, 0},
+    {"_httpuv_stopServer", (DL_FUNC) &_httpuv_stopServer, 1},
+    {"_httpuv_stopAllServers", (DL_FUNC) &_httpuv_stopAllServers, 0},
     {"_httpuv_base64encode", (DL_FUNC) &_httpuv_base64encode, 1},
     {"_httpuv_daemonize", (DL_FUNC) &_httpuv_daemonize, 1},
     {"_httpuv_destroyDaemonizedServer", (DL_FUNC) &_httpuv_destroyDaemonizedServer, 1},

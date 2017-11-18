@@ -26,29 +26,39 @@ void throwError(int err,
   throw Rcpp::exception(msg.c_str());
 }
 
+// For keeping track of all running server apps.
+std::vector<uv_stream_t*> pServers;
+
 // ============================================================================
 // Background thread and I/O event loop
 // ============================================================================
 
+// A queue of tasks to run on the background thread. This is how the main
+// thread schedules work to be done on the background thread.
 WriteQueue* write_queue;
 
-uv_thread_t *io_thread_id = NULL;
-uv_async_t async_stop_io_thread;
+uv_thread_t io_thread_id;
+bool io_thread_running = false;
+
+uv_async_t async_stop_io_loop;
 
 // The uv loop that we'll use. Should be accessed via get_io_loop().
 uv_loop_t io_loop;
 bool io_loop_initialized = false;
 
 uv_loop_t* get_io_loop() {
-  // The first time this is called, it initializes the loop. The first call is
-  // always from the main thread (not from multiple threads) so we don't need
-  // to lock for this operation.
+  if (!io_loop_initialized) {
+    throw std::runtime_error("io_loop not initialized!");
+  }
+  return &io_loop;
+}
+
+void ensure_io_loop() {
+  ASSERT_MAIN_THREAD()
   if (!io_loop_initialized) {
     uv_loop_init(&io_loop);
     io_loop_initialized = true;
   }
-
-  return &io_loop;
 }
 
 void close_handle_cb(uv_handle_t* handle, void* arg) {
@@ -56,32 +66,46 @@ void close_handle_cb(uv_handle_t* handle, void* arg) {
   uv_close(handle, NULL);
 }
 
-void stop_io_thread(uv_async_t *handle) {
-  trace("stop_io_thread");
+void stop_io_loop(uv_async_t *handle) {
+  ASSERT_BACKGROUND_THREAD()
+  trace("stop_io_loop");
   uv_stop(get_io_loop());
 }
 
 void io_thread(void* data) {
   REGISTER_BACKGROUND_THREAD()
-  uv_stream_t* pServer = reinterpret_cast<uv_stream_t*>(data);
-
-  write_queue = new WriteQueue(get_io_loop());
+  io_thread_running = true;
 
   // Set up async communication channels
-  uv_async_init(get_io_loop(), &async_stop_io_thread, stop_io_thread);
+  uv_async_init(get_io_loop(), &async_stop_io_loop, stop_io_loop);
 
+  // Run io_loop. When it stops, this fuction continues and the thread exits.
   uv_run(get_io_loop(), UV_RUN_DEFAULT);
 
   trace("io_loop stopped");
 
   // Cleanup stuff
-  freeServer(pServer);
-  uv_run(get_io_loop(), UV_RUN_ONCE);
-  // Close any remaining handles
   uv_walk(get_io_loop(), close_handle_cb, NULL);
   uv_run(get_io_loop(), UV_RUN_ONCE);
   uv_loop_close(get_io_loop());
   io_loop_initialized = false;
+}
+
+void ensure_io_thread() {
+  ASSERT_MAIN_THREAD()
+  if (io_thread_running) {
+    return;
+  }
+
+  ensure_io_loop();
+  write_queue = new WriteQueue(get_io_loop());
+
+  // TODO: pass data?
+  int ret = uv_thread_create(&io_thread_id, io_thread, NULL);
+
+  if (ret != 0) {
+    Rcpp::stop(std::string("Error: ") + uv_strerror(ret));
+  }
 }
 
 
@@ -149,20 +173,22 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
                             Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
+  return R_NilValue;
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
-  RWebApplication* pHandler =
-    new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
-                        onWSMessage, onWSClose);
-  uv_stream_t* pServer = createTcpServer(
-    get_io_loop(), host.c_str(), port, (WebApplication*)pHandler);
+  // RWebApplication* pHandler =
+  //   new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
+  //                       onWSMessage, onWSClose);
+  // uv_stream_t* pServer = createTcpServer(
+  //   get_io_loop(), host.c_str(), port, (WebApplication*)pHandler);
 
-  if (!pServer) {
-    return R_NilValue;
-  }
+  // if (!pServer) {
+  //   return R_NilValue;
+  // }
 
-  return Rcpp::wrap(externalize<uv_stream_t>(pServer));
+  // return Rcpp::wrap(externalize<uv_stream_t>(pServer));
 }
+
 // [[Rcpp::export]]
 Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port,
                             Rcpp::Function onHeaders,
@@ -175,36 +201,40 @@ Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port,
   using namespace Rcpp;
   REGISTER_MAIN_THREAD()
 
-  if (io_thread_id != NULL) {
-    Rcpp::stop("Must call stopServer() before creating new background server.");
-  }
-
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
   RWebApplication* pHandler =
     new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
                         onWSMessage, onWSClose);
 
-  uv_stream_t* pServer = createTcpServer(
-    get_io_loop(), host.c_str(), port, (WebApplication*)pHandler
+  ensure_io_thread();
+
+  uv_barrier_t blocker;
+  uv_barrier_init(&blocker, 2);
+
+  uv_stream_t* pServer;
+
+  // Run on background thread:
+  // createTcpServer(
+  //   get_io_loop(), host.c_str(), port, (WebApplication*)pHandler,
+  //   &pServer, &blocker
+  // );
+  write_queue->push(
+    boost::bind(createTcpServerSync,
+      get_io_loop(), host.c_str(), port, (WebApplication*)pHandler,
+      &pServer, &blocker
+    )
   );
+
+  // Wait for server to be created before continuing
+  uv_barrier_wait(&blocker);
 
   if (!pServer) {
     return R_NilValue;
   }
 
-  io_thread_id = (uv_thread_t *) malloc(sizeof(uv_thread_t));
+  pServers.push_back(pServer);
 
-  int ret = uv_thread_create(io_thread_id, io_thread, pServer);
-
-  if (ret != 0) {
-    free(io_thread_id);
-    io_thread_id = NULL;
-
-    Rcpp::stop(std::string("Error: ") + uv_strerror(ret));
-  }
-
-  // Return thread id instead?
   return Rcpp::wrap(externalize<uv_stream_t>(pServer));
 }
 
@@ -234,18 +264,63 @@ Rcpp::RObject makePipeServer(const std::string& name,
   return Rcpp::wrap(externalize(pServer));
 }
 
-// [[Rcpp::export]]
-void destroyServer(std::string handle) {
+
+void stopServer(uv_stream_t* pServer) {
   ASSERT_MAIN_THREAD()
 
-  if (io_thread_id == NULL)
+  // Remove it from the list of running servers.
+  // Note: we're removing it from the pServers list without waiting for the
+  // background thread to call freeServer().
+  std::vector<uv_stream_t*>::iterator pos = std::find(pServers.begin(), pServers.end(), pServer);
+  if (pos != pServers.end()) {
+    pServers.erase(pos);
+  } else {
+    Rcpp::exception("pServer handle not found in list!");
+  }
+
+  // Run on background thread:
+  // freeServer(pServer);
+  write_queue->push(
+    boost::bind(freeServer, pServer)
+  );
+
+  fprintf(stderr, "destroying\n");
+}
+
+//' Stop a running server
+//' 
+//' Given a handle that was returned from a previous invocation of 
+//' \code{\link{startServer}}, closes all open connections for that server and 
+//' unbinds the port. \strong{Be careful not to call \code{stopServer} more than 
+//' once on a handle, as this will cause the R process to crash!}
+//' 
+//' @param handle A handle that was previously returned from
+//'   \code{\link{startServer}}.
+//'   
+//' @export
+// [[Rcpp::export]]
+void stopServer(std::string handle) {
+  ASSERT_MAIN_THREAD()
+  uv_stream_t* pServer = internalize<uv_stream_t>(handle);
+  stopServer(pServer);
+}
+
+// [[Rcpp::export]]
+void stopAllServers() {
+  ASSERT_MAIN_THREAD()
+
+  if (!io_thread_running)
     return;
 
-  uv_async_send(&async_stop_io_thread);
+  // Each call to stopServer also removes it from the pServers list.
+  while (pServers.size() > 0) {
+    stopServer(pServers[0]);
+  }
 
-  uv_thread_join(io_thread_id);
-  free(io_thread_id);
-  io_thread_id = NULL;
+  uv_async_send(&async_stop_io_loop);
+
+  uv_thread_join(&io_thread_id);
+  io_thread_running = false;
 }
 
 void dummy_close_cb(uv_handle_t* handle) {

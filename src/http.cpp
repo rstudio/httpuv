@@ -109,8 +109,21 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   return &pSocket->handle.stream;
 }
 
+// A wrapper for createTcpServer. The main thread schedules this to run on the
+// background thread, then waits for this to finish, using a barrier.
+void createTcpServerSync(uv_loop_t* pLoop, const std::string& host,
+  int port, WebApplication* pWebApplication,
+  uv_stream_t** pServer, uv_barrier_t* blocker)
+{
+  ASSERT_BACKGROUND_THREAD()
+  *pServer = createTcpServer(pLoop, host, port, pWebApplication);
+  uv_barrier_wait(blocker);
+}
+
 
 void freeServer(uv_stream_t* pHandle) {
+  ASSERT_BACKGROUND_THREAD()
+  // TODO: Check if server is still running?
   Socket* pSocket = (Socket*)pHandle->data;
   pSocket->destroy();
 }
