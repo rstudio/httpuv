@@ -4,10 +4,10 @@
 \alias{stopDaemonizedServer}
 \title{Stop a running daemonized server in Unix environments}
 \usage{
-stopDaemonizedServer(server)
+stopDaemonizedServer(handle)
 }
 \arguments{
-\item{server}{A handle that was previously returned from
+\item{handle}{A handle that was previously returned from
 \code{\link{startDaemonizedServer}}.}
 }
 \description{

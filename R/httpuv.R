@@ -386,24 +386,7 @@ WebSocket <- setRefClass(
 startServer <- function(host, port, app) {
   
   appWrapper <- AppWrapper$new(app)
-  server <- makeTcpServer(host, port,
-                          appWrapper$onHeaders,
-                          appWrapper$onBodyData,
-                          appWrapper$call,
-                          appWrapper$onWSOpen,
-                          appWrapper$onWSMessage,
-                          appWrapper$onWSClose)
-  if (is.null(server)) {
-    stop("Failed to create server")
-  }
-  return(server)
-}
-
-#' @export
-startBackgroundServer <- function(host, port, app) {
-
-  appWrapper <- AppWrapper$new(app)
-  server <- makeBackgroundTcpServer(
+  server <- makeTcpServer(
     host, port,
     appWrapper$onHeaders,
     appWrapper$onBodyData,
@@ -412,6 +395,7 @@ startBackgroundServer <- function(host, port, app) {
     appWrapper$onWSMessage,
     appWrapper$onWSClose
   )
+
   if (is.null(server)) {
     stop("Failed to create server")
   }
@@ -503,7 +487,7 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 #' @export
 runServer <- function(host, port, app,
                       interruptIntervalMs = ifelse(interactive(), 100, 1000)) {
-  server <- startBackgroundServer(host, port, app)
+  server <- startServer(host, port, app)
   on.exit(stopServer(server))
   
   .globals$stopped <- FALSE
@@ -588,14 +572,7 @@ rawToBase64 <- function(x) {
 #' @seealso \code{\link{startServer}}
 #' @export
 startDaemonizedServer <- function(host, port, app) {
-  server <- startServer(host, port, app)
-  tryCatch({
-    server <- daemonize(server)
-  }, error=function(e) {
-    stopServer(server)
-    stop(e)
-  })
-  return(server)
+  startServer(host, port, app)
 }
 
 #' Stop a running daemonized server in Unix environments
@@ -606,13 +583,11 @@ startDaemonizedServer <- function(host, port, app) {
 #' unbinds the port. \strong{Be careful not to call \code{stopDaemonizedServer} more than 
 #' once on a handle, as this will cause the R process to crash!}
 #' 
-#' @param server A handle that was previously returned from
+#' @param handle A handle that was previously returned from
 #'   \code{\link{startDaemonizedServer}}.
 #'   
 #' @export
-stopDaemonizedServer <- function(server) {
-  destroyDaemonizedServer(server)
-}
+stopDaemonizedServer <- stopServer
 
 # Needed so that Rcpp registers the 'httpuv_decodeURIComponent' symbol
 legacy_dummy <- function(value){

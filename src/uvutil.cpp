@@ -16,6 +16,7 @@ public:
   }
 
   void end() {
+    ASSERT_BACKGROUND_THREAD()
     pParent->_pDataSource->freeData(buffer);
     pParent->_activeWrites--;
 
@@ -48,16 +49,19 @@ uv_buf_t InMemoryDataSource::getData(size_t bytesDesired) {
 void InMemoryDataSource::freeData(uv_buf_t buffer) {
 }
 void InMemoryDataSource::close() {
+  ASSERT_BACKGROUND_THREAD()
   _buffer.clear();
 }
 
 void InMemoryDataSource::add(const std::vector<uint8_t>& moreData) {
+  ASSERT_BACKGROUND_THREAD()
   if (_buffer.capacity() < _buffer.size() + moreData.size())
     _buffer.reserve(_buffer.size() + moreData.size());
   _buffer.insert(_buffer.end(), moreData.begin(), moreData.end());
 }
 
 static void writecb(uv_write_t* handle, int status) {
+  ASSERT_BACKGROUND_THREAD()
   WriteOp* pWriteOp = (WriteOp*)handle->data;
   pWriteOp->end();
 }

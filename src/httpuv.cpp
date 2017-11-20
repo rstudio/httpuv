@@ -173,32 +173,6 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
                             Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
-  return R_NilValue;
-  // Deleted when owning pServer is deleted. If pServer creation fails,
-  // it's still createTcpServer's responsibility to delete pHandler.
-  // RWebApplication* pHandler =
-  //   new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
-  //                       onWSMessage, onWSClose);
-  // uv_stream_t* pServer = createTcpServer(
-  //   get_io_loop(), host.c_str(), port, (WebApplication*)pHandler);
-
-  // if (!pServer) {
-  //   return R_NilValue;
-  // }
-
-  // return Rcpp::wrap(externalize<uv_stream_t>(pServer));
-}
-
-// [[Rcpp::export]]
-Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port,
-                            Rcpp::Function onHeaders,
-                            Rcpp::Function onBodyData,
-                            Rcpp::Function onRequest,
-                            Rcpp::Function onWSOpen,
-                            Rcpp::Function onWSMessage,
-                            Rcpp::Function onWSClose) {
-
-  using namespace Rcpp;
   REGISTER_MAIN_THREAD()
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
@@ -328,129 +302,14 @@ void stop_loop_timer_cb(uv_timer_t* handle) {
 }
 
 
+// ============================================================================
+// Miscellaneous utility functions
+// ============================================================================
+
 // [[Rcpp::export]]
 std::string base64encode(const Rcpp::RawVector& x) {
   return b64encode(x.begin(), x.end());
 }
-
-/*
- * Daemonizing
- * 
- * On UNIX-like environments: Uses the R event loop to trigger the libuv default loop. This is a similar mechanism as that used by Rhttpd.
- * It adds an event listener on the port where the TCP server was created by libuv. This triggers uv_run on the
- * default loop any time there is an event on the server port. It also adds an event listener to a file descriptor
- * exposed by the get_io_loop to trigger uv_run whenever necessary. It uses the non-blocking version
- * of uv_run (UV_RUN_NOWAIT).
- *
- * On Windows: creates a thread that runs the libuv default loop. It uses the usual "service" mechanism
- * on the new thread (it uses the run function defined above). TODO: check synchronization. 
- *
- */
-
-#ifndef WIN32
-#include <R_ext/eventloop.h>
-
-#define UVSERVERACTIVITY 55
-#define UVLOOPACTIVITY 57
-#endif
-
-void loop_input_handler(void *data) {
-  #ifndef WIN32
-  // this fake loop is here to force
-  // processing events
-  // deals with strange behavior in some Ubuntu installations
-  for (int i=0; i < 5; ++i) {
-    uv_run(get_io_loop(), UV_RUN_NOWAIT);
-  }
-  #else
-  bool res = 1;
-  while (res) {
-    // res = run(100);
-    Sleep(1);
-  }
-  #endif
-}
-
-#ifdef WIN32
-static DWORD WINAPI ServerThreadProc(LPVOID lpParameter) {
-  loop_input_handler(lpParameter);
-  return 0;
-}
-#endif
-
-class DaemonizedServer {
-public:
-  uv_stream_t *_pServer;
-  #ifndef WIN32
-  InputHandler *serverHandler;
-  InputHandler *loopHandler;
-  #else
-  HANDLE server_thread;
-  #endif
-  
-  DaemonizedServer(uv_stream_t *pServer)
-  : _pServer(pServer) {}
-
-  ~DaemonizedServer() {
-    #ifndef WIN32
-    if (loopHandler) {
-      removeInputHandler(&R_InputHandlers, loopHandler);
-    }
-    
-    if (serverHandler) {
-      removeInputHandler(&R_InputHandlers, serverHandler);
-    }
-    #else 
-      if (server_thread) {
-        DWORD ts = 0;
-        if (GetExitCodeThread(server_thread, &ts) && ts == STILL_ACTIVE)
-          TerminateThread(server_thread, 0);
-        server_thread = 0;
-      }
-    #endif
-    
-    if (_pServer) {
-      freeServer(_pServer);
-    }
-  }
-  void setup(){
-  };
-};
-
-// [[Rcpp::export]]
-Rcpp::RObject daemonize(std::string handle) {
-  uv_stream_t *pServer = internalize<uv_stream_t >(handle);
-  DaemonizedServer *dServer = new DaemonizedServer(pServer);
-
-   #ifndef WIN32
-   int fd = pServer->io_watcher.fd;
-   dServer->serverHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVSERVERACTIVITY);
-
-   fd = uv_backend_fd(get_io_loop());
-   dServer->loopHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVLOOPACTIVITY);
-   #else
-   if (dServer->server_thread) {
-     DWORD ts = 0;
-     if (GetExitCodeThread(dServer->server_thread, &ts) && ts == STILL_ACTIVE)
-       TerminateThread(dServer->server_thread, 0);
-     dServer->server_thread = 0;
-   }
-   dServer->server_thread = CreateThread(NULL, 0, ServerThreadProc, 0, 0, 0);
-   #endif
-
-  return Rcpp::wrap(externalize(dServer));
-}
-
-// [[Rcpp::export]]
-void destroyDaemonizedServer(std::string handle) {
-  DaemonizedServer *dServer = internalize<DaemonizedServer >(handle);
-  delete dServer;
-}
-
-
-// ============================================================================
-// Miscellaneous utility functions
-// ============================================================================
 
 static std::string allowed = ";,/?:@&=+$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_.!~*'()";
 

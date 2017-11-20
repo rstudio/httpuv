@@ -45,24 +45,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// makeBackgroundTcpServer
-Rcpp::RObject makeBackgroundTcpServer(const std::string& host, int port, Rcpp::Function onHeaders, Rcpp::Function onBodyData, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
-RcppExport SEXP _httpuv_makeBackgroundTcpServer(SEXP hostSEXP, SEXP portSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const std::string& >::type host(hostSEXP);
-    Rcpp::traits::input_parameter< int >::type port(portSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Function >::type onHeaders(onHeadersSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Function >::type onBodyData(onBodyDataSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Function >::type onRequest(onRequestSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Function >::type onWSOpen(onWSOpenSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Function >::type onWSMessage(onWSMessageSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Function >::type onWSClose(onWSCloseSEXP);
-    rcpp_result_gen = Rcpp::wrap(makeBackgroundTcpServer(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose));
-    return rcpp_result_gen;
-END_RCPP
-}
 // makePipeServer
 Rcpp::RObject makePipeServer(const std::string& name, int mask, Rcpp::Function onHeaders, Rcpp::Function onBodyData, Rcpp::Function onRequest, Rcpp::Function onWSOpen, Rcpp::Function onWSMessage, Rcpp::Function onWSClose);
 RcppExport SEXP _httpuv_makePipeServer(SEXP nameSEXP, SEXP maskSEXP, SEXP onHeadersSEXP, SEXP onBodyDataSEXP, SEXP onRequestSEXP, SEXP onWSOpenSEXP, SEXP onWSMessageSEXP, SEXP onWSCloseSEXP) {
@@ -109,27 +91,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::RawVector& >::type x(xSEXP);
     rcpp_result_gen = Rcpp::wrap(base64encode(x));
     return rcpp_result_gen;
-END_RCPP
-}
-// daemonize
-Rcpp::RObject daemonize(std::string handle);
-RcppExport SEXP _httpuv_daemonize(SEXP handleSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP);
-    rcpp_result_gen = Rcpp::wrap(daemonize(handle));
-    return rcpp_result_gen;
-END_RCPP
-}
-// destroyDaemonizedServer
-void destroyDaemonizedServer(std::string handle);
-RcppExport SEXP _httpuv_destroyDaemonizedServer(SEXP handleSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP);
-    destroyDaemonizedServer(handle);
-    return R_NilValue;
 END_RCPP
 }
 // encodeURI
@@ -203,20 +164,17 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_sendWSMessage", (DL_FUNC) &_httpuv_sendWSMessage, 3},
     {"_httpuv_closeWS", (DL_FUNC) &_httpuv_closeWS, 1},
     {"_httpuv_makeTcpServer", (DL_FUNC) &_httpuv_makeTcpServer, 8},
-    {"_httpuv_makeBackgroundTcpServer", (DL_FUNC) &_httpuv_makeBackgroundTcpServer, 8},
     {"_httpuv_makePipeServer", (DL_FUNC) &_httpuv_makePipeServer, 8},
     {"_httpuv_stopServer", (DL_FUNC) &_httpuv_stopServer, 1},
     {"_httpuv_stopAllServers", (DL_FUNC) &_httpuv_stopAllServers, 0},
     {"_httpuv_base64encode", (DL_FUNC) &_httpuv_base64encode, 1},
-    {"_httpuv_daemonize", (DL_FUNC) &_httpuv_daemonize, 1},
-    {"_httpuv_destroyDaemonizedServer", (DL_FUNC) &_httpuv_destroyDaemonizedServer, 1},
     {"_httpuv_encodeURI", (DL_FUNC) &_httpuv_encodeURI, 1},
     {"_httpuv_encodeURIComponent", (DL_FUNC) &_httpuv_encodeURIComponent, 1},
     {"_httpuv_decodeURI", (DL_FUNC) &_httpuv_decodeURI, 1},
     {"_httpuv_decodeURIComponent", (DL_FUNC) &_httpuv_decodeURIComponent, 1},
     {"_httpuv_invokeCppCallback", (DL_FUNC) &_httpuv_invokeCppCallback, 2},
     {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
-    {"httpuv_decodeURIComponent",       (DL_FUNC) &httpuv_decodeURIComponent,       1},
+    {"httpuv_decodeURIComponent",  (DL_FUNC) &httpuv_decodeURIComponent,  1},
     {NULL, NULL, 0}
 };
 
