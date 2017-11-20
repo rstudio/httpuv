@@ -12,7 +12,7 @@
 #include "uvutil.h"
 #include "webapplication.h"
 #include "http.h"
-#include "writequeue.h"
+#include "callbackqueue.h"
 #include "debug.h"
 #include <Rinternals.h>
 
@@ -35,7 +35,7 @@ std::vector<uv_stream_t*> pServers;
 
 // A queue of tasks to run on the background thread. This is how the main
 // thread schedules work to be done on the background thread.
-WriteQueue* write_queue;
+CallbackQueue* background_queue;
 
 uv_thread_t io_thread_id;
 bool io_thread_running = false;
@@ -98,7 +98,7 @@ void ensure_io_thread() {
   }
 
   ensure_io_loop();
-  write_queue = new WriteQueue(get_io_loop());
+  background_queue = new CallbackQueue(get_io_loop());
 
   // TODO: pass data?
   int ret = uv_thread_create(&io_thread_id, io_thread, NULL);
@@ -146,8 +146,8 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
     )
   );
 
-  write_queue->push(cb);
-  write_queue->push(boost::bind(delete_vector_char, str)); // Free str after data is written
+  background_queue->push(cb);
+  background_queue->push(boost::bind(delete_vector_char, str)); // Free str after data is written
 }
 
 // [[Rcpp::export]]
@@ -157,7 +157,7 @@ void closeWS(std::string conn) {
 
   // Schedule on background thread:
   // wsc->closeWS();
-  write_queue->push(
+  background_queue->push(
     boost::bind(&WebSocketConnection::closeWS, wsc)
   );
 }
@@ -191,12 +191,12 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
   // Run on background thread:
   // createTcpServer(
   //   get_io_loop(), host.c_str(), port, (WebApplication*)pHandler,
-  //   &pServer, &blocker
+  //   background_queue, &pServer, &blocker
   // );
-  write_queue->push(
+  background_queue->push(
     boost::bind(createTcpServerSync,
       get_io_loop(), host.c_str(), port, (WebApplication*)pHandler,
-      &pServer, &blocker
+      background_queue, &pServer, &blocker
     )
   );
 
@@ -254,11 +254,9 @@ void stopServer(uv_stream_t* pServer) {
 
   // Run on background thread:
   // freeServer(pServer);
-  write_queue->push(
+  background_queue->push(
     boost::bind(freeServer, pServer)
   );
-
-  fprintf(stderr, "destroying\n");
 }
 
 //' Stop a running server

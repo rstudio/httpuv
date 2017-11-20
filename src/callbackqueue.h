@@ -1,13 +1,13 @@
-#ifndef WRITEQUEUE_HPP
-#define WRITEQUEUE_HPP
+#ifndef CALLBACKQUEUE_HPP
+#define CALLBACKQUEUE_HPP
 
 #include "queue.h"
 #include <boost/function.hpp>
 #include <uv.h>
 
-class WriteQueue {
+class CallbackQueue {
 public:
-  WriteQueue(uv_loop_t* loop);
+  CallbackQueue(uv_loop_t* loop);
   void push(boost::function<void (void)> cb);
   void flush();
 

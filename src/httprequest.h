@@ -10,7 +10,7 @@
 #include <http_parser.h>
 #include "socket.h"
 #include "webapplication.h"
-#include "writequeue.h"
+#include "callbackqueue.h"
 #include "httpresponse.h"
 
 enum Protocol {
@@ -59,17 +59,24 @@ private:
   // for R to process headers.
   std::vector<char> _requestBuffer;
 
+  // Most of the methods in HttpRequest run on a background thread. Some
+  // methods run on the main thread. This is used by the main-thread methods
+  // to schedule callbacks to run on the background thread.
+  CallbackQueue* _background_queue;
+
 public:
   HttpRequest(uv_loop_t* pLoop, WebApplication* pWebApplication,
-      Socket* pSocket)
+      Socket* pSocket, CallbackQueue* backgroundQueue)
     : _pLoop(pLoop), _pWebApplication(pWebApplication), _pSocket(pSocket),
       _protocol(HTTP), _bytesRead(0),
       _pWebSocketConnection(new WebSocketConnection(this)),
       _env(NULL),
       _ignoreNewData(false),
       _ref_count(1),
-      _is_closing(false) {
-
+      _is_closing(false),
+      _background_queue(backgroundQueue)
+  {
+    ASSERT_BACKGROUND_THREAD()
     uv_tcp_init(pLoop, &_handle.tcp);
     _handle.isTcp = true;
     _handle.stream.data = this;
@@ -153,9 +160,6 @@ DECLARE_CALLBACK_1(HttpRequest, on_message_complete, int, http_parser*)
 DECLARE_CALLBACK_1(HttpRequest, on_closed, void, uv_handle_t*)
 DECLARE_CALLBACK_3(HttpRequest, on_request_read, void, uv_stream_t*, ssize_t, const uv_buf_t*)
 DECLARE_CALLBACK_2(HttpRequest, on_response_write, void, uv_write_t*, int)
-
-
-extern WriteQueue* write_queue;
 
 
 #endif // HTTPREQUEST_HPP

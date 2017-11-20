@@ -243,7 +243,7 @@ void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse
     boost::bind(&HttpRequest::_on_headers_complete_complete, this, pResponse)
   );
 
-  write_queue->push(cb);
+  _background_queue->push(cb);
 }
 
 // This is called after the user's R onHeaders() function has finished. It can
@@ -355,7 +355,7 @@ void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse
     boost::bind(&HttpRequest::_on_message_complete_complete, this, pResponse)
   );
 
-  write_queue->push(cb);
+  _background_queue->push(cb);
 }
 
 void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
@@ -554,9 +554,9 @@ void HttpRequest::_call_r_on_ws_open() {
     )
   );
 
-  write_queue->push(cb);
+  _background_queue->push(cb);
   // Free req_buffer after data is written
-  write_queue->push(boost::bind(delete_vector_char, req_buffer));
+  _background_queue->push(boost::bind(delete_vector_char, req_buffer));
 }
 
 

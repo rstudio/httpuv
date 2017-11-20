@@ -1,6 +1,7 @@
 #include "http.h"
 #include "httprequest.h"
 #include "httpresponse.h"
+#include "callbackqueue.h"
 #include "socket.h"
 #include "debug.h"
 #include <stdlib.h>
@@ -21,12 +22,14 @@ void on_request(uv_stream_t* handle, int status) {
     return;
   }
 
-  Socket* pSocket = (Socket*)handle->data;
+  StreamHandleData* handle_data = (StreamHandleData*)handle->data;
+  Socket* pSocket = handle_data->socket;
+  CallbackQueue* bg_queue = handle_data->background_queue;
 
   // Freed by HttpRequest itself when close() is called, which
   // can occur on EOF, error, or when the Socket is destroyed
   HttpRequest* req = new HttpRequest(
-    handle->loop, pSocket->pWebApplication, pSocket);
+    handle->loop, pSocket->pWebApplication, pSocket, bg_queue);
 
   int r = uv_accept(handle, req->handle());
   if (r) {
@@ -75,7 +78,7 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
 }
 
 uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
-  int port, WebApplication* pWebApplication) {
+  int port, WebApplication* pWebApplication, CallbackQueue* background_queue) {
 
   // We own pWebApplication. It will be destroyed by the socket but if in
   // the future we have failure cases that stop execution before we get
@@ -86,7 +89,9 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   // TODO: Handle error
   uv_tcp_init(pLoop, &pSocket->handle.tcp);
   pSocket->handle.isTcp = true;
-  pSocket->handle.stream.data = pSocket;
+
+  // Deleted in freeServer()
+  pSocket->handle.stream.data = new StreamHandleData(pSocket, background_queue);;
   pSocket->pWebApplication = pWebApplication;
 
   struct sockaddr_in address = {0};
@@ -112,11 +117,11 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
 // A wrapper for createTcpServer. The main thread schedules this to run on the
 // background thread, then waits for this to finish, using a barrier.
 void createTcpServerSync(uv_loop_t* pLoop, const std::string& host,
-  int port, WebApplication* pWebApplication,
+  int port, WebApplication* pWebApplication, CallbackQueue* background_queue,
   uv_stream_t** pServer, uv_barrier_t* blocker)
 {
   ASSERT_BACKGROUND_THREAD()
-  *pServer = createTcpServer(pLoop, host, port, pWebApplication);
+  *pServer = createTcpServer(pLoop, host, port, pWebApplication, background_queue);
   uv_barrier_wait(blocker);
 }
 
@@ -124,6 +129,7 @@ void createTcpServerSync(uv_loop_t* pLoop, const std::string& host,
 void freeServer(uv_stream_t* pHandle) {
   ASSERT_BACKGROUND_THREAD()
   // TODO: Check if server is still running?
-  Socket* pSocket = (Socket*)pHandle->data;
-  pSocket->destroy();
+  StreamHandleData* handle_data = (StreamHandleData*)pHandle->data;
+  handle_data->socket->destroy();
+  delete handle_data;
 }

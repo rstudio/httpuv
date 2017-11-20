@@ -1,31 +1,31 @@
-#include "writequeue.h"
+#include "callbackqueue.h"
 #include "queue.h"
 #include "debug.h"
 #include <boost/function.hpp>
 #include <uv.h>
 
 
-// This non-class function is a plain C wrapper for WriteQueue::flush(), and
+// This non-class function is a plain C wrapper for CallbackQueue::flush(), and
 // is needed as a callback to pass to uv_async_send.
-void flush_write_queue(uv_async_t *handle) {
-  WriteQueue* wq = reinterpret_cast<WriteQueue*>(handle->data);
+void flush_callback_queue(uv_async_t *handle) {
+  CallbackQueue* wq = reinterpret_cast<CallbackQueue*>(handle->data);
   wq->flush();
 }
 
 
-WriteQueue::WriteQueue(uv_loop_t* loop) {
+CallbackQueue::CallbackQueue(uv_loop_t* loop) {
   q = queue< boost::function<void (void)> >();
-  uv_async_init(loop, &flush_handle, flush_write_queue);
+  uv_async_init(loop, &flush_handle, flush_callback_queue);
   flush_handle.data = reinterpret_cast<void*>(this);
 }
 
 
-void WriteQueue::push(boost::function<void (void)> cb) {
+void CallbackQueue::push(boost::function<void (void)> cb) {
   q.push(cb);
   uv_async_send(&flush_handle);
 }
 
-void WriteQueue::flush() {
+void CallbackQueue::flush() {
   ASSERT_BACKGROUND_THREAD()
   boost::function<void (void)> cb;
 
