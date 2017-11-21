@@ -8,20 +8,20 @@
 int FileDataSource::initialize(const std::string& path, bool owned) {
   _fd = open(path.c_str(), O_RDONLY);
   if (_fd == -1) {
-    fprintf(stderr, "Error opening file: %d\n", errno);
+    REprintf("Error opening file: %d\n", errno);
     return 1;
   }
   else {
     struct stat info = {0};
     if (fstat(_fd, &info)) {
-      fprintf(stderr, "Error opening path: %d\n", errno);
+      REprintf("Error opening path: %d\n", errno);
       ::close(_fd);
       return 1;
     }
     _length = info.st_size;
 
     if (owned && unlink(path.c_str())) {
-      fprintf(stderr, "Couldn't delete temp file: %d\n", errno);
+      REprintf("Couldn't delete temp file: %d\n", errno);
       // It's OK to continue
     }
 
@@ -45,7 +45,7 @@ uv_buf_t FileDataSource::getData(size_t bytesDesired) {
 
   ssize_t bytesRead = read(_fd, buffer, bytesDesired);
   if (bytesRead == -1) {
-    fprintf(stderr, "Error reading: %d\n", errno);
+    REprintf("Error reading: %d\n", errno);
     free(buffer);
     throw std::runtime_error("File read failed");
   }

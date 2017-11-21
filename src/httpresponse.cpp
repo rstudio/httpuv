@@ -107,7 +107,7 @@ void HttpResponse::writeResponse() {
 void HttpResponse::onResponseWritten(int status) {
   ASSERT_BACKGROUND_THREAD()
   if (status != 0) {
-    fprintf(stderr, "Error writing response: %d\n", status);
+    REprintf("Error writing response: %d\n", status);
     destroy(true);  // Force close
     return;
   }

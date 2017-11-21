@@ -22,13 +22,13 @@ int FileDataSource::initialize(const std::string& path, bool owned) {
                       NULL);
 
   if (_hFile == INVALID_HANDLE_VALUE) {
-    fprintf(stderr, "Error opening file: %d\n", GetLastError());
+    REprintf("Error opening file: %d\n", GetLastError());
     return 1;
   }
 
   if (!GetFileSizeEx(_hFile, &_length)) {
     CloseHandle(_hFile);
-    fprintf(stderr, "Error retrieving file size: %d\n", GetLastError());
+    REprintf("Error retrieving file size: %d\n", GetLastError());
     return 1;
   }
 
@@ -50,7 +50,7 @@ uv_buf_t FileDataSource::getData(size_t bytesDesired) {
 
   DWORD bytesRead;
   if (!ReadFile(_hFile, buffer, bytesDesired, &bytesRead, NULL)) {
-    fprintf(stderr, "Error reading: %d\n", GetLastError());
+    REprintf("Error reading: %d\n", GetLastError());
     free(buffer);
     throw std::runtime_error("File read failed");
   }

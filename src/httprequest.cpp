@@ -414,7 +414,7 @@ void HttpRequest::onWSClose(int code) {
 }
 
 void HttpRequest::fatal_error(const char* method, const char* message) {
-  fprintf(stderr, "ERROR: [%s] %s\n", method, message);
+  REprintf("ERROR: [%s] %s\n", method, message);
 }
 
 

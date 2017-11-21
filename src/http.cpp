@@ -18,7 +18,7 @@
 void on_request(uv_stream_t* handle, int status) {
   ASSERT_BACKGROUND_THREAD()
   if (status) {
-    fprintf(stderr, "connection error: %s\n", uv_strerror(status));
+    REprintf("connection error: %s\n", uv_strerror(status));
     return;
   }
 
@@ -33,7 +33,7 @@ void on_request(uv_stream_t* handle, int status) {
 
   int r = uv_accept(handle, req->handle());
   if (r) {
-    fprintf(stderr, "accept: %s\n", uv_strerror(r));
+    REprintf("accept: %s\n", uv_strerror(r));
     delete req;
     return;
   }
