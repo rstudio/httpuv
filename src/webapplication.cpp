@@ -89,31 +89,35 @@ void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
     queryString = url.substr(qsIndex);
   }
 
-  env["REQUEST_METHOD"] = pRequest->method();
-  env["SCRIPT_NAME"] = std::string("");
-  env["PATH_INFO"] = path;
-  env["QUERY_STRING"] = queryString;
+  // When making assignments into the Environment, the value must be wrapped
+  // in a Rcpp object -- letting Rcpp automatically do the wrapping can result
+  // in an object being GC'd too early.
+  // https://github.com/RcppCore/Rcpp/issues/780
+  env["REQUEST_METHOD"] = CharacterVector(pRequest->method());
+  env["SCRIPT_NAME"] = CharacterVector(std::string(""));
+  env["PATH_INFO"] = CharacterVector(path);
+  env["QUERY_STRING"] = CharacterVector(queryString);
 
-  env["rook.version"] = "1.1-0";
-  env["rook.url_scheme"] = "http";
+  env["rook.version"] = CharacterVector("1.1-0");
+  env["rook.url_scheme"] = CharacterVector("http");
 
   Address addr = pRequest->serverAddress();
-  env["SERVER_NAME"] = addr.host;
+  env["SERVER_NAME"] = CharacterVector(addr.host);
   std::ostringstream portstr;
   portstr << addr.port;
-  env["SERVER_PORT"] = portstr.str();
+  env["SERVER_PORT"] = CharacterVector(portstr.str());
 
   Address raddr = pRequest->clientAddress();
-  env["REMOTE_ADDR"] = raddr.host;
+  env["REMOTE_ADDR"] = CharacterVector(raddr.host);
   std::ostringstream rportstr;
   rportstr << raddr.port;
-  env["REMOTE_PORT"] = rportstr.str();
+  env["REMOTE_PORT"] = CharacterVector(rportstr.str());
 
   const RequestHeaders& headers = pRequest->headers();
   for (RequestHeaders::const_iterator it = headers.begin();
     it != headers.end();
     it++) {
-    env["HTTP_" + normalizeHeaderName(it->first)] = it->second;
+    env["HTTP_" + normalizeHeaderName(it->first)] = CharacterVector(it->second);
   }
 }
 
