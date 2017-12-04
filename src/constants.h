@@ -54,10 +54,4 @@ static inline std::string trim(const std::string &s) {
   return s.substr(start, end-start);
 }
 
-// later() callbacks require void(void*) function
-inline void delete_vector_char(void* obj) {
-  std::vector<char>* vc_obj = reinterpret_cast<std::vector<char>*>(obj);
-  delete vc_obj;
-}
-
 #endif // CONSTANTS_H

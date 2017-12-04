@@ -3,6 +3,7 @@
 #include <later_api.h>
 #include "httprequest.h"
 #include "callback.h"
+#include "utils.h"
 #include "debug.h"
 
 
@@ -238,6 +239,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
 // something there.
 void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse) {
   ASSERT_MAIN_THREAD()
+  trace("schedule_on_headers_complete_complete");
 
   boost::function<void (void)> cb(
     boost::bind(&HttpRequest::_on_headers_complete_complete, this, pResponse)
@@ -405,8 +407,8 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   later::later(invoke_callback, on_ws_message_callback, 0);
 
   // Schedule for after on_ws_message_callback:
-  // delete_vector_char(buf)
-  later::later(delete_vector_char, buf, 0);
+  // delete_cb<std::vector<char>*>(buf)
+  later::later(delete_cb<std::vector<char>*>, buf, 0);
 }
 
 void HttpRequest::onWSClose(int code) {
@@ -556,7 +558,7 @@ void HttpRequest::_call_r_on_ws_open() {
 
   _background_queue->push(cb);
   // Free req_buffer after data is written
-  _background_queue->push(boost::bind(delete_vector_char, req_buffer));
+  _background_queue->push(boost::bind(delete_cb<std::vector<char>*>, req_buffer));
 }
 
 

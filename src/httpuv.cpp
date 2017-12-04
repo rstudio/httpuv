@@ -13,6 +13,7 @@
 #include "webapplication.h"
 #include "http.h"
 #include "callbackqueue.h"
+#include "utils.h"
 #include "debug.h"
 #include <Rinternals.h>
 
@@ -147,7 +148,9 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
   );
 
   background_queue->push(cb);
-  background_queue->push(boost::bind(delete_vector_char, str)); // Free str after data is written
+  // Free str after data is written
+  // delete_cb<std::vector<char>*>(str)
+  background_queue->push(boost::bind(delete_cb<std::vector<char>*>, str));
 }
 
 // [[Rcpp::export]]

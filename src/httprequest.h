@@ -12,21 +12,13 @@
 #include "webapplication.h"
 #include "callbackqueue.h"
 #include "httpresponse.h"
+#include "utils.h"
 #include <later_api.h>
 
 enum Protocol {
   HTTP,
   WebSockets
 };
-
-// A callback for deleting an Rcpp::Environment on the main thread. It's
-// unsafe to delete an Rcpp::Environment on the background thread, because it
-// could trigger GC-related bookkeeping on that thread, which is unsafe.
-inline void delete_Environment(void* env) {
-  ASSERT_MAIN_THREAD()
-  Rcpp::Environment* envir = reinterpret_cast<Rcpp::Environment*>(env);
-  delete envir;
-}
 
 class HttpRequest : WebSocketConnectionCallbacks {
 
@@ -101,7 +93,7 @@ public:
     try {
       delete _pWebSocketConnection;
       // We need to delete the Rcpp::Environment on the main thread
-      later::later(delete_Environment, _env, 0);
+      later::later(delete_cb<Rcpp::Environment*>, _env, 0);
     } catch (...) {}
   }
 
