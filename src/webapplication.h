@@ -5,6 +5,7 @@
 #include <uv.h>
 #include <Rcpp.h>
 #include "websockets.h"
+#include "debug.h"
 
 class HttpRequest;
 class HttpResponse;
@@ -41,9 +42,14 @@ public:
                   Rcpp::Function onWSClose) :
     _onHeaders(onHeaders), _onBodyData(onBodyData), _onRequest(onRequest),
     _onWSOpen(onWSOpen), _onWSMessage(onWSMessage), _onWSClose(onWSClose) {
+    ASSERT_MAIN_THREAD()
   }
 
-  virtual ~RWebApplication() {}
+  virtual ~RWebApplication() {
+    // The Functions need to be deleted on the main thread because their
+    // destructors call R's memory management functions.
+    ASSERT_MAIN_THREAD()
+  }
 
   virtual void onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback);
   virtual void onBodyData(HttpRequest* pRequest,

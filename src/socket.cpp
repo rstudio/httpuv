@@ -1,5 +1,6 @@
 #include "socket.h"
 #include "httprequest.h"
+#include <later_api.h>
 #include <uv.h>
 
 void on_Socket_close(uv_handle_t* pHandle);
@@ -14,10 +15,17 @@ void Socket::removeConnection(HttpRequest* request) {
     connections.end());
 }
 
-Socket::~Socket() {
+void delete_webApplication(void* pWebApplication) {
   try {
-    delete pWebApplication;
+    delete reinterpret_cast<WebApplication*>(pWebApplication);
   } catch(...) {}
+}
+
+Socket::~Socket() {
+  // Need to delete pWebApplication on the main thread because it contains
+  // Rcpp::Function objects. We use our own callback instead of delete_cb()
+  // because it needs to be wrapped in try-catch.
+  later::later(delete_webApplication, pWebApplication, 0);
 }
 
 void Socket::destroy() {
