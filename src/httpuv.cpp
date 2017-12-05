@@ -252,7 +252,7 @@ void stopServer(uv_stream_t* pServer) {
   if (pos != pServers.end()) {
     pServers.erase(pos);
   } else {
-    Rcpp::exception("pServer handle not found in list!");
+    throw Rcpp::exception("pServer handle not found in list of running servers.");
   }
 
   // Run on background thread:
