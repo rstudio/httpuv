@@ -408,7 +408,7 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
 
   // Schedule for after on_ws_message_callback:
   // delete_cb<std::vector<char>*>(buf)
-  later::later(delete_cb<std::vector<char>*>, buf, 0);
+  later::later(delete_cb_main<std::vector<char>*>, buf, 0);
 }
 
 void HttpRequest::onWSClose(int code) {
@@ -558,7 +558,7 @@ void HttpRequest::_call_r_on_ws_open() {
 
   _background_queue->push(cb);
   // Free req_buffer after data is written
-  _background_queue->push(boost::bind(delete_cb<std::vector<char>*>, req_buffer));
+  _background_queue->push(boost::bind(delete_cb_bg<std::vector<char>*>, req_buffer));
 }
 
 

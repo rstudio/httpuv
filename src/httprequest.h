@@ -93,7 +93,7 @@ public:
     try {
       delete _pWebSocketConnection;
       // We need to delete the Rcpp::Environment on the main thread
-      later::later(delete_cb<Rcpp::Environment*>, _env, 0);
+      later::later(delete_cb_main<Rcpp::Environment*>, _env, 0);
     } catch (...) {}
   }
 

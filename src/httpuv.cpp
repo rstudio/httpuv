@@ -150,7 +150,7 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
   background_queue->push(cb);
   // Free str after data is written
   // delete_cb<std::vector<char>*>(str)
-  background_queue->push(boost::bind(delete_cb<std::vector<char>*>, str));
+  background_queue->push(boost::bind(delete_cb_bg<std::vector<char>*>, str));
 }
 
 // [[Rcpp::export]]

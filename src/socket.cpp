@@ -23,8 +23,8 @@ void delete_webApplication(void* pWebApplication) {
 
 Socket::~Socket() {
   // Need to delete pWebApplication on the main thread because it contains
-  // Rcpp::Function objects. We use our own callback instead of delete_cb()
-  // because it needs to be wrapped in try-catch.
+  // Rcpp::Function objects. We use our own callback instead of
+  // delete_cb_main() because it needs to be wrapped in try-catch.
   later::later(delete_webApplication, pWebApplication, 0);
 }
 
