@@ -15,6 +15,7 @@
 #include "callbackqueue.h"
 #include "utils.h"
 #include "debug.h"
+#include "httpuv.h"
 #include <Rinternals.h>
 
 

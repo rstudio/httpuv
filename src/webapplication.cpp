@@ -1,4 +1,5 @@
 #include <boost/bind.hpp>
+#include "httpuv.h"
 #include "filedatasource.h"
 #include "webapplication.h"
 #include "httprequest.h"
@@ -72,6 +73,18 @@ const std::string& getStatusDescription(int code) {
     return unknown;
 }
 
+// A generic HTTP response to send when an error (uncaught in the R code)
+// happens during processing a request.
+Rcpp::List errorResponse() {
+  using namespace Rcpp;
+  return List::create(
+    _["status"] = 500L,
+    _["headers"] = List::create(
+      _["Content-Type"] = "text/plain; charset=UTF-8"
+    ),
+    _["body"] = "An exception occurred."
+  );
+}
 
 void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
   ASSERT_MAIN_THREAD()
@@ -187,8 +200,18 @@ void RWebApplication::onHeaders(HttpRequest* pRequest, boost::function<void(Http
 
   requestToEnv(pRequest, &pRequest->env());
 
-  // Call the R onHeaders function
-  Rcpp::List response(_onHeaders(pRequest->env()));
+  // Call the R onHeaders function. If an exception occurs during processing,
+  // catch it and then send a generic error response.
+  Rcpp::List response;
+  try {
+    response = _onHeaders(pRequest->env());
+  } catch (Rcpp::internal::InterruptedException &e) {
+    trace("Interrupt occurred in _onHeaders");
+    response = errorResponse();
+  } catch (...) {
+    trace("Exception occurred in _onHeaders");
+    response = errorResponse();
+  }
 
   // new HttpResponse object. The callback will invoke
   // HttpResponse->writeResponse(), which adds a callback to destroy(), which
@@ -219,7 +242,23 @@ void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(Ht
 
   // Call the R call() function, and pass it the callback xptr so it can
   // asynchronously pass data back to C++.
-  _onRequest(pRequest->env(), callback_xptr);
+  try {
+    _onRequest(pRequest->env(), callback_xptr);
+
+    // On the R side, httpuv's call() function will catch errors that happen
+    // in the user-defined call() function, but if an error happens outside of
+    // that scope, or if another uncaught exception happens (like an interrupt
+    // if Ctrl-C is pressed), then it will bubble up to here, where we'll catch
+    // it and deal with it.
+
+  } catch (Rcpp::internal::InterruptedException &e) {
+    trace("Interrupt occurred in _onRequest");
+    invokeCppCallback(errorResponse(), callback_xptr);
+  } catch (...) {
+    trace("Exception occurred in _onRequest");
+    invokeCppCallback(errorResponse(), callback_xptr);
+  }
+
   UNPROTECT(1);
 }
 
