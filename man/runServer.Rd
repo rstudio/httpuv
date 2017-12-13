@@ -4,8 +4,7 @@
 \alias{runServer}
 \title{Run a server}
 \usage{
-runServer(host, port, app, interruptIntervalMs = ifelse(interactive(), 100,
-  1000))
+runServer(host, port, app, interruptIntervalMs = NULL)
 }
 \arguments{
 \item{host}{A string that is a valid IPv4 address that is owned by this 
@@ -18,8 +17,7 @@ X, port numbers smaller than 1025 require root privileges.}
 \item{app}{A collection of functions that define your application. See 
 \code{\link{startServer}}.}
 
-\item{interruptIntervalMs}{How often to check for interrupt. The default 
-should be appropriate for most situations.}
+\item{interruptIntervalMs}{Deprecated (last used in httpuv 1.3.5).}
 }
 \description{
 This is a convenience function that provides a simple way to call 

@@ -38,12 +38,28 @@ A handle for this server that can be passed to
 Creates an HTTP/WebSocket server on the specified host and port.
 }
 \details{
-\code{startServer} binds the specified port, but no connections are 
-  actually accepted. See \code{\link{service}}, which should be called 
-  repeatedly in order to actually accept and handle connections. If the port
-  cannot be bound (most likely due to permissions or because it is already
-  bound), an error is raised.
-  
+\code{startServer} binds the specified port and listens for
+  connections on an thread running in the background. This background thread
+  handles the I/O, and when it receives a HTTP request, it will schedule a
+  call to the user-defined R functions in \code{app} to handle the request.
+  This scheduling is done with \code{\link[later]{later}()}. When the R call
+  stack is empty -- in other words, when an interactive R session is sitting
+  idle at the command prompt -- R will automatically run the scheduled calls.
+  However, if the call stack is not empty -- if R is evaluating other R code
+  -- then the callbacks will not execute until either the call stack is
+  empty, or the \code{\link[later]{run_now}()} function is called. This
+  function tells R to execute any callbacks that have been scheduled by
+  \code{\link[later]{later}()}. The \code{\link{service}()} function is
+  essentially a wrapper for \code{\link[later]{run_now}()}.
+
+  In older versions of httpuv (1.3.5 and below), it did not use a background
+  thread for I/O, and when this function was called, it did not accept
+  connections immediately. It was necessary to call \code{\link{service}}
+  repeatedly in order to actually accept and handle connections.
+
+  If the port cannot be bound (most likely due to permissions or because it
+  is already bound), an error is raised.
+
   The \code{app} parameter is where your application logic will be provided 
   to the server. This can be a list, environment, or reference class that 
   contains the following named functions/methods:
@@ -68,5 +84,5 @@ Creates an HTTP/WebSocket server on the specified host and port.
   than a TCP socket (this is not common).
 }
 \seealso{
-\code{\link{runServer}}
+\code{\link{stopServer}}, \code{\link{runServer}}
 }

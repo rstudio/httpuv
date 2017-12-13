@@ -2,18 +2,15 @@
 % Please edit documentation in R/httpuv.R
 \name{stopDaemonizedServer}
 \alias{stopDaemonizedServer}
-\title{Stop a running daemonized server in Unix environments}
+\title{Stop a running daemonized server in Unix environments (deprecated)}
 \usage{
 stopDaemonizedServer(handle)
 }
 \arguments{
 \item{handle}{A handle that was previously returned from
-\code{\link{startDaemonizedServer}}.}
+\code{\link{startServer}}.}
 }
 \description{
-Given a handle that was returned from a previous invocation of 
-\code{\link{startDaemonizedServer}}, closes all open connections for that server,
-removes listeners in the R event loop and 
-unbinds the port. \strong{Be careful not to call \code{stopDaemonizedServer} more than 
-once on a handle, as this will cause the R process to crash!}
+This function will be removed in a future release of httpuv. Instead, use
+\code{\link{stopServer}}.
 }

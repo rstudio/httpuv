@@ -8,29 +8,31 @@ service(timeoutMs = ifelse(interactive(), 100, 1000))
 }
 \arguments{
 \item{timeoutMs}{Approximate number of milliseconds to run before returning.
-It will return after an I/O event occurs, or after the timeout duration has
-elapsed. If 0, then the function will continually process requests without
-returning unless an error occurs. If NA, performs a non-blocking run
-without waiting.}
+It will return this duration has elapsed. If 0 or Inf, then the function
+will continually process requests without returning unless an error occurs.
+If NA, performs a non-blocking run without waiting.}
 }
 \description{
-Process HTTP requests and WebSocket messages. Even if a server exists, no
-requests are serviced unless and until \code{service} is called.
+Process HTTP requests and WebSocket messages. If there is nothing on R's call
+stack -- if R is sitting idle at the command prompt -- it is not necessary to
+call this function, because requests will be handled automatically. However,
+if R is executing code, then requests will not be handled until either the
+call stack is empty, or this function is called (or alternatively,
+\code{\link[later]{run_now}} is called).
 }
 \details{
-Note that while \code{service} is waiting for a new request, the process is
-not interruptible using normal R means (Esc, Ctrl+C, etc.). If being
-interruptible is a requirement, then call \code{service} in a while loop with
-a very short but non-zero \code{\link{Sys.sleep}} during each iteration.
+In previous versions of httpuv (1.3.5 and below), even if a server created by
+\code{\link{startServer}} exists, no requests were serviced unless and until
+\code{service} was called.
 
-This function calls \code{\link[later]{run_now}()}, so if your application
-schedules any \code{\link[later]{later}} callbacks, they will be invoked.
+This function simply calls \code{\link[later]{run_now}()}, so if your
+application schedules any \code{\link[later]{later}} callbacks, they will be
+invoked.
 }
 \examples{
 \dontrun{
 while (TRUE) {
   service()
-  Sys.sleep(0.001)
 }
 }
 
