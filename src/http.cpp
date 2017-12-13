@@ -22,9 +22,8 @@ void on_request(uv_stream_t* handle, int status) {
     return;
   }
 
-  StreamHandleData* handle_data = (StreamHandleData*)handle->data;
-  Socket* pSocket = handle_data->socket;
-  CallbackQueue* bg_queue = handle_data->background_queue;
+  Socket* pSocket = (Socket*)handle->data;
+  CallbackQueue* bg_queue = pSocket->background_queue;
 
   // Freed by HttpRequest itself when close() is called, which
   // can occur on EOF, error, or when the Socket is destroyed
@@ -50,12 +49,11 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
   // that far, we MUST delete pWebApplication ourselves.
 
   // Deletes itself when destroy() is called, which occurs in freeServer()
-  Socket* pSocket = new Socket();
+  Socket* pSocket = new Socket(pWebApplication, NULL);
   // TODO: Handle error
   uv_pipe_init(pLoop, &pSocket->handle.pipe, true);
   pSocket->handle.isTcp = false;
   pSocket->handle.stream.data = pSocket;
-  pSocket->pWebApplication = pWebApplication;
 
   mode_t oldMask = 0;
   if (mask >= 0)
@@ -85,14 +83,11 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   // that far, we MUST delete pWebApplication ourselves.
 
   // Deletes itself when destroy() is called, in io_thread()
-  Socket* pSocket = new Socket();
+  Socket* pSocket = new Socket(pWebApplication, background_queue);
   // TODO: Handle error
   uv_tcp_init(pLoop, &pSocket->handle.tcp);
   pSocket->handle.isTcp = true;
-
-  // Deleted in freeServer()
-  pSocket->handle.stream.data = new StreamHandleData(pSocket, background_queue);;
-  pSocket->pWebApplication = pWebApplication;
+  pSocket->handle.stream.data = pSocket;
 
   struct sockaddr_in address = {0};
   int r = uv_ip4_addr(host.c_str(), port, &address);
@@ -129,7 +124,6 @@ void createTcpServerSync(uv_loop_t* pLoop, const std::string& host,
 void freeServer(uv_stream_t* pHandle) {
   ASSERT_BACKGROUND_THREAD()
   // TODO: Check if server is still running?
-  StreamHandleData* handle_data = (StreamHandleData*)pHandle->data;
-  handle_data->socket->destroy();
-  delete handle_data;
+  Socket* pSocket = (Socket*)pHandle->data;
+  pSocket->destroy();
 }

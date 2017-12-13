@@ -11,9 +11,12 @@ class Socket {
 public:
   VariantHandle handle;
   WebApplication* pWebApplication;
+  CallbackQueue* background_queue;
   std::vector<HttpRequest*> connections;
 
-  Socket() {
+  Socket(WebApplication* pWebApplication, CallbackQueue* background_queue)
+    : pWebApplication(pWebApplication), background_queue(background_queue)
+  {
   }
 
   void addConnection(HttpRequest* request);

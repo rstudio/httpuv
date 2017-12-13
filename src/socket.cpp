@@ -40,6 +40,5 @@ void Socket::destroy() {
 }
 
 void on_Socket_close(uv_handle_t* pHandle) {
-  StreamHandleData* handle_data = (StreamHandleData*)pHandle->data;
-  delete handle_data->socket;
+  delete (Socket*)pHandle->data;
 }
