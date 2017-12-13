@@ -313,8 +313,34 @@ void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
 int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) {
   ASSERT_BACKGROUND_THREAD()
   trace("on_body");
-  _pWebApplication->onBodyData(this, pAt, length);
+
+  // Copy pAt because the source data is deleted right after calling this
+  // function.
+  std::vector<char>* buf = new std::vector<char>(pAt, pAt + length);
+
+  // Schedule on main thread:
+  // _pWebApplication->onBodyData(this, pAt, length);
+  BoostFunctionCallback* webapp_on_body_data_callback = new BoostFunctionCallback(
+    boost::bind(
+      &WebApplication::onBodyData,
+      _pWebApplication,
+      this,
+      &(*buf)[0],
+      length
+    )
+  );
+  later::later(invoke_callback, webapp_on_body_data_callback, 0);
+
+  // Schedule for after on_ws_message_callback:
+  // delete_cb_main<std::vector<char>*>(buf)
+  later::later(delete_cb_main<std::vector<char>*>, buf, 0);
+
+  // TODO: _bytesRead currently is not used anywhere else. If this changes,
+  // then depending on how it's used, it might make more sense to have
+  // _pWebApplication->onBodyData() set this, or schedule a callback that sets
+  // it on the background thread.
   _bytesRead += length;
+
   return 0;
 }
 
@@ -348,8 +374,8 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
   return 0;
 }
 
-// This is called at the end of WebApplication::getResponse(). It puts an item on the
-// write queue and signals to the background thread that there's something there.
+// This is called by the user's application code during or after the end of
+// WebApplication::getResponse(). It puts an item on the background queue.
 void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse) {
   ASSERT_MAIN_THREAD()
 
@@ -407,7 +433,7 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   later::later(invoke_callback, on_ws_message_callback, 0);
 
   // Schedule for after on_ws_message_callback:
-  // delete_cb<std::vector<char>*>(buf)
+  // delete_cb_main<std::vector<char>*>(buf)
   later::later(delete_cb_main<std::vector<char>*>, buf, 0);
 }
 
