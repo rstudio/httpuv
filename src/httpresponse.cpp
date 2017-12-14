@@ -53,6 +53,7 @@ public:
 
 void HttpResponse::writeResponse() {
   ASSERT_BACKGROUND_THREAD()
+  trace("HttpResponse::writeResponse");
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
   response << "HTTP/1.1 " << _statusCode << " " << _status << "\r\n";
@@ -106,6 +107,7 @@ void HttpResponse::writeResponse() {
 
 void HttpResponse::onResponseWritten(int status) {
   ASSERT_BACKGROUND_THREAD()
+  trace("HttpResponse::onResponseWritten");
   if (status != 0) {
     REprintf("Error writing response: %d\n", status);
     destroy(true);  // Force close
@@ -134,6 +136,7 @@ void HttpResponse::closeAfterWritten() {
 // deletes this.
 void HttpResponse::destroy(bool forceClose) {
   ASSERT_BACKGROUND_THREAD()
+  trace("HttpResponse::destroy");
   if (forceClose || _closeAfterWritten) {
     _pRequest->close();
   }

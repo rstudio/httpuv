@@ -221,15 +221,37 @@ void RWebApplication::onHeaders(HttpRequest* pRequest, boost::function<void(Http
 }
 
 void RWebApplication::onBodyData(HttpRequest* pRequest,
-                        const char* pData, size_t length) {
+      const char* pData, size_t length,
+      boost::function<void(HttpResponse*)> errorCallback)
+{
   ASSERT_MAIN_THREAD()
+  trace("RWebApplication::onBodyData");
+
+  // We're in an error state, but the background thread has already scheduled
+  // more data to be processed here. Don't process more data.
+  if (pRequest->isResponseScheduled())
+    return;
+
   Rcpp::RawVector rawVector(length);
   std::copy(pData, pData + length, rawVector.begin());
-  _onBodyData(pRequest->env(), rawVector);
+  try {
+    _onBodyData(pRequest->env(), rawVector);
+  } catch (...) {
+    trace("Exception occurred in _onBodyData");
+    // Send an error message to the client. It's very possible that getResponse() or more
+    // calls to onBodyData() will have been scheduled on the main thread
+    // before the errorCallback is called.
+    //
+    // Note that some (most?) clients won't correctly handle a response that's
+    // sent early, before the request is completed.
+    // https://stackoverflow.com/a/18370751/412655
+    errorCallback(listToResponse(pRequest, errorResponse()));
+  }
 }
 
 void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
   ASSERT_MAIN_THREAD()
+  trace("RWebApplication::getResponse");
   using namespace Rcpp;
 
   // Pass callback to R:
@@ -239,6 +261,14 @@ void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(Ht
   );
 
   SEXP callback_xptr = PROTECT(R_MakeExternalPtr(callback_wrapper, R_NilValue, R_NilValue));
+
+  // We previously encountered an error processing the body. Don't call into
+  // the R call/_onRequest() function. We need to signal the HttpRequest
+  // object to let it know that we had an error.
+  if (pRequest->isResponseScheduled()) {
+    invokeCppCallback(NULL, callback_xptr);
+    return;
+  }
 
   // Call the R call() function, and pass it the callback xptr so it can
   // asynchronously pass data back to C++.

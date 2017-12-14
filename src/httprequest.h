@@ -34,13 +34,13 @@ private:
   std::string _lastHeaderField;
   unsigned long _bytesRead;
   WebSocketConnection* _pWebSocketConnection;
+  Rcpp::Environment* _env;
   // _ignoreNewData is used in cases where we rejected a request (by sending
   // a response with a non-100 status code) before its body was received. We
   // don't want to close the connection because the response might not be
   // sent yet, but we don't want to parse any more data from this connection.
   // (You would think uv_stop_read could be called, but it seems to prevent
   // the response from being written as well.)
-  Rcpp::Environment* _env;
   bool _ignoreNewData;
 
   // TODO: Need a simpler, more robust construct for this
@@ -55,6 +55,8 @@ private:
   void _parse_http_data(char* buf, const ssize_t n);
   // Parse data that has been stored in the buffer.
   void _parse_http_data_from_buffer();
+
+  bool _response_scheduled;
 
   // For buffering the incoming HTTP request when data comes in while waiting
   // for R to process headers.
@@ -75,6 +77,7 @@ public:
       _ignoreNewData(false),
       _ref_count(1),
       _is_closing(false),
+      _response_scheduled(false),
       _background_queue(backgroundQueue)
   {
     ASSERT_BACKGROUND_THREAD()
@@ -114,13 +117,21 @@ public:
                    const char* pFooter, size_t footerSize);
   void closeWSSocket();
 
+  // Call this function from the main thread to indicate that a response has
+  // been scheduled. This is needed because sometimes by the time the main
+  // thread knows that it needs to send a response, the bg thread will have
+  // kept going and scheduled another call into the main thread to send a
+  // response.
+  void responseScheduled();
+  bool isResponseScheduled();
 
   void _call_r_on_ws_open();
   void _schedule_on_headers_complete_complete(HttpResponse* pResponse);
   void _on_headers_complete_complete(HttpResponse* pResponse);
+  void _schedule_on_body_error(HttpResponse* pResponse);
+  void _on_body_error(HttpResponse* pResponse);
   void _schedule_on_message_complete_complete(HttpResponse* pResponse);
   void _on_message_complete_complete(HttpResponse* pResponse);
-
 
 public:
   // Callbacks
@@ -139,6 +150,7 @@ public:
   void fatal_error(const char* method, const char* message);
   void _on_closed(uv_handle_t* handle);
   void close();
+  void schedule_close();
   void _on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* buf);
   void _on_response_write(int status);
 
