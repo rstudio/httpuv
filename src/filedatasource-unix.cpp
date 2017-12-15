@@ -6,6 +6,8 @@
 #include <errno.h>
 
 int FileDataSource::initialize(const std::string& path, bool owned) {
+  ASSERT_MAIN_THREAD()
+
   _fd = open(path.c_str(), O_RDONLY);
   if (_fd == -1) {
     REprintf("Error opening file: %d\n", errno);

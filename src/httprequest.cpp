@@ -473,6 +473,10 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   // function.
   std::vector<char>* buf = new std::vector<char>(data, data + len);
 
+  boost::function<void (void)> error_callback(
+    boost::bind(&HttpRequest::schedule_close, this)
+  );
+
   // Schedule:
   // _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
   BoostFunctionCallback* on_ws_message_callback = new BoostFunctionCallback(
@@ -482,7 +486,8 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
       _pWebSocketConnection,
       binary,
       &(*buf)[0],
-      len
+      len,
+      error_callback
     )
   );
   later::later(invoke_callback, on_ws_message_callback, 0);
@@ -632,7 +637,10 @@ void HttpRequest::_call_r_on_ws_open() {
   ASSERT_MAIN_THREAD()
   trace("_call_r_on_ws_open");
 
-  this->_pWebApplication->onWSOpen(this);
+  boost::function<void (void)> error_callback(
+    boost::bind(&HttpRequest::schedule_close, this)
+  );
+  this->_pWebApplication->onWSOpen(this, error_callback);
 
   // _requestBuffer is likely empty at this point, but copy its contents and
   // _pass along just in case.

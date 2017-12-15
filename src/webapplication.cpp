@@ -292,18 +292,29 @@ void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(Ht
   UNPROTECT(1);
 }
 
-void RWebApplication::onWSOpen(HttpRequest* pRequest) {
+void RWebApplication::onWSOpen(HttpRequest* pRequest,
+                               boost::function<void(void)> error_callback) {
   ASSERT_MAIN_THREAD()
   requestToEnv(pRequest, &pRequest->env());
-  _onWSOpen(externalize<WebSocketConnection>(pRequest->websocket()), pRequest->env());
+  try {
+    _onWSOpen(externalize<WebSocketConnection>(pRequest->websocket()), pRequest->env());
+  } catch(...) {
+    error_callback();
+  }
 }
 
-void RWebApplication::onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {
+void RWebApplication::onWSMessage(WebSocketConnection* pConn,
+                                  bool binary, const char* data, size_t len,
+                                  boost::function<void(void)> error_callback) {
   ASSERT_MAIN_THREAD()
-  if (binary)
-    _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::vector<uint8_t>(data, data + len));
-  else
-    _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::string(data, len));
+  try {
+    if (binary)
+      _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::vector<uint8_t>(data, data + len));
+    else
+      _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::string(data, len));
+  } catch(...) {
+    error_callback();
+  }
 }
 
 void RWebApplication::onWSClose(WebSocketConnection* pConn) {

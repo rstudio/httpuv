@@ -18,9 +18,10 @@ public:
                           const char* data, size_t len,
                           boost::function<void(HttpResponse*)> errorCallback) = 0;
   virtual void getResponse(HttpRequest* request, boost::function<void(HttpResponse*)> callback) = 0;
-  virtual void onWSOpen(HttpRequest* pRequest) = 0;
+  virtual void onWSOpen(HttpRequest* pRequest, boost::function<void(void)> error_callback) = 0;
   virtual void onWSMessage(WebSocketConnection* conn,
-                           bool binary, const char* data, size_t len) = 0;
+                           bool binary, const char* data, size_t len,
+                           boost::function<void(void)> error_callback) = 0;
   virtual void onWSClose(WebSocketConnection* conn) = 0;
 };
 
@@ -57,9 +58,10 @@ public:
                           const char* data, size_t len,
                           boost::function<void(HttpResponse*)> errorCallback);
   virtual void getResponse(HttpRequest* request, boost::function<void(HttpResponse*)> callback);
-  virtual void onWSOpen(HttpRequest* pRequest);
+  virtual void onWSOpen(HttpRequest* pRequest, boost::function<void(void)> error_callback);
   virtual void onWSMessage(WebSocketConnection* conn,
-                           bool binary, const char* data, size_t len);
+                           bool binary, const char* data, size_t len,
+                           boost::function<void(void)> error_callback);
   virtual void onWSClose(WebSocketConnection* conn);
 };
 
