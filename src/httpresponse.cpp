@@ -2,6 +2,7 @@
 #include "httprequest.h"
 #include "constants.h"
 #include "debug.h"
+#include "utils.h"
 #include <uv.h>
 
 
@@ -109,7 +110,7 @@ void HttpResponse::onResponseWritten(int status) {
   ASSERT_BACKGROUND_THREAD()
   trace("HttpResponse::onResponseWritten");
   if (status != 0) {
-    REprintf("Error writing response: %d\n", status);
+    err_printf("Error writing response: %d\n", status);
     destroy(true);  // Force close
     return;
   }

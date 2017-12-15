@@ -1,6 +1,7 @@
 #ifdef _WIN32
 
 #include "filedatasource.h"
+#include "utils.h"
 #include <Windows.h>
 
 // Windows gets a whole different implementation of FileDataSource
@@ -8,6 +9,7 @@
 // using the POSIX file functions.
 
 int FileDataSource::initialize(const std::string& path, bool owned) {
+  ASSERT_MAIN_THREAD()
 
   DWORD flags = FILE_FLAG_SEQUENTIAL_SCAN;
   if (owned)
@@ -40,6 +42,7 @@ uint64_t FileDataSource::size() const {
 }
 
 uv_buf_t FileDataSource::getData(size_t bytesDesired) {
+  ASSERT_BACKGROUND_THREAD()
   if (bytesDesired == 0)
     return uv_buf_init(NULL, 0);
 
@@ -50,7 +53,8 @@ uv_buf_t FileDataSource::getData(size_t bytesDesired) {
 
   DWORD bytesRead;
   if (!ReadFile(_hFile, buffer, bytesDesired, &bytesRead, NULL)) {
-    REprintf("Error reading: %d\n", GetLastError());
+
+    err_printf("Error reading: %d\n", GetLastError());
     free(buffer);
     throw std::runtime_error("File read failed");
   }

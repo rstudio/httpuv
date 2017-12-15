@@ -3,6 +3,7 @@
 #include "httpresponse.h"
 #include "callbackqueue.h"
 #include "socket.h"
+#include "utils.h"
 #include "debug.h"
 #include <stdlib.h>
 #include <string.h>
@@ -18,7 +19,7 @@
 void on_request(uv_stream_t* handle, int status) {
   ASSERT_BACKGROUND_THREAD()
   if (status) {
-    REprintf("connection error: %s\n", uv_strerror(status));
+    err_printf("connection error: %s\n", uv_strerror(status));
     return;
   }
 
@@ -32,7 +33,7 @@ void on_request(uv_stream_t* handle, int status) {
 
   int r = uv_accept(handle, req->handle());
   if (r) {
-    REprintf("accept: %s\n", uv_strerror(r));
+    err_printf("accept: %s\n", uv_strerror(r));
     delete req;
     return;
   }

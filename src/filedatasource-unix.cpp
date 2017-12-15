@@ -1,6 +1,7 @@
 #ifndef _WIN32
 
 #include "filedatasource.h"
+#include "utils.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -47,7 +48,7 @@ uv_buf_t FileDataSource::getData(size_t bytesDesired) {
 
   ssize_t bytesRead = read(_fd, buffer, bytesDesired);
   if (bytesRead == -1) {
-    REprintf("Error reading: %d\n", errno);
+    err_printf("Error reading: %d\n", errno);
     free(buffer);
     throw std::runtime_error("File read failed");
   }
