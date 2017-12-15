@@ -193,7 +193,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
   uv_stream_t* pServer;
 
   // Run on background thread:
-  // createTcpServer(
+  // createTcpServerSync(
   //   get_io_loop(), host.c_str(), port, (WebApplication*)pHandler,
   //   background_queue, &pServer, &blocker
   // );
@@ -227,19 +227,43 @@ Rcpp::RObject makePipeServer(const std::string& name,
                              Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
+  REGISTER_MAIN_THREAD()
+
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
   RWebApplication* pHandler =
     new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
                         onWSMessage, onWSClose);
-  uv_stream_t* pServer = createPipeServer(
-    get_io_loop(), name.c_str(), mask, (WebApplication*)pHandler);
+
+  ensure_io_thread();
+
+  uv_barrier_t blocker;
+  uv_barrier_init(&blocker, 2);
+
+  uv_stream_t* pServer;
+
+  // Run on background thread:
+  // createPipeServerSync(
+  //   get_io_loop(), name.c_str(), mask, (WebApplication*)pHandler,
+  //   background_queue, &pServer, &blocker
+  // );
+  background_queue->push(
+    boost::bind(createPipeServerSync,
+      get_io_loop(), name.c_str(), mask, (WebApplication*)pHandler,
+      background_queue, &pServer, &blocker
+    )
+  );
+
+  // Wait for server to be created before continuing
+  uv_barrier_wait(&blocker);
 
   if (!pServer) {
     return R_NilValue;
   }
 
-  return Rcpp::wrap(externalize(pServer));
+  pServers.push_back(pServer);
+
+  return Rcpp::wrap(externalize<uv_stream_t>(pServer));
 }
 
 

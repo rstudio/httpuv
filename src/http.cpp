@@ -43,14 +43,14 @@ void on_request(uv_stream_t* handle, int status) {
 }
 
 uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
-  int mask, WebApplication* pWebApplication) {
+  int mask, WebApplication* pWebApplication, CallbackQueue* background_queue) {
 
   // We own pWebApplication. It will be destroyed by the socket but if in
   // the future we have failure cases that stop execution before we get
   // that far, we MUST delete pWebApplication ourselves.
 
   // Deletes itself when destroy() is called, which occurs in freeServer()
-  Socket* pSocket = new Socket(pWebApplication, NULL);
+  Socket* pSocket = new Socket(pWebApplication, background_queue);
   // TODO: Handle error
   uv_pipe_init(pLoop, &pSocket->handle.pipe, true);
   pSocket->handle.isTcp = false;
@@ -75,6 +75,18 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
 
   return &pSocket->handle.stream;
 }
+
+// A wrapper for createPipeServer. The main thread schedules this to run on
+// the background thread, then waits for this to finish, using a barrier.
+void createPipeServerSync(uv_loop_t* loop, const std::string& name,
+  int mask, WebApplication* pWebApplication, CallbackQueue* background_queue,
+  uv_stream_t** pServer, uv_barrier_t* blocker)
+{
+  ASSERT_BACKGROUND_THREAD()
+  *pServer = createPipeServer(loop, name, mask, pWebApplication, background_queue);
+  uv_barrier_wait(blocker);
+}
+
 
 uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   int port, WebApplication* pWebApplication, CallbackQueue* background_queue) {
