@@ -8,7 +8,10 @@
 
 /* Prevent naming conflicts for Free() and Calloc() */
 #define R_NO_REMAP
+// This could be defined from Makevars.win. In that case, don't re-define it.
+#ifndef STRICT_R_HEADERS
 #define STRICT_R_HEADERS
+#endif
 #include <Rcpp.h>
 
 inline uv_handle_t* toHandle(uv_timer_t* timer) {
