@@ -187,8 +187,12 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   ensure_io_thread();
 
-  uv_barrier_t blocker;
-  uv_barrier_init(&blocker, 2);
+  // We previous used a uv_barrier_t here instead of mutex + condvar, but it
+  // caused crashes on Windows (with libuv 1.15.0).
+  uv_mutex_t mutex;
+  uv_cond_t cond;
+  uv_mutex_init(&mutex);
+  uv_cond_init(&cond);
 
   uv_stream_t* pServer;
 
@@ -200,12 +204,17 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
   background_queue->push(
     boost::bind(createTcpServerSync,
       get_io_loop(), host.c_str(), port, (WebApplication*)pHandler,
-      background_queue, &pServer, &blocker
+      background_queue, &pServer, &mutex, &cond
     )
   );
 
   // Wait for server to be created before continuing
-  uv_barrier_wait(&blocker);
+  uv_mutex_lock(&mutex);
+  uv_cond_wait(&cond, &mutex);
+  uv_mutex_unlock(&mutex);
+
+  uv_mutex_destroy(&mutex);
+  uv_cond_destroy(&cond);
 
   if (!pServer) {
     return R_NilValue;
@@ -237,8 +246,10 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   ensure_io_thread();
 
-  uv_barrier_t blocker;
-  uv_barrier_init(&blocker, 2);
+  uv_mutex_t mutex;
+  uv_cond_t cond;
+  uv_mutex_init(&mutex);
+  uv_cond_init(&cond);
 
   uv_stream_t* pServer;
 
@@ -250,12 +261,17 @@ Rcpp::RObject makePipeServer(const std::string& name,
   background_queue->push(
     boost::bind(createPipeServerSync,
       get_io_loop(), name.c_str(), mask, (WebApplication*)pHandler,
-      background_queue, &pServer, &blocker
+      background_queue, &pServer, &mutex, &cond
     )
   );
 
   // Wait for server to be created before continuing
-  uv_barrier_wait(&blocker);
+  uv_mutex_lock(&mutex);
+  uv_cond_wait(&cond, &mutex);
+  uv_mutex_unlock(&mutex);
+
+  uv_mutex_destroy(&mutex);
+  uv_cond_destroy(&cond);
 
   if (!pServer) {
     return R_NilValue;

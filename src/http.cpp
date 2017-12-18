@@ -80,11 +80,15 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
 // the background thread, then waits for this to finish, using a barrier.
 void createPipeServerSync(uv_loop_t* loop, const std::string& name,
   int mask, WebApplication* pWebApplication, CallbackQueue* background_queue,
-  uv_stream_t** pServer, uv_barrier_t* blocker)
+  uv_stream_t** pServer, uv_mutex_t* mutex, uv_cond_t* cond)
 {
   ASSERT_BACKGROUND_THREAD()
   *pServer = createPipeServer(loop, name, mask, pWebApplication, background_queue);
-  uv_barrier_wait(blocker);
+
+  // Tell the main thread that the server is ready
+  uv_mutex_lock(mutex);
+  uv_cond_signal(cond);
+  uv_mutex_unlock(mutex);
 }
 
 
@@ -126,11 +130,15 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
 // background thread, then waits for this to finish, using a barrier.
 void createTcpServerSync(uv_loop_t* pLoop, const std::string& host,
   int port, WebApplication* pWebApplication, CallbackQueue* background_queue,
-  uv_stream_t** pServer, uv_barrier_t* blocker)
+  uv_stream_t** pServer, uv_mutex_t* mutex, uv_cond_t* cond)
 {
   ASSERT_BACKGROUND_THREAD()
   *pServer = createTcpServer(pLoop, host, port, pWebApplication, background_queue);
-  uv_barrier_wait(blocker);
+
+  // Tell the main thread that the server is ready
+  uv_mutex_lock(mutex);
+  uv_cond_signal(cond);
+  uv_mutex_unlock(mutex);
 }
 
 
