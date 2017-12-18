@@ -267,26 +267,27 @@ void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(Ht
   // object to let it know that we had an error.
   if (pRequest->isResponseScheduled()) {
     invokeCppCallback(NULL, callback_xptr);
-    return;
   }
+  else {
 
-  // Call the R call() function, and pass it the callback xptr so it can
-  // asynchronously pass data back to C++.
-  try {
-    _onRequest(pRequest->env(), callback_xptr);
+    // Call the R call() function, and pass it the callback xptr so it can
+    // asynchronously pass data back to C++.
+    try {
+      _onRequest(pRequest->env(), callback_xptr);
 
-    // On the R side, httpuv's call() function will catch errors that happen
-    // in the user-defined call() function, but if an error happens outside of
-    // that scope, or if another uncaught exception happens (like an interrupt
-    // if Ctrl-C is pressed), then it will bubble up to here, where we'll catch
-    // it and deal with it.
+      // On the R side, httpuv's call() function will catch errors that happen
+      // in the user-defined call() function, but if an error happens outside of
+      // that scope, or if another uncaught exception happens (like an interrupt
+      // if Ctrl-C is pressed), then it will bubble up to here, where we'll catch
+      // it and deal with it.
 
-  } catch (Rcpp::internal::InterruptedException &e) {
-    trace("Interrupt occurred in _onRequest");
-    invokeCppCallback(errorResponse(), callback_xptr);
-  } catch (...) {
-    trace("Exception occurred in _onRequest");
-    invokeCppCallback(errorResponse(), callback_xptr);
+    } catch (Rcpp::internal::InterruptedException &e) {
+      trace("Interrupt occurred in _onRequest");
+      invokeCppCallback(errorResponse(), callback_xptr);
+    } catch (...) {
+      trace("Exception occurred in _onRequest");
+      invokeCppCallback(errorResponse(), callback_xptr);
+    }
   }
 
   UNPROTECT(1);
