@@ -287,16 +287,17 @@ void stopServer(uv_stream_t* pServer) {
   );
 }
 
-//' Stop a running server
+//' Stop a server
 //' 
 //' Given a handle that was returned from a previous invocation of 
-//' \code{\link{startServer}}, closes all open connections for that server and 
-//' unbinds the port. \strong{Be careful not to call \code{stopServer} more than 
-//' once on a handle, as this will cause the R process to crash!}
+//' \code{\link{startServer}} or \code{\link{startPipeServer}}, this closes all
+//' open connections for that server and  unbinds the port.
 //' 
 //' @param handle A handle that was previously returned from
-//'   \code{\link{startServer}}.
-//'   
+//'   \code{\link{startServer}} or \code{\link{startPipeServer}}.
+//'
+//' @seealso \code{\link{stopAllServers}} to stop all servers.
+//'
 //' @export
 // [[Rcpp::export]]
 void stopServer(std::string handle) {
@@ -305,6 +306,14 @@ void stopServer(std::string handle) {
   stopServer(pServer);
 }
 
+//' Stop all applications
+//'
+//' This will stop all applications which were created by
+//' \code{\link{startServer}} or \code{\link{startPipeServer}}.
+//'
+//' @seealso \code{\link{stopServer}} to stop a specific server.
+//'
+//' @export
 // [[Rcpp::export]]
 void stopAllServers() {
   ASSERT_MAIN_THREAD()
