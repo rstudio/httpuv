@@ -158,7 +158,11 @@ bool HttpRequest::isResponseScheduled() {
 int HttpRequest::_on_message_begin(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
   trace("HttpRequest::_on_message_begin");
+  // Each HttpRequest object represents a connection. Multiple actual HTTP
+  // requests can happen in sequence on this object. Each time a new message
+  // starts, we need to reset some parts of the HttpRequest object.
   _headers.clear();
+  _response_scheduled = false;
   return 0;
 }
 
