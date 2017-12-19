@@ -26,6 +26,7 @@ public:
   }
 
   virtual ~HttpResponse() {
+    delete _pBody;
   }
 
   ResponseHeaders& headers();
