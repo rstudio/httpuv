@@ -125,6 +125,9 @@ void HttpRequest::_newRequest() {
   BoostFunctionCallback* initialize_env_callback = new BoostFunctionCallback(
     boost::bind(&HttpRequest::_initializeEnv, this)
   );
+  // Make sure the HttpRequest object doesn't get deleted before the callback
+  // is invoked.
+  _increment_reference();
   later::later(invoke_callback, (void*)initialize_env_callback, 0);
 }
 
@@ -141,6 +144,12 @@ void HttpRequest::_initializeEnv() {
 
   // Deleted either when this function is called again, or in destructor.
   _env = new Environment(new_env(_["parent"] = R_EmptyEnv));
+
+  // Schedule _decrement_reference on background thread.
+  boost::function<void (void)> cb(
+    boost::bind(&HttpRequest::_decrement_reference, this)
+  );
+  _background_queue->push(cb);
 }
 
 Rcpp::Environment& HttpRequest::env() {
