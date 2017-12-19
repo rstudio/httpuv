@@ -256,12 +256,13 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
     )
   );
 
+  // This needs to be called before scheduling the callback on the other thread;
+  // otherwise there's a possible race.
+  _increment_reference();
   // Use later to schedule _pWebApplication->onHeaders(this, schedule_bg_callback)
   // to run on the main thread. That function in turn calls
   // this->_schedule_on_headers_complete_complete.
   later::later(invoke_callback, (void*)webapp_on_headers_callback, 0);
-
-  _increment_reference();
 
   return 0;
 }
@@ -273,13 +274,19 @@ void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse
   ASSERT_MAIN_THREAD()
   trace("HttpRequest::_schedule_on_headers_complete_complete");
 
+  // responseScheduled() should be called before scheduling work on the
+  // background thread. Otherwise there's a possible case where
+  // _on_headers_complete_complete() gets called, and it calls
+  // _decrement_reference(), which deletes the HttpRequest object, all before
+  // responseScheduled() is called; then that function tries to modify a
+  // deleted object.
+  if (pResponse)
+    responseScheduled();
+
   boost::function<void (void)> cb(
     boost::bind(&HttpRequest::_on_headers_complete_complete, this, pResponse)
   );
   _background_queue->push(cb);
-
-  if (pResponse)
-    responseScheduled();
 }
 
 // This is called after the user's R onHeaders() function has finished. It can
@@ -387,12 +394,13 @@ void HttpRequest::_schedule_on_body_error(HttpResponse* pResponse) {
   ASSERT_MAIN_THREAD()
   trace("HttpRequest::_schedule_on_body_error");
 
+  responseScheduled();
+
   boost::function<void (void)> cb(
     boost::bind(&HttpRequest::_on_body_error, this, pResponse)
   );
   _background_queue->push(cb);
 
-  responseScheduled();
 }
 
 void HttpRequest::_on_body_error(HttpResponse* pResponse) {
@@ -436,9 +444,8 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
   // Use later to schedule _pWebApplication->getResponse(this, schedule_bg_callback)
   // to run on the main thread. That function in turn calls
   // this->_schedule_on_message_complete_complete.
-  later::later(invoke_callback, (void*)webapp_get_response_callback, 0);
-
   _increment_reference();
+  later::later(invoke_callback, (void*)webapp_get_response_callback, 0);
 
   return 0;
 }
@@ -448,12 +455,12 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse) {
   ASSERT_MAIN_THREAD()
 
+  responseScheduled();
+
   boost::function<void (void)> cb(
     boost::bind(&HttpRequest::_on_message_complete_complete, this, pResponse)
   );
   _background_queue->push(cb);
-
-  responseScheduled();
 }
 
 void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
