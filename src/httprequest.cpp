@@ -112,18 +112,38 @@ Address HttpRequest::clientAddress() {
   return address;
 }
 
-Rcpp::Environment& HttpRequest::env() {
+// Each HttpRequest object represents a connection. Multiple actual HTTP
+// requests can happen in sequence on this connection. Each time a new message
+// starts, we need to reset some parts of the HttpRequest object.
+void HttpRequest::_newRequest() {
+  ASSERT_BACKGROUND_THREAD()
+  _headers.clear();
+  _response_scheduled = false;
+
+  // Schedule on main thread:
+  //   this->_initializeEnv();
+  BoostFunctionCallback* initialize_env_callback = new BoostFunctionCallback(
+    boost::bind(&HttpRequest::_initializeEnv, this)
+  );
+  later::later(invoke_callback, (void*)initialize_env_callback, 0);
+}
+
+void HttpRequest::_initializeEnv() {
   ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
   if (_env == NULL) {
-    Environment base(R_BaseEnv);
-    Function new_env = as<Function>(base["new.env"]);
-
-    // Deleted in destructor
-    _env = new Environment(new_env(_["parent"] = R_EmptyEnv));
+    delete _env;
   }
 
+  Environment base(R_BaseEnv);
+  Function new_env = as<Function>(base["new.env"]);
+
+  // Deleted either when this function is called again, or in destructor.
+  _env = new Environment(new_env(_["parent"] = R_EmptyEnv));
+}
+
+Rcpp::Environment& HttpRequest::env() {
   return *_env;
 }
 
@@ -158,11 +178,7 @@ bool HttpRequest::isResponseScheduled() {
 int HttpRequest::_on_message_begin(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
   trace("HttpRequest::_on_message_begin");
-  // Each HttpRequest object represents a connection. Multiple actual HTTP
-  // requests can happen in sequence on this object. Each time a new message
-  // starts, we need to reset some parts of the HttpRequest object.
-  _headers.clear();
-  _response_scheduled = false;
+  _newRequest();
   return 0;
 }
 

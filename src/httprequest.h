@@ -34,7 +34,16 @@ private:
   std::string _lastHeaderField;
   unsigned long _bytesRead;
   WebSocketConnection* _pWebSocketConnection;
+
+  // `_env` is an Environment* instead of an Environment because it must be
+  // created and deleted on the main thread. However, the creation and
+  // deletion of HttpRequest objects happens on the background thread, and so
+  // the lifetime of the Environment can't be strictly tied to the lifetime of
+  // the HttpRequest.
   Rcpp::Environment* _env;
+  void _newRequest();
+  void _initializeEnv();
+
   // _ignoreNewData is used in cases where we rejected a request (by sending
   // a response with a non-100 status code) before its body was received. We
   // don't want to close the connection because the response might not be
