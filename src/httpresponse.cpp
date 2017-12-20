@@ -103,6 +103,8 @@ void HttpResponse::writeResponse() {
     _pRequest->fatal_error("uv_write", uv_strerror(r));
     destroy();
     free(pWriteReq);
+  } else {
+    _pRequest->requestCompleted();
   }
 }
 

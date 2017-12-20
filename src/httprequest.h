@@ -20,6 +20,9 @@ enum Protocol {
   WebSockets
 };
 
+
+// HttpRequest is a bit of a misnomer -- a HttpRequest object represents a
+// single connection, on which multiple actual HTTP requests can be made.
 class HttpRequest : WebSocketConnectionCallbacks {
 
 private:
@@ -66,6 +69,9 @@ private:
   void _parse_http_data_from_buffer();
 
   bool _response_scheduled;
+  // True when the HttpRequest object is handling an HTTP request; gets set to
+  // false when the response is written.
+  bool _handling_request;
 
   // For buffering the incoming HTTP request when data comes in while waiting
   // for R to process headers.
@@ -87,6 +93,7 @@ public:
       _ref_count(1),
       _is_closing(false),
       _response_scheduled(false),
+      _handling_request(false),
       _background_queue(backgroundQueue)
   {
     ASSERT_BACKGROUND_THREAD()
@@ -133,6 +140,11 @@ public:
   // response.
   void responseScheduled();
   bool isResponseScheduled();
+
+  // This function should be called when a single request has been completed
+  // (when the response has been sent). It is currently used to detect
+  // pipelined HTTP requests.
+  void requestCompleted();
 
   void _call_r_on_ws_open();
   void _schedule_on_headers_complete_complete(HttpResponse* pResponse);

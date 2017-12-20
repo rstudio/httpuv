@@ -117,6 +117,13 @@ Address HttpRequest::clientAddress() {
 // starts, we need to reset some parts of the HttpRequest object.
 void HttpRequest::_newRequest() {
   ASSERT_BACKGROUND_THREAD()
+
+  if (_handling_request) {
+    err_printf("Error: pipelined HTTP requests not supported.\n");
+    close();
+  }
+
+  _handling_request = true;
   _headers.clear();
   _response_scheduled = false;
 
@@ -177,6 +184,12 @@ void HttpRequest::responseScheduled() {
 bool HttpRequest::isResponseScheduled() {
   ASSERT_MAIN_THREAD()
   return _response_scheduled;
+}
+
+void HttpRequest::requestCompleted() {
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::requestCompleted");
+  _handling_request = false;
 }
 
 
