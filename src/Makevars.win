@@ -10,6 +10,13 @@ CFLAGS += -D_WIN32_WINNT=0x0600 -DSTRICT_R_HEADERS
 # Additional flags for libuv borrowed from libuv/Makefile.mingw
 LIBUV_CFLAGS = -Iinclude -Isrc -Isrc/win -DWIN32_LEAN_AND_MEAN
 
+#### Debugging flags ####
+# Uncomment to enable thread assertions
+# PKG_CPPFLAGS += -DDEBUG_THREAD -UNDEBUG
+# Uncomment to enable printing of trace() messages
+# PKG_CPPFLAGS += -DDEBUG_TRACE
+
+
 $(SHLIB): libuv/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
 
 libuv/libuv.a:
