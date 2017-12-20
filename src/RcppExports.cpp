@@ -18,12 +18,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // closeWS
-void closeWS(std::string conn);
-RcppExport SEXP _httpuv_closeWS(SEXP connSEXP) {
+void closeWS(std::string conn, uint16_t code, std::string reason);
+RcppExport SEXP _httpuv_closeWS(SEXP connSEXP, SEXP codeSEXP, SEXP reasonSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type conn(connSEXP);
-    closeWS(conn);
+    Rcpp::traits::input_parameter< uint16_t >::type code(codeSEXP);
+    Rcpp::traits::input_parameter< std::string >::type reason(reasonSEXP);
+    closeWS(conn, code, reason);
     return R_NilValue;
 END_RCPP
 }
@@ -162,7 +164,7 @@ RcppExport SEXP httpuv_decodeURIComponent(SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_sendWSMessage", (DL_FUNC) &_httpuv_sendWSMessage, 3},
-    {"_httpuv_closeWS", (DL_FUNC) &_httpuv_closeWS, 1},
+    {"_httpuv_closeWS", (DL_FUNC) &_httpuv_closeWS, 3},
     {"_httpuv_makeTcpServer", (DL_FUNC) &_httpuv_makeTcpServer, 8},
     {"_httpuv_makePipeServer", (DL_FUNC) &_httpuv_makePipeServer, 8},
     {"_httpuv_stopServer", (DL_FUNC) &_httpuv_stopServer, 1},

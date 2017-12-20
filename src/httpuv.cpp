@@ -155,14 +155,14 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
 }
 
 // [[Rcpp::export]]
-void closeWS(std::string conn) {
+void closeWS(std::string conn, uint16_t code, std::string reason) {
   ASSERT_MAIN_THREAD()
   WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
 
   // Schedule on background thread:
-  // wsc->closeWS();
+  // wsc->closeWS(code, reason);
   background_queue->push(
-    boost::bind(&WebSocketConnection::closeWS, wsc)
+    boost::bind(&WebSocketConnection::closeWS, wsc, code, reason)
   );
 }
 

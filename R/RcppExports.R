@@ -5,8 +5,8 @@ sendWSMessage <- function(conn, binary, message) {
     invisible(.Call('_httpuv_sendWSMessage', PACKAGE = 'httpuv', conn, binary, message))
 }
 
-closeWS <- function(conn) {
-    invisible(.Call('_httpuv_closeWS', PACKAGE = 'httpuv', conn))
+closeWS <- function(conn, code, reason) {
+    invisible(.Call('_httpuv_closeWS', PACKAGE = 'httpuv', conn, code, reason))
 }
 
 makeTcpServer <- function(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose) {

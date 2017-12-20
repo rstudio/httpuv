@@ -228,16 +228,14 @@ AppWrapper <- setRefClass(
 
       # If an unexpected error happened, just close up
       if (inherits(result, 'try-error')) {
-        # TODO: Close code indicating error?
-        ws$close()
+        ws$close(1011, "Error in onWSOpen")
       }
     },
     onWSMessage = function(handle, binary, message) {
       for (handler in .wsconns[[as.character(handle)]]$.messageCallbacks) {
         result <- try(handler(binary, message))
         if (inherits(result, 'try-error')) {
-          # TODO: Close code indicating error?
-          .wsconns[[as.character(handle)]]$close()
+          .wsconns[[as.character(handle)]]$close(1011, "Error executing onWSMessage")
           return()
         }
       }
@@ -320,7 +318,7 @@ WebSocket <- setRefClass(
     },
     send = function(message) {
       if (is.null(.handle))
-        stop("Can't send message on a closed WebSocket")
+        return()
       
       if (is.raw(message))
         sendWSMessage(.handle, TRUE, message)
@@ -329,11 +327,21 @@ WebSocket <- setRefClass(
         sendWSMessage(.handle, FALSE, as.character(message))
       }
     },
-    close = function() {
+    close = function(code = 1000L, reason = "") {
       if (is.null(.handle))
         return()
-      
-      closeWS(.handle)
+
+      # Make sure the code will fit in a short int (2 bytes); if not just use
+      # "Going Away" error code.
+      code <- as.integer(code)
+      if (code < 0 || code > 2^16 - 1) {
+        warning("Invalid websocket error code: ", code)
+        code <- 1001L
+      }
+      reason <- iconv(reason, to = "UTF-8")
+
+      closeWS(.handle, code, reason)
+      .handle <<- NULL
     }
   )
 )

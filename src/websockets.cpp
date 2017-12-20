@@ -262,7 +262,7 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
                            &footer[0], footer.size());
 }
 
-void WebSocketConnection::closeWS() {
+void WebSocketConnection::closeWS(uint16_t code, std::string reason) {
   ASSERT_BACKGROUND_THREAD()
   // If we have already sent a close message, do nothing. It's especially
   // important that we don't call closeWSSocket twice, this might lead to
@@ -272,7 +272,15 @@ void WebSocketConnection::closeWS() {
 
   // Send the close message
   _connState |= WS_CLOSE_SENT;
-  sendWSMessage(Close, NULL, 0);
+
+  // Make sure code has right endian-ness
+  unsigned char* code_p = (unsigned char*)&code;
+  if (!isBigEndian())
+    swapByteOrder(code_p, code_p + 2);
+
+  std::string message = std::string(reinterpret_cast<char*>(code_p), 2) + reason;
+
+  sendWSMessage(Close, message.c_str(), message.length());
 
   // If close messages have been both sent and received, close socket.
   if (_connState == WS_CLOSE)

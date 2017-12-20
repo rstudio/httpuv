@@ -178,7 +178,7 @@ public:
                  std::vector<uint8_t>* pResponse);
 
   void sendWSMessage(Opcode opcode, const char* pData, size_t length);
-  void closeWS();
+  void closeWS(uint16_t code = 1000, std::string reason = "");
   void read(const char* data, size_t len);
 
 protected:
