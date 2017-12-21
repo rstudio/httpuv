@@ -23,3 +23,8 @@ libuv/libuv.a:
 	$(MAKE) --directory=libuv -f Makefile.mingw \
 		CC="$(CC)" CFLAGS="$(CFLAGS) $(LIBUV_CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" \
 		AR="$(AR)" RANLIB="$(RANLIB)" HAVE_DTRACE=0
+
+clean:
+    $(MAKE) --directory=libuv distclean
+
+shlib-clean: clean
