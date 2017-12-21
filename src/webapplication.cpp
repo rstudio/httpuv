@@ -86,7 +86,7 @@ Rcpp::List errorResponse() {
   );
 }
 
-void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
+void requestToEnv(boost::shared_ptr<HttpRequest> pRequest, Rcpp::Environment* pEnv) {
   ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
@@ -135,7 +135,7 @@ void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
 }
 
 
-HttpResponse* listToResponse(HttpRequest* pRequest, const Rcpp::List& response) {
+HttpResponse* listToResponse(boost::shared_ptr<HttpRequest> pRequest, const Rcpp::List& response) {
   ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
@@ -182,7 +182,10 @@ HttpResponse* listToResponse(HttpRequest* pRequest, const Rcpp::List& response) 
   return pResp;
 }
 
-void invokeResponseFun(boost::function<void(HttpResponse*)> fun, HttpRequest* pRequest, Rcpp::List response) {
+void invokeResponseFun(boost::function<void(HttpResponse*)> fun,
+                       boost::shared_ptr<HttpRequest> pRequest,
+                       Rcpp::List response)
+{
   ASSERT_MAIN_THREAD()
   // new HttpResponse object. The callback will invoke
   // HttpResponse->writeResponse(), which adds a callback to destroy(), which
@@ -192,7 +195,9 @@ void invokeResponseFun(boost::function<void(HttpResponse*)> fun, HttpRequest* pR
 }
 
 
-void RWebApplication::onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
+void RWebApplication::onHeaders(boost::shared_ptr<HttpRequest> pRequest,
+                                boost::function<void(HttpResponse*)> callback)
+{
   ASSERT_MAIN_THREAD()
   if (_onHeaders.isNULL()) {
     callback(NULL);
@@ -220,7 +225,7 @@ void RWebApplication::onHeaders(HttpRequest* pRequest, boost::function<void(Http
   callback(pResponse);
 }
 
-void RWebApplication::onBodyData(HttpRequest* pRequest,
+void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
       const char* pData, size_t length,
       boost::function<void(HttpResponse*)> errorCallback)
 {
@@ -249,7 +254,8 @@ void RWebApplication::onBodyData(HttpRequest* pRequest,
   }
 }
 
-void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
+void RWebApplication::getResponse(boost::shared_ptr<HttpRequest> pRequest,
+                                  boost::function<void(HttpResponse*)> callback) {
   ASSERT_MAIN_THREAD()
   trace("RWebApplication::getResponse");
   using namespace Rcpp;
@@ -293,7 +299,7 @@ void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(Ht
   UNPROTECT(1);
 }
 
-void RWebApplication::onWSOpen(HttpRequest* pRequest,
+void RWebApplication::onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
                                boost::function<void(void)> error_callback) {
   ASSERT_MAIN_THREAD()
   requestToEnv(pRequest, &pRequest->env());

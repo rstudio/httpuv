@@ -13,12 +13,15 @@ class HttpResponse;
 class WebApplication {
 public:
   virtual ~WebApplication() {}
-  virtual void onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) = 0;
-  virtual void onBodyData(HttpRequest* pRequest,
+  virtual void onHeaders(boost::shared_ptr<HttpRequest> pRequest,
+                         boost::function<void(HttpResponse*)> callback) = 0;
+  virtual void onBodyData(boost::shared_ptr<HttpRequest> pRequest,
                           const char* data, size_t len,
                           boost::function<void(HttpResponse*)> errorCallback) = 0;
-  virtual void getResponse(HttpRequest* request, boost::function<void(HttpResponse*)> callback) = 0;
-  virtual void onWSOpen(HttpRequest* pRequest, boost::function<void(void)> error_callback) = 0;
+  virtual void getResponse(boost::shared_ptr<HttpRequest> request,
+                           boost::function<void(HttpResponse*)> callback) = 0;
+  virtual void onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
+                        boost::function<void(void)> error_callback) = 0;
   virtual void onWSMessage(WebSocketConnection* conn,
                            bool binary, const char* data, size_t len,
                            boost::function<void(void)> error_callback) = 0;
@@ -53,12 +56,15 @@ public:
     ASSERT_MAIN_THREAD()
   }
 
-  virtual void onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback);
-  virtual void onBodyData(HttpRequest* pRequest,
+  virtual void onHeaders(boost::shared_ptr<HttpRequest> pRequest,
+                         boost::function<void(HttpResponse*)> callback);
+  virtual void onBodyData(boost::shared_ptr<HttpRequest> pRequest,
                           const char* data, size_t len,
                           boost::function<void(HttpResponse*)> errorCallback);
-  virtual void getResponse(HttpRequest* request, boost::function<void(HttpResponse*)> callback);
-  virtual void onWSOpen(HttpRequest* pRequest, boost::function<void(void)> error_callback);
+  virtual void getResponse(boost::shared_ptr<HttpRequest> request,
+                           boost::function<void(HttpResponse*)> callback);
+  virtual void onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
+                        boost::function<void(void)> error_callback);
   virtual void onWSMessage(WebSocketConnection* conn,
                            bool binary, const char* data, size_t len,
                            boost::function<void(void)> error_callback);

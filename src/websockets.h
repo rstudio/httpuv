@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <boost/enable_shared_from_this.hpp>
 
 #include "constants.h"
 #include "websockets-base.h"
@@ -152,7 +153,7 @@ public:
 
 class WebSocketConnection : WSParserCallbacks, NoCopy {
   WSConnState _connState;
-  WebSocketConnectionCallbacks* _pCallbacks;
+  boost::shared_ptr<WebSocketConnectionCallbacks> _pCallbacks;
   WSParser* _pParser;
   WSFrameHeaderInfo _incompleteContentHeader;
   WSFrameHeaderInfo _header;
@@ -160,8 +161,9 @@ class WebSocketConnection : WSParserCallbacks, NoCopy {
   std::vector<char> _payload;
 
 public:
-  WebSocketConnection(WebSocketConnectionCallbacks* callbacks)
-      : _connState(WS_OPEN), _pCallbacks(callbacks),
+  WebSocketConnection(boost::shared_ptr<WebSocketConnectionCallbacks> callbacks)
+      : _connState(WS_OPEN),
+        _pCallbacks(callbacks),
         _pParser(NULL) {
   }
   virtual ~WebSocketConnection() {

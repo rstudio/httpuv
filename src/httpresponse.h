@@ -4,12 +4,13 @@
 #include "uvutil.h"
 #include "constants.h"
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 
 class HttpRequest;
 
 class HttpResponse {
 
-  HttpRequest* _pRequest;
+  boost::shared_ptr<HttpRequest> _pRequest;
   int _statusCode;
   std::string _status;
   ResponseHeaders _headers;
@@ -18,11 +19,16 @@ class HttpResponse {
   bool _closeAfterWritten;
 
 public:
-  HttpResponse(HttpRequest* pRequest, int statusCode,
-         const std::string& status, DataSource* pBody)
-    : _pRequest(pRequest), _statusCode(statusCode), _status(status), _pBody(pBody),
-      _closeAfterWritten(false) {
-
+  HttpResponse(boost::shared_ptr<HttpRequest> pRequest,
+               int statusCode,
+               const std::string& status,
+               DataSource* pBody)
+    : _pRequest(pRequest),
+      _statusCode(statusCode),
+      _status(status),
+      _pBody(pBody),
+      _closeAfterWritten(false)
+  {
   }
 
   virtual ~HttpResponse() {

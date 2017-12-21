@@ -5,11 +5,11 @@
 
 void on_Socket_close(uv_handle_t* pHandle);
 
-void Socket::addConnection(HttpRequest* request) {
+void Socket::addConnection(boost::shared_ptr<HttpRequest> request) {
   connections.push_back(request);
 }
 
-void Socket::removeConnection(HttpRequest* request) {
+void Socket::removeConnection(boost::shared_ptr<HttpRequest> request) {
   connections.erase(
     std::remove(connections.begin(), connections.end(), request),
     connections.end());
@@ -22,6 +22,8 @@ void delete_webApplication(void* pWebApplication) {
 }
 
 Socket::~Socket() {
+  ASSERT_BACKGROUND_THREAD()
+  trace("Socket::~Socket");
   // Need to delete pWebApplication on the main thread because it contains
   // Rcpp::Function objects. We use our own callback instead of
   // delete_cb_main() because it needs to be wrapped in try-catch.
@@ -29,7 +31,9 @@ Socket::~Socket() {
 }
 
 void Socket::destroy() {
-  for (std::vector<HttpRequest*>::reverse_iterator it = connections.rbegin();
+  ASSERT_BACKGROUND_THREAD()
+  trace("Socket::destroy");
+  for (std::vector<boost::shared_ptr<HttpRequest>>::reverse_iterator it = connections.rbegin();
     it != connections.rend();
     it++) {
 

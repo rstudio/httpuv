@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <boost/shared_ptr.hpp>
 
 
 // TODO: Streaming response body (with chunked transfer encoding)
@@ -28,13 +29,13 @@ void on_request(uv_stream_t* handle, int status) {
 
   // Freed by HttpRequest itself when close() is called, which
   // can occur on EOF, error, or when the Socket is destroyed
-  HttpRequest* req = new HttpRequest(
-    handle->loop, pSocket->pWebApplication, pSocket, bg_queue);
+  boost::shared_ptr<HttpRequest> req = createHttpRequest(
+    handle->loop, pSocket->pWebApplication, pSocket, bg_queue
+  );
 
   int r = uv_accept(handle, req->handle());
   if (r) {
     err_printf("accept: %s\n", uv_strerror(r));
-    delete req;
     return;
   }
 

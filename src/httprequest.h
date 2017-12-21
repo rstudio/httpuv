@@ -5,7 +5,9 @@
 #include <iostream>
 
 #include <boost/function.hpp>
-
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
 #include <uv.h>
 #include <http_parser.h>
 #include "socket.h"
@@ -23,8 +25,9 @@ enum Protocol {
 
 // HttpRequest is a bit of a misnomer -- a HttpRequest object represents a
 // single connection, on which multiple actual HTTP requests can be made.
-class HttpRequest : WebSocketConnectionCallbacks {
-
+class HttpRequest : public WebSocketConnectionCallbacks,
+                    public boost::enable_shared_from_this<HttpRequest> 
+{
 private:
   uv_loop_t* _pLoop;
   WebApplication* _pWebApplication;
@@ -58,8 +61,6 @@ private:
   // TODO: Need a simpler, more robust construct for this
   int _ref_count;
   bool _is_closing;
-  void _increment_reference();
-  bool _decrement_reference();
 
   bool _hasHeader(const std::string& name) const;
   bool _hasHeader(const std::string& name, const std::string& value, bool ci = false) const;
@@ -83,11 +84,14 @@ private:
   CallbackQueue* _background_queue;
 
 public:
-  HttpRequest(uv_loop_t* pLoop, WebApplication* pWebApplication,
-      Socket* pSocket, CallbackQueue* backgroundQueue)
-    : _pLoop(pLoop), _pWebApplication(pWebApplication), _pSocket(pSocket),
+  HttpRequest(uv_loop_t* pLoop,
+              WebApplication* pWebApplication,
+              Socket* pSocket,
+              CallbackQueue* backgroundQueue)
+    : _pLoop(pLoop),
+      _pWebApplication(pWebApplication),
+      _pSocket(pSocket),
       _protocol(HTTP), _bytesRead(0),
-      _pWebSocketConnection(new WebSocketConnection(this)),
       _env(NULL),
       _ignoreNewData(false),
       _ref_count(1),
@@ -103,8 +107,6 @@ public:
 
     http_parser_init(&_parser, HTTP_REQUEST);
     _parser.data = this;
-
-    _pSocket->addConnection(this);
   }
 
   virtual ~HttpRequest() {
@@ -175,7 +177,33 @@ public:
   void _on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* buf);
   void _on_response_write(int status);
 
+  void _initializeSocket() {
+    boost::shared_ptr<WebSocketConnectionCallbacks> this_base(
+      boost::static_pointer_cast<WebSocketConnectionCallbacks>(shared_from_this())
+    );
+    _pWebSocketConnection = new WebSocketConnection(this_base);
+
+    _pSocket->addConnection(shared_from_this());
+  }
 };
+
+
+// Factory function needed because we can't call shared_from_this() inside the
+// constructor.
+inline boost::shared_ptr<HttpRequest> createHttpRequest(
+  uv_loop_t* pLoop,
+  WebApplication* pWebApplication,
+  Socket* pSocket,
+  CallbackQueue* backgroundQueue)
+{
+  boost::shared_ptr<HttpRequest> req = boost::make_shared<HttpRequest>(
+    pLoop, pWebApplication, pSocket, backgroundQueue
+  );
+
+  req->_initializeSocket();
+
+  return req;
+}
 
 
 #define DECLARE_CALLBACK_1(type, function_name, return_type, type_1) \
