@@ -3,6 +3,9 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdarg.h>
+#include <string>
+#include "thread.h"
 
 // A callback for deleting objects on the main thread using later(). This is
 // needed when the object is an Rcpp object or contains one, because deleting
@@ -24,7 +27,6 @@ void delete_cb_bg(void* obj) {
   delete typed_obj;
 }
 
-
 // It's not safe to call REprintf from the background thread but we need some
 // way to output error messages. R CMD check does not it if the code uses the
 // symbols stdout, stderr, and printf, so this function is a way to avoid
@@ -43,5 +45,10 @@ inline void err_printf(const char *fmt, ...) {
 
   write(STDERR_FILENO, buf, n);
 }
+
+
+// For debugging. See Makevars for information on how to enable.
+void trace(const std::string& msg);
+
 
 #endif

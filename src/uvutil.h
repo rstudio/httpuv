@@ -1,7 +1,7 @@
 #ifndef UVUTIL_HPP
 #define UVUTIL_HPP
 
-#include "debug.h"
+#include "thread.h"
 #include <string>
 #include <vector>
 #include <uv.h>

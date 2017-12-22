@@ -4,7 +4,7 @@
 #include "httprequest.h"
 #include "callback.h"
 #include "utils.h"
-#include "debug.h"
+#include "thread.h"
 
 
 http_parser_settings& request_settings() {
@@ -257,7 +257,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
   trace("HttpRequest::_on_headers_complete");
 
   boost::function<void(HttpResponse*)> schedule_bg_callback(
-    boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, this, _1)
+    boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, shared_from_this(), _1)
   );
 
   BoostFunctionCallback* webapp_on_headers_callback = new BoostFunctionCallback(
@@ -457,7 +457,7 @@ void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse
   responseScheduled();
 
   boost::function<void (void)> cb(
-    boost::bind(&HttpRequest::_on_message_complete_complete, this, pResponse)
+    boost::bind(&HttpRequest::_on_message_complete_complete, shared_from_this(), pResponse)
   );
   _background_queue->push(cb);
 }
@@ -490,6 +490,7 @@ void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
 // Called from WebSocketConnection::onFrameComplete
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::onWSMessage");
 
   // Copy data because the source data is deleted right after calling this
   // function.
@@ -520,6 +521,7 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
 }
 
 void HttpRequest::onWSClose(int code) {
+  trace("HttpRequest::onWSClose");
   // TODO: Call close() here?
 }
 
@@ -541,6 +543,7 @@ typedef struct {
 
 void on_ws_message_sent(uv_write_t* handle, int status) {
   ASSERT_BACKGROUND_THREAD()
+  trace("on_ws_message_sent");
   // TODO: Handle error if status != 0
   ws_send_t* pSend = (ws_send_t*)handle;
   delete pSend->pHeader;
@@ -553,6 +556,7 @@ void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
                               const char* pData, size_t dataSize,
                               const char* pFooter, size_t footerSize) {
   ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::sendWSFrame");
   ws_send_t* pSend = (ws_send_t*)malloc(sizeof(ws_send_t));
   memset(pSend, 0, sizeof(ws_send_t));
   pSend->pHeader = new std::vector<char>(pHeader, pHeader + headerSize);
@@ -579,7 +583,9 @@ void HttpRequest::closeWSSocket() {
 // ============================================================================
 
 void HttpRequest::_on_closed(uv_handle_t* handle) {
+  ASSERT_BACKGROUND_THREAD()
   trace("HttpRequest::_on_closed");
+  _pWebSocketConnection.reset();
 }
 
 void HttpRequest::close() {

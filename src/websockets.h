@@ -8,6 +8,8 @@
 #include <vector>
 #include <boost/enable_shared_from_this.hpp>
 
+#include "utils.h"
+#include "thread.h"
 #include "constants.h"
 #include "websockets-base.h"
 
@@ -167,6 +169,8 @@ public:
         _pParser(NULL) {
   }
   virtual ~WebSocketConnection() {
+    ASSERT_BACKGROUND_THREAD()
+    trace("WebSocketConnection::~WebSocketConnection");
     try {
       delete _pParser;
     } catch(...) {}

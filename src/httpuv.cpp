@@ -14,7 +14,7 @@
 #include "http.h"
 #include "callbackqueue.h"
 #include "utils.h"
-#include "debug.h"
+#include "thread.h"
 #include "httpuv.h"
 #include <Rinternals.h>
 
@@ -75,7 +75,7 @@ void stop_io_loop(uv_async_t *handle) {
 }
 
 void io_thread(void* data) {
-  REGISTER_BACKGROUND_THREAD()
+  register_background_thread();
   io_thread_running = true;
 
   // Set up async communication channels
@@ -116,9 +116,13 @@ void ensure_io_thread() {
 // ============================================================================
 
 // [[Rcpp::export]]
-void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
+void sendWSMessage(SEXP conn,
+                   bool binary,
+                   Rcpp::RObject message)
+{
   ASSERT_MAIN_THREAD()
-  WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
+  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>, Rcpp::PreserveStorage, Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>, true> conn_xptr(conn);
+  boost::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
 
   Opcode mode;
   SEXP msg_sexp;
@@ -155,9 +159,14 @@ void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
 }
 
 // [[Rcpp::export]]
-void closeWS(std::string conn, uint16_t code, std::string reason) {
+void closeWS(SEXP conn,
+             uint16_t code,
+             std::string reason)
+{
   ASSERT_MAIN_THREAD()
-  WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
+  trace("closeWS\n");
+  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>, Rcpp::PreserveStorage, Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>, true> conn_xptr(conn);
+  boost::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
 
   // Schedule on background thread:
   // wsc->closeWS(code, reason);
@@ -177,7 +186,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
                             Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
-  REGISTER_MAIN_THREAD()
+  register_main_thread();
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
@@ -222,7 +231,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   pServers.push_back(pServer);
 
-  return Rcpp::wrap(externalize<uv_stream_t>(pServer));
+  return Rcpp::wrap(externalize_str<uv_stream_t>(pServer));
 }
 
 // [[Rcpp::export]]
@@ -236,7 +245,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
                              Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
-  REGISTER_MAIN_THREAD()
+  register_main_thread();
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
@@ -279,7 +288,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   pServers.push_back(pServer);
 
-  return Rcpp::wrap(externalize<uv_stream_t>(pServer));
+  return Rcpp::wrap(externalize_str<uv_stream_t>(pServer));
 }
 
 
@@ -318,7 +327,7 @@ void stopServer(uv_stream_t* pServer) {
 // [[Rcpp::export]]
 void stopServer(std::string handle) {
   ASSERT_MAIN_THREAD()
-  uv_stream_t* pServer = internalize<uv_stream_t>(handle);
+  uv_stream_t* pServer = internalize_str<uv_stream_t>(handle);
   stopServer(pServer);
 }
 
@@ -600,4 +609,17 @@ void invokeCppCallback(Rcpp::List data, SEXP callback_xptr) {
 // [[Rcpp::export]]
 void getRNGState() {
   GetRNGstate();
+}
+
+// We are given an external pointer to a
+// boost::shared_ptr<WebSocketConnection>. This returns a hexadecimal string
+// representing the address of the WebSocketConnection (not the shared_ptr to
+// it!).
+//
+//[[Rcpp::export]]
+std::string wsconn_address(SEXP external_ptr) {
+  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>> xptr(external_ptr);
+  std::ostringstream os;
+  os << std::hex << reinterpret_cast<uintptr_t>(xptr.get()->get());
+  return os.str();
 }

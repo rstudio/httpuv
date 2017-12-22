@@ -6,11 +6,11 @@
 using namespace Rcpp;
 
 // sendWSMessage
-void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message);
+void sendWSMessage(SEXP conn, bool binary, Rcpp::RObject message);
 RcppExport SEXP _httpuv_sendWSMessage(SEXP connSEXP, SEXP binarySEXP, SEXP messageSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type conn(connSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type conn(connSEXP);
     Rcpp::traits::input_parameter< bool >::type binary(binarySEXP);
     Rcpp::traits::input_parameter< Rcpp::RObject >::type message(messageSEXP);
     sendWSMessage(conn, binary, message);
@@ -18,11 +18,11 @@ BEGIN_RCPP
 END_RCPP
 }
 // closeWS
-void closeWS(std::string conn, uint16_t code, std::string reason);
+void closeWS(SEXP conn, uint16_t code, std::string reason);
 RcppExport SEXP _httpuv_closeWS(SEXP connSEXP, SEXP codeSEXP, SEXP reasonSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type conn(connSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type conn(connSEXP);
     Rcpp::traits::input_parameter< uint16_t >::type code(codeSEXP);
     Rcpp::traits::input_parameter< std::string >::type reason(reasonSEXP);
     closeWS(conn, code, reason);
@@ -159,6 +159,17 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// wsconn_address
+std::string wsconn_address(SEXP external_ptr);
+RcppExport SEXP _httpuv_wsconn_address(SEXP external_ptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type external_ptr(external_ptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(wsconn_address(external_ptr));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 RcppExport SEXP httpuv_decodeURIComponent(SEXP);
 
@@ -176,6 +187,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_decodeURIComponent", (DL_FUNC) &_httpuv_decodeURIComponent, 1},
     {"_httpuv_invokeCppCallback", (DL_FUNC) &_httpuv_invokeCppCallback, 2},
     {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
+    {"_httpuv_wsconn_address", (DL_FUNC) &_httpuv_wsconn_address, 1},
     {"httpuv_decodeURIComponent",  (DL_FUNC) &httpuv_decodeURIComponent,  1},
     {NULL, NULL, 0}
 };

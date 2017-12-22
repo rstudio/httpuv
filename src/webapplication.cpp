@@ -4,7 +4,7 @@
 #include "webapplication.h"
 #include "httprequest.h"
 #include "http.h"
-#include "debug.h"
+#include "thread.h"
 #include <Rinternals.h>
 
 
@@ -304,27 +304,41 @@ void RWebApplication::onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
   ASSERT_MAIN_THREAD()
   requestToEnv(pRequest, &pRequest->env());
   try {
-    _onWSOpen(externalize<WebSocketConnection>(pRequest->websocket()), pRequest->env());
+    _onWSOpen(
+      externalize_shared_ptr<WebSocketConnection>(pRequest->websocket()),
+      pRequest->env()
+    );
   } catch(...) {
     error_callback();
   }
 }
 
-void RWebApplication::onWSMessage(WebSocketConnection* pConn,
-                                  bool binary, const char* data, size_t len,
-                                  boost::function<void(void)> error_callback) {
+void RWebApplication::onWSMessage(boost::shared_ptr<WebSocketConnection> pConn,
+                                  bool binary,
+                                  const char* data,
+                                  size_t len,
+                                  boost::function<void(void)> error_callback)
+{
   ASSERT_MAIN_THREAD()
   try {
     if (binary)
-      _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::vector<uint8_t>(data, data + len));
+      _onWSMessage(
+        externalize_shared_ptr<WebSocketConnection>(pConn),
+        binary,
+        std::vector<uint8_t>(data, data + len)
+      );
     else
-      _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::string(data, len));
+      _onWSMessage(
+        externalize_shared_ptr<WebSocketConnection>(pConn),
+        binary,
+        std::string(data, len)
+      );
   } catch(...) {
     error_callback();
   }
 }
 
-void RWebApplication::onWSClose(WebSocketConnection* pConn) {
+void RWebApplication::onWSClose(boost::shared_ptr<WebSocketConnection> pConn) {
   ASSERT_MAIN_THREAD()
-  _onWSClose(externalize<WebSocketConnection>(pConn));
+  _onWSClose(externalize_shared_ptr<WebSocketConnection>(pConn));
 }

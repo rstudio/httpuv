@@ -119,3 +119,7 @@ getRNGState <- function() {
     invisible(.Call('_httpuv_getRNGState', PACKAGE = 'httpuv'))
 }
 
+wsconn_address <- function(external_ptr) {
+    .Call('_httpuv_wsconn_address', PACKAGE = 'httpuv', external_ptr)
+}
+

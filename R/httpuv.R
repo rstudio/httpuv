@@ -223,7 +223,7 @@ AppWrapper <- setRefClass(
     },
     onWSOpen = function(handle, req) {
       ws <- WebSocket$new(handle, req)
-      .wsconns[[as.character(handle)]] <<- ws
+      .wsconns[[wsconn_address(handle)]] <<- ws
       result <- try(.app$onWSOpen(ws))
 
       # If an unexpected error happened, just close up
@@ -232,18 +232,19 @@ AppWrapper <- setRefClass(
       }
     },
     onWSMessage = function(handle, binary, message) {
-      for (handler in .wsconns[[as.character(handle)]]$.messageCallbacks) {
+      for (handler in .wsconns[[wsconn_address(handle)]]$.messageCallbacks) {
         result <- try(handler(binary, message))
         if (inherits(result, 'try-error')) {
-          .wsconns[[as.character(handle)]]$close(1011, "Error executing onWSMessage")
+          .wsconns[[wsconn_address(handle)]]$close(1011, "Error executing onWSMessage")
           return()
         }
       }
     },
     onWSClose = function(handle) {
-      ws <- .wsconns[[as.character(handle)]]
+      ws <- .wsconns[[wsconn_address(handle)]]
       ws$.handle <- NULL
-      rm(list=as.character(handle), pos=.wsconns)
+      .wsconns[[wsconn_address(handle)]] <<- NULL
+
       for (handler in ws$.closeCallbacks) {
         handler()
       }

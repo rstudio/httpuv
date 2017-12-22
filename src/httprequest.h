@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include <boost/function.hpp>
+#include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
@@ -15,12 +16,32 @@
 #include "callbackqueue.h"
 #include "httpresponse.h"
 #include "utils.h"
+#include "thread.h"
 #include <later_api.h>
 
 enum Protocol {
   HTTP,
   WebSockets
 };
+
+
+extern CallbackQueue* background_queue;
+
+// A deleter, which, if called on the background thread, will delete the
+// object immediately. If called on the main thread, it will schedule itself
+// to run on the background thread.
+template <typename T>
+void background_deleter(T* obj) {
+  if (is_main_thread()) {
+    background_queue->push(boost::bind(background_deleter<T>, obj));
+
+  } else if (is_background_thread()) {
+    delete obj;
+
+  } else {
+    throw std::runtime_error("Can't detect correct thread for background_deleter.");
+  }
+}
 
 
 // HttpRequest is a bit of a misnomer -- a HttpRequest object represents a
@@ -39,7 +60,7 @@ private:
   RequestHeaders _headers;
   std::string _lastHeaderField;
   unsigned long _bytesRead;
-  WebSocketConnection* _pWebSocketConnection;
+  boost::shared_ptr<WebSocketConnection> _pWebSocketConnection;
 
   // `_env` is an Environment* instead of an Environment because it must be
   // created and deleted on the main thread. However, the creation and
@@ -91,7 +112,8 @@ public:
     : _pLoop(pLoop),
       _pWebApplication(pWebApplication),
       _pSocket(pSocket),
-      _protocol(HTTP), _bytesRead(0),
+      _protocol(HTTP),
+      _bytesRead(0),
       _env(NULL),
       _ignoreNewData(false),
       _ref_count(1),
@@ -103,6 +125,7 @@ public:
     ASSERT_BACKGROUND_THREAD()
     uv_tcp_init(pLoop, &_handle.tcp);
     _handle.isTcp = true;
+    // TODO: convert to shared_ptr?
     _handle.stream.data = this;
 
     http_parser_init(&_parser, HTTP_REQUEST);
@@ -111,15 +134,22 @@ public:
 
   virtual ~HttpRequest() {
     ASSERT_BACKGROUND_THREAD()
+    trace("HttpRequest::~HttpRequest");
+
     try {
-      delete _pWebSocketConnection;
-      // We need to delete the Rcpp::Environment on the main thread
-      later::later(delete_cb_main<Rcpp::Environment*>, _env, 0);
+      // Call reset instead of letting the lifetime end, because we want it
+      // inside a try-catch.
+      _pWebSocketConnection.reset();
     } catch (...) {}
+
+    // We need to delete the Rcpp::Environment on the main thread
+    later::later(delete_cb_main<Rcpp::Environment*>, _env, 0);
   }
 
   uv_stream_t* handle();
-  WebSocketConnection* websocket() const { return _pWebSocketConnection; }
+  boost::shared_ptr<WebSocketConnection> websocket() const {
+    return _pWebSocketConnection;
+  }
   Address clientAddress();
   Address serverAddress();
   Rcpp::Environment& env();
@@ -178,16 +208,22 @@ public:
   void _on_response_write(int status);
 
   void _initializeSocket() {
+    // Coerce to parent class
     boost::shared_ptr<WebSocketConnectionCallbacks> this_base(
       boost::static_pointer_cast<WebSocketConnectionCallbacks>(shared_from_this())
     );
-    _pWebSocketConnection = new WebSocketConnection(this_base);
+
+    _pWebSocketConnection = boost::shared_ptr<WebSocketConnection>(
+      new WebSocketConnection(this_base),
+      background_deleter<WebSocketConnection>
+    );
 
     _pSocket->addConnection(shared_from_this());
   }
 };
 
 
+// Same for Websocketconnection
 // Factory function needed because we can't call shared_from_this() inside the
 // constructor.
 inline boost::shared_ptr<HttpRequest> createHttpRequest(
@@ -196,8 +232,13 @@ inline boost::shared_ptr<HttpRequest> createHttpRequest(
   Socket* pSocket,
   CallbackQueue* backgroundQueue)
 {
-  boost::shared_ptr<HttpRequest> req = boost::make_shared<HttpRequest>(
-    pLoop, pWebApplication, pSocket, backgroundQueue
+  ASSERT_BACKGROUND_THREAD()
+
+  // The shared_ptr has a custom deleter which ensures that the HttpRequest is
+  // deleted on the background thread.
+  boost::shared_ptr<HttpRequest> req(
+    new HttpRequest(pLoop, pWebApplication, pSocket, backgroundQueue),
+    background_deleter<HttpRequest>
   );
 
   req->_initializeSocket();

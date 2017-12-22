@@ -4,7 +4,7 @@
 #include "callbackqueue.h"
 #include "socket.h"
 #include "utils.h"
-#include "debug.h"
+#include "thread.h"
 #include <stdlib.h>
 #include <string.h>
 

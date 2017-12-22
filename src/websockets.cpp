@@ -1,5 +1,6 @@
 #include "websockets.h"
-#include "debug.h"
+#include "utils.h"
+#include "thread.h"
 #include <assert.h>
 
 #include <algorithm>
@@ -264,6 +265,7 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
 
 void WebSocketConnection::closeWS(uint16_t code, std::string reason) {
   ASSERT_BACKGROUND_THREAD()
+  trace("WebSocketConnection::closeWS");
   // If we have already sent a close message, do nothing. It's especially
   // important that we don't call closeWSSocket twice, this might lead to
   // a crash as we (eventually) might double-free the Socket object.
@@ -313,6 +315,8 @@ void WebSocketConnection::onPayload(const char* data, size_t len) {
 }
 void WebSocketConnection::onFrameComplete() {
   ASSERT_BACKGROUND_THREAD()
+  trace("WebSocketConnection::onFrameComplete");
+
   if (!_header.fin) {
     std::copy(_payload.begin(), _payload.end(),
       std::back_inserter(_incompleteContentPayload));
@@ -333,6 +337,7 @@ void WebSocketConnection::onFrameComplete() {
         break;
       }
       case Close: {
+  trace("WebSocketConnection::onFrameComplete Close");
         _connState |= WS_CLOSE_RECEIVED;
 
         // If we haven't sent a Close frame before, send one now, echoing
@@ -347,6 +352,9 @@ void WebSocketConnection::onFrameComplete() {
 
         // TODO: Use code and status
         _pCallbacks->onWSClose(0);
+
+        // TODO: Is this necessary?
+        // _pCallbacks.reset();
 
         break;
       }

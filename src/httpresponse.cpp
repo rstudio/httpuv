@@ -1,7 +1,7 @@
 #include "httpresponse.h"
 #include "httprequest.h"
 #include "constants.h"
-#include "debug.h"
+#include "thread.h"
 #include "utils.h"
 #include <uv.h>
 

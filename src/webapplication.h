@@ -5,7 +5,7 @@
 #include <uv.h>
 #include <Rcpp.h>
 #include "websockets.h"
-#include "debug.h"
+#include "thread.h"
 
 class HttpRequest;
 class HttpResponse;
@@ -22,10 +22,12 @@ public:
                            boost::function<void(HttpResponse*)> callback) = 0;
   virtual void onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
                         boost::function<void(void)> error_callback) = 0;
-  virtual void onWSMessage(WebSocketConnection* conn,
-                           bool binary, const char* data, size_t len,
+  virtual void onWSMessage(boost::shared_ptr<WebSocketConnection>,
+                           bool binary,
+                           const char* data,
+                           size_t len,
                            boost::function<void(void)> error_callback) = 0;
-  virtual void onWSClose(WebSocketConnection* conn) = 0;
+  virtual void onWSClose(boost::shared_ptr<WebSocketConnection>) = 0;
 };
 
 
@@ -65,10 +67,12 @@ public:
                            boost::function<void(HttpResponse*)> callback);
   virtual void onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
                         boost::function<void(void)> error_callback);
-  virtual void onWSMessage(WebSocketConnection* conn,
-                           bool binary, const char* data, size_t len,
+  virtual void onWSMessage(boost::shared_ptr<WebSocketConnection> conn,
+                           bool binary,
+                           const char* data,
+                           size_t len,
                            boost::function<void(void)> error_callback);
-  virtual void onWSClose(WebSocketConnection* conn);
+  virtual void onWSClose(boost::shared_ptr<WebSocketConnection> conn);
 };
 
 
