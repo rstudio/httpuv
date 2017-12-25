@@ -44,5 +44,8 @@ void Socket::destroy() {
 }
 
 void on_Socket_close(uv_handle_t* pHandle) {
-  delete (Socket*)pHandle->data;
+  boost::shared_ptr<Socket>* pSocket = reinterpret_cast<boost::shared_ptr<Socket>*>(pHandle->data);
+  // Delete the pointer to the shared_ptr to the Socket. This may trigger
+  // ~Socket if it's the last shared_ptr to the Socket.
+  delete pSocket;
 }

@@ -12,6 +12,7 @@
 #include <iostream>
 #include <sstream>
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 
 
 // TODO: Streaming response body (with chunked transfer encoding)
@@ -24,13 +25,13 @@ void on_request(uv_stream_t* handle, int status) {
     return;
   }
 
-  Socket* pSocket = (Socket*)handle->data;
-  CallbackQueue* bg_queue = pSocket->background_queue;
+  boost::shared_ptr<Socket>* pSocket = (boost::shared_ptr<Socket>*)handle->data;
+  CallbackQueue* bg_queue = (*pSocket)->background_queue;
 
   // Freed by HttpRequest itself when close() is called, which
   // can occur on EOF, error, or when the Socket is destroyed
   boost::shared_ptr<HttpRequest> req = createHttpRequest(
-    handle->loop, pSocket->pWebApplication, pSocket, bg_queue
+    handle->loop, (*pSocket)->pWebApplication, *pSocket, bg_queue
   );
 
   int r = uv_accept(handle, req->handle());
@@ -51,30 +52,34 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
   // that far, we MUST delete pWebApplication ourselves.
 
   // Deletes itself when destroy() is called, which occurs in freeServer()
-  Socket* pSocket = new Socket(pWebApplication, background_queue);
+  // Unfortuantely, this needs to be a pointer to a shared_ptr, because the
+  // uv_stream_t.data field is just a void* pointer.
+  boost::shared_ptr<Socket>* pSocket = new boost::shared_ptr<Socket>(
+    new Socket(pWebApplication, background_queue)
+  );
   // TODO: Handle error
-  uv_pipe_init(pLoop, &pSocket->handle.pipe, true);
-  pSocket->handle.isTcp = false;
-  pSocket->handle.stream.data = pSocket;
+  uv_pipe_init(pLoop, &(*pSocket)->handle.pipe, true);
+  (*pSocket)->handle.isTcp = false;
+  (*pSocket)->handle.stream.data = pSocket;
 
   mode_t oldMask = 0;
   if (mask >= 0)
     oldMask = umask(mask);
-  int r = uv_pipe_bind(&pSocket->handle.pipe, name.c_str());
+  int r = uv_pipe_bind(&(*pSocket)->handle.pipe, name.c_str());
   if (mask >= 0)
     umask(oldMask);
 
   if (r) {
-    pSocket->destroy();
+    (*pSocket)->destroy();
     return NULL;
   }
-  r = uv_listen((uv_stream_t*)&pSocket->handle.stream, 128, &on_request);
+  r = uv_listen((uv_stream_t*)&(*pSocket)->handle.stream, 128, &on_request);
   if (r) {
-    pSocket->destroy();
+    (*pSocket)->destroy();
     return NULL;
   }
 
-  return &pSocket->handle.stream;
+  return &(*pSocket)->handle.stream;
 }
 
 // A wrapper for createPipeServer. The main thread schedules this to run on
@@ -100,31 +105,35 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   // the future we have failure cases that stop execution before we get
   // that far, we MUST delete pWebApplication ourselves.
 
-  // Deletes itself when destroy() is called, in io_thread()
-  Socket* pSocket = new Socket(pWebApplication, background_queue);
+  // Deletes itself when destroy() is called, which occurs in freeServer()
+  // Unfortuantely, this needs to be a pointer to a shared_ptr, because the
+  // uv_stream_t.data field is just a void* pointer.
+  boost::shared_ptr<Socket>* pSocket = new boost::shared_ptr<Socket>(
+    new Socket(pWebApplication, background_queue)
+  );
   // TODO: Handle error
-  uv_tcp_init(pLoop, &pSocket->handle.tcp);
-  pSocket->handle.isTcp = true;
-  pSocket->handle.stream.data = pSocket;
+  uv_tcp_init(pLoop, &(*pSocket)->handle.tcp);
+  (*pSocket)->handle.isTcp = true;
+  (*pSocket)->handle.stream.data = pSocket;
 
   struct sockaddr_in address = {0};
   int r = uv_ip4_addr(host.c_str(), port, &address);
   if (r) {
-    pSocket->destroy();
+    (*pSocket)->destroy();
     return NULL;
   }
-  r = uv_tcp_bind(&pSocket->handle.tcp, (sockaddr*)&address, 0);
+  r = uv_tcp_bind(&(*pSocket)->handle.tcp, (sockaddr*)&address, 0);
   if (r) {
-    pSocket->destroy();
+    (*pSocket)->destroy();
     return NULL;
   }
-  r = uv_listen((uv_stream_t*)&pSocket->handle.stream, 128, &on_request);
+  r = uv_listen((uv_stream_t*)&(*pSocket)->handle.stream, 128, &on_request);
   if (r) {
-    pSocket->destroy();
+    (*pSocket)->destroy();
     return NULL;
   }
 
-  return &pSocket->handle.stream;
+  return &(*pSocket)->handle.stream;
 }
 
 // A wrapper for createTcpServer. The main thread schedules this to run on the
@@ -146,6 +155,6 @@ void createTcpServerSync(uv_loop_t* pLoop, const std::string& host,
 void freeServer(uv_stream_t* pHandle) {
   ASSERT_BACKGROUND_THREAD()
   // TODO: Check if server is still running?
-  Socket* pSocket = (Socket*)pHandle->data;
-  pSocket->destroy();
+  boost::shared_ptr<Socket>* pSocket = (boost::shared_ptr<Socket>*)pHandle->data;
+  (*pSocket)->destroy();
 }

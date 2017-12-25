@@ -7,7 +7,6 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <uv.h>
 #include <http_parser.h>
@@ -53,7 +52,7 @@ private:
   uv_loop_t* _pLoop;
   WebApplication* _pWebApplication;
   VariantHandle _handle;
-  Socket* _pSocket;
+  boost::shared_ptr<Socket> _pSocket;
   http_parser _parser;
   Protocol _protocol;
   std::string _url;
@@ -107,7 +106,7 @@ private:
 public:
   HttpRequest(uv_loop_t* pLoop,
               WebApplication* pWebApplication,
-              Socket* pSocket,
+              boost::shared_ptr<Socket> pSocket,
               CallbackQueue* backgroundQueue)
     : _pLoop(pLoop),
       _pWebApplication(pWebApplication),
@@ -229,7 +228,7 @@ public:
 inline boost::shared_ptr<HttpRequest> createHttpRequest(
   uv_loop_t* pLoop,
   WebApplication* pWebApplication,
-  Socket* pSocket,
+  boost::shared_ptr<Socket> pSocket,
   CallbackQueue* backgroundQueue)
 {
   ASSERT_BACKGROUND_THREAD()
