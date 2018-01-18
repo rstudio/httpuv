@@ -32,7 +32,7 @@ void delete_cb_bg(void* obj) {
 // symbols stdout, stderr, and printf, so this function is a way to avoid
 // those. It's to calling `fprintf(stderr, ...)`.
 inline void err_printf(const char *fmt, ...) {
-  size_t max_size = 4096;
+  const size_t max_size = 4096;
   char buf[max_size];
 
   va_list args;
