@@ -28,16 +28,20 @@ struct Address {
 
 class Socket;
 
-uv_stream_t* createPipeServer(uv_loop_t* loop, const std::string& name,
-  int mask, WebApplication* pWebApplication);
+uv_stream_t* createPipeServer(uv_loop_t* loop, const std::string& name, int mask,
+  boost::shared_ptr<WebApplication> pWebApplication);
+
 uv_stream_t* createTcpServer(uv_loop_t* loop, const std::string& host, int port,
-  WebApplication* pWebApplication);
-void createPipeServerSync(uv_loop_t* loop, const std::string& name,
-  int mask, WebApplication* pWebApplication, CallbackQueue* background_queue,
+  boost::shared_ptr<WebApplication> pWebApplication);
+
+void createPipeServerSync(uv_loop_t* loop, const std::string& name, int mask,
+  boost::shared_ptr<WebApplication> pWebApplication, CallbackQueue* background_queue,
   uv_stream_t** pServer, uv_mutex_t* mutex, uv_cond_t* cond);
+
 void createTcpServerSync(uv_loop_t* loop, const std::string& host, int port,
-  WebApplication* pWebApplication, CallbackQueue* background_queue,
+  boost::shared_ptr<WebApplication> pWebApplication, CallbackQueue* background_queue,
   uv_stream_t** pServer, uv_mutex_t* mutex, uv_cond_t* cond);
+
 void freeServer(uv_stream_t* pServer);
 bool runNonBlocking(uv_loop_t* loop);
 

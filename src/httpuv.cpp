@@ -16,6 +16,7 @@
 #include "utils.h"
 #include "thread.h"
 #include "httpuv.h"
+#include "auto_deleter.h"
 #include <Rinternals.h>
 
 
@@ -190,9 +191,12 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
-  RWebApplication* pHandler =
-    new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
-                        onWSMessage, onWSClose);
+  boost::shared_ptr<RWebApplication> pHandler =
+    boost::shared_ptr<RWebApplication>(
+      new RWebApplication(onHeaders, onBodyData, onRequest,
+                          onWSOpen, onWSMessage, onWSClose),
+      auto_deleter_main<RWebApplication, true>
+    );
 
   ensure_io_thread();
 
@@ -207,12 +211,14 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   // Run on background thread:
   // createTcpServerSync(
-  //   get_io_loop(), host.c_str(), port, (WebApplication*)pHandler,
+  //   get_io_loop(), host.c_str(), port,
+  //   boost::static_pointer_cast<WebApplication>(pHandler),
   //   background_queue, &pServer, &blocker
   // );
   background_queue->push(
     boost::bind(createTcpServerSync,
-      get_io_loop(), host.c_str(), port, (WebApplication*)pHandler,
+      get_io_loop(), host.c_str(), port,
+      boost::static_pointer_cast<WebApplication>(pHandler),
       background_queue, &pServer, &mutex, &cond
     )
   );
@@ -249,9 +255,12 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // it's still createTcpServer's responsibility to delete pHandler.
-  RWebApplication* pHandler =
-    new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
-                        onWSMessage, onWSClose);
+  boost::shared_ptr<RWebApplication> pHandler =
+    boost::shared_ptr<RWebApplication>(
+      new RWebApplication(onHeaders, onBodyData, onRequest,
+                          onWSOpen, onWSMessage, onWSClose),
+      auto_deleter_main<RWebApplication, true>
+    );
 
   ensure_io_thread();
 
@@ -264,12 +273,14 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   // Run on background thread:
   // createPipeServerSync(
-  //   get_io_loop(), name.c_str(), mask, (WebApplication*)pHandler,
+  //   get_io_loop(), name.c_str(), mask,
+  //   boost::static_pointer_cast<WebApplication>(pHandler),
   //   background_queue, &pServer, &blocker
   // );
   background_queue->push(
     boost::bind(createPipeServerSync,
-      get_io_loop(), name.c_str(), mask, (WebApplication*)pHandler,
+      get_io_loop(), name.c_str(), mask,
+      boost::static_pointer_cast<WebApplication>(pHandler),
       background_queue, &pServer, &mutex, &cond
     )
   );

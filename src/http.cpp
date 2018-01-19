@@ -45,7 +45,8 @@ void on_request(uv_stream_t* handle, int status) {
 }
 
 uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
-  int mask, WebApplication* pWebApplication, CallbackQueue* background_queue) {
+  int mask, boost::shared_ptr<WebApplication> pWebApplication,
+  CallbackQueue* background_queue) {
 
   // We own pWebApplication. It will be destroyed by the socket but if in
   // the future we have failure cases that stop execution before we get
@@ -85,7 +86,8 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
 // A wrapper for createPipeServer. The main thread schedules this to run on
 // the background thread, then waits for this to finish, using a barrier.
 void createPipeServerSync(uv_loop_t* loop, const std::string& name,
-  int mask, WebApplication* pWebApplication, CallbackQueue* background_queue,
+  int mask, boost::shared_ptr<WebApplication> pWebApplication,
+  CallbackQueue* background_queue,
   uv_stream_t** pServer, uv_mutex_t* mutex, uv_cond_t* cond)
 {
   ASSERT_BACKGROUND_THREAD()
@@ -99,7 +101,8 @@ void createPipeServerSync(uv_loop_t* loop, const std::string& name,
 
 
 uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
-  int port, WebApplication* pWebApplication, CallbackQueue* background_queue) {
+  int port, boost::shared_ptr<WebApplication> pWebApplication,
+  CallbackQueue* background_queue) {
 
   // We own pWebApplication. It will be destroyed by the socket but if in
   // the future we have failure cases that stop execution before we get
@@ -139,7 +142,8 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
 // A wrapper for createTcpServer. The main thread schedules this to run on the
 // background thread, then waits for this to finish, using a barrier.
 void createTcpServerSync(uv_loop_t* pLoop, const std::string& host,
-  int port, WebApplication* pWebApplication, CallbackQueue* background_queue,
+  int port, boost::shared_ptr<WebApplication> pWebApplication,
+  CallbackQueue* background_queue,
   uv_stream_t** pServer, uv_mutex_t* mutex, uv_cond_t* cond)
 {
   ASSERT_BACKGROUND_THREAD()

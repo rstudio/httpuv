@@ -16,51 +16,12 @@
 #include "httpresponse.h"
 #include "utils.h"
 #include "thread.h"
-#include <later_api.h>
+#include "auto_deleter.h"
 
 enum Protocol {
   HTTP,
   WebSockets
 };
-
-
-extern CallbackQueue* background_queue;
-
-
-// A deleter function, which, if called on the main thread, will delete the
-// object immediately. If called on the background thread, it will schedule
-// deletion to run on the main thread. This is useful in cases where we don't
-// know ahead of time which thread will be triggering the deletion.
-template <typename T>
-void auto_deleter_main(T* obj) {
-  if (is_main_thread()) {
-    delete obj;
-
-  } else if (is_background_thread()) {
-    later::later(deleter_main<T>, obj, 0);
-
-  } else {
-    throw std::runtime_error("Can't detect correct thread for deleter_main.");
-  }
-}
-
-// A deleter function, which, if called on the background thread, will delete
-// the object immediately. If called on the main thread, it will schedule
-// itself to run on the background thread. This is useful in cases where we
-// don't know ahead of time which thread will be triggering the deletion.
-template <typename T>
-void auto_deleter_background(T* obj) {
-  if (is_main_thread()) {
-    background_queue->push(boost::bind(auto_deleter_background<T>, obj));
-
-  } else if (is_background_thread()) {
-    delete obj;
-
-  } else {
-    throw std::runtime_error("Can't detect correct thread for deleter_background.");
-  }
-}
-
 
 // HttpRequest is a bit of a misnomer -- a HttpRequest object represents a
 // single connection, on which multiple actual HTTP requests can be made.
@@ -69,7 +30,7 @@ class HttpRequest : public WebSocketConnectionCallbacks,
 {
 private:
   uv_loop_t* _pLoop;
-  WebApplication* _pWebApplication;
+  boost::shared_ptr<WebApplication> _pWebApplication;
   VariantHandle _handle;
   boost::shared_ptr<Socket> _pSocket;
   http_parser _parser;
@@ -124,7 +85,7 @@ private:
 
 public:
   HttpRequest(uv_loop_t* pLoop,
-              WebApplication* pWebApplication,
+              boost::shared_ptr<WebApplication> pWebApplication,
               boost::shared_ptr<Socket> pSocket,
               CallbackQueue* backgroundQueue)
     : _pLoop(pLoop),
@@ -243,7 +204,7 @@ public:
 // constructor.
 inline boost::shared_ptr<HttpRequest> createHttpRequest(
   uv_loop_t* pLoop,
-  WebApplication* pWebApplication,
+  boost::shared_ptr<WebApplication> pWebApplication,
   boost::shared_ptr<Socket> pSocket,
   CallbackQueue* backgroundQueue)
 {

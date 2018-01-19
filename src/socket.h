@@ -11,11 +11,12 @@ class WebApplication;
 class Socket {
 public:
   VariantHandle handle;
-  WebApplication* pWebApplication;
+  boost::shared_ptr<WebApplication> pWebApplication;
   CallbackQueue* background_queue;
   std::vector<boost::shared_ptr<HttpRequest>> connections;
 
-  Socket(WebApplication* pWebApplication, CallbackQueue* background_queue)
+  Socket(boost::shared_ptr<WebApplication> pWebApplication,
+         CallbackQueue* background_queue)
     : pWebApplication(pWebApplication), background_queue(background_queue)
   {
   }

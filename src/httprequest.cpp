@@ -5,6 +5,7 @@
 #include "callback.h"
 #include "utils.h"
 #include "thread.h"
+#include "auto_deleter.h"
 
 
 http_parser_settings& request_settings() {
