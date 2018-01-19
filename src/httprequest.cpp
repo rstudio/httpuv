@@ -139,18 +139,21 @@ void HttpRequest::_initializeEnv() {
   ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
-  if (_env == NULL) {
-    delete _env;
-  }
-
   Environment base(R_BaseEnv);
   Function new_env = as<Function>(base["new.env"]);
 
-  // Deleted either when this function is called again, or in destructor.
-  _env = new Environment(new_env(_["parent"] = R_EmptyEnv));
+  // The deleter is called either when this function is called again, or when
+  // the HttpRequest object is deleted. The deletion will happen on the
+  // background thread; auto_deleter_main() schedules the deletion of the
+  // Rcpp::Environment object on the main thread.
+  _env = boost::shared_ptr<Environment>(
+    new Environment(new_env(_["parent"] = R_EmptyEnv)),
+    auto_deleter_main<Environment>
+  );
 }
 
 Rcpp::Environment& HttpRequest::env() {
+  ASSERT_MAIN_THREAD()
   return *_env;
 }
 
@@ -378,8 +381,8 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
   later::later(invoke_callback, webapp_on_body_data_callback, 0);
 
   // Schedule for after on_ws_message_callback:
-  // delete_cb_main<std::vector<char>*>(buf)
-  later::later(delete_cb_main<std::vector<char>*>, buf, 0);
+  // deleter_main<std::vector<char>>(buf)
+  later::later(deleter_main<std::vector<char>>, buf, 0);
 
   // TODO: _bytesRead currently is not used anywhere else. If this changes,
   // then depending on how it's used, it might make more sense to have
@@ -471,6 +474,11 @@ void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
     return;
   }
 
+  // TODO: ADding this fixes the ERROR: [uv_write] bad file descriptor, but
+  // then we need to make sure the pResponse gets cleaned up. Smart pointer?
+  if (_is_closing)
+    return;
+
   if (!http_should_keep_alive(&_parser)) {
     pResponse->closeAfterWritten();
 
@@ -516,8 +524,8 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   later::later(invoke_callback, on_ws_message_callback, 0);
 
   // Schedule for after on_ws_message_callback:
-  // delete_cb_main<std::vector<char>*>(buf)
-  later::later(delete_cb_main<std::vector<char>*>, buf, 0);
+  // deleter_main<std::vector<char>>(buf)
+  later::later(deleter_main<std::vector<char>>, buf, 0);
 }
 
 void HttpRequest::onWSClose(int code) {
@@ -663,7 +671,7 @@ void HttpRequest::_call_r_on_ws_open() {
 
   _background_queue->push(cb);
   // Free req_buffer after data is written
-  _background_queue->push(boost::bind(delete_cb_bg<std::vector<char>*>, req_buffer));
+  _background_queue->push(boost::bind(deleter_background<std::vector<char>>, req_buffer));
 }
 
 

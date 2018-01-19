@@ -26,19 +26,38 @@ enum Protocol {
 
 extern CallbackQueue* background_queue;
 
-// A deleter, which, if called on the background thread, will delete the
-// object immediately. If called on the main thread, it will schedule itself
-// to run on the background thread.
+
+// A deleter function, which, if called on the main thread, will delete the
+// object immediately. If called on the background thread, it will schedule
+// deletion to run on the main thread. This is useful in cases where we don't
+// know ahead of time which thread will be triggering the deletion.
 template <typename T>
-void background_deleter(T* obj) {
+void auto_deleter_main(T* obj) {
   if (is_main_thread()) {
-    background_queue->push(boost::bind(background_deleter<T>, obj));
+    delete obj;
+
+  } else if (is_background_thread()) {
+    later::later(deleter_main<T>, obj, 0);
+
+  } else {
+    throw std::runtime_error("Can't detect correct thread for deleter_main.");
+  }
+}
+
+// A deleter function, which, if called on the background thread, will delete
+// the object immediately. If called on the main thread, it will schedule
+// itself to run on the background thread. This is useful in cases where we
+// don't know ahead of time which thread will be triggering the deletion.
+template <typename T>
+void auto_deleter_background(T* obj) {
+  if (is_main_thread()) {
+    background_queue->push(boost::bind(auto_deleter_background<T>, obj));
 
   } else if (is_background_thread()) {
     delete obj;
 
   } else {
-    throw std::runtime_error("Can't detect correct thread for background_deleter.");
+    throw std::runtime_error("Can't detect correct thread for deleter_background.");
   }
 }
 
@@ -66,7 +85,7 @@ private:
   // deletion of HttpRequest objects happens on the background thread, and so
   // the lifetime of the Environment can't be strictly tied to the lifetime of
   // the HttpRequest.
-  Rcpp::Environment* _env;
+  boost::shared_ptr<Rcpp::Environment> _env;
   void _newRequest();
   void _initializeEnv();
 
@@ -140,9 +159,6 @@ public:
       // inside a try-catch.
       _pWebSocketConnection.reset();
     } catch (...) {}
-
-    // We need to delete the Rcpp::Environment on the main thread
-    later::later(delete_cb_main<Rcpp::Environment*>, _env, 0);
   }
 
   uv_stream_t* handle();
@@ -214,7 +230,7 @@ public:
 
     _pWebSocketConnection = boost::shared_ptr<WebSocketConnection>(
       new WebSocketConnection(this_base),
-      background_deleter<WebSocketConnection>
+      auto_deleter_background<WebSocketConnection>
     );
 
     _pSocket->addConnection(shared_from_this());
@@ -237,7 +253,7 @@ inline boost::shared_ptr<HttpRequest> createHttpRequest(
   // deleted on the background thread.
   boost::shared_ptr<HttpRequest> req(
     new HttpRequest(pLoop, pWebApplication, pSocket, backgroundQueue),
-    background_deleter<HttpRequest>
+    auto_deleter_background<HttpRequest>
   );
 
   req->_initializeSocket();

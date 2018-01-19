@@ -154,8 +154,8 @@ void sendWSMessage(SEXP conn,
 
   background_queue->push(cb);
   // Free str after data is written
-  // delete_cb<std::vector<char>*>(str)
-  background_queue->push(boost::bind(delete_cb_bg<std::vector<char>*>, str));
+  // deleter_background<std::vector<char>>(str)
+  background_queue->push(boost::bind(deleter_background<std::vector<char>>, str));
 }
 
 // [[Rcpp::export]]
