@@ -25,7 +25,6 @@ public:
   void removeConnection(boost::shared_ptr<HttpRequest> request);
 
   virtual ~Socket();
-  virtual void destroy();
 };
 
 #endif // SOCKET_HPP
