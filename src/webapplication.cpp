@@ -135,7 +135,10 @@ void requestToEnv(boost::shared_ptr<HttpRequest> pRequest, Rcpp::Environment* pE
 }
 
 
-HttpResponse* listToResponse(boost::shared_ptr<HttpRequest> pRequest, const Rcpp::List& response) {
+boost::shared_ptr<HttpResponse> listToResponse(
+  boost::shared_ptr<HttpRequest> pRequest,
+  const Rcpp::List& response)
+{
   ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
@@ -170,8 +173,10 @@ HttpResponse* listToResponse(boost::shared_ptr<HttpRequest> pRequest, const Rcpp
     pDataSource = new InMemoryDataSource(responseBytes);
   }
 
-  HttpResponse* pResp = new HttpResponse(pRequest, status, statusDesc,
-                                         pDataSource);
+  boost::shared_ptr<HttpResponse> pResp = boost::shared_ptr<HttpResponse>(
+    new HttpResponse(pRequest, status, statusDesc, pDataSource),
+    auto_deleter_background<HttpResponse>
+  );
   CharacterVector headerNames = responseHeaders.names();
   for (R_len_t i = 0; i < responseHeaders.size(); i++) {
     pResp->addHeader(
@@ -182,21 +187,20 @@ HttpResponse* listToResponse(boost::shared_ptr<HttpRequest> pRequest, const Rcpp
   return pResp;
 }
 
-void invokeResponseFun(boost::function<void(HttpResponse*)> fun,
+void invokeResponseFun(boost::function<void(boost::shared_ptr<HttpResponse>)> fun,
                        boost::shared_ptr<HttpRequest> pRequest,
                        Rcpp::List response)
 {
   ASSERT_MAIN_THREAD()
   // new HttpResponse object. The callback will invoke
-  // HttpResponse->writeResponse(), which adds a callback to destroy(), which
-  // deletes the object.
-  HttpResponse* pResponse = listToResponse(pRequest, response);
+  // HttpResponse->writeResponse().
+  boost::shared_ptr<HttpResponse> pResponse = listToResponse(pRequest, response);
   fun(pResponse);
 }
 
 
 void RWebApplication::onHeaders(boost::shared_ptr<HttpRequest> pRequest,
-                                boost::function<void(HttpResponse*)> callback)
+                                boost::function<void(boost::shared_ptr<HttpResponse>)> callback)
 {
   ASSERT_MAIN_THREAD()
   if (_onHeaders.isNULL()) {
@@ -221,13 +225,13 @@ void RWebApplication::onHeaders(boost::shared_ptr<HttpRequest> pRequest,
   // new HttpResponse object. The callback will invoke
   // HttpResponse->writeResponse(), which adds a callback to destroy(), which
   // deletes the object.
-  HttpResponse* pResponse = listToResponse(pRequest, response);
+  boost::shared_ptr<HttpResponse> pResponse = listToResponse(pRequest, response);
   callback(pResponse);
 }
 
 void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
       const char* pData, size_t length,
-      boost::function<void(HttpResponse*)> errorCallback)
+      boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback)
 {
   ASSERT_MAIN_THREAD()
   trace("RWebApplication::onBodyData");
@@ -255,7 +259,7 @@ void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
 }
 
 void RWebApplication::getResponse(boost::shared_ptr<HttpRequest> pRequest,
-                                  boost::function<void(HttpResponse*)> callback) {
+                                  boost::function<void(boost::shared_ptr<HttpResponse>)> callback) {
   ASSERT_MAIN_THREAD()
   trace("RWebApplication::getResponse");
   using namespace Rcpp;

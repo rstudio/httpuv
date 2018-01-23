@@ -14,12 +14,12 @@ class WebApplication {
 public:
   virtual ~WebApplication() {}
   virtual void onHeaders(boost::shared_ptr<HttpRequest> pRequest,
-                         boost::function<void(HttpResponse*)> callback) = 0;
+                         boost::function<void(boost::shared_ptr<HttpResponse>)> callback) = 0;
   virtual void onBodyData(boost::shared_ptr<HttpRequest> pRequest,
                           const char* data, size_t len,
-                          boost::function<void(HttpResponse*)> errorCallback) = 0;
+                          boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback) = 0;
   virtual void getResponse(boost::shared_ptr<HttpRequest> request,
-                           boost::function<void(HttpResponse*)> callback) = 0;
+                           boost::function<void(boost::shared_ptr<HttpResponse>)> callback) = 0;
   virtual void onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
                         boost::function<void(void)> error_callback) = 0;
   virtual void onWSMessage(boost::shared_ptr<WebSocketConnection>,
@@ -59,12 +59,12 @@ public:
   }
 
   virtual void onHeaders(boost::shared_ptr<HttpRequest> pRequest,
-                         boost::function<void(HttpResponse*)> callback);
+                         boost::function<void(boost::shared_ptr<HttpResponse>)> callback);
   virtual void onBodyData(boost::shared_ptr<HttpRequest> pRequest,
                           const char* data, size_t len,
-                          boost::function<void(HttpResponse*)> errorCallback);
+                          boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback);
   virtual void getResponse(boost::shared_ptr<HttpRequest> request,
-                           boost::function<void(HttpResponse*)> callback);
+                           boost::function<void(boost::shared_ptr<HttpResponse>)> callback);
   virtual void onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
                         boost::function<void(void)> error_callback);
   virtual void onWSMessage(boost::shared_ptr<WebSocketConnection> conn,

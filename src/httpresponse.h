@@ -5,10 +5,11 @@
 #include "constants.h"
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 class HttpRequest;
 
-class HttpResponse {
+class HttpResponse : public boost::enable_shared_from_this<HttpResponse>  {
 
   boost::shared_ptr<HttpRequest> _pRequest;
   int _statusCode;
@@ -31,10 +32,7 @@ public:
   {
   }
 
-  virtual ~HttpResponse() {
-    delete _pBody;
-  }
-
+  ~HttpResponse();
   ResponseHeaders& headers();
 
   void addHeader(const std::string& name, const std::string& value);
@@ -42,8 +40,6 @@ public:
   void writeResponse();
   void onResponseWritten(int status);
   void closeAfterWritten();
-  void destroy(bool forceClose = false);
 };
-
 
 #endif

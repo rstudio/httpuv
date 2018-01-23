@@ -260,7 +260,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
   trace("HttpRequest::_on_headers_complete");
 
-  boost::function<void(HttpResponse*)> schedule_bg_callback(
+  boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
     boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, shared_from_this(), _1)
   );
 
@@ -284,7 +284,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
 // This is called at the end of WebApplication::onHeaders(). It puts an item
 // on the write queue and signals to the background thread that there's
 // something there.
-void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse) {
+void HttpRequest::_schedule_on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
   ASSERT_MAIN_THREAD()
   trace("HttpRequest::_schedule_on_headers_complete_complete");
 
@@ -300,7 +300,7 @@ void HttpRequest::_schedule_on_headers_complete_complete(HttpResponse* pResponse
 // This is called after the user's R onHeaders() function has finished. It can
 // write a response, if onHeaders() wants that. It also sets a status code for
 // http-parser and then re-executes the parser. Runs on the background thread.
-void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
+void HttpRequest::_on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
   ASSERT_BACKGROUND_THREAD()
   trace("HttpRequest::_on_headers_complete_complete");
 
@@ -338,7 +338,10 @@ void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
     // If the request is Expect: Continue, and the app didn't say otherwise,
     // then give it what it wants
     if (_hasHeader("Expect", "100-continue")) {
-      pResponse = new HttpResponse(shared_from_this(), 100, "Continue", NULL);
+      pResponse = boost::shared_ptr<HttpResponse>(
+        new HttpResponse(shared_from_this(), 100, "Continue", (DataSource*)NULL),
+        auto_deleter_background<HttpResponse>
+      );
       pResponse->writeResponse();
     }
   }
@@ -363,7 +366,7 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
   // function.
   std::vector<char>* buf = new std::vector<char>(pAt, pAt + length);
 
-  boost::function<void(HttpResponse*)> schedule_bg_callback(
+  boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
     boost::bind(&HttpRequest::_schedule_on_body_error, shared_from_this(), _1)
   );
 
@@ -394,7 +397,7 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
   return 0;
 }
 
-void HttpRequest::_schedule_on_body_error(HttpResponse* pResponse) {
+void HttpRequest::_schedule_on_body_error(boost::shared_ptr<HttpResponse> pResponse) {
   ASSERT_MAIN_THREAD()
   trace("HttpRequest::_schedule_on_body_error");
 
@@ -407,7 +410,7 @@ void HttpRequest::_schedule_on_body_error(HttpResponse* pResponse) {
 
 }
 
-void HttpRequest::_on_body_error(HttpResponse* pResponse) {
+void HttpRequest::_on_body_error(boost::shared_ptr<HttpResponse> pResponse) {
   ASSERT_BACKGROUND_THREAD()
   trace("HttpRequest::_on_body_error");
 
@@ -432,7 +435,7 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
   if (pParser->upgrade)
     return 0;
 
-  boost::function<void(HttpResponse*)> schedule_bg_callback(
+  boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
     boost::bind(&HttpRequest::_schedule_on_message_complete_complete, shared_from_this(), _1)
   );
 
@@ -455,7 +458,7 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 
 // This is called by the user's application code during or after the end of
 // WebApplication::getResponse(). It puts an item on the background queue.
-void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse) {
+void HttpRequest::_schedule_on_message_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
   ASSERT_MAIN_THREAD()
 
   responseScheduled();
@@ -466,7 +469,7 @@ void HttpRequest::_schedule_on_message_complete_complete(HttpResponse* pResponse
   _background_queue->push(cb);
 }
 
-void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
+void HttpRequest::_on_message_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
   ASSERT_BACKGROUND_THREAD()
   trace("HttpRequest::_on_message_complete_complete");
 
@@ -696,8 +699,10 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
     if (_pWebSocketConnection->accept(_headers, pData, pDataLen)) {
       // Freed in on_response_written
       InMemoryDataSource* pDS = new InMemoryDataSource();
-      HttpResponse* pResp = new HttpResponse(shared_from_this(), 101,
-        "Switching Protocols", pDS);
+      boost::shared_ptr<HttpResponse> pResp = boost::shared_ptr<HttpResponse>(
+        new HttpResponse(shared_from_this(), 101, "Switching Protocols", pDS),
+        auto_deleter_background<HttpResponse>
+      );
 
       std::vector<uint8_t> body;
       _pWebSocketConnection->handshake(_url, _headers, &pData, &pDataLen,

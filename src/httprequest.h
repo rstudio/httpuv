@@ -155,12 +155,12 @@ public:
   void requestCompleted();
 
   void _call_r_on_ws_open();
-  void _schedule_on_headers_complete_complete(HttpResponse* pResponse);
-  void _on_headers_complete_complete(HttpResponse* pResponse);
-  void _schedule_on_body_error(HttpResponse* pResponse);
-  void _on_body_error(HttpResponse* pResponse);
-  void _schedule_on_message_complete_complete(HttpResponse* pResponse);
-  void _on_message_complete_complete(HttpResponse* pResponse);
+  void _schedule_on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse);
+  void _on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse);
+  void _schedule_on_body_error(boost::shared_ptr<HttpResponse> pResponse);
+  void _on_body_error(boost::shared_ptr<HttpResponse> pResponse);
+  void _schedule_on_message_complete_complete(boost::shared_ptr<HttpResponse> pResponse);
+  void _on_message_complete_complete(boost::shared_ptr<HttpResponse> pResponse);
 
 public:
   // Callbacks
