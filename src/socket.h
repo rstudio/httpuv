@@ -27,4 +27,8 @@ public:
   virtual ~Socket();
 };
 
+
+// Deleter function for shared_ptr<Socket>.
+void Socket_deleter(Socket*);
+
 #endif // SOCKET_HPP
