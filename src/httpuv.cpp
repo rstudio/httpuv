@@ -32,6 +32,41 @@ void throwError(int err,
 // For keeping track of all running server apps.
 std::vector<uv_stream_t*> pServers;
 
+
+class UVLoop {
+public:
+  UVLoop() : _initialized(false) {
+    uv_mutex_init(&_mutex);
+  };
+
+  void ensure_initialized() {
+    guard guard(_mutex);
+    if (!_initialized) {
+      uv_loop_init(&_loop);
+      _initialized = true;
+    }
+  }
+
+  uv_loop_t* get() {
+    guard guard(_mutex);
+    if (!_initialized) {
+      throw std::runtime_error("io_loop not initialized!");
+    }
+
+    return &_loop;
+  };
+
+  void reset() {
+    guard guard(_mutex);
+    _initialized = false;
+  }
+
+private:
+  uv_loop_t _loop;
+  uv_mutex_t _mutex;
+  bool _initialized;
+};
+
 // ============================================================================
 // Background thread and I/O event loop
 // ============================================================================
@@ -41,28 +76,10 @@ std::vector<uv_stream_t*> pServers;
 CallbackQueue* background_queue;
 
 uv_thread_t io_thread_id;
-bool io_thread_running = false;
+ThreadSafe<bool> io_thread_running(false);
 
+UVLoop io_loop;
 uv_async_t async_stop_io_loop;
-
-// The uv loop that we'll use. Should be accessed via get_io_loop().
-uv_loop_t io_loop;
-bool io_loop_initialized = false;
-
-uv_loop_t* get_io_loop() {
-  if (!io_loop_initialized) {
-    throw std::runtime_error("io_loop not initialized!");
-  }
-  return &io_loop;
-}
-
-void ensure_io_loop() {
-  ASSERT_MAIN_THREAD()
-  if (!io_loop_initialized) {
-    uv_loop_init(&io_loop);
-    io_loop_initialized = true;
-  }
-}
 
 void close_handle_cb(uv_handle_t* handle, void* arg) {
   ASSERT_BACKGROUND_THREAD()
@@ -72,39 +89,51 @@ void close_handle_cb(uv_handle_t* handle, void* arg) {
 void stop_io_loop(uv_async_t *handle) {
   ASSERT_BACKGROUND_THREAD()
   trace("stop_io_loop");
-  uv_stop(get_io_loop());
+  uv_stop(io_loop.get());
 }
 
 void io_thread(void* data) {
   register_background_thread();
-  io_thread_running = true;
+  CondWait* condwait = reinterpret_cast<CondWait*>(data);
+  condwait->lock();
+
+  io_thread_running.set(true);
+
+  io_loop.ensure_initialized();
+
+  background_queue = new CallbackQueue(io_loop.get());
 
   // Set up async communication channels
-  uv_async_init(get_io_loop(), &async_stop_io_loop, stop_io_loop);
+  uv_async_init(io_loop.get(), &async_stop_io_loop, stop_io_loop);
+
+  // Tell other thread that it can continue.
+  condwait->signal();
 
   // Run io_loop. When it stops, this fuction continues and the thread exits.
-  uv_run(get_io_loop(), UV_RUN_DEFAULT);
+  uv_run(io_loop.get(), UV_RUN_DEFAULT);
 
   trace("io_loop stopped");
 
   // Cleanup stuff
-  uv_walk(get_io_loop(), close_handle_cb, NULL);
-  uv_run(get_io_loop(), UV_RUN_ONCE);
-  uv_loop_close(get_io_loop());
-  io_loop_initialized = false;
+  uv_walk(io_loop.get(), close_handle_cb, NULL);
+  uv_run(io_loop.get(), UV_RUN_ONCE);
+  uv_loop_close(io_loop.get());
+  io_loop.reset();
+  io_thread_running.set(false);
+
+  delete background_queue;
 }
 
 void ensure_io_thread() {
   ASSERT_MAIN_THREAD()
-  if (io_thread_running) {
+  if (io_thread_running.get()) {
     return;
   }
 
-  ensure_io_loop();
-  background_queue = new CallbackQueue(get_io_loop());
-
-  // TODO: pass data?
-  int ret = uv_thread_create(&io_thread_id, io_thread, NULL);
+  CondWait condwait;
+  int ret = uv_thread_create(&io_thread_id, io_thread, &condwait);
+  // Wait for io_loop to be initialized before continuing
+  condwait.wait();
 
   if (ret != 0) {
     Rcpp::stop(std::string("Error: ") + uv_strerror(ret));
@@ -200,36 +229,28 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   ensure_io_thread();
 
-  // We previous used a uv_barrier_t here instead of mutex + condvar, but it
-  // caused crashes on Windows (with libuv 1.15.0).
-  uv_mutex_t mutex;
-  uv_cond_t cond;
-  uv_mutex_init(&mutex);
-  uv_cond_init(&cond);
+  // We previous used a uv_barrier_t here, but it caused crashes on Windows
+  // (with libuv 1.15.0).
+  CondWait condwait;
 
   uv_stream_t* pServer;
 
   // Run on background thread:
   // createTcpServerSync(
-  //   get_io_loop(), host.c_str(), port,
+  //   io_loop.get(), host.c_str(), port,
   //   boost::static_pointer_cast<WebApplication>(pHandler),
   //   background_queue, &pServer, &blocker
   // );
   background_queue->push(
     boost::bind(createTcpServerSync,
-      get_io_loop(), host.c_str(), port,
+      io_loop.get(), host.c_str(), port,
       boost::static_pointer_cast<WebApplication>(pHandler),
-      background_queue, &pServer, &mutex, &cond
+      background_queue, &pServer, &condwait
     )
   );
 
   // Wait for server to be created before continuing
-  uv_mutex_lock(&mutex);
-  uv_cond_wait(&cond, &mutex);
-  uv_mutex_unlock(&mutex);
-
-  uv_mutex_destroy(&mutex);
-  uv_cond_destroy(&cond);
+  condwait.wait();
 
   if (!pServer) {
     return R_NilValue;
@@ -264,34 +285,26 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   ensure_io_thread();
 
-  uv_mutex_t mutex;
-  uv_cond_t cond;
-  uv_mutex_init(&mutex);
-  uv_cond_init(&cond);
+  CondWait condwait;
 
   uv_stream_t* pServer;
 
   // Run on background thread:
   // createPipeServerSync(
-  //   get_io_loop(), name.c_str(), mask,
+  //   io_loop.get(), name.c_str(), mask,
   //   boost::static_pointer_cast<WebApplication>(pHandler),
   //   background_queue, &pServer, &blocker
   // );
   background_queue->push(
     boost::bind(createPipeServerSync,
-      get_io_loop(), name.c_str(), mask,
+      io_loop.get(), name.c_str(), mask,
       boost::static_pointer_cast<WebApplication>(pHandler),
-      background_queue, &pServer, &mutex, &cond
+      background_queue, &pServer, &condwait
     )
   );
 
   // Wait for server to be created before continuing
-  uv_mutex_lock(&mutex);
-  uv_cond_wait(&cond, &mutex);
-  uv_mutex_unlock(&mutex);
-
-  uv_mutex_destroy(&mutex);
-  uv_cond_destroy(&cond);
+  condwait.wait();
 
   if (!pServer) {
     return R_NilValue;
@@ -354,7 +367,7 @@ void stopServer(std::string handle) {
 void stopAllServers() {
   ASSERT_MAIN_THREAD()
 
-  if (!io_thread_running)
+  if (!io_thread_running.get())
     return;
 
   // Each call to stopServer also removes it from the pServers list.
@@ -364,8 +377,8 @@ void stopAllServers() {
 
   uv_async_send(&async_stop_io_loop);
 
+  trace("io_thread stopped");
   uv_thread_join(&io_thread_id);
-  io_thread_running = false;
 }
 
 void stop_loop_timer_cb(uv_timer_t* handle) {

@@ -4,7 +4,7 @@
 // A thread-safe queue, using threading constructs from libuv.
 
 #include <queue>
-#include "guard.h"
+#include "thread.h"
 
 template <typename T>
 class queue {

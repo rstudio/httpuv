@@ -36,11 +36,11 @@ uv_stream_t* createTcpServer(uv_loop_t* loop, const std::string& host, int port,
 
 void createPipeServerSync(uv_loop_t* loop, const std::string& name, int mask,
   boost::shared_ptr<WebApplication> pWebApplication, CallbackQueue* background_queue,
-  uv_stream_t** pServer, uv_mutex_t* mutex, uv_cond_t* cond);
+  uv_stream_t** pServer, CondWait* condwait);
 
 void createTcpServerSync(uv_loop_t* loop, const std::string& host, int port,
   boost::shared_ptr<WebApplication> pWebApplication, CallbackQueue* background_queue,
-  uv_stream_t** pServer, uv_mutex_t* mutex, uv_cond_t* cond);
+  uv_stream_t** pServer, CondWait* condwait);
 
 void freeServer(uv_stream_t* pServer);
 bool runNonBlocking(uv_loop_t* loop);
@@ -57,6 +57,9 @@ bool runNonBlocking(uv_loop_t* loop);
 // refcount goes to 0, then the target object will be deleted (or, if it has a
 // deleter, that will be called). This means that the target object could be
 // deleted from the main thread due to a GC event in R.
+//
+// The reason we need the explicit Xptr type is because we want to set the last
+// argument (finalizeOnExit) to true.
 template <typename T>
 Rcpp::XPtr<boost::shared_ptr<T>,
           Rcpp::PreserveStorage,
@@ -74,8 +77,8 @@ Rcpp::XPtr<boost::shared_ptr<T>,
   return obj_xptr;
 }
 
-// Given an XPtr to a shared_ptr, return the shared_ptr. This does not affect
-// the shared_ptr's ref count.
+// Given an XPtr to a shared_ptr, return a copy of the shared_ptr. This
+// increases the shared_ptr's ref count by one.
 template <typename T>
 boost::shared_ptr<T> internalize_shared_ptr(
   Rcpp::XPtr<boost::shared_ptr<T>,
@@ -84,7 +87,7 @@ boost::shared_ptr<T> internalize_shared_ptr(
              true> obj_xptr)
 {
   boost::shared_ptr<T>* obj_copy = obj_xptr.get();
-  // Return the shared pointer's value
+  // Return a copy of the shared pointer.
   return *obj_copy;
 }
 

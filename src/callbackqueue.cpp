@@ -14,7 +14,7 @@ void flush_callback_queue(uv_async_t *handle) {
 
 
 CallbackQueue::CallbackQueue(uv_loop_t* loop) {
-  q = queue< boost::function<void (void)> >();
+  ASSERT_BACKGROUND_THREAD()
   uv_async_init(loop, &flush_handle, flush_callback_queue);
   flush_handle.data = reinterpret_cast<void*>(this);
 }

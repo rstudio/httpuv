@@ -388,12 +388,6 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
   // deleter_main<std::vector<char>>(buf)
   later::later(deleter_main<std::vector<char>>, buf, 0);
 
-  // TODO: _bytesRead currently is not used anywhere else. If this changes,
-  // then depending on how it's used, it might make more sense to have
-  // _pWebApplication->onBodyData() set this, or schedule a callback that sets
-  // it on the background thread.
-  _bytesRead += length;
-
   return 0;
 }
 

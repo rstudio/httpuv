@@ -38,7 +38,6 @@ private:
   std::string _url;
   RequestHeaders _headers;
   std::string _lastHeaderField;
-  unsigned long _bytesRead;
   boost::shared_ptr<WebSocketConnection> _pWebSocketConnection;
 
   // `_env` is an shared_ptr<Environment> instead of an Environment because it
@@ -91,10 +90,8 @@ public:
       _pWebApplication(pWebApplication),
       _pSocket(pSocket),
       _protocol(HTTP),
-      _bytesRead(0),
       _env(NULL),
       _ignoreNewData(false),
-      _ref_count(1),
       _is_closing(false),
       _response_scheduled(false),
       _handling_request(false),
