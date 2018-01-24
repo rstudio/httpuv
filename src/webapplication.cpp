@@ -76,6 +76,7 @@ const std::string& getStatusDescription(int code) {
 // A generic HTTP response to send when an error (uncaught in the R code)
 // happens during processing a request.
 Rcpp::List errorResponse() {
+  ASSERT_MAIN_THREAD()
   using namespace Rcpp;
   return List::create(
     _["status"] = 500L,

@@ -41,11 +41,12 @@ private:
   unsigned long _bytesRead;
   boost::shared_ptr<WebSocketConnection> _pWebSocketConnection;
 
-  // `_env` is an Environment* instead of an Environment because it must be
-  // created and deleted on the main thread. However, the creation and
+  // `_env` is an shared_ptr<Environment> instead of an Environment because it
+  // must be created and deleted on the main thread. However, the creation and
   // deletion of HttpRequest objects happens on the background thread, and so
   // the lifetime of the Environment can't be strictly tied to the lifetime of
-  // the HttpRequest.
+  // the HttpRequest. It is instantiated with a deleter function that ensures
+  // deletion happens on the main thread.
   boost::shared_ptr<Rcpp::Environment> _env;
   void _newRequest();
   void _initializeEnv();
@@ -58,8 +59,6 @@ private:
   // the response from being written as well.)
   bool _ignoreNewData;
 
-  // TODO: Need a simpler, more robust construct for this
-  int _ref_count;
   bool _is_closing;
 
   bool _hasHeader(const std::string& name) const;

@@ -53,8 +53,6 @@ public:
   }
 
   virtual ~RWebApplication() {
-    // The Functions need to be deleted on the main thread because their
-    // destructors call R's memory management functions.
     ASSERT_MAIN_THREAD()
   }
 
