@@ -56,8 +56,7 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
   // that far, we MUST delete pWebApplication ourselves.
 
   boost::shared_ptr<Socket> pSocket = boost::shared_ptr<Socket>(
-    new Socket(pWebApplication, background_queue),
-    Socket_deleter
+    new Socket(pWebApplication, background_queue)
   );
 
   // TODO: Handle error
@@ -115,8 +114,7 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   // that far, we MUST delete pWebApplication ourselves.
 
   boost::shared_ptr<Socket> pSocket = boost::shared_ptr<Socket>(
-    new Socket(pWebApplication, background_queue),
-    Socket_deleter
+    new Socket(pWebApplication, background_queue)
   );
 
   // TODO: Handle error
@@ -167,7 +165,5 @@ void freeServer(uv_stream_t* pHandle) {
   ASSERT_BACKGROUND_THREAD()
   // TODO: Check if server is still running?
   boost::shared_ptr<Socket>* ppSocket = (boost::shared_ptr<Socket>*)pHandle->data;
-  // This will reduce the shared_ptr's refcount to 0, and trigger the deleter
-  // function.
-  delete ppSocket;
+  (*ppSocket)->close();
 }

@@ -23,12 +23,10 @@ public:
 
   void addConnection(boost::shared_ptr<HttpRequest> request);
   void removeConnection(boost::shared_ptr<HttpRequest> request);
+  void close();
 
   virtual ~Socket();
 };
 
-
-// Deleter function for shared_ptr<Socket>.
-void Socket_deleter(Socket*);
 
 #endif // SOCKET_HPP

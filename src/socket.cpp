@@ -20,30 +20,25 @@ Socket::~Socket() {
   trace("Socket::~Socket");
 }
 
-void Socket_deleter(Socket* pSocket) {
+// This tells all the HttpRequests to close and deletes the
+// shared_ptr<Socket>. Each HttpRequest also has a shared_ptr to this Socket.
+// Once they're all closed, the Socket will be deleted. In some cases, there
+// may be an extant HttpRequest object which doesn't get deleted until an R GC
+// event occurs, and so this Socket will continue to exist until then.
+void Socket::close() {
   ASSERT_BACKGROUND_THREAD()
-  trace("Socket_deleter");
-  for (std::vector<boost::shared_ptr<HttpRequest>>::reverse_iterator it = pSocket->connections.rbegin();
-    it != pSocket->connections.rend();
+  trace("Socket::close");
+  for (std::vector<boost::shared_ptr<HttpRequest>>::reverse_iterator it = connections.rbegin();
+    it != connections.rend();
     it++) {
 
     // std::cerr << "Request close on " << *it << std::endl;
     (*it)->close();
   }
 
-  uv_handle_t* pHandle = toHandle(&pSocket->handle.stream);
-  // pHandle->data is currently the pointer to the shared_ptr<Socket> to this
-  // Socket, but when this deleter has been called, the shared_ptr's refcount
-  // has dropped to zero so it's no longer useful. We need to pass the Socket*
-  // to the close callback somehow, so we'll just overwrite pHandle->data.
-  pHandle->data = pSocket;
+  uv_handle_t* pHandle = toHandle(&handle.stream);
+  uv_close(pHandle, NULL);
 
-  uv_close(pHandle, on_Socket_close);
-}
-
-void on_Socket_close(uv_handle_t* pHandle) {
-  ASSERT_BACKGROUND_THREAD()
-  trace("on_Socket_close");
-  Socket* pSocket = reinterpret_cast<Socket*>(pHandle->data);
-  delete pSocket;
+  // Delete the shared_ptr<Socket>* from pHandle; this reduces the ref count.
+  delete reinterpret_cast<boost::shared_ptr<Socket>*>(pHandle->data);
 }
