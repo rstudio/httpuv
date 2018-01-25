@@ -27,4 +27,24 @@ Follow the instructions at http://www.rstudio.com/ide/docs/packages/prerequisite
 
 ---
 
-&copy; 2013-2017 RStudio, Inc.
+
+## Debugging builds
+
+httpuv can be built with debugging options enabled. This can be done by uncommenting these lines in src/Makevars, and then installing. The first one enables thread assertions, to ensure that code is running on the correct thread; if not. The second one enables tracing statements: httpuv will print lots of messages when various events occur.
+
+```
+PKG_CPPFLAGS += -DDEBUG_THREAD -UNDEBUG
+PKG_CPPFLAGS += -DDEBUG_TRACE
+```
+
+To install it directly from Github with these options, you can use `with_makevars`, like this:
+
+```R
+withr::with_makevars(
+  c(PKG_CPPFLAGS="-DDEBUG_TRACE -DDEBUG_THREAD -UNDEBUG"), {
+    devtools::install_github("rstudio/httpuv")
+  }, assignment = "+="
+)
+```
+
+&copy; 2013-2018 RStudio, Inc.
