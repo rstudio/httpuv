@@ -38,7 +38,4 @@ void Socket::close() {
 
   uv_handle_t* pHandle = toHandle(&handle.stream);
   uv_close(pHandle, NULL);
-
-  // Delete the shared_ptr<Socket>* from pHandle; this reduces the ref count.
-  delete reinterpret_cast<boost::shared_ptr<Socket>*>(pHandle->data);
 }
