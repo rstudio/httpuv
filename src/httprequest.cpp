@@ -130,10 +130,9 @@ void HttpRequest::_newRequest() {
 
   // Schedule on main thread:
   //   this->_initializeEnv();
-  BoostFunctionCallback* initialize_env_callback = new BoostFunctionCallback(
+  invoke_later(
     boost::bind(&HttpRequest::_initializeEnv, shared_from_this())
   );
-  later::later(invoke_callback, (void*)initialize_env_callback, 0);
 }
 
 void HttpRequest::_initializeEnv() {
@@ -264,7 +263,10 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
     boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, shared_from_this(), _1)
   );
 
-  BoostFunctionCallback* webapp_on_headers_callback = new BoostFunctionCallback(
+  // Use later to schedule _pWebApplication->onHeaders(this, schedule_bg_callback)
+  // to run on the main thread. That function in turn calls
+  // this->_schedule_on_headers_complete_complete.
+  invoke_later(
     boost::bind(
       &WebApplication::onHeaders,
       _pWebApplication,
@@ -272,11 +274,6 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
       schedule_bg_callback
     )
   );
-
-  // Use later to schedule _pWebApplication->onHeaders(this, schedule_bg_callback)
-  // to run on the main thread. That function in turn calls
-  // this->_schedule_on_headers_complete_complete.
-  later::later(invoke_callback, (void*)webapp_on_headers_callback, 0);
 
   return 0;
 }
@@ -371,8 +368,8 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
   );
 
   // Schedule on main thread:
-  // _pWebApplication->onBodyData(this, pAt, length);
-  BoostFunctionCallback* webapp_on_body_data_callback = new BoostFunctionCallback(
+  // _pWebApplication->onBodyData(this, pAt, length, schedule_bg_callback);
+  invoke_later(
     boost::bind(
       &WebApplication::onBodyData,
       _pWebApplication,
@@ -382,11 +379,11 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
       schedule_bg_callback
     )
   );
-  later::later(invoke_callback, webapp_on_body_data_callback, 0);
 
   // Schedule for after on_ws_message_callback:
   // deleter_main<std::vector<char>>(buf)
   later::later(deleter_main<std::vector<char>>, buf, 0);
+
 
   return 0;
 }
@@ -433,7 +430,10 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
     boost::bind(&HttpRequest::_schedule_on_message_complete_complete, shared_from_this(), _1)
   );
 
-  BoostFunctionCallback* webapp_get_response_callback = new BoostFunctionCallback(
+  // Use later to schedule _pWebApplication->getResponse(this, schedule_bg_callback)
+  // to run on the main thread. That function in turn calls
+  // this->_schedule_on_message_complete_complete.
+  invoke_later(
     boost::bind(
       &WebApplication::getResponse,
       _pWebApplication,
@@ -441,11 +441,6 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
       schedule_bg_callback
     )
   );
-
-  // Use later to schedule _pWebApplication->getResponse(this, schedule_bg_callback)
-  // to run on the main thread. That function in turn calls
-  // this->_schedule_on_message_complete_complete.
-  later::later(invoke_callback, (void*)webapp_get_response_callback, 0);
 
   return 0;
 }
@@ -508,7 +503,7 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
 
   // Schedule:
   // _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
-  BoostFunctionCallback* on_ws_message_callback = new BoostFunctionCallback(
+  invoke_later(
     boost::bind(
       &WebApplication::onWSMessage,
       _pWebApplication,
@@ -519,7 +514,6 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
       error_callback
     )
   );
-  later::later(invoke_callback, on_ws_message_callback, 0);
 
   // Schedule for after on_ws_message_callback:
   // deleter_main<std::vector<char>>(buf)
@@ -612,14 +606,13 @@ void HttpRequest::close() {
   if (_protocol == WebSockets) {
     // Schedule:
     // _pWebApplication->onWSClose(_pWebSocketConnection)
-    BoostFunctionCallback* on_ws_close_callback = new BoostFunctionCallback(
+    invoke_later(
       boost::bind(
         &WebApplication::onWSClose,
         _pWebApplication,
         _pWebSocketConnection
       )
     );
-    later::later(invoke_callback, (void*)on_ws_close_callback, 0);
   }
 
   _pSocket->removeConnection(shared_from_this());
@@ -714,10 +707,9 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
 
       // Schedule on main thread:
       // this->_call_r_on_ws_open()
-      BoostFunctionCallback* call_r_on_ws_open_callback = new BoostFunctionCallback(
+      invoke_later(
         boost::bind(&HttpRequest::_call_r_on_ws_open, shared_from_this())
       );
-      later::later(invoke_callback, (void*)call_r_on_ws_open_callback, 0);
     }
 
     if (_protocol != WebSockets) {

@@ -2,6 +2,7 @@
 #define CALLBACK_HPP
 
 #include <boost/function.hpp>
+#include <later_api.h>
 
 class Callback {
 public:
@@ -29,5 +30,7 @@ public:
   }
 
 };
+
+void invoke_later(boost::function<void(void)> f, double secs = 0);
 
 #endif
