@@ -14,13 +14,17 @@ extern CallbackQueue* background_queue;
 // object immediately. If called on the background thread, it will schedule
 // deletion to happen on the main thread. This is useful in cases where we
 // don't know ahead of time which thread will be triggering the deletion.
-template <typename T, bool trycatch = false>
-void auto_deleter_main(T* obj) {
+template <typename T>
+void auto_deleter_main(void* obj) {
+  // Unlike auto_deleter_background, this function takes a void* argument.
+  // This is because later() can only pass a void* to the callback.
   if (is_main_thread()) {
-    deleter_main<T, trycatch>(obj);
+    try {
+      delete reinterpret_cast<T*>(obj);
+    } catch (...) {}
 
   } else if (is_background_thread()) {
-    later::later(deleter_main<T, trycatch>, obj, 0);
+    later::later(auto_deleter_main<T>, obj, 0);
 
   } else {
     throw std::runtime_error("Can't detect correct thread for auto_deleter_main.");
@@ -31,13 +35,15 @@ void auto_deleter_main(T* obj) {
 // the object immediately. If called on the main thread, it will schedule
 // deletion to happen on the background thread. This is useful in cases where
 // we don't know ahead of time which thread will be triggering the deletion.
-template <typename T, bool trycatch = false>
+template <typename T>
 void auto_deleter_background(T* obj) {
   if (is_main_thread()) {
-    background_queue->push(boost::bind(deleter_background<T, trycatch>, obj));
+    background_queue->push(boost::bind(auto_deleter_background<T>, obj));
 
   } else if (is_background_thread()) {
-    deleter_background<T, trycatch>(obj);
+    try {
+      delete obj;
+    } catch (...) {}
 
   } else {
     throw std::runtime_error("Can't detect correct thread for auto_deleter_background.");

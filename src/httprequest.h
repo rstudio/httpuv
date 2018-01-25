@@ -100,10 +100,11 @@ public:
     ASSERT_BACKGROUND_THREAD()
     uv_tcp_init(pLoop, &_handle.tcp);
     _handle.isTcp = true;
-    // TODO: convert to shared_ptr?
+    // This is used by the macro-defined callbacks like _on_request_read
     _handle.stream.data = this;
 
     http_parser_init(&_parser, HTTP_REQUEST);
+    // This is used by the macro-defined callbacks like _on_message_begin
     _parser.data = this;
   }
 

@@ -224,7 +224,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
     boost::shared_ptr<RWebApplication>(
       new RWebApplication(onHeaders, onBodyData, onRequest,
                           onWSOpen, onWSMessage, onWSClose),
-      auto_deleter_main<RWebApplication, true>
+      auto_deleter_main<RWebApplication>
     );
 
   ensure_io_thread();
@@ -280,7 +280,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
     boost::shared_ptr<RWebApplication>(
       new RWebApplication(onHeaders, onBodyData, onRequest,
                           onWSOpen, onWSMessage, onWSClose),
-      auto_deleter_main<RWebApplication, true>
+      auto_deleter_main<RWebApplication>
     );
 
   ensure_io_thread();

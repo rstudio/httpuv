@@ -10,37 +10,27 @@
 // A callback for deleting objects on the main thread using later(). This is
 // needed when the object is an Rcpp object or contains one, because deleting
 // such objects invoke R's memory management functions.
-template <typename T, bool trycatch = false>
+template <typename T>
 void deleter_main(void* obj) {
   ASSERT_MAIN_THREAD()
   // later() passes a void* to the callback, so we have to cast it.
   T* typed_obj = reinterpret_cast<T*>(obj);
 
-  if (trycatch) {
-    try {
-      delete typed_obj;
-    } catch (...) {}
-
-  } else {
+  try {
     delete typed_obj;
-  }
+  } catch (...) {}
 }
 
 // Does the same as deleter_main, but checks that it's running on the
 // background thread (when thread debugging is enabled).
-template <typename T, bool trycatch = false>
+template <typename T>
 void deleter_background(void* obj) {
   ASSERT_BACKGROUND_THREAD()
   T* typed_obj = reinterpret_cast<T*>(obj);
 
-  if (trycatch) {
-    try {
-      delete typed_obj;
-    } catch (...) {}
-
-  } else {
+  try {
     delete typed_obj;
-  }
+  } catch (...) {}
 }
 
 // It's not safe to call REprintf from the background thread but we need some
