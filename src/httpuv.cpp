@@ -131,6 +131,7 @@ void ensure_io_thread() {
   }
 
   CondWait condwait;
+  condwait.lock();
   int ret = uv_thread_create(&io_thread_id, io_thread, &condwait);
   // Wait for io_loop to be initialized before continuing
   condwait.wait();
@@ -232,6 +233,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
   // We previous used a uv_barrier_t here, but it caused crashes on Windows
   // (with libuv 1.15.0).
   CondWait condwait;
+  condwait.lock();
 
   uv_stream_t* pServer;
 
@@ -286,6 +288,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
   ensure_io_thread();
 
   CondWait condwait;
+  condwait.lock();
 
   uv_stream_t* pServer;
 

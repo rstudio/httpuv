@@ -91,7 +91,6 @@ public:
   };
 
   void wait() {
-    uv_mutex_lock(&mutex);
     uv_cond_wait(&cond, &mutex);
     uv_mutex_unlock(&mutex);
   }
