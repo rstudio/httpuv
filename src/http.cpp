@@ -91,15 +91,14 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
 void createPipeServerSync(uv_loop_t* loop, const std::string& name,
   int mask, boost::shared_ptr<WebApplication> pWebApplication,
   CallbackQueue* background_queue,
-  uv_stream_t** pServer, CondWait* condwait)
+  uv_stream_t** pServer, Barrier* blocker)
 {
   ASSERT_BACKGROUND_THREAD()
 
-  condwait->lock();
   *pServer = createPipeServer(loop, name, mask, pWebApplication, background_queue);
 
   // Tell the main thread that the server is ready
-  condwait->signal();
+  blocker->wait();
 }
 
 
@@ -149,15 +148,14 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
 void createTcpServerSync(uv_loop_t* pLoop, const std::string& host,
   int port, boost::shared_ptr<WebApplication> pWebApplication,
   CallbackQueue* background_queue,
-  uv_stream_t** pServer, CondWait* condwait)
+  uv_stream_t** pServer, Barrier* blocker)
 {
   ASSERT_BACKGROUND_THREAD()
 
-  condwait->lock();
   *pServer = createTcpServer(pLoop, host, port, pWebApplication, background_queue);
 
   // Tell the main thread that the server is ready
-  condwait->signal();
+  blocker->wait();
 }
 
 

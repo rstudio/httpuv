@@ -36,11 +36,11 @@ uv_stream_t* createTcpServer(uv_loop_t* loop, const std::string& host, int port,
 
 void createPipeServerSync(uv_loop_t* loop, const std::string& name, int mask,
   boost::shared_ptr<WebApplication> pWebApplication, CallbackQueue* background_queue,
-  uv_stream_t** pServer, CondWait* condwait);
+  uv_stream_t** pServer, Barrier* blocker);
 
 void createTcpServerSync(uv_loop_t* loop, const std::string& host, int port,
   boost::shared_ptr<WebApplication> pWebApplication, CallbackQueue* background_queue,
-  uv_stream_t** pServer, CondWait* condwait);
+  uv_stream_t** pServer, Barrier* blocker);
 
 void freeServer(uv_stream_t* pServer);
 bool runNonBlocking(uv_loop_t* loop);

@@ -67,7 +67,6 @@ private:
 };
 
 
-
 // Wrapper class for mutex/condition variable pair.
 class CondWait {
 public:
@@ -85,18 +84,49 @@ public:
     uv_mutex_lock(&mutex);
   }
 
+  void unlock() {
+    uv_mutex_unlock(&mutex);
+  }
+
   void signal() {
     uv_cond_signal(&cond);
-    uv_mutex_unlock(&mutex);
   };
 
   void wait() {
     uv_cond_wait(&cond, &mutex);
-    uv_mutex_unlock(&mutex);
   }
 
   uv_mutex_t mutex;
   uv_cond_t cond;
+};
+
+
+// uv_barrier_t causes crashes on Windows (with libuv 1.15.0), so we have our
+// own implementation here.
+class Barrier {
+public:
+  Barrier(int n) : n(n) {}
+
+  void wait() {
+    guard guard(condwait.mutex);
+
+    if (n == 0) {
+      return;
+    }
+
+    --n;
+
+    if (n == 0) {
+      condwait.signal();
+    }
+    while(n > 0) {
+      condwait.wait();
+    }
+  }
+
+private:
+  int n;
+  CondWait condwait;
 };
 
 #endif

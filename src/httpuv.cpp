@@ -94,8 +94,7 @@ void stop_io_loop(uv_async_t *handle) {
 
 void io_thread(void* data) {
   register_background_thread();
-  CondWait* condwait = reinterpret_cast<CondWait*>(data);
-  condwait->lock();
+  Barrier* blocker = reinterpret_cast<Barrier*>(data);
 
   io_thread_running.set(true);
 
@@ -107,7 +106,7 @@ void io_thread(void* data) {
   uv_async_init(io_loop.get(), &async_stop_io_loop, stop_io_loop);
 
   // Tell other thread that it can continue.
-  condwait->signal();
+  blocker->wait();
 
   // Run io_loop. When it stops, this fuction continues and the thread exits.
   uv_run(io_loop.get(), UV_RUN_DEFAULT);
@@ -130,11 +129,10 @@ void ensure_io_thread() {
     return;
   }
 
-  CondWait condwait;
-  condwait.lock();
-  int ret = uv_thread_create(&io_thread_id, io_thread, &condwait);
+  Barrier blocker(2);
+  int ret = uv_thread_create(&io_thread_id, io_thread, &blocker);
   // Wait for io_loop to be initialized before continuing
-  condwait.wait();
+  blocker.wait();
 
   if (ret != 0) {
     Rcpp::stop(std::string("Error: ") + uv_strerror(ret));
@@ -230,10 +228,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   ensure_io_thread();
 
-  // We previous used a uv_barrier_t here, but it caused crashes on Windows
-  // (with libuv 1.15.0).
-  CondWait condwait;
-  condwait.lock();
+  Barrier blocker(2);
 
   uv_stream_t* pServer;
 
@@ -247,12 +242,12 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
     boost::bind(createTcpServerSync,
       io_loop.get(), host.c_str(), port,
       boost::static_pointer_cast<WebApplication>(pHandler),
-      background_queue, &pServer, &condwait
+      background_queue, &pServer, &blocker
     )
   );
 
   // Wait for server to be created before continuing
-  condwait.wait();
+  blocker.wait();
 
   if (!pServer) {
     return R_NilValue;
@@ -287,8 +282,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   ensure_io_thread();
 
-  CondWait condwait;
-  condwait.lock();
+  Barrier blocker(2);
 
   uv_stream_t* pServer;
 
@@ -302,12 +296,12 @@ Rcpp::RObject makePipeServer(const std::string& name,
     boost::bind(createPipeServerSync,
       io_loop.get(), name.c_str(), mask,
       boost::static_pointer_cast<WebApplication>(pHandler),
-      background_queue, &pServer, &condwait
+      background_queue, &pServer, &blocker
     )
   );
 
   // Wait for server to be created before continuing
-  condwait.wait();
+  blocker.wait();
 
   if (!pServer) {
     return R_NilValue;
