@@ -1,13 +1,17 @@
 #ifndef UVUTIL_HPP
 #define UVUTIL_HPP
 
+#include "thread.h"
 #include <string>
 #include <vector>
 #include <uv.h>
 
 /* Prevent naming conflicts for Free() and Calloc() */
 #define R_NO_REMAP
+// This could be defined from Makevars.win. In that case, don't re-define it.
+#ifndef STRICT_R_HEADERS
 #define STRICT_R_HEADERS
+#endif
 #include <Rcpp.h>
 
 inline uv_handle_t* toHandle(uv_timer_t* timer) {
@@ -23,10 +27,6 @@ inline uv_handle_t* toHandle(uv_stream_t* stream) {
 inline uv_stream_t* toStream(uv_tcp_t* tcp) {
   return (uv_stream_t*)tcp;
 }
-
-void throwError(int err,
-  const std::string& prefix = std::string(),
-  const std::string& suffix = std::string());
 
 class WriteOp;
 
@@ -48,6 +48,14 @@ private:
 public:
   explicit InMemoryDataSource(const std::vector<uint8_t>& buffer = std::vector<uint8_t>())
     : _buffer(buffer), _pos(0) {}
+
+  explicit InMemoryDataSource(const Rcpp::RawVector& rawVector)
+    : _buffer(rawVector.size()), _pos(0) 
+  {
+    ASSERT_MAIN_THREAD()
+    std::copy(rawVector.begin(), rawVector.end(), _buffer.begin());
+  }
+
   virtual ~InMemoryDataSource() {}
   uint64_t size() const;
   uv_buf_t getData(size_t bytesDesired);

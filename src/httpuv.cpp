@@ -12,28 +12,198 @@
 #include "uvutil.h"
 #include "webapplication.h"
 #include "http.h"
+#include "callbackqueue.h"
+#include "utils.h"
+#include "thread.h"
+#include "httpuv.h"
+#include "auto_deleter.h"
 #include <Rinternals.h>
 
 
-// [[Rcpp::export]]
-void sendWSMessage(std::string conn, bool binary, Rcpp::RObject message) {
-  WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
-  if (binary) {
-    Rcpp::RawVector raw = Rcpp::as<Rcpp::RawVector>(message);
-    wsc->sendWSMessage(Binary, reinterpret_cast<char*>(&raw[0]), raw.size());
-  } else {
-    std::string str = Rcpp::as<std::string>(message);
-    wsc->sendWSMessage(Text, str.c_str(), str.size());
+void throwError(int err,
+  const std::string& prefix = std::string(),
+  const std::string& suffix = std::string())
+{
+  ASSERT_MAIN_THREAD()
+  std::string msg = prefix + uv_strerror(err) + suffix;
+  throw Rcpp::exception(msg.c_str());
+}
+
+// For keeping track of all running server apps.
+std::vector<uv_stream_t*> pServers;
+
+
+class UVLoop {
+public:
+  UVLoop() : _initialized(false) {
+    uv_mutex_init(&_mutex);
+  };
+
+  void ensure_initialized() {
+    guard guard(_mutex);
+    if (!_initialized) {
+      uv_loop_init(&_loop);
+      _initialized = true;
+    }
+  }
+
+  uv_loop_t* get() {
+    guard guard(_mutex);
+    if (!_initialized) {
+      throw std::runtime_error("io_loop not initialized!");
+    }
+
+    return &_loop;
+  };
+
+  void reset() {
+    guard guard(_mutex);
+    _initialized = false;
+  }
+
+private:
+  uv_loop_t _loop;
+  uv_mutex_t _mutex;
+  bool _initialized;
+};
+
+// ============================================================================
+// Background thread and I/O event loop
+// ============================================================================
+
+// A queue of tasks to run on the background thread. This is how the main
+// thread schedules work to be done on the background thread.
+CallbackQueue* background_queue;
+
+uv_thread_t io_thread_id;
+ThreadSafe<bool> io_thread_running(false);
+
+UVLoop io_loop;
+uv_async_t async_stop_io_loop;
+
+void close_handle_cb(uv_handle_t* handle, void* arg) {
+  ASSERT_BACKGROUND_THREAD()
+  uv_close(handle, NULL);
+}
+
+void stop_io_loop(uv_async_t *handle) {
+  ASSERT_BACKGROUND_THREAD()
+  trace("stop_io_loop");
+  uv_stop(io_loop.get());
+}
+
+void io_thread(void* data) {
+  register_background_thread();
+  Barrier* blocker = reinterpret_cast<Barrier*>(data);
+
+  io_thread_running.set(true);
+
+  io_loop.ensure_initialized();
+
+  background_queue = new CallbackQueue(io_loop.get());
+
+  // Set up async communication channels
+  uv_async_init(io_loop.get(), &async_stop_io_loop, stop_io_loop);
+
+  // Tell other thread that it can continue.
+  blocker->wait();
+
+  // Run io_loop. When it stops, this fuction continues and the thread exits.
+  uv_run(io_loop.get(), UV_RUN_DEFAULT);
+
+  trace("io_loop stopped");
+
+  // Cleanup stuff
+  uv_walk(io_loop.get(), close_handle_cb, NULL);
+  uv_run(io_loop.get(), UV_RUN_ONCE);
+  uv_loop_close(io_loop.get());
+  io_loop.reset();
+  io_thread_running.set(false);
+
+  delete background_queue;
+}
+
+void ensure_io_thread() {
+  ASSERT_MAIN_THREAD()
+  if (io_thread_running.get()) {
+    return;
+  }
+
+  Barrier blocker(2);
+  int ret = uv_thread_create(&io_thread_id, io_thread, &blocker);
+  // Wait for io_loop to be initialized before continuing
+  blocker.wait();
+
+  if (ret != 0) {
+    Rcpp::stop(std::string("Error: ") + uv_strerror(ret));
   }
 }
 
+
+// ============================================================================
+// Outgoing websocket messages
+// ============================================================================
+
 // [[Rcpp::export]]
-void closeWS(std::string conn) {
-  WebSocketConnection* wsc = internalize<WebSocketConnection>(conn);
-  wsc->closeWS();
+void sendWSMessage(SEXP conn,
+                   bool binary,
+                   Rcpp::RObject message)
+{
+  ASSERT_MAIN_THREAD()
+  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>, Rcpp::PreserveStorage, Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>, true> conn_xptr(conn);
+  boost::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
+
+  Opcode mode;
+  SEXP msg_sexp;
+  std::vector<char>* str;
+
+  // Efficiently copy message into a new vector<char>. There's probably a
+  // cleaner way to do this.
+   if (binary) {
+    mode = Binary;
+    msg_sexp = PROTECT(Rcpp::as<SEXP>(message));
+    str = new std::vector<char>(RAW(msg_sexp), RAW(msg_sexp) + Rf_length(msg_sexp));
+    UNPROTECT(1);
+
+  } else {
+    mode = Text;
+    msg_sexp = PROTECT(STRING_ELT(message, 0));
+    str = new std::vector<char>(CHAR(msg_sexp), CHAR(msg_sexp) + Rf_length(msg_sexp));
+    UNPROTECT(1);
+  }
+
+
+  boost::function<void (void)> cb(
+    boost::bind(&WebSocketConnection::sendWSMessage, wsc,
+      mode,
+      &(*str)[0],
+      str->size()
+    )
+  );
+
+  background_queue->push(cb);
+  // Free str after data is written
+  // deleter_background<std::vector<char>>(str)
+  background_queue->push(boost::bind(deleter_background<std::vector<char>>, str));
 }
 
-void destroyServer(std::string handle);
+// [[Rcpp::export]]
+void closeWS(SEXP conn,
+             uint16_t code,
+             std::string reason)
+{
+  ASSERT_MAIN_THREAD()
+  trace("closeWS\n");
+  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>, Rcpp::PreserveStorage, Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>, true> conn_xptr(conn);
+  boost::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
+
+  // Schedule on background thread:
+  // wsc->closeWS(code, reason);
+  background_queue->push(
+    boost::bind(&WebSocketConnection::closeWS, wsc, code, reason)
+  );
+}
+
 
 // [[Rcpp::export]]
 Rcpp::RObject makeTcpServer(const std::string& host, int port,
@@ -45,19 +215,47 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
                             Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
+  register_main_thread();
+
   // Deleted when owning pServer is deleted. If pServer creation fails,
-  // it's still createTcpServer's responsibility to delete pHandler.
-  RWebApplication* pHandler =
-    new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
-                        onWSMessage, onWSClose);
-  uv_stream_t* pServer = createTcpServer(
-    uv_default_loop(), host.c_str(), port, (WebApplication*)pHandler);
+  // this should be deleted when it goes out of scope.
+  boost::shared_ptr<RWebApplication> pHandler =
+    boost::shared_ptr<RWebApplication>(
+      new RWebApplication(onHeaders, onBodyData, onRequest,
+                          onWSOpen, onWSMessage, onWSClose),
+      auto_deleter_main<RWebApplication>
+    );
+
+  ensure_io_thread();
+
+  Barrier blocker(2);
+
+  uv_stream_t* pServer;
+
+  // Run on background thread:
+  // createTcpServerSync(
+  //   io_loop.get(), host.c_str(), port,
+  //   boost::static_pointer_cast<WebApplication>(pHandler),
+  //   background_queue, &pServer, &blocker
+  // );
+  background_queue->push(
+    boost::bind(createTcpServerSync,
+      io_loop.get(), host.c_str(), port,
+      boost::static_pointer_cast<WebApplication>(pHandler),
+      background_queue, &pServer, &blocker
+    )
+  );
+
+  // Wait for server to be created before continuing
+  blocker.wait();
 
   if (!pServer) {
     return R_NilValue;
   }
 
-  return Rcpp::wrap(externalize<uv_stream_t>(pServer));
+  pServers.push_back(pServer);
+
+  return Rcpp::wrap(externalize_str<uv_stream_t>(pServer));
 }
 
 // [[Rcpp::export]]
@@ -71,188 +269,127 @@ Rcpp::RObject makePipeServer(const std::string& name,
                              Rcpp::Function onWSClose) {
 
   using namespace Rcpp;
+  register_main_thread();
+
   // Deleted when owning pServer is deleted. If pServer creation fails,
-  // it's still createTcpServer's responsibility to delete pHandler.
-  RWebApplication* pHandler =
-    new RWebApplication(onHeaders, onBodyData, onRequest, onWSOpen,
-                        onWSMessage, onWSClose);
-  uv_stream_t* pServer = createPipeServer(
-    uv_default_loop(), name.c_str(), mask, (WebApplication*)pHandler);
+  // this should be deleted when it goes out of scope.
+  boost::shared_ptr<RWebApplication> pHandler =
+    boost::shared_ptr<RWebApplication>(
+      new RWebApplication(onHeaders, onBodyData, onRequest,
+                          onWSOpen, onWSMessage, onWSClose),
+      auto_deleter_main<RWebApplication>
+    );
+
+  ensure_io_thread();
+
+  Barrier blocker(2);
+
+  uv_stream_t* pServer;
+
+  // Run on background thread:
+  // createPipeServerSync(
+  //   io_loop.get(), name.c_str(), mask,
+  //   boost::static_pointer_cast<WebApplication>(pHandler),
+  //   background_queue, &pServer, &blocker
+  // );
+  background_queue->push(
+    boost::bind(createPipeServerSync,
+      io_loop.get(), name.c_str(), mask,
+      boost::static_pointer_cast<WebApplication>(pHandler),
+      background_queue, &pServer, &blocker
+    )
+  );
+
+  // Wait for server to be created before continuing
+  blocker.wait();
 
   if (!pServer) {
     return R_NilValue;
   }
 
-  return Rcpp::wrap(externalize(pServer));
+  pServers.push_back(pServer);
+
+  return Rcpp::wrap(externalize_str<uv_stream_t>(pServer));
 }
 
+
+void stopServer(uv_stream_t* pServer) {
+  ASSERT_MAIN_THREAD()
+
+  // Remove it from the list of running servers.
+  // Note: we're removing it from the pServers list without waiting for the
+  // background thread to call freeServer().
+  std::vector<uv_stream_t*>::iterator pos = std::find(pServers.begin(), pServers.end(), pServer);
+  if (pos != pServers.end()) {
+    pServers.erase(pos);
+  } else {
+    throw Rcpp::exception("pServer handle not found in list of running servers.");
+  }
+
+  // Run on background thread:
+  // freeServer(pServer);
+  background_queue->push(
+    boost::bind(freeServer, pServer)
+  );
+}
+
+//' Stop a server
+//' 
+//' Given a handle that was returned from a previous invocation of 
+//' \code{\link{startServer}} or \code{\link{startPipeServer}}, this closes all
+//' open connections for that server and  unbinds the port.
+//' 
+//' @param handle A handle that was previously returned from
+//'   \code{\link{startServer}} or \code{\link{startPipeServer}}.
+//'
+//' @seealso \code{\link{stopAllServers}} to stop all servers.
+//'
+//' @export
 // [[Rcpp::export]]
-void destroyServer(std::string handle) {
-  uv_stream_t* pServer = internalize<uv_stream_t>(handle);
-  freeServer(pServer);
+void stopServer(std::string handle) {
+  ASSERT_MAIN_THREAD()
+  uv_stream_t* pServer = internalize_str<uv_stream_t>(handle);
+  stopServer(pServer);
 }
 
-void dummy_close_cb(uv_handle_t* handle) {
+//' Stop all applications
+//'
+//' This will stop all applications which were created by
+//' \code{\link{startServer}} or \code{\link{startPipeServer}}.
+//'
+//' @seealso \code{\link{stopServer}} to stop a specific server.
+//'
+//' @export
+// [[Rcpp::export]]
+void stopAllServers() {
+  ASSERT_MAIN_THREAD()
+
+  if (!io_thread_running.get())
+    return;
+
+  // Each call to stopServer also removes it from the pServers list.
+  while (pServers.size() > 0) {
+    stopServer(pServers[0]);
+  }
+
+  uv_async_send(&async_stop_io_loop);
+
+  trace("io_thread stopped");
+  uv_thread_join(&io_thread_id);
 }
 
 void stop_loop_timer_cb(uv_timer_t* handle) {
   uv_stop(handle->loop);
 }
 
-// Run the libuv default loop until an I/O event occurs, or for up to
-// timeoutMillis, then stop.
-// [[Rcpp::export]]
-bool run(int timeoutMillis) {
-  static uv_timer_t timer_req = {0};
-  int r;
 
-  if (!timer_req.loop) {
-    r = uv_timer_init(uv_default_loop(), &timer_req);
-    if (r) {
-      throwError(r,
-          "Failed to initialize libuv timeout timer: ");
-    }
-  }
-
-  if (timeoutMillis > 0) {
-    uv_timer_stop(&timer_req);
-    r = uv_timer_start(&timer_req, &stop_loop_timer_cb, timeoutMillis, 0);
-    if (r) {
-      throwError(r,
-          "Failed to start libuv timeout timer: ");
-    }
-  }
-
-  // Must ignore SIGPIPE when libuv code is running, otherwise unexpectedly
-  // closing connections kill us
-#ifndef _WIN32
-  signal(SIGPIPE, SIG_IGN);
-#endif
-  return uv_run(uv_default_loop(), timeoutMillis == NA_INTEGER ? UV_RUN_NOWAIT : UV_RUN_ONCE);
-}
-
-// [[Rcpp::export]]
-void stopLoop() {
-  uv_stop(uv_default_loop());
-}
+// ============================================================================
+// Miscellaneous utility functions
+// ============================================================================
 
 // [[Rcpp::export]]
 std::string base64encode(const Rcpp::RawVector& x) {
   return b64encode(x.begin(), x.end());
-}
-
-/*
- * Daemonizing
- * 
- * On UNIX-like environments: Uses the R event loop to trigger the libuv default loop. This is a similar mechanism as that used by Rhttpd.
- * It adds an event listener on the port where the TCP server was created by libuv. This triggers uv_run on the
- * default loop any time there is an event on the server port. It also adds an event listener to a file descriptor
- * exposed by the uv_default_loop to trigger uv_run whenever necessary. It uses the non-blocking version
- * of uv_run (UV_RUN_NOWAIT).
- *
- * On Windows: creates a thread that runs the libuv default loop. It uses the usual "service" mechanism
- * on the new thread (it uses the run function defined above). TODO: check synchronization. 
- *
- */
-
-#ifndef WIN32
-#include <R_ext/eventloop.h>
-
-#define UVSERVERACTIVITY 55
-#define UVLOOPACTIVITY 57
-#endif
-
-void loop_input_handler(void *data) {
-  #ifndef WIN32
-  // this fake loop is here to force
-  // processing events
-  // deals with strange behavior in some Ubuntu installations
-  for (int i=0; i < 5; ++i) {
-    uv_run(uv_default_loop(), UV_RUN_NOWAIT);
-  }
-  #else
-  bool res = 1;
-  while (res) {
-    res = run(100);
-    Sleep(1);
-  }
-  #endif
-}
-
-#ifdef WIN32
-static DWORD WINAPI ServerThreadProc(LPVOID lpParameter) {
-  loop_input_handler(lpParameter);
-  return 0;
-}
-#endif
-
-class DaemonizedServer {
-public:
-  uv_stream_t *_pServer;
-  #ifndef WIN32
-  InputHandler *serverHandler;
-  InputHandler *loopHandler;
-  #else
-  HANDLE server_thread;
-  #endif
-  
-  DaemonizedServer(uv_stream_t *pServer)
-  : _pServer(pServer) {}
-
-  ~DaemonizedServer() {
-    #ifndef WIN32
-    if (loopHandler) {
-      removeInputHandler(&R_InputHandlers, loopHandler);
-    }
-    
-    if (serverHandler) {
-      removeInputHandler(&R_InputHandlers, serverHandler);
-    }
-    #else 
-      if (server_thread) {
-        DWORD ts = 0;
-        if (GetExitCodeThread(server_thread, &ts) && ts == STILL_ACTIVE)
-          TerminateThread(server_thread, 0);
-        server_thread = 0;
-      }
-    #endif
-    
-    if (_pServer) {
-      freeServer(_pServer);
-    }
-  }
-  void setup(){
-  };
-};
-
-// [[Rcpp::export]]
-Rcpp::RObject daemonize(std::string handle) {
-  uv_stream_t *pServer = internalize<uv_stream_t >(handle);
-  DaemonizedServer *dServer = new DaemonizedServer(pServer);
-
-   #ifndef WIN32
-   int fd = pServer->io_watcher.fd;
-   dServer->serverHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVSERVERACTIVITY);
-
-   fd = uv_backend_fd(uv_default_loop());
-   dServer->loopHandler = addInputHandler(R_InputHandlers, fd, &loop_input_handler, UVLOOPACTIVITY);
-   #else
-   if (dServer->server_thread) {
-     DWORD ts = 0;
-     if (GetExitCodeThread(dServer->server_thread, &ts) && ts == STILL_ACTIVE)
-       TerminateThread(dServer->server_thread, 0);
-     dServer->server_thread = 0;
-   }
-   dServer->server_thread = CreateThread(NULL, 0, ServerThreadProc, 0, 0, 0);
-   #endif
-
-  return Rcpp::wrap(externalize(dServer));
-}
-
-// [[Rcpp::export]]
-void destroyDaemonizedServer(std::string handle) {
-  DaemonizedServer *dServer = internalize<DaemonizedServer >(handle);
-  delete dServer;
 }
 
 static std::string allowed = ";,/?:@&=+$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_.!~*'()";
@@ -462,22 +599,22 @@ std::vector<std::string> decodeURIComponent(std::vector<std::string> value) {
 // invoke the function with the List as the single argument. This also clears
 // the external pointer so that the C++ function can't be called again.
 // [[Rcpp::export]]
-void invokeCppCallback(Rcpp::List data, SEXP callback_sexp) {
-  if (TYPEOF(callback_sexp) != EXTPTRSXP) {
+void invokeCppCallback(Rcpp::List data, SEXP callback_xptr) {
+  ASSERT_MAIN_THREAD()
+
+  if (TYPEOF(callback_xptr) != EXTPTRSXP) {
      throw Rcpp::exception("Expected external pointer.");
   }
-  Rcpp::XPtr< boost::function<void(Rcpp::List)> > callback_xptr(callback_sexp);
-  boost::function<void(Rcpp::List)> callback = *callback_xptr;
-  callback(data);
+  boost::function<void(Rcpp::List)>* callback_wrapper =
+    (boost::function<void(Rcpp::List)>*)(R_ExternalPtrAddr(callback_xptr));
+
+  (*callback_wrapper)(data);
 
   // We want to clear the external pointer to make sure that the C++ function
-  // can't get called again by accident. But if we do this, the Xptr's finalizer
-  // won't work correctly because it'll be deleting a NULL pointer. So we have
-  // to delete it explicitly before clearing the external pointer.
-  //
-  // Free the callback_wrapper allocated in onHeaders or getResponse.
-  delete callback_xptr.get();
-  R_ClearExternalPtr(callback_sexp);
+  // can't get called again by accident. Also delete the heap-allocated
+  // boost::function.
+  delete callback_wrapper;
+  R_ClearExternalPtr(callback_xptr);
 }
 
 //' Apply the value of .Random.seed to R's internal RNG state
@@ -493,4 +630,17 @@ void invokeCppCallback(Rcpp::List data, SEXP callback_sexp) {
 // [[Rcpp::export]]
 void getRNGState() {
   GetRNGstate();
+}
+
+// We are given an external pointer to a
+// boost::shared_ptr<WebSocketConnection>. This returns a hexadecimal string
+// representing the address of the WebSocketConnection (not the shared_ptr to
+// it!).
+//
+//[[Rcpp::export]]
+std::string wsconn_address(SEXP external_ptr) {
+  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>> xptr(external_ptr);
+  std::ostringstream os;
+  os << std::hex << reinterpret_cast<uintptr_t>(xptr.get()->get());
+  return os.str();
 }

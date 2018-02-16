@@ -223,29 +223,28 @@ AppWrapper <- setRefClass(
     },
     onWSOpen = function(handle, req) {
       ws <- WebSocket$new(handle, req)
-      .wsconns[[as.character(handle)]] <<- ws
+      .wsconns[[wsconn_address(handle)]] <<- ws
       result <- try(.app$onWSOpen(ws))
 
       # If an unexpected error happened, just close up
       if (inherits(result, 'try-error')) {
-        # TODO: Close code indicating error?
-        ws$close()
+        ws$close(1011, "Error in onWSOpen")
       }
     },
     onWSMessage = function(handle, binary, message) {
-      for (handler in .wsconns[[as.character(handle)]]$.messageCallbacks) {
+      for (handler in .wsconns[[wsconn_address(handle)]]$.messageCallbacks) {
         result <- try(handler(binary, message))
         if (inherits(result, 'try-error')) {
-          # TODO: Close code indicating error?
-          .wsconns[[as.character(handle)]]$close()
+          .wsconns[[wsconn_address(handle)]]$close(1011, "Error executing onWSMessage")
           return()
         }
       }
     },
     onWSClose = function(handle) {
-      ws <- .wsconns[[as.character(handle)]]
+      ws <- .wsconns[[wsconn_address(handle)]]
       ws$.handle <- NULL
-      rm(list=as.character(handle), pos=.wsconns)
+      .wsconns[[wsconn_address(handle)]] <<- NULL
+
       for (handler in ws$.closeCallbacks) {
         handler()
       }
@@ -320,7 +319,7 @@ WebSocket <- setRefClass(
     },
     send = function(message) {
       if (is.null(.handle))
-        stop("Can't send message on a closed WebSocket")
+        return()
       
       if (is.raw(message))
         sendWSMessage(.handle, TRUE, message)
@@ -329,11 +328,21 @@ WebSocket <- setRefClass(
         sendWSMessage(.handle, FALSE, as.character(message))
       }
     },
-    close = function() {
+    close = function(code = 1000L, reason = "") {
       if (is.null(.handle))
         return()
-      
-      closeWS(.handle)
+
+      # Make sure the code will fit in a short int (2 bytes); if not just use
+      # "Going Away" error code.
+      code <- as.integer(code)
+      if (code < 0 || code > 2^16 - 1) {
+        warning("Invalid websocket error code: ", code)
+        code <- 1001L
+      }
+      reason <- iconv(reason, to = "UTF-8")
+
+      closeWS(.handle, code, reason)
+      .handle <<- NULL
     }
   )
 )
@@ -352,12 +361,29 @@ WebSocket <- setRefClass(
 #' @return A handle for this server that can be passed to
 #'   \code{\link{stopServer}} to shut the server down.
 #'   
-#' @details \code{startServer} binds the specified port, but no connections are 
-#'   actually accepted. See \code{\link{service}}, which should be called 
-#'   repeatedly in order to actually accept and handle connections. If the port
-#'   cannot be bound (most likely due to permissions or because it is already
-#'   bound), an error is raised.
-#'   
+
+#' @details \code{startServer} binds the specified port and listens for
+#'   connections on an thread running in the background. This background thread
+#'   handles the I/O, and when it receives a HTTP request, it will schedule a
+#'   call to the user-defined R functions in \code{app} to handle the request.
+#'   This scheduling is done with \code{\link[later]{later}()}. When the R call
+#'   stack is empty -- in other words, when an interactive R session is sitting
+#'   idle at the command prompt -- R will automatically run the scheduled calls.
+#'   However, if the call stack is not empty -- if R is evaluating other R code
+#'   -- then the callbacks will not execute until either the call stack is
+#'   empty, or the \code{\link[later]{run_now}()} function is called. This
+#'   function tells R to execute any callbacks that have been scheduled by
+#'   \code{\link[later]{later}()}. The \code{\link{service}()} function is
+#'   essentially a wrapper for \code{\link[later]{run_now}()}.
+#'
+#'   In older versions of httpuv (1.3.5 and below), it did not use a background
+#'   thread for I/O, and when this function was called, it did not accept
+#'   connections immediately. It was necessary to call \code{\link{service}}
+#'   repeatedly in order to actually accept and handle connections.
+#'
+#'   If the port cannot be bound (most likely due to permissions or because it
+#'   is already bound), an error is raised.
+#'
 #'   The \code{app} parameter is where your application logic will be provided 
 #'   to the server. This can be a list, environment, or reference class that 
 #'   contains the following named functions/methods:
@@ -380,19 +406,22 @@ WebSocket <- setRefClass(
 #'   The \code{startPipeServer} variant can be used instead of 
 #'   \code{startServer} to listen on a Unix domain socket or named pipe rather
 #'   than a TCP socket (this is not common).
-#' @seealso \code{\link{runServer}}
+#' @seealso \code{\link{stopServer}}, \code{\link{runServer}}
 #' @aliases startPipeServer
 #' @export
 startServer <- function(host, port, app) {
   
   appWrapper <- AppWrapper$new(app)
-  server <- makeTcpServer(host, port,
-                          appWrapper$onHeaders,
-                          appWrapper$onBodyData,
-                          appWrapper$call,
-                          appWrapper$onWSOpen,
-                          appWrapper$onWSMessage,
-                          appWrapper$onWSClose)
+  server <- makeTcpServer(
+    host, port,
+    appWrapper$onHeaders,
+    appWrapper$onBodyData,
+    appWrapper$call,
+    appWrapper$onWSOpen,
+    appWrapper$onWSMessage,
+    appWrapper$onWSClose
+  )
+
   if (is.null(server)) {
     stop("Failed to create server")
   }
@@ -429,50 +458,51 @@ startPipeServer <- function(name, mask, app) {
 
 #' Process requests
 #'
-#' Process HTTP requests and WebSocket messages. Even if a server exists, no
-#' requests are serviced unless and until \code{service} is called.
+#' Process HTTP requests and WebSocket messages. If there is nothing on R's call
+#' stack -- if R is sitting idle at the command prompt -- it is not necessary to
+#' call this function, because requests will be handled automatically. However,
+#' if R is executing code, then requests will not be handled until either the
+#' call stack is empty, or this function is called (or alternatively,
+#' \code{\link[later]{run_now}} is called).
 #'
-#' Note that while \code{service} is waiting for a new request, the process is
-#' not interruptible using normal R means (Esc, Ctrl+C, etc.). If being
-#' interruptible is a requirement, then call \code{service} in a while loop with
-#' a very short but non-zero \code{\link{Sys.sleep}} during each iteration.
+#' In previous versions of httpuv (1.3.5 and below), even if a server created by
+#' \code{\link{startServer}} exists, no requests were serviced unless and until
+#' \code{service} was called.
 #'
-#' This function calls \code{\link[later]{run_now}()}, so if your application
-#' schedules any \code{\link[later]{later}} callbacks, they will be invoked.
+#' This function simply calls \code{\link[later]{run_now}()}, so if your
+#' application schedules any \code{\link[later]{later}} callbacks, they will be
+#' invoked.
 #'
 #' @param timeoutMs Approximate number of milliseconds to run before returning.
-#'   It will return after an I/O event occurs, or after the timeout duration has
-#'   elapsed. If 0, then the function will continually process requests without
-#'   returning unless an error occurs. If NA, performs a non-blocking run
-#'   without waiting.
+#'   It will return this duration has elapsed. If 0 or Inf, then the function
+#'   will continually process requests without returning unless an error occurs.
+#'   If NA, performs a non-blocking run without waiting.
 #'
 #' @examples
 #' \dontrun{
 #' while (TRUE) {
 #'   service()
-#'   Sys.sleep(0.001)
 #' }
 #' }
 #'
 #' @export
+#' @importFrom later run_now
 service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
-  run(timeoutMs)
-  later::run_now()
-}
+  if (is.na(timeoutMs)) {
+    # NA means to run non-blocking
+    run_now(0)
 
-#' Stop a running server
-#' 
-#' Given a handle that was returned from a previous invocation of 
-#' \code{\link{startServer}}, closes all open connections for that server and 
-#' unbinds the port. \strong{Be careful not to call \code{stopServer} more than 
-#' once on a handle, as this will cause the R process to crash!}
-#' 
-#' @param handle A handle that was previously returned from
-#'   \code{\link{startServer}}.
-#'   
-#' @export
-stopServer <- function(handle) {
-  destroyServer(handle)
+  } else if (timeoutMs == 0 || timeoutMs == Inf) {
+    .globals$paused <- FALSE
+    while (!.globals$paused) {
+      run_now(Inf)
+    }
+
+  } else {
+    # No need to check for .globals$paused because if run_now() executes
+    # anything, it will return immediately.
+    run_now(timeoutMs / 1000)
+  }
 }
 
 #' Run a server
@@ -492,36 +522,30 @@ stopServer <- function(handle) {
 #'   X, port numbers smaller than 1025 require root privileges.
 #' @param app A collection of functions that define your application. See 
 #'   \code{\link{startServer}}.
-#' @param interruptIntervalMs How often to check for interrupt. The default 
-#'   should be appropriate for most situations.
+#' @param interruptIntervalMs Deprecated (last used in httpuv 1.3.5).
 #'   
 #' @seealso \code{\link{startServer}}, \code{\link{service}},
 #'   \code{\link{stopServer}}
 #' @export
-runServer <- function(host, port, app,
-                      interruptIntervalMs = ifelse(interactive(), 100, 1000)) {
+runServer <- function(host, port, app, interruptIntervalMs = NULL) {
   server <- startServer(host, port, app)
   on.exit(stopServer(server))
   
-  .globals$stopped <- FALSE
-  while (!.globals$stopped) {
-    service(interruptIntervalMs)
-    Sys.sleep(0.001)
-  }
+  # TODO: in the future, add deprecation message to interruptIntervalMs.
+  service(0)
 }
 
 #' Interrupt httpuv runloop
-#' 
+#'
 #' Interrupts the currently running httpuv runloop, meaning
 #' \code{\link{runServer}} or \code{\link{service}} will return control back to
 #' the caller and no further tasks will be processed until those methods are
 #' called again. Note that this may cause in-process uploads or downloads to be
 #' interrupted in mid-request.
-#' 
+#'
 #' @export
 interrupt <- function() {
-  stopLoop()
-  .globals$stopped <- TRUE
+  .globals$paused <- TRUE
 }
 
 #' Convert raw vector to Base64-encoded string
@@ -544,74 +568,28 @@ rawToBase64 <- function(x) {
 .globals <- new.env()
 
 
-#' Create an HTTP/WebSocket daemonized server (experimental)
-#' 
-#' Creates an HTTP/WebSocket server on the specified host and port. The server is daemonized
-#' so R interactive sessions are not blocked to handle requests.
-#' 
-#' @param host A string that is a valid IPv4 address that is owned by this 
-#'   server, or \code{"0.0.0.0"} to listen on all IP addresses.
-#' @param port A number or integer that indicates the server port that should be
-#'   listened on. Note that on most Unix-like systems including Linux and Mac OS
-#'   X, port numbers smaller than 1025 require root privileges.
-#' @param app A collection of functions that define your application. See 
-#'   Details.
-#' @return A handle for this server that can be passed to
-#'   \code{\link{stopDaemonizedServer}} to shut the server down.
-#'   
-#' @details In contrast to servers created by \code{\link{startServer}}, calls to \code{\link{service}} 
-#'   are not needed to accept and handle connections. If the port
-#'   cannot be bound (most likely due to permissions or because it is already
-#'   bound), an error is raised.
-#'   
-#'   The \code{app} parameter is where your application logic will be provided 
-#'   to the server. This can be a list, environment, or reference class that 
-#'   contains the following named functions/methods:
-#'   
-#'   \describe{
-#'     \item{\code{call(req)}}{Process the given HTTP request, and return an 
-#'     HTTP response. This method should be implemented in accordance with the
-#'     \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
-#'     specification.}
-#'     \item{\code{onHeaders(req)}}{Optional. Similar to \code{call}, but occurs
-#'     when headers are received. Return \code{NULL} to continue normal
-#'     processing of the request, or a Rook response to send that response,
-#'     stop processing the request, and ask the client to close the connection.
-#'     (This can be used to implement upload size limits, for example.)}
-#'     \item{\code{onWSOpen(ws)}}{Called back when a WebSocket connection is established.
-#'     The given object can be used to be notified when a message is received from
-#'     the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}
-#'   }
-#'   
-#'   The \code{startPipeServer} variant is not supported yet.
-#' @seealso \code{\link{startServer}}
+#' Create an HTTP/WebSocket daemonized server (deprecated)
+#'
+#' This function will be removed in a future release of httpuv. It is simply a
+#' wrapper for \code{\link{startServer}}. In previous versions of httpuv (1.3.5
+#' and below), \code{startServer} ran applications in the foreground and
+#' \code{startDaemonizedServer} ran applications in the background, but now both
+#' of them run applications in the background.
+#'
+#' @inheritParams startServer
 #' @export
-startDaemonizedServer <- function(host, port, app) {
-  server <- startServer(host, port, app)
-  tryCatch({
-    server <- daemonize(server)
-  }, error=function(e) {
-    stopServer(server)
-    stop(e)
-  })
-  return(server)
-}
+startDaemonizedServer <- startServer
 
-#' Stop a running daemonized server in Unix environments
-#' 
-#' Given a handle that was returned from a previous invocation of 
-#' \code{\link{startDaemonizedServer}}, closes all open connections for that server,
-#' removes listeners in the R event loop and 
-#' unbinds the port. \strong{Be careful not to call \code{stopDaemonizedServer} more than 
-#' once on a handle, as this will cause the R process to crash!}
-#' 
-#' @param server A handle that was previously returned from
-#'   \code{\link{startDaemonizedServer}}.
-#'   
+#' Stop a running daemonized server in Unix environments (deprecated)
+#'
+#' This function will be removed in a future release of httpuv. Instead, use
+#' \code{\link{stopServer}}.
+#'
+#' @inheritParams stopServer
+#'
 #' @export
-stopDaemonizedServer <- function(server) {
-  destroyDaemonizedServer(server)
-}
+stopDaemonizedServer <- stopServer
+
 
 # Needed so that Rcpp registers the 'httpuv_decodeURIComponent' symbol
 legacy_dummy <- function(value){

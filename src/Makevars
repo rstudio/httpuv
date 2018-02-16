@@ -22,12 +22,29 @@ endif
 
 PKG_CPPFLAGS = -I./libuv/include -I./http-parser -I./sha1 -I./base64 $(C_VISIBILITY)
 
+# To avoid spurious warnings from `R CMD check --as-cran`, about compiler
+# warning flags like -Werror.
+ifdef _R_CHECK_COMPILATION_FLAGS_
+CONFIGURE_FLAGS="--quiet"
+endif
+
+#### Debugging flags ####
+# Uncomment to enable thread assertions
+# PKG_CPPFLAGS += -DDEBUG_THREAD -UNDEBUG
+# Uncomment to enable printing of trace() messages
+# PKG_CPPFLAGS += -DDEBUG_TRACE
+
+
 $(SHLIB): libuv/.libs/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
 
 libuv/Makefile:
-	(cd libuv && sh autogen.sh && ./configure)
+	(cd libuv && sh autogen.sh && ./configure $(CONFIGURE_FLAGS))
+
 
 libuv/.libs/libuv.a: libuv/Makefile
 	$(MAKE) --directory=libuv \
 		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" \
-    HAVE_DTRACE=0
+		HAVE_DTRACE=0
+
+clean:
+	$(MAKE) --directory=libuv distclean

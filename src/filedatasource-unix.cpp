@@ -1,11 +1,14 @@
 #ifndef _WIN32
 
 #include "filedatasource.h"
+#include "utils.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 
 int FileDataSource::initialize(const std::string& path, bool owned) {
+  ASSERT_MAIN_THREAD()
+
   _fd = open(path.c_str(), O_RDONLY);
   if (_fd == -1) {
     REprintf("Error opening file: %d\n", errno);
@@ -34,19 +37,20 @@ uint64_t FileDataSource::size() const {
 }
 
 uv_buf_t FileDataSource::getData(size_t bytesDesired) {
+  ASSERT_BACKGROUND_THREAD()
   if (bytesDesired == 0)
     return uv_buf_init(NULL, 0);
 
   char* buffer = (char*)malloc(bytesDesired);
   if (!buffer) {
-    throw Rcpp::exception("Couldn't allocate buffer");
+    throw std::runtime_error("Couldn't allocate buffer");
   }
 
   ssize_t bytesRead = read(_fd, buffer, bytesDesired);
   if (bytesRead == -1) {
-    REprintf("Error reading: %d\n", errno);
+    err_printf("Error reading: %d\n", errno);
     free(buffer);
-    throw Rcpp::exception("File read failed");
+    throw std::runtime_error("File read failed");
   }
 
   return uv_buf_init(buffer, bytesRead);

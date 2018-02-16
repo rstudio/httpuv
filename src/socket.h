@@ -2,25 +2,32 @@
 #define SOCKET_HPP
 
 #include "http.h"
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 #include <uv.h>
 
 class HttpRequest;
 class WebApplication;
 
-class Socket {
+class Socket : public boost::enable_shared_from_this<Socket> {
 public:
   VariantHandle handle;
-  WebApplication* pWebApplication;
-  std::vector<HttpRequest*> connections;
+  boost::shared_ptr<WebApplication> pWebApplication;
+  CallbackQueue* background_queue;
+  std::vector<boost::shared_ptr<HttpRequest>> connections;
 
-  Socket() {
+  Socket(boost::shared_ptr<WebApplication> pWebApplication,
+         CallbackQueue* background_queue)
+    : pWebApplication(pWebApplication), background_queue(background_queue)
+  {
   }
 
-  void addConnection(HttpRequest* request);
-  void removeConnection(HttpRequest* request);
+  void addConnection(boost::shared_ptr<HttpRequest> request);
+  void removeConnection(boost::shared_ptr<HttpRequest> request);
+  void close();
 
   virtual ~Socket();
-  virtual void destroy();
 };
+
 
 #endif // SOCKET_HPP

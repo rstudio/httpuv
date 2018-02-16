@@ -1,12 +1,19 @@
 #include "httpresponse.h"
 #include "httprequest.h"
 #include "constants.h"
+#include "thread.h"
+#include "utils.h"
 #include <uv.h>
 
 
 void on_response_written(uv_write_t* handle, int status) {
-  HttpResponse* pResponse = (HttpResponse*)handle->data;
+  ASSERT_BACKGROUND_THREAD()
+  // Make a local copy of the shared_ptr before deleting the original one.
+  boost::shared_ptr<HttpResponse> pResponse(*(boost::shared_ptr<HttpResponse>*)handle->data);
+
+  delete (boost::shared_ptr<HttpResponse>*)handle->data;
   free(handle);
+
   pResponse->onResponseWritten(status);
 }
 
@@ -37,19 +44,21 @@ void HttpResponse::setHeader(const std::string& name, const std::string& value) 
 }
 
 class HttpResponseExtendedWrite : public ExtendedWrite {
-  HttpResponse* _pParent;
+  boost::shared_ptr<HttpResponse> _pParent;
 public:
-  HttpResponseExtendedWrite(HttpResponse* pParent, uv_stream_t* pHandle,
+  HttpResponseExtendedWrite(boost::shared_ptr<HttpResponse> pParent,
+                            uv_stream_t* pHandle,
                             DataSource* pDataSource) :
       ExtendedWrite(pHandle, pDataSource), _pParent(pParent) {}
 
   void onWriteComplete(int status) {
-    _pParent->destroy();
     delete this;
   }
 };
 
 void HttpResponse::writeResponse() {
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpResponse::writeResponse");
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
   response << "HTTP/1.1 " << _statusCode << " " << _status << "\r\n";
@@ -90,30 +99,32 @@ void HttpResponse::writeResponse() {
   uv_buf_t headerBuf = uv_buf_init(&_responseHeader[0], _responseHeader.size());
   uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));
   memset(pWriteReq, 0, sizeof(uv_write_t));
-  pWriteReq->data = this;
+  // Pointer to shared_ptr
+  pWriteReq->data = new boost::shared_ptr<HttpResponse>(shared_from_this());
 
   int r = uv_write(pWriteReq, _pRequest->handle(), &headerBuf, 1,
       &on_response_written);
   if (r) {
     _pRequest->fatal_error("uv_write", uv_strerror(r));
-    destroy();
+    delete (boost::shared_ptr<HttpResponse>*)pWriteReq->data;
     free(pWriteReq);
+  } else {
+    _pRequest->requestCompleted();
   }
 }
 
 void HttpResponse::onResponseWritten(int status) {
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpResponse::onResponseWritten");
   if (status != 0) {
-    REprintf("Error writing response: %d\n", status);
-    destroy(true);  // Force close
+    err_printf("Error writing response: %d\n", status);
+    _closeAfterWritten = true; // Cause the request connection to close.
     return;
   }
 
-  if (_pBody == NULL) {
-    destroy();
-  }
-  else {
+  if (_pBody != NULL) {
     HttpResponseExtendedWrite* pResponseWrite = new HttpResponseExtendedWrite(
-        this, _pRequest->handle(), _pBody);
+      shared_from_this(), _pRequest->handle(), _pBody);
     pResponseWrite->begin();
   }
 }
@@ -125,12 +136,11 @@ void HttpResponse::closeAfterWritten() {
   _closeAfterWritten = true;
 }
 
-// A wrapper function that closes the HttpRequest's connection if
-// closeAfterWritten() has been called or if forceClose is true, and then
-// deletes this.
-void HttpResponse::destroy(bool forceClose) {
-  if (forceClose || _closeAfterWritten) {
+HttpResponse::~HttpResponse() {
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpResponse::~HttpResponse");
+  if (_closeAfterWritten) {
     _pRequest->close();
   }
-  delete this;
+  delete _pBody;
 }

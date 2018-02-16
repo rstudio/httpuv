@@ -5,8 +5,8 @@ sendWSMessage <- function(conn, binary, message) {
     invisible(.Call('_httpuv_sendWSMessage', PACKAGE = 'httpuv', conn, binary, message))
 }
 
-closeWS <- function(conn) {
-    invisible(.Call('_httpuv_closeWS', PACKAGE = 'httpuv', conn))
+closeWS <- function(conn, code, reason) {
+    invisible(.Call('_httpuv_closeWS', PACKAGE = 'httpuv', conn, code, reason))
 }
 
 makeTcpServer <- function(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose) {
@@ -17,28 +17,36 @@ makePipeServer <- function(name, mask, onHeaders, onBodyData, onRequest, onWSOpe
     .Call('_httpuv_makePipeServer', PACKAGE = 'httpuv', name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose)
 }
 
-destroyServer <- function(handle) {
-    invisible(.Call('_httpuv_destroyServer', PACKAGE = 'httpuv', handle))
+#' Stop a server
+#' 
+#' Given a handle that was returned from a previous invocation of 
+#' \code{\link{startServer}} or \code{\link{startPipeServer}}, this closes all
+#' open connections for that server and  unbinds the port.
+#' 
+#' @param handle A handle that was previously returned from
+#'   \code{\link{startServer}} or \code{\link{startPipeServer}}.
+#'
+#' @seealso \code{\link{stopAllServers}} to stop all servers.
+#'
+#' @export
+stopServer <- function(handle) {
+    invisible(.Call('_httpuv_stopServer', PACKAGE = 'httpuv', handle))
 }
 
-run <- function(timeoutMillis) {
-    .Call('_httpuv_run', PACKAGE = 'httpuv', timeoutMillis)
-}
-
-stopLoop <- function() {
-    invisible(.Call('_httpuv_stopLoop', PACKAGE = 'httpuv'))
+#' Stop all applications
+#'
+#' This will stop all applications which were created by
+#' \code{\link{startServer}} or \code{\link{startPipeServer}}.
+#'
+#' @seealso \code{\link{stopServer}} to stop a specific server.
+#'
+#' @export
+stopAllServers <- function() {
+    invisible(.Call('_httpuv_stopAllServers', PACKAGE = 'httpuv'))
 }
 
 base64encode <- function(x) {
     .Call('_httpuv_base64encode', PACKAGE = 'httpuv', x)
-}
-
-daemonize <- function(handle) {
-    .Call('_httpuv_daemonize', PACKAGE = 'httpuv', handle)
-}
-
-destroyDaemonizedServer <- function(handle) {
-    invisible(.Call('_httpuv_destroyDaemonizedServer', PACKAGE = 'httpuv', handle))
 }
 
 #' URI encoding/decoding
@@ -93,8 +101,8 @@ decodeURIComponent <- function(value) {
     .Call('_httpuv_decodeURIComponent', PACKAGE = 'httpuv', value)
 }
 
-invokeCppCallback <- function(data, callback_sexp) {
-    invisible(.Call('_httpuv_invokeCppCallback', PACKAGE = 'httpuv', data, callback_sexp))
+invokeCppCallback <- function(data, callback_xptr) {
+    invisible(.Call('_httpuv_invokeCppCallback', PACKAGE = 'httpuv', data, callback_xptr))
 }
 
 #' Apply the value of .Random.seed to R's internal RNG state
@@ -109,5 +117,9 @@ invokeCppCallback <- function(data, callback_sexp) {
 #' @export
 getRNGState <- function() {
     invisible(.Call('_httpuv_getRNGState', PACKAGE = 'httpuv'))
+}
+
+wsconn_address <- function(external_ptr) {
+    .Call('_httpuv_wsconn_address', PACKAGE = 'httpuv', external_ptr)
 }
 

@@ -5,6 +5,7 @@
 #include <uv.h>
 #include <Rcpp.h>
 #include "websockets.h"
+#include "thread.h"
 
 class HttpRequest;
 class HttpResponse;
@@ -12,14 +13,21 @@ class HttpResponse;
 class WebApplication {
 public:
   virtual ~WebApplication() {}
-  virtual void onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) = 0;
-  virtual void onBodyData(HttpRequest* pRequest,
-                          const char* data, size_t len) = 0;
-  virtual void getResponse(HttpRequest* request, boost::function<void(HttpResponse*)> callback) = 0;
-  virtual void onWSOpen(HttpRequest* pRequest) = 0;
-  virtual void onWSMessage(WebSocketConnection* conn,
-                           bool binary, const char* data, size_t len) = 0;
-  virtual void onWSClose(WebSocketConnection* conn) = 0;
+  virtual void onHeaders(boost::shared_ptr<HttpRequest> pRequest,
+                         boost::function<void(boost::shared_ptr<HttpResponse>)> callback) = 0;
+  virtual void onBodyData(boost::shared_ptr<HttpRequest> pRequest,
+                          const char* data, size_t len,
+                          boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback) = 0;
+  virtual void getResponse(boost::shared_ptr<HttpRequest> request,
+                           boost::function<void(boost::shared_ptr<HttpResponse>)> callback) = 0;
+  virtual void onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
+                        boost::function<void(void)> error_callback) = 0;
+  virtual void onWSMessage(boost::shared_ptr<WebSocketConnection>,
+                           bool binary,
+                           const char* data,
+                           size_t len,
+                           boost::function<void(void)> error_callback) = 0;
+  virtual void onWSClose(boost::shared_ptr<WebSocketConnection>) = 0;
 };
 
 
@@ -41,18 +49,28 @@ public:
                   Rcpp::Function onWSClose) :
     _onHeaders(onHeaders), _onBodyData(onBodyData), _onRequest(onRequest),
     _onWSOpen(onWSOpen), _onWSMessage(onWSMessage), _onWSClose(onWSClose) {
+    ASSERT_MAIN_THREAD()
   }
 
-  virtual ~RWebApplication() {}
+  virtual ~RWebApplication() {
+    ASSERT_MAIN_THREAD()
+  }
 
-  virtual void onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback);
-  virtual void onBodyData(HttpRequest* pRequest,
-                          const char* data, size_t len);
-  virtual void getResponse(HttpRequest* request, boost::function<void(HttpResponse*)> callback);
-  virtual void onWSOpen(HttpRequest* pRequest);
-  virtual void onWSMessage(WebSocketConnection* conn,
-                           bool binary, const char* data, size_t len);
-  virtual void onWSClose(WebSocketConnection* conn);
+  virtual void onHeaders(boost::shared_ptr<HttpRequest> pRequest,
+                         boost::function<void(boost::shared_ptr<HttpResponse>)> callback);
+  virtual void onBodyData(boost::shared_ptr<HttpRequest> pRequest,
+                          const char* data, size_t len,
+                          boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback);
+  virtual void getResponse(boost::shared_ptr<HttpRequest> request,
+                           boost::function<void(boost::shared_ptr<HttpResponse>)> callback);
+  virtual void onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
+                        boost::function<void(void)> error_callback);
+  virtual void onWSMessage(boost::shared_ptr<WebSocketConnection> conn,
+                           bool binary,
+                           const char* data,
+                           size_t len,
+                           boost::function<void(void)> error_callback);
+  virtual void onWSClose(boost::shared_ptr<WebSocketConnection> conn);
 };
 
 

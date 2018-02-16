@@ -1,4 +1,4 @@
-httpuv 1.3.5.9002
+httpuv 1.3.5.9004
 =================
 
 * Upgraded to libuv 1.15.0. ([#91](https://github.com/rstudio/httpuv/pull/91))

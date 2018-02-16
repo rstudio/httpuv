@@ -1,8 +1,11 @@
 #include <boost/bind.hpp>
+#include "httpuv.h"
 #include "filedatasource.h"
 #include "webapplication.h"
 #include "httprequest.h"
 #include "http.h"
+#include "thread.h"
+#include <Rinternals.h>
 
 
 std::string normalizeHeaderName(const std::string& name) {
@@ -70,8 +73,22 @@ const std::string& getStatusDescription(int code) {
     return unknown;
 }
 
+// A generic HTTP response to send when an error (uncaught in the R code)
+// happens during processing a request.
+Rcpp::List errorResponse() {
+  ASSERT_MAIN_THREAD()
+  using namespace Rcpp;
+  return List::create(
+    _["status"] = 500L,
+    _["headers"] = List::create(
+      _["Content-Type"] = "text/plain; charset=UTF-8"
+    ),
+    _["body"] = "An exception occurred."
+  );
+}
 
-void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
+void requestToEnv(boost::shared_ptr<HttpRequest> pRequest, Rcpp::Environment* pEnv) {
+  ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
   Environment& env = *pEnv;
@@ -86,80 +103,44 @@ void requestToEnv(HttpRequest* pRequest, Rcpp::Environment* pEnv) {
     queryString = url.substr(qsIndex);
   }
 
-  env["REQUEST_METHOD"] = pRequest->method();
-  env["SCRIPT_NAME"] = std::string("");
-  env["PATH_INFO"] = path;
-  env["QUERY_STRING"] = queryString;
+  // When making assignments into the Environment, the value must be wrapped
+  // in a Rcpp object -- letting Rcpp automatically do the wrapping can result
+  // in an object being GC'd too early.
+  // https://github.com/RcppCore/Rcpp/issues/780
+  env["REQUEST_METHOD"] = CharacterVector(pRequest->method());
+  env["SCRIPT_NAME"] = CharacterVector(std::string(""));
+  env["PATH_INFO"] = CharacterVector(path);
+  env["QUERY_STRING"] = CharacterVector(queryString);
 
-  env["rook.version"] = "1.1-0";
-  env["rook.url_scheme"] = "http";
+  env["rook.version"] = CharacterVector("1.1-0");
+  env["rook.url_scheme"] = CharacterVector("http");
 
   Address addr = pRequest->serverAddress();
-  env["SERVER_NAME"] = addr.host;
+  env["SERVER_NAME"] = CharacterVector(addr.host);
   std::ostringstream portstr;
   portstr << addr.port;
-  env["SERVER_PORT"] = portstr.str();
+  env["SERVER_PORT"] = CharacterVector(portstr.str());
 
   Address raddr = pRequest->clientAddress();
-  env["REMOTE_ADDR"] = raddr.host;
+  env["REMOTE_ADDR"] = CharacterVector(raddr.host);
   std::ostringstream rportstr;
   rportstr << raddr.port;
-  env["REMOTE_PORT"] = rportstr.str();
+  env["REMOTE_PORT"] = CharacterVector(rportstr.str());
 
   const RequestHeaders& headers = pRequest->headers();
   for (RequestHeaders::const_iterator it = headers.begin();
     it != headers.end();
     it++) {
-    env["HTTP_" + normalizeHeaderName(it->first)] = it->second;
+    env["HTTP_" + normalizeHeaderName(it->first)] = CharacterVector(it->second);
   }
 }
 
-class RawVectorDataSource : public DataSource {
-  Rcpp::RawVector _vector;
-  R_len_t _pos;
 
-public:
-  RawVectorDataSource(const Rcpp::RawVector& vector) : _vector(vector), _pos(0) {
-  }
-
-  uint64_t size() const {
-    return _vector.size();
-  }
-
-  uv_buf_t getData(size_t bytesDesired) {
-    size_t bytes = _vector.size() - _pos;
-
-    // Are we at the end?
-    if (bytes == 0)
-      return uv_buf_init(NULL, 0);
-
-    if (bytesDesired < bytes)
-      bytes = bytesDesired;
-    char* buf = (char*)malloc(bytes);
-    if (!buf) {
-      throw Rcpp::exception("Couldn't allocate buffer");
-    }
-
-    for (size_t i = 0; i < bytes; i++) {
-      buf[i] = _vector[_pos + i];
-    }
-
-    _pos += bytes;
-
-    return uv_buf_init(buf, bytes);
-  }
-
-  void freeData(uv_buf_t buffer) {
-    free(buffer.base);
-  }
-
-  void close() {
-    delete this;
-  }
-};
-
-HttpResponse* listToResponse(HttpRequest* pRequest,
-                             const Rcpp::List& response) {
+boost::shared_ptr<HttpResponse> listToResponse(
+  boost::shared_ptr<HttpRequest> pRequest,
+  const Rcpp::List& response)
+{
+  ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
   if (response.isNULL() || response.size() == 0)
@@ -178,7 +159,7 @@ HttpResponse* listToResponse(HttpRequest* pRequest,
   // The response can either contain:
   // - bodyFile: String value that names the file that should be streamed
   // - body: Character vector (which is charToRaw-ed) or raw vector, or NULL
-    if (std::find(names.begin(), names.end(), "bodyFile") != names.end()) {
+  if (std::find(names.begin(), names.end(), "bodyFile") != names.end()) {
     FileDataSource* pFDS = new FileDataSource();
     pFDS->initialize(Rcpp::as<std::string>(response["bodyFile"]),
         Rcpp::as<bool>(response["bodyFileOwned"]));
@@ -186,15 +167,17 @@ HttpResponse* listToResponse(HttpRequest* pRequest,
   }
   else if (Rf_isString(response["body"])) {
     RawVector responseBytes = Function("charToRaw")(response["body"]);
-    pDataSource = new RawVectorDataSource(responseBytes);
+    pDataSource = new InMemoryDataSource(responseBytes);
   }
   else {
     RawVector responseBytes = response["body"];
-    pDataSource = new RawVectorDataSource(responseBytes);
+    pDataSource = new InMemoryDataSource(responseBytes);
   }
 
-  HttpResponse* pResp = new HttpResponse(pRequest, status, statusDesc,
-                                         pDataSource);
+  boost::shared_ptr<HttpResponse> pResp = boost::shared_ptr<HttpResponse>(
+    new HttpResponse(pRequest, status, statusDesc, pDataSource),
+    auto_deleter_background<HttpResponse>
+  );
   CharacterVector headerNames = responseHeaders.names();
   for (R_len_t i = 0; i < responseHeaders.size(); i++) {
     pResp->addHeader(
@@ -205,61 +188,162 @@ HttpResponse* listToResponse(HttpRequest* pRequest,
   return pResp;
 }
 
-void invokeResponseFun(boost::function<void(HttpResponse*)> fun, HttpRequest* pRequest, Rcpp::List response) {
-  HttpResponse* pResponse = listToResponse(pRequest, response);
+void invokeResponseFun(boost::function<void(boost::shared_ptr<HttpResponse>)> fun,
+                       boost::shared_ptr<HttpRequest> pRequest,
+                       Rcpp::List response)
+{
+  ASSERT_MAIN_THREAD()
+  // new HttpResponse object. The callback will invoke
+  // HttpResponse->writeResponse().
+  boost::shared_ptr<HttpResponse> pResponse = listToResponse(pRequest, response);
   fun(pResponse);
-};
+}
 
 
-void RWebApplication::onHeaders(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
+void RWebApplication::onHeaders(boost::shared_ptr<HttpRequest> pRequest,
+                                boost::function<void(boost::shared_ptr<HttpResponse>)> callback)
+{
+  ASSERT_MAIN_THREAD()
   if (_onHeaders.isNULL()) {
     callback(NULL);
   }
 
   requestToEnv(pRequest, &pRequest->env());
 
-  // Call the R onHeaders function
-  Rcpp::List response(_onHeaders(pRequest->env()));
+  // Call the R onHeaders function. If an exception occurs during processing,
+  // catch it and then send a generic error response.
+  Rcpp::List response;
+  try {
+    response = _onHeaders(pRequest->env());
+  } catch (Rcpp::internal::InterruptedException &e) {
+    trace("Interrupt occurred in _onHeaders");
+    response = errorResponse();
+  } catch (...) {
+    trace("Exception occurred in _onHeaders");
+    response = errorResponse();
+  }
 
-  callback(listToResponse(pRequest, response));
+  // new HttpResponse object. The callback will invoke
+  // HttpResponse->writeResponse(), which adds a callback to destroy(), which
+  // deletes the object.
+  boost::shared_ptr<HttpResponse> pResponse = listToResponse(pRequest, response);
+  callback(pResponse);
 }
 
-void RWebApplication::onBodyData(HttpRequest* pRequest,
-                        const char* pData, size_t length) {
+void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
+      const char* pData, size_t length,
+      boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback)
+{
+  ASSERT_MAIN_THREAD()
+  trace("RWebApplication::onBodyData");
+
+  // We're in an error state, but the background thread has already scheduled
+  // more data to be processed here. Don't process more data.
+  if (pRequest->isResponseScheduled())
+    return;
+
   Rcpp::RawVector rawVector(length);
   std::copy(pData, pData + length, rawVector.begin());
-  _onBodyData(pRequest->env(), rawVector);
+  try {
+    _onBodyData(pRequest->env(), rawVector);
+  } catch (...) {
+    trace("Exception occurred in _onBodyData");
+    // Send an error message to the client. It's very possible that getResponse() or more
+    // calls to onBodyData() will have been scheduled on the main thread
+    // before the errorCallback is called.
+    //
+    // Note that some (most?) clients won't correctly handle a response that's
+    // sent early, before the request is completed.
+    // https://stackoverflow.com/a/18370751/412655
+    errorCallback(listToResponse(pRequest, errorResponse()));
+  }
 }
 
-void RWebApplication::getResponse(HttpRequest* pRequest, boost::function<void(HttpResponse*)> callback) {
+void RWebApplication::getResponse(boost::shared_ptr<HttpRequest> pRequest,
+                                  boost::function<void(boost::shared_ptr<HttpResponse>)> callback) {
+  ASSERT_MAIN_THREAD()
+  trace("RWebApplication::getResponse");
   using namespace Rcpp;
 
-  boost::function<void(List)> * callback_wrapper = new boost::function<void(List)>();
-
-  *callback_wrapper = boost::bind(
-    &invokeResponseFun,
-    callback,
-    pRequest,
-    _1
+  // Pass callback to R:
+  // invokeResponseFun(callback, pRequest, _1)
+  boost::function<void(List)>* callback_wrapper = new boost::function<void(List)>(
+    boost::bind(invokeResponseFun, callback, pRequest, _1)
   );
 
-  XPtr< boost::function<void(List)> > callback_xptr(callback_wrapper);
+  SEXP callback_xptr = PROTECT(R_MakeExternalPtr(callback_wrapper, R_NilValue, R_NilValue));
 
-  _onRequest(pRequest->env(), callback_xptr);
+  // We previously encountered an error processing the body. Don't call into
+  // the R call/_onRequest() function. We need to signal the HttpRequest
+  // object to let it know that we had an error.
+  if (pRequest->isResponseScheduled()) {
+    invokeCppCallback(NULL, callback_xptr);
+  }
+  else {
+
+    // Call the R call() function, and pass it the callback xptr so it can
+    // asynchronously pass data back to C++.
+    try {
+      _onRequest(pRequest->env(), callback_xptr);
+
+      // On the R side, httpuv's call() function will catch errors that happen
+      // in the user-defined call() function, but if an error happens outside of
+      // that scope, or if another uncaught exception happens (like an interrupt
+      // if Ctrl-C is pressed), then it will bubble up to here, where we'll catch
+      // it and deal with it.
+
+    } catch (Rcpp::internal::InterruptedException &e) {
+      trace("Interrupt occurred in _onRequest");
+      invokeCppCallback(errorResponse(), callback_xptr);
+    } catch (...) {
+      trace("Exception occurred in _onRequest");
+      invokeCppCallback(errorResponse(), callback_xptr);
+    }
+  }
+
+  UNPROTECT(1);
 }
 
-void RWebApplication::onWSOpen(HttpRequest* pRequest) {
+void RWebApplication::onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
+                               boost::function<void(void)> error_callback) {
+  ASSERT_MAIN_THREAD()
   requestToEnv(pRequest, &pRequest->env());
-  _onWSOpen(externalize<WebSocketConnection>(pRequest->websocket()), pRequest->env());
+  try {
+    _onWSOpen(
+      externalize_shared_ptr<WebSocketConnection>(pRequest->websocket()),
+      pRequest->env()
+    );
+  } catch(...) {
+    error_callback();
+  }
 }
 
-void RWebApplication::onWSMessage(WebSocketConnection* pConn, bool binary, const char* data, size_t len) {
-  if (binary)
-    _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::vector<uint8_t>(data, data + len));
-  else
-    _onWSMessage(externalize<WebSocketConnection>(pConn), binary, std::string(data, len));
+void RWebApplication::onWSMessage(boost::shared_ptr<WebSocketConnection> pConn,
+                                  bool binary,
+                                  const char* data,
+                                  size_t len,
+                                  boost::function<void(void)> error_callback)
+{
+  ASSERT_MAIN_THREAD()
+  try {
+    if (binary)
+      _onWSMessage(
+        externalize_shared_ptr<WebSocketConnection>(pConn),
+        binary,
+        std::vector<uint8_t>(data, data + len)
+      );
+    else
+      _onWSMessage(
+        externalize_shared_ptr<WebSocketConnection>(pConn),
+        binary,
+        std::string(data, len)
+      );
+  } catch(...) {
+    error_callback();
+  }
 }
 
-void RWebApplication::onWSClose(WebSocketConnection* pConn) {
-  _onWSClose(externalize<WebSocketConnection>(pConn));
+void RWebApplication::onWSClose(boost::shared_ptr<WebSocketConnection> pConn) {
+  ASSERT_MAIN_THREAD()
+  _onWSClose(externalize_shared_ptr<WebSocketConnection>(pConn));
 }

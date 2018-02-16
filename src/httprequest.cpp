@@ -1,7 +1,12 @@
-
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
 #include <later_api.h>
 #include "httprequest.h"
+#include "callback.h"
+#include "utils.h"
+#include "thread.h"
+#include "auto_deleter.h"
+
 
 http_parser_settings& request_settings() {
   static http_parser_settings settings;
@@ -18,13 +23,10 @@ http_parser_settings& request_settings() {
 }
 
 void on_alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
+  ASSERT_BACKGROUND_THREAD()
   // Freed in HttpRequest::_on_request_read
   void* result = malloc(suggested_size);
   *buf = uv_buf_init((char*)result, suggested_size);
-}
-
-void HttpRequest::trace(const std::string& msg) {
-  //std::cerr << msg << std::endl;
 }
 
 // Does a header field `name` exist?
@@ -111,8 +113,48 @@ Address HttpRequest::clientAddress() {
   return address;
 }
 
+// Each HttpRequest object represents a connection. Multiple actual HTTP
+// requests can happen in sequence on this connection. Each time a new message
+// starts, we need to reset some parts of the HttpRequest object.
+void HttpRequest::_newRequest() {
+  ASSERT_BACKGROUND_THREAD()
+
+  if (_handling_request) {
+    err_printf("Error: pipelined HTTP requests not supported.\n");
+    close();
+  }
+
+  _handling_request = true;
+  _headers.clear();
+  _response_scheduled = false;
+
+  // Schedule on main thread:
+  //   this->_initializeEnv();
+  invoke_later(
+    boost::bind(&HttpRequest::_initializeEnv, shared_from_this())
+  );
+}
+
+void HttpRequest::_initializeEnv() {
+  ASSERT_MAIN_THREAD()
+  using namespace Rcpp;
+
+  Environment base(R_BaseEnv);
+  Function new_env = as<Function>(base["new.env"]);
+
+  // The deleter is called either when this function is called again, or when
+  // the HttpRequest object is deleted. The deletion will happen on the
+  // background thread; auto_deleter_main() schedules the deletion of the
+  // Rcpp::Environment object on the main thread.
+  _env = boost::shared_ptr<Environment>(
+    new Environment(new_env(_["parent"] = R_EmptyEnv)),
+    auto_deleter_main<Environment>
+  );
+}
+
 Rcpp::Environment& HttpRequest::env() {
-  return _env;
+  ASSERT_MAIN_THREAD()
+  return *_env;
 }
 
 std::string HttpRequest::method() const {
@@ -127,70 +169,57 @@ const RequestHeaders& HttpRequest::headers() const {
   return _headers;
 }
 
-typedef struct {
-  uv_write_t writeReq;
-  std::vector<char>* pHeader;
-  std::vector<char>* pData;
-  std::vector<char>* pFooter;
-} ws_send_t;
-
-void on_ws_message_sent(uv_write_t* handle, int status) {
-  // TODO: Handle error if status != 0
-  ws_send_t* pSend = (ws_send_t*)handle;
-  delete pSend->pHeader;
-  delete pSend->pData;
-  delete pSend->pFooter;
-  free(pSend);
+void HttpRequest::responseScheduled() {
+  ASSERT_MAIN_THREAD()
+  trace("HttpRequest::responseScheduled");
+  _response_scheduled = true;
 }
 
-void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
-                              const char* pData, size_t dataSize,
-                              const char* pFooter, size_t footerSize) {
-  ws_send_t* pSend = (ws_send_t*)malloc(sizeof(ws_send_t));
-  memset(pSend, 0, sizeof(ws_send_t));
-  pSend->pHeader = new std::vector<char>(pHeader, pHeader + headerSize);
-  pSend->pData = new std::vector<char>(pData, pData + dataSize);
-  pSend->pFooter = new std::vector<char>(pFooter, pFooter + footerSize);
-
-  uv_buf_t buffers[3];
-  buffers[0] = uv_buf_init(&(*pSend->pHeader)[0], pSend->pHeader->size());
-  buffers[1] = uv_buf_init(&(*pSend->pData)[0], pSend->pData->size());
-  buffers[2] = uv_buf_init(&(*pSend->pFooter)[0], pSend->pFooter->size());
-
-  // TODO: Handle return code
-  uv_write(&pSend->writeReq, (uv_stream_t*)handle(), buffers, 3,
-           &on_ws_message_sent);
+bool HttpRequest::isResponseScheduled() {
+  ASSERT_MAIN_THREAD()
+  return _response_scheduled;
 }
 
-void HttpRequest::closeWSSocket() {
-  close();
+void HttpRequest::requestCompleted() {
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::requestCompleted");
+  _handling_request = false;
 }
 
+
+// ============================================================================
+// Miscellaneous callbacks for http parser
+// ============================================================================
 
 int HttpRequest::_on_message_begin(http_parser* pParser) {
-  trace("on_message_begin");
-  _headers.clear();
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_message_begin");
+  _newRequest();
   return 0;
 }
 
 int HttpRequest::_on_url(http_parser* pParser, const char* pAt, size_t length) {
-  trace("on_url");
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_url");
   _url = std::string(pAt, length);
   return 0;
 }
 
 int HttpRequest::_on_status(http_parser* pParser, const char* pAt, size_t length) {
-  trace("on_status");
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_status");
   return 0;
 }
 int HttpRequest::_on_header_field(http_parser* pParser, const char* pAt, size_t length) {
-  trace("on_header_field");
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_header_field");
   std::copy(pAt, pAt + length, std::back_inserter(_lastHeaderField));
   return 0;
 }
 
 int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t length) {
-  trace("on_header_value");
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_header_value");
 
   std::string value(pAt, length);
 
@@ -215,20 +244,9 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
   return 0;
 }
 
-// This should be called from the main thread.
-void HttpRequest::_call_r_on_headers() {
-  this->_pWebApplication->onHeaders(
-    this,
-    boost::bind(&HttpRequest::_on_headers_complete_complete, this, _1)
-  );
-}
-
-// This wrapper function is needed to use HttpRequest::_call_r_on_headers with
-// later(). That method can't be passed to later(), but this function can.
-void call_r_on_headers_wrapper(void* data) {
-  HttpRequest* req = reinterpret_cast<HttpRequest*>(data);
-  req->_call_r_on_headers();
-}
+// ============================================================================
+// Headers complete
+// ============================================================================
 
 // This is called after http-parser has finished parsing the request headers.
 // It uses later() to schedule the user's R onHeaders() function. Always
@@ -238,18 +256,51 @@ void call_r_on_headers_wrapper(void* data) {
 // one of those conditions occurs, we'll set it later, but before we call
 // http_parser_execute() again.
 int HttpRequest::_on_headers_complete(http_parser* pParser) {
-  trace("on_headers_complete");
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_headers_complete");
 
-  later::later(call_r_on_headers_wrapper, this, 0);
+  boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
+    boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, shared_from_this(), _1)
+  );
+
+  // Use later to schedule _pWebApplication->onHeaders(this, schedule_bg_callback)
+  // to run on the main thread. That function in turn calls
+  // this->_schedule_on_headers_complete_complete.
+  invoke_later(
+    boost::bind(
+      &WebApplication::onHeaders,
+      _pWebApplication,
+      shared_from_this(),
+      schedule_bg_callback
+    )
+  );
 
   return 0;
 }
 
+// This is called at the end of WebApplication::onHeaders(). It puts an item
+// on the write queue and signals to the background thread that there's
+// something there.
+void HttpRequest::_schedule_on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
+  ASSERT_MAIN_THREAD()
+  trace("HttpRequest::_schedule_on_headers_complete_complete");
+
+  if (pResponse)
+    responseScheduled();
+
+  boost::function<void (void)> cb(
+    boost::bind(&HttpRequest::_on_headers_complete_complete, shared_from_this(), pResponse)
+  );
+  _background_queue->push(cb);
+}
+
 // This is called after the user's R onHeaders() function has finished. It can
 // write a response, if onHeaders() wants that. It also sets a status code for
-// http-parser.
-void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
-  trace("on_headers_complete_complete");
+// http-parser and then re-executes the parser. Runs on the background thread.
+void HttpRequest::_on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_headers_complete_complete");
+
   int result = 0;
 
   if (pResponse) {
@@ -284,7 +335,10 @@ void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
     // If the request is Expect: Continue, and the app didn't say otherwise,
     // then give it what it wants
     if (_hasHeader("Expect", "100-continue")) {
-      pResponse = new HttpResponse(this, 100, "Continue", NULL);
+      pResponse = boost::shared_ptr<HttpResponse>(
+        new HttpResponse(shared_from_this(), 100, "Continue", (DataSource*)NULL),
+        auto_deleter_background<HttpResponse>
+      );
       pResponse->writeResponse();
     }
   }
@@ -297,28 +351,127 @@ void HttpRequest::_on_headers_complete_complete(HttpResponse* pResponse) {
 }
 
 
+// ============================================================================
+// Message body (for POST)
+// ============================================================================
+
 int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) {
-  trace("on_body");
-  _pWebApplication->onBodyData(this, pAt, length);
-  _bytesRead += length;
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_body");
+
+  // Copy pAt because the source data is deleted right after calling this
+  // function.
+  std::vector<char>* buf = new std::vector<char>(pAt, pAt + length);
+
+  boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
+    boost::bind(&HttpRequest::_schedule_on_body_error, shared_from_this(), _1)
+  );
+
+  // Schedule on main thread:
+  // _pWebApplication->onBodyData(this, pAt, length, schedule_bg_callback);
+  invoke_later(
+    boost::bind(
+      &WebApplication::onBodyData,
+      _pWebApplication,
+      shared_from_this(),
+      &(*buf)[0],
+      length,
+      schedule_bg_callback
+    )
+  );
+
+  // Schedule for after on_ws_message_callback:
+  // deleter_main<std::vector<char>>(buf)
+  later::later(deleter_main<std::vector<char>>, buf, 0);
+
+
   return 0;
 }
+
+void HttpRequest::_schedule_on_body_error(boost::shared_ptr<HttpResponse> pResponse) {
+  ASSERT_MAIN_THREAD()
+  trace("HttpRequest::_schedule_on_body_error");
+
+  responseScheduled();
+
+  boost::function<void (void)> cb(
+    boost::bind(&HttpRequest::_on_body_error, shared_from_this(), pResponse)
+  );
+  _background_queue->push(cb);
+
+}
+
+void HttpRequest::_on_body_error(boost::shared_ptr<HttpResponse> pResponse) {
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_body_error");
+
+  http_parser_pause(&_parser, 1);
+
+  pResponse->closeAfterWritten();
+  uv_read_stop((uv_stream_t*)handle());
+  _ignoreNewData = true;
+
+  pResponse->writeResponse();
+}
+
+
+// ============================================================================
+// Message complete
+// ============================================================================
 
 int HttpRequest::_on_message_complete(http_parser* pParser) {
-  trace("on_message_complete");
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_message_complete");
 
-  if (!pParser->upgrade) {
-    // Deleted in on_response_written
-    _pWebApplication->getResponse(
-      this,
-      boost::bind(&HttpRequest::_on_message_complete_complete, this, _1)
-    );
-  }
+  if (pParser->upgrade)
+    return 0;
+
+  boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
+    boost::bind(&HttpRequest::_schedule_on_message_complete_complete, shared_from_this(), _1)
+  );
+
+  // Use later to schedule _pWebApplication->getResponse(this, schedule_bg_callback)
+  // to run on the main thread. That function in turn calls
+  // this->_schedule_on_message_complete_complete.
+  invoke_later(
+    boost::bind(
+      &WebApplication::getResponse,
+      _pWebApplication,
+      shared_from_this(),
+      schedule_bg_callback
+    )
+  );
 
   return 0;
 }
 
-void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
+// This is called by the user's application code during or after the end of
+// WebApplication::getResponse(). It puts an item on the background queue.
+void HttpRequest::_schedule_on_message_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
+  ASSERT_MAIN_THREAD()
+
+  responseScheduled();
+
+  boost::function<void (void)> cb(
+    boost::bind(&HttpRequest::_on_message_complete_complete, shared_from_this(), pResponse)
+  );
+  _background_queue->push(cb);
+}
+
+void HttpRequest::_on_message_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_message_complete_complete");
+
+  // This can happen if an error occured in WebApplication::onBodyData.
+  if (pResponse == NULL) {
+    return;
+  }
+
+  // TODO: ADding this fixes the ERROR: [uv_write] bad file descriptor, but
+  // then we need to make sure the pResponse gets cleaned up. Smart pointer?
+  if (_is_closing)
+    return;
+
   if (!http_should_keep_alive(&_parser)) {
     pResponse->closeAfterWritten();
 
@@ -330,32 +483,195 @@ void HttpRequest::_on_message_complete_complete(HttpResponse* pResponse) {
   pResponse->writeResponse();
 }
 
+
+// ============================================================================
+// Incoming websocket messages
+// ============================================================================
+
+// Called from WebSocketConnection::onFrameComplete
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
-  _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::onWSMessage");
+
+  // Copy data because the source data is deleted right after calling this
+  // function.
+  std::vector<char>* buf = new std::vector<char>(data, data + len);
+
+  boost::function<void (void)> error_callback(
+    boost::bind(&HttpRequest::schedule_close, shared_from_this())
+  );
+
+  // Schedule:
+  // _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
+  invoke_later(
+    boost::bind(
+      &WebApplication::onWSMessage,
+      _pWebApplication,
+      _pWebSocketConnection,
+      binary,
+      &(*buf)[0],
+      len,
+      error_callback
+    )
+  );
+
+  // Schedule for after on_ws_message_callback:
+  // deleter_main<std::vector<char>>(buf)
+  later::later(deleter_main<std::vector<char>>, buf, 0);
 }
+
 void HttpRequest::onWSClose(int code) {
+  trace("HttpRequest::onWSClose");
   // TODO: Call close() here?
 }
 
-
 void HttpRequest::fatal_error(const char* method, const char* message) {
-  REprintf("ERROR: [%s] %s\n", method, message);
+  err_printf("ERROR: [%s] %s\n", method, message);
 }
 
+
+// ============================================================================
+// Outgoing websocket messages
+// ============================================================================
+
+typedef struct {
+  uv_write_t writeReq;
+  std::vector<char>* pHeader;
+  std::vector<char>* pData;
+  std::vector<char>* pFooter;
+} ws_send_t;
+
+void on_ws_message_sent(uv_write_t* handle, int status) {
+  ASSERT_BACKGROUND_THREAD()
+  trace("on_ws_message_sent");
+  // TODO: Handle error if status != 0
+  ws_send_t* pSend = (ws_send_t*)handle;
+  delete pSend->pHeader;
+  delete pSend->pData;
+  delete pSend->pFooter;
+  free(pSend);
+}
+
+void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
+                              const char* pData, size_t dataSize,
+                              const char* pFooter, size_t footerSize) {
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::sendWSFrame");
+  ws_send_t* pSend = (ws_send_t*)malloc(sizeof(ws_send_t));
+  memset(pSend, 0, sizeof(ws_send_t));
+  pSend->pHeader = new std::vector<char>(pHeader, pHeader + headerSize);
+  pSend->pData = new std::vector<char>(pData, pData + dataSize);
+  pSend->pFooter = new std::vector<char>(pFooter, pFooter + footerSize);
+
+  uv_buf_t buffers[3];
+  buffers[0] = uv_buf_init(&(*pSend->pHeader)[0], pSend->pHeader->size());
+  buffers[1] = uv_buf_init(&(*pSend->pData)[0], pSend->pData->size());
+  buffers[2] = uv_buf_init(&(*pSend->pFooter)[0], pSend->pFooter->size());
+
+  // TODO: Handle return code
+  uv_write(&pSend->writeReq, (uv_stream_t*)handle(), buffers, 3,
+           &on_ws_message_sent);
+}
+
+void HttpRequest::closeWSSocket() {
+  close();
+}
+
+
+// ============================================================================
+// Closing connection
+// ============================================================================
+
 void HttpRequest::_on_closed(uv_handle_t* handle) {
-  // printf("Closed\n");
-  delete this;
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::_on_closed");
+  _pWebSocketConnection.reset();
 }
 
 void HttpRequest::close() {
+  ASSERT_BACKGROUND_THREAD()
+  trace("HttpRequest::close");
   // std::cerr << "Closing handle " << &_handle << std::endl;
-  if (_protocol == WebSockets)
-    _pWebApplication->onWSClose(_pWebSocketConnection);
-  _pSocket->removeConnection(this);
+
+  if (_is_closing) {
+    trace("close() called twice on HttpRequest object");
+    // Shouldn't get here, but just in case close() gets called twice
+    // (probably via a scheduled callback), don't do the closing machinery
+    // twice.
+    _on_closed(NULL);
+    return;
+  }
+  _is_closing = true;
+
+  if (_protocol == WebSockets) {
+    // Schedule:
+    // _pWebApplication->onWSClose(_pWebSocketConnection)
+    invoke_later(
+      boost::bind(
+        &WebApplication::onWSClose,
+        _pWebApplication,
+        _pWebSocketConnection
+      )
+    );
+  }
+
+  _pSocket->removeConnection(shared_from_this());
+
   uv_close(toHandle(&_handle.stream), HttpRequest_on_closed);
 }
 
+// This is to be called from the main thread, when the main thread needs to
+// tell the background thread to close the request. The main thread should not
+// close() directly.
+void HttpRequest::schedule_close() {
+  // Schedule on background thread:
+  //  pRequest->close()
+  _background_queue->push(
+    boost::bind(&HttpRequest::close, shared_from_this())
+  );
+}
+
+
+// ============================================================================
+// Open websocket
+// ============================================================================
+
+void HttpRequest::_call_r_on_ws_open() {
+  ASSERT_MAIN_THREAD()
+  trace("_call_r_on_ws_open");
+
+  boost::function<void (void)> error_callback(
+    boost::bind(&HttpRequest::schedule_close, shared_from_this())
+  );
+  this->_pWebApplication->onWSOpen(shared_from_this(), error_callback);
+
+  // _requestBuffer is likely empty at this point, but copy its contents and
+  // _pass along just in case.
+  std::vector<char>* req_buffer = new std::vector<char>(_requestBuffer);
+  _requestBuffer.clear();
+
+  // Schedule on background thread:
+  // _pWebSocketConnection->read(&(*req_buffer)[0], req_buffer->size())
+  boost::function<void (void)> cb(
+    boost::bind(&WebSocketConnection::read,
+      _pWebSocketConnection,
+      &(*req_buffer)[0],
+      req_buffer->size()
+    )
+  );
+
+  _background_queue->push(cb);
+  // Free req_buffer after data is written
+  _background_queue->push(boost::bind(deleter_background<std::vector<char>>, req_buffer));
+}
+
+
+// ============================================================================
+// Parse incoming data
+// ============================================================================
+
 void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
+  ASSERT_BACKGROUND_THREAD()
   int parsed = http_parser_execute(&_parser, &request_settings(), buffer, n);
 
   if (http_parser_waiting_for_headers_completed(&_parser)) {
@@ -370,8 +686,10 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
     if (_pWebSocketConnection->accept(_headers, pData, pDataLen)) {
       // Freed in on_response_written
       InMemoryDataSource* pDS = new InMemoryDataSource();
-      HttpResponse* pResp = new HttpResponse(this, 101, "Switching Protocols",
-        pDS);
+      boost::shared_ptr<HttpResponse> pResp = boost::shared_ptr<HttpResponse>(
+        new HttpResponse(shared_from_this(), 101, "Switching Protocols", pDS),
+        auto_deleter_background<HttpResponse>
+      );
 
       std::vector<uint8_t> body;
       _pWebSocketConnection->handshake(_url, _headers, &pData, &pDataLen,
@@ -384,9 +702,14 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
       pResp->writeResponse();
 
       _protocol = WebSockets;
-      _pWebApplication->onWSOpen(this);
 
-      _pWebSocketConnection->read(pData, pDataLen);
+      _requestBuffer.insert(_requestBuffer.end(), pData, pData + pDataLen);
+
+      // Schedule on main thread:
+      // this->_call_r_on_ws_open()
+      invoke_later(
+        boost::bind(&HttpRequest::_call_r_on_ws_open, shared_from_this())
+      );
     }
 
     if (_protocol != WebSockets) {
@@ -406,6 +729,7 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
 }
 
 void HttpRequest::_parse_http_data_from_buffer() {
+  ASSERT_BACKGROUND_THREAD()
   // Copy contents of _requestBuffer, then clear _requestBuffer, because it
   // might be written to in _parse_http_data().
   std::vector<char> req_buffer = _requestBuffer;
@@ -415,6 +739,7 @@ void HttpRequest::_parse_http_data_from_buffer() {
 }
 
 void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* buf) {
+  ASSERT_BACKGROUND_THREAD()
   if (nread > 0) {
     //std::cerr << nread << " bytes read\n";
     if (_ignoreNewData) {
@@ -440,6 +765,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* 
 }
 
 void HttpRequest::handleRequest() {
+  ASSERT_BACKGROUND_THREAD()
   int r = uv_read_start(handle(), &on_alloc, &HttpRequest_on_request_read);
   if (r) {
     fatal_error("read_start", uv_strerror(r));
