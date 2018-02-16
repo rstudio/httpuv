@@ -164,6 +164,5 @@ void freeServer(uv_stream_t* pHandle) {
   // TODO: Check if server is still running?
   boost::shared_ptr<Socket>* ppSocket = (boost::shared_ptr<Socket>*)pHandle->data;
   (*ppSocket)->close();
-  // Delete the shared_ptr<Socket>*; this reduces the ref count.
-  delete ppSocket;
+  // ppSocket gets deleted in a callback in close()
 }

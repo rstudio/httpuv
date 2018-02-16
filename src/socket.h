@@ -3,12 +3,13 @@
 
 #include "http.h"
 #include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 #include <uv.h>
 
 class HttpRequest;
 class WebApplication;
 
-class Socket {
+class Socket : public boost::enable_shared_from_this<Socket> {
 public:
   VariantHandle handle;
   boost::shared_ptr<WebApplication> pWebApplication;

@@ -20,6 +20,12 @@ Socket::~Socket() {
   trace("Socket::~Socket");
 }
 
+// A deleter callback for the shared_ptr<Socket>.
+void delete_ppsocket(uv_handle_t* pHandle) {
+  boost::shared_ptr<Socket>* ppSocket = (boost::shared_ptr<Socket>*)pHandle->data;
+  delete ppSocket;
+}
+
 // This tells all the HttpRequests to close and deletes the
 // shared_ptr<Socket>. Each HttpRequest also has a shared_ptr to this Socket.
 // Once they're all closed, the Socket will be deleted. In some cases, there
@@ -37,5 +43,8 @@ void Socket::close() {
   }
 
   uv_handle_t* pHandle = toHandle(&handle.stream);
-  uv_close(pHandle, NULL);
+
+  // Delete the shared_ptr<Socket> only after uv_close() does its work. This
+  // will decrease the refcount and should trigger deletion of the Socket.
+  uv_close(pHandle, delete_ppsocket);
 }
