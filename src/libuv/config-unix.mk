@@ -19,12 +19,14 @@
 # IN THE SOFTWARE.
 
 E=
-CSTDFLAG=--std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter
-CFLAGS += -g
+CSTDFLAG=--std=c89
+## CSTDFLAG=--std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter
+## CFLAGS += -g
 CPPFLAGS += -I$(SRCDIR)/src
 LDFLAGS=-lm
 
 CPPFLAGS += -D_LARGEFILE_SOURCE
+## is this safe?
 CPPFLAGS += -D_FILE_OFFSET_BITS=64
 
 RUNNER_SRC=test/runner-unix.c
@@ -84,7 +86,7 @@ HAVE_DTRACE ?= 1
 ifeq (__clang__,$(shell sh -c "$(CC) -dM -E - </dev/null | grep -ow __clang__"))
 CFLAGS += -Wno-dollar-in-identifier-extension
 endif
-CPPFLAGS += -D_DARWIN_USE_64_BIT_INODE=1 -Wno-deprecated-declarations
+CPPFLAGS += -D_DARWIN_USE_64_BIT_INODE=1 ## -Wno-deprecated-declarations
 LDFLAGS += -framework Foundation \
            -framework CoreServices \
            -framework ApplicationServices
