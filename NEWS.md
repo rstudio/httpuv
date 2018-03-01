@@ -1,5 +1,7 @@
-httpuv 1.3.6.9005
+httpuv 1.3.6.9006
 =================
+
+* Changed license from GPL 3 to GPL >= 2. ([#109](https://github.com/rstudio/httpuv/pull/109))
 
 * Upgraded to libuv 1.15.0. ([#91](https://github.com/rstudio/httpuv/pull/91))
 
