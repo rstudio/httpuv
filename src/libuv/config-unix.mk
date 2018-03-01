@@ -19,7 +19,6 @@
 # IN THE SOFTWARE.
 
 E=
-CSTDFLAG=--std=c89
 ## CSTDFLAG=--std=c89 -pedantic -Wall -Wextra -Wno-unused-parameter
 ## CFLAGS += -g
 CPPFLAGS += -I$(SRCDIR)/src
@@ -62,7 +61,8 @@ OBJS += src/version.o
 
 ifeq (sunos,$(PLATFORM))
 HAVE_DTRACE ?= 1
-CPPFLAGS += -D__EXTENSIONS__ -D_XOPEN_SOURCE=500
+## _XOPEN_SOURCE=600 is needed to use C99 mode
+CPPFLAGS += -D__EXTENSIONS__ -D_XOPEN_SOURCE=600
 LDFLAGS+=-lkstat -lnsl -lsendfile -lsocket
 # Library dependencies are not transitive.
 OBJS += src/unix/sunos.o
