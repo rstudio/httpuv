@@ -143,8 +143,10 @@ boost::shared_ptr<HttpResponse> listToResponse(
   ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
-  if (response.isNULL() || response.size() == 0)
-    return NULL;
+  if (response.isNULL() || response.size() == 0) {
+    boost::shared_ptr<HttpResponse> null_ptr;
+    return null_ptr;
+  }
 
   CharacterVector names = response.names();
 
@@ -205,7 +207,8 @@ void RWebApplication::onHeaders(boost::shared_ptr<HttpRequest> pRequest,
 {
   ASSERT_MAIN_THREAD()
   if (_onHeaders.isNULL()) {
-    callback(NULL);
+    boost::shared_ptr<HttpResponse> null_ptr;
+    callback(null_ptr);
   }
 
   requestToEnv(pRequest, &pRequest->env());
