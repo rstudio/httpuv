@@ -46,6 +46,13 @@ void freeServer(uv_stream_t* pServer);
 bool runNonBlocking(uv_loop_t* loop);
 
 
+// NOTE: externalize/internalize_shared_ptr were originally template functions
+// but were made into non-template functions because gcc 4.4.7 (used on RHEL
+// 6) gives the following error with the templated versions:
+//   sorry, unimplemented: mangling template_id_expr
+// This was due to a bug in gcc which was fixed in later versions.
+//   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=38600
+
 // externalize_shared_ptr is used to pass a shared_ptr to R, and have its
 // lifetime be tied to the R external pointer object. This function creates a
 // copy of the shared_ptr (incrementing the shared_ptr's target's refcount)
@@ -60,17 +67,16 @@ bool runNonBlocking(uv_loop_t* loop);
 //
 // The reason we need the explicit Xptr type is because we want to set the last
 // argument (finalizeOnExit) to true.
-template <typename T>
-Rcpp::XPtr<boost::shared_ptr<T>,
+inline Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
           Rcpp::PreserveStorage,
-          Rcpp::standard_delete_finalizer<boost::shared_ptr<T>>,
-          true> externalize_shared_ptr(boost::shared_ptr<T> obj)
+          Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>,
+          true> externalize_shared_ptr(boost::shared_ptr<WebSocketConnection> obj)
 {
-  boost::shared_ptr<T>* obj_copy = new boost::shared_ptr<T>(obj);
+  boost::shared_ptr<WebSocketConnection>* obj_copy = new boost::shared_ptr<WebSocketConnection>(obj);
 
-  Rcpp::XPtr<boost::shared_ptr<T>,
+  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             Rcpp::standard_delete_finalizer<boost::shared_ptr<T>>,
+             Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>,
              true>
             obj_xptr(obj_copy, true);
 
@@ -79,14 +85,13 @@ Rcpp::XPtr<boost::shared_ptr<T>,
 
 // Given an XPtr to a shared_ptr, return a copy of the shared_ptr. This
 // increases the shared_ptr's ref count by one.
-template <typename T>
-boost::shared_ptr<T> internalize_shared_ptr(
-  Rcpp::XPtr<boost::shared_ptr<T>,
+inline boost::shared_ptr<WebSocketConnection> internalize_shared_ptr(
+  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             Rcpp::standard_delete_finalizer<boost::shared_ptr<T>>,
+             Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>,
              true> obj_xptr)
 {
-  boost::shared_ptr<T>* obj_copy = obj_xptr.get();
+  boost::shared_ptr<WebSocketConnection>* obj_copy = obj_xptr.get();
   // Return a copy of the shared pointer.
   return *obj_copy;
 }
