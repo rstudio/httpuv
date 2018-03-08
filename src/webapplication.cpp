@@ -143,8 +143,10 @@ boost::shared_ptr<HttpResponse> listToResponse(
   ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
-  if (response.isNULL() || response.size() == 0)
-    return NULL;
+  if (response.isNULL() || response.size() == 0) {
+    boost::shared_ptr<HttpResponse> null_ptr;
+    return null_ptr;
+  }
 
   CharacterVector names = response.names();
 
@@ -205,7 +207,8 @@ void RWebApplication::onHeaders(boost::shared_ptr<HttpRequest> pRequest,
 {
   ASSERT_MAIN_THREAD()
   if (_onHeaders.isNULL()) {
-    callback(NULL);
+    boost::shared_ptr<HttpResponse> null_ptr;
+    callback(null_ptr);
   }
 
   requestToEnv(pRequest, &pRequest->env());
@@ -310,7 +313,7 @@ void RWebApplication::onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
   requestToEnv(pRequest, &pRequest->env());
   try {
     _onWSOpen(
-      externalize_shared_ptr<WebSocketConnection>(pRequest->websocket()),
+      externalize_shared_ptr(pRequest->websocket()),
       pRequest->env()
     );
   } catch(...) {
@@ -328,13 +331,13 @@ void RWebApplication::onWSMessage(boost::shared_ptr<WebSocketConnection> pConn,
   try {
     if (binary)
       _onWSMessage(
-        externalize_shared_ptr<WebSocketConnection>(pConn),
+        externalize_shared_ptr(pConn),
         binary,
         std::vector<uint8_t>(data, data + len)
       );
     else
       _onWSMessage(
-        externalize_shared_ptr<WebSocketConnection>(pConn),
+        externalize_shared_ptr(pConn),
         binary,
         std::string(data, len)
       );
@@ -345,5 +348,5 @@ void RWebApplication::onWSMessage(boost::shared_ptr<WebSocketConnection> pConn,
 
 void RWebApplication::onWSClose(boost::shared_ptr<WebSocketConnection> pConn) {
   ASSERT_MAIN_THREAD()
-  _onWSClose(externalize_shared_ptr<WebSocketConnection>(pConn));
+  _onWSClose(externalize_shared_ptr(pConn));
 }

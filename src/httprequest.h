@@ -90,7 +90,6 @@ public:
       _pWebApplication(pWebApplication),
       _pSocket(pSocket),
       _protocol(HTTP),
-      _env(NULL),
       _ignoreNewData(false),
       _is_closing(false),
       _response_scheduled(false),
