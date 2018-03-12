@@ -501,13 +501,21 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
     boost::bind(&HttpRequest::schedule_close, shared_from_this())
   );
 
+  boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+  // It's possible for _pWebSocketConnection to have had its refcount drop to
+  // zero from another thread or earlier callback in this thread. If that
+  // happened, do nothing.
+  if (!p_wsc) {
+    return;
+  }
+
   // Schedule:
-  // _pWebApplication->onWSMessage(_pWebSocketConnection, binary, data, len);
+  // _pWebApplication->onWSMessage(p_wsc, binary, data, len);
   invoke_later(
     boost::bind(
       &WebApplication::onWSMessage,
       _pWebApplication,
-      _pWebSocketConnection,
+      p_wsc,
       binary,
       &(*buf)[0],
       len,
@@ -640,6 +648,14 @@ void HttpRequest::_call_r_on_ws_open() {
   ASSERT_MAIN_THREAD()
   trace("_call_r_on_ws_open");
 
+  boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+  // It's possible for _pWebSocketConnection to have had its refcount drop to
+  // zero from another thread or earlier callback in this thread. If that
+  // happened, do nothing.
+  if (!p_wsc) {
+    return;
+  }
+
   boost::function<void (void)> error_callback(
     boost::bind(&HttpRequest::schedule_close, shared_from_this())
   );
@@ -650,11 +666,12 @@ void HttpRequest::_call_r_on_ws_open() {
   std::vector<char>* req_buffer = new std::vector<char>(_requestBuffer);
   _requestBuffer.clear();
 
+
   // Schedule on background thread:
-  // _pWebSocketConnection->read(&(*req_buffer)[0], req_buffer->size())
+  // p_wsc->read(&(*req_buffer)[0], req_buffer->size())
   boost::function<void (void)> cb(
     boost::bind(&WebSocketConnection::read,
-      _pWebSocketConnection,
+      p_wsc,
       &(*req_buffer)[0],
       req_buffer->size()
     )
@@ -683,7 +700,15 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
     char* pData = buffer + parsed;
     size_t pDataLen = n - parsed;
 
-    if (_pWebSocketConnection->accept(_headers, pData, pDataLen)) {
+    boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+    // It's possible for _pWebSocketConnection to have had its refcount drop to
+    // zero from another thread or earlier callback in this thread. If that
+    // happened, do nothing.
+    if (!p_wsc) {
+      return;
+    }
+
+    if (p_wsc->accept(_headers, pData, pDataLen)) {
       // Freed in on_response_written
       InMemoryDataSource* pDS = new InMemoryDataSource();
       boost::shared_ptr<HttpResponse> pResp = boost::shared_ptr<HttpResponse>(
@@ -692,8 +717,8 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
       );
 
       std::vector<uint8_t> body;
-      _pWebSocketConnection->handshake(_url, _headers, &pData, &pDataLen,
-                                       &pResp->headers(), &body);
+      p_wsc->handshake(_url, _headers, &pData, &pDataLen,
+                       &pResp->headers(), &body);
       if (body.size() > 0) {
         pDS->add(body);
       }
