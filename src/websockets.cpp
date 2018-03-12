@@ -295,6 +295,11 @@ void WebSocketConnection::read(const char* data, size_t len) {
   _pParser->read(data, len);
 }
 
+void WebSocketConnection::read(boost::shared_ptr<std::vector<char>> buf) {
+  ASSERT_BACKGROUND_THREAD()
+  read(&(*buf)[0], buf->size());
+}
+
 void WebSocketConnection::onHeaderComplete(const WSFrameHeaderInfo& header) {
   ASSERT_BACKGROUND_THREAD()
   _header = header;

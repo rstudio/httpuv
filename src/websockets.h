@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include "utils.h"
@@ -186,6 +187,7 @@ public:
   void sendWSMessage(Opcode opcode, const char* pData, size_t length);
   void closeWS(uint16_t code = 1000, std::string reason = "");
   void read(const char* data, size_t len);
+  void read(boost::shared_ptr<std::vector<char>> buf);
 
 protected:
   void onHeaderComplete(const WSFrameHeaderInfo& header);

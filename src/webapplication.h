@@ -16,7 +16,7 @@ public:
   virtual void onHeaders(boost::shared_ptr<HttpRequest> pRequest,
                          boost::function<void(boost::shared_ptr<HttpResponse>)> callback) = 0;
   virtual void onBodyData(boost::shared_ptr<HttpRequest> pRequest,
-                          const char* data, size_t len,
+                          boost::shared_ptr<std::vector<char>> data,
                           boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback) = 0;
   virtual void getResponse(boost::shared_ptr<HttpRequest> request,
                            boost::function<void(boost::shared_ptr<HttpResponse>)> callback) = 0;
@@ -24,8 +24,7 @@ public:
                         boost::function<void(void)> error_callback) = 0;
   virtual void onWSMessage(boost::shared_ptr<WebSocketConnection>,
                            bool binary,
-                           const char* data,
-                           size_t len,
+                           boost::shared_ptr<std::vector<char>> data,
                            boost::function<void(void)> error_callback) = 0;
   virtual void onWSClose(boost::shared_ptr<WebSocketConnection>) = 0;
 };
@@ -59,7 +58,7 @@ public:
   virtual void onHeaders(boost::shared_ptr<HttpRequest> pRequest,
                          boost::function<void(boost::shared_ptr<HttpResponse>)> callback);
   virtual void onBodyData(boost::shared_ptr<HttpRequest> pRequest,
-                          const char* data, size_t len,
+                          boost::shared_ptr<std::vector<char>> data,
                           boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback);
   virtual void getResponse(boost::shared_ptr<HttpRequest> request,
                            boost::function<void(boost::shared_ptr<HttpResponse>)> callback);
@@ -67,8 +66,7 @@ public:
                         boost::function<void(void)> error_callback);
   virtual void onWSMessage(boost::shared_ptr<WebSocketConnection> conn,
                            bool binary,
-                           const char* data,
-                           size_t len,
+                           boost::shared_ptr<std::vector<char>> data,
                            boost::function<void(void)> error_callback);
   virtual void onWSClose(boost::shared_ptr<WebSocketConnection> conn);
 };

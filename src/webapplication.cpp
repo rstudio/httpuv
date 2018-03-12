@@ -234,7 +234,7 @@ void RWebApplication::onHeaders(boost::shared_ptr<HttpRequest> pRequest,
 }
 
 void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
-      const char* pData, size_t length,
+      boost::shared_ptr<std::vector<char>> data,
       boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback)
 {
   ASSERT_MAIN_THREAD()
@@ -245,8 +245,8 @@ void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
   if (pRequest->isResponseScheduled())
     return;
 
-  Rcpp::RawVector rawVector(length);
-  std::copy(pData, pData + length, rawVector.begin());
+  Rcpp::RawVector rawVector(data->size());
+  std::copy(data->begin(), data->end(), rawVector.begin());
   try {
     _onBodyData(pRequest->env(), rawVector);
   } catch (...) {
@@ -323,8 +323,7 @@ void RWebApplication::onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
 
 void RWebApplication::onWSMessage(boost::shared_ptr<WebSocketConnection> pConn,
                                   bool binary,
-                                  const char* data,
-                                  size_t len,
+                                  boost::shared_ptr<std::vector<char>> data,
                                   boost::function<void(void)> error_callback)
 {
   ASSERT_MAIN_THREAD()
@@ -333,13 +332,13 @@ void RWebApplication::onWSMessage(boost::shared_ptr<WebSocketConnection> pConn,
       _onWSMessage(
         externalize_shared_ptr(pConn),
         binary,
-        std::vector<uint8_t>(data, data + len)
+        std::vector<uint8_t>(data->begin(), data->end())
       );
     else
       _onWSMessage(
         externalize_shared_ptr(pConn),
         binary,
-        std::string(data, len)
+        std::string(data->begin(), data->end())
       );
   } catch(...) {
     error_callback();
