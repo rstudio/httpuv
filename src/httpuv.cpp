@@ -150,7 +150,10 @@ void sendWSMessage(SEXP conn,
                    Rcpp::RObject message)
 {
   ASSERT_MAIN_THREAD()
-  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>, Rcpp::PreserveStorage, Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>, true> conn_xptr(conn);
+  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
+             Rcpp::PreserveStorage,
+             auto_deleter_background<boost::shared_ptr<WebSocketConnection>>,
+             true> conn_xptr(conn);
   boost::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
 
   Opcode mode;
@@ -194,7 +197,10 @@ void closeWS(SEXP conn,
 {
   ASSERT_MAIN_THREAD()
   trace("closeWS\n");
-  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>, Rcpp::PreserveStorage, Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>, true> conn_xptr(conn);
+  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
+             Rcpp::PreserveStorage,
+             auto_deleter_background<boost::shared_ptr<WebSocketConnection>>,
+             true> conn_xptr(conn);
   boost::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
 
   // Schedule on background thread:

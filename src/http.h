@@ -8,6 +8,7 @@
 #include "websockets.h"
 #include "callbackqueue.h"
 #include "utils.h"
+#include "auto_deleter.h"
 
 typedef struct {
   union {
@@ -68,17 +69,17 @@ bool runNonBlocking(uv_loop_t* loop);
 // The reason we need the explicit Xptr type is because we want to set the last
 // argument (finalizeOnExit) to true.
 inline Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
-          Rcpp::PreserveStorage,
-          Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>,
-          true> externalize_shared_ptr(boost::shared_ptr<WebSocketConnection> obj)
+                  Rcpp::PreserveStorage,
+                  auto_deleter_background<boost::shared_ptr<WebSocketConnection>>,
+                  true> externalize_shared_ptr(boost::shared_ptr<WebSocketConnection> obj)
 {
+  ASSERT_MAIN_THREAD()
   boost::shared_ptr<WebSocketConnection>* obj_copy = new boost::shared_ptr<WebSocketConnection>(obj);
 
   Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>,
-             true>
-            obj_xptr(obj_copy, true);
+             auto_deleter_background<boost::shared_ptr<WebSocketConnection>>,
+             true> obj_xptr(obj_copy, true);
 
   return obj_xptr;
 }
@@ -88,9 +89,10 @@ inline Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
 inline boost::shared_ptr<WebSocketConnection> internalize_shared_ptr(
   Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             Rcpp::standard_delete_finalizer<boost::shared_ptr<WebSocketConnection>>,
+             auto_deleter_background<boost::shared_ptr<WebSocketConnection>>,
              true> obj_xptr)
 {
+  ASSERT_MAIN_THREAD()
   boost::shared_ptr<WebSocketConnection>* obj_copy = obj_xptr.get();
   // Return a copy of the shared pointer.
   return *obj_copy;
