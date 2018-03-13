@@ -310,10 +310,15 @@ void RWebApplication::getResponse(boost::shared_ptr<HttpRequest> pRequest,
 void RWebApplication::onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
                                boost::function<void(void)> error_callback) {
   ASSERT_MAIN_THREAD()
+  boost::shared_ptr<WebSocketConnection> pConn = pRequest->websocket();
+  if (!pConn) {
+    return;
+  }
+
   requestToEnv(pRequest, &pRequest->env());
   try {
     _onWSOpen(
-      externalize_shared_ptr(pRequest->websocket()),
+      externalize_shared_ptr(pConn),
       pRequest->env()
     );
   } catch(...) {

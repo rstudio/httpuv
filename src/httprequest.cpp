@@ -643,6 +643,12 @@ void HttpRequest::_call_r_on_ws_open() {
   ASSERT_MAIN_THREAD()
   trace("_call_r_on_ws_open");
 
+  boost::function<void (void)> error_callback(
+    boost::bind(&HttpRequest::schedule_close, shared_from_this())
+  );
+
+  this->_pWebApplication->onWSOpen(shared_from_this(), error_callback);
+
   boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
   // It's possible for _pWebSocketConnection to have had its refcount drop to
   // zero from another thread or earlier callback in this thread. If that
@@ -650,11 +656,6 @@ void HttpRequest::_call_r_on_ws_open() {
   if (!p_wsc) {
     return;
   }
-
-  boost::function<void (void)> error_callback(
-    boost::bind(&HttpRequest::schedule_close, shared_from_this())
-  );
-  this->_pWebApplication->onWSOpen(shared_from_this(), error_callback);
 
   // _requestBuffer is likely empty at this point, but copy its contents and
   // _pass along just in case.
