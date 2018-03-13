@@ -266,14 +266,19 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
 void WebSocketConnection::closeWS(uint16_t code, std::string reason) {
   ASSERT_BACKGROUND_THREAD()
   trace("WebSocketConnection::closeWS");
-  // If we have already sent a close message, do nothing. It's especially
-  // important that we don't call closeWSSocket twice, this might lead to
-  // a crash as we (eventually) might double-free the Socket object.
-  if (_connState & WS_CLOSE_SENT)
-    return;
 
-  // Send the close message
-  _connState |= WS_CLOSE_SENT;
+  switch (_connState) {
+  // If we have already sent a close message, do nothing.
+  case WS_CLOSE_SENT:
+  case WS_CLOSED:
+    return;
+  case WS_OPEN:
+    _connState = WS_CLOSE_SENT;
+    break;
+  case WS_CLOSE_RECEIVED:
+    _connState = WS_CLOSED;
+    break;
+  }
 
   // Make sure code has right endian-ness
   unsigned char* code_p = (unsigned char*)&code;
@@ -285,7 +290,7 @@ void WebSocketConnection::closeWS(uint16_t code, std::string reason) {
   sendWSMessage(Close, message.c_str(), message.length());
 
   // If close messages have been both sent and received, close socket.
-  if (_connState == WS_CLOSE)
+  if (_connState == WS_CLOSED)
     _pCallbacks->closeWSSocket();
 }
 
@@ -343,12 +348,17 @@ void WebSocketConnection::onFrameComplete() {
       }
       case Close: {
   trace("WebSocketConnection::onFrameComplete Close");
-        _connState |= WS_CLOSE_RECEIVED;
 
+        if (_connState == WS_OPEN) {
+          _connState = WS_CLOSE_RECEIVED;
+        } else if (_connState == WS_CLOSE_SENT) {
+          _connState = WS_CLOSED;
+        }
+        
         // If we haven't sent a Close frame before, send one now, echoing
         // the callback
-        if (!(_connState & WS_CLOSE_SENT)) {
-          _connState |= WS_CLOSE_SENT;
+        if (_connState != WS_CLOSE_SENT && _connState != WS_CLOSED) {
+          _connState = WS_CLOSED;
           sendWSMessage(Close, &_payload[0], _payload.size());
         }
 
