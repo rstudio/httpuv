@@ -364,7 +364,6 @@ void WebSocketConnection::onFrameComplete() {
         break;
       }
       case Close: {
-  trace("WebSocketConnection::onFrameComplete Close");
 
         if (_connState == WS_OPEN) {
           _connState = WS_CLOSE_RECEIVED;
@@ -384,9 +383,6 @@ void WebSocketConnection::onFrameComplete() {
 
         // TODO: Use code and status
         _pCallbacks->onWSClose(0);
-
-        // TODO: Is this necessary?
-        // _pCallbacks.reset();
 
         break;
       }
