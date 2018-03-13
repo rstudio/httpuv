@@ -194,6 +194,7 @@ public:
   void closeWS(uint16_t code = 1000, std::string reason = "");
   void read(const char* data, size_t len);
   void read(boost::shared_ptr<std::vector<char>> buf);
+  void markClosed();
 
 protected:
   void onHeaderComplete(const WSFrameHeaderInfo& header);

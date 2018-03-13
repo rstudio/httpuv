@@ -583,6 +583,11 @@ void HttpRequest::closeWSSocket() {
 void HttpRequest::_on_closed(uv_handle_t* handle) {
   ASSERT_BACKGROUND_THREAD()
   trace("HttpRequest::_on_closed");
+  // Tell the WebSocketConnection that the connection is closed, before
+  // resetting the shared_ptr. This is useful because there may be some
+  // callbacks that will execute later, and we want to make sure the WSC
+  // doesn't try to do anything with them.
+  _pWebSocketConnection->markClosed();
   _pWebSocketConnection.reset();
 }
 

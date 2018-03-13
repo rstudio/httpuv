@@ -218,6 +218,7 @@ bool WebSocketConnection::accept(const RequestHeaders& requestHeaders,
                                  const char* pData, size_t len) {
   ASSERT_BACKGROUND_THREAD()
   assert(!_pParser);
+  if (_connState == WS_CLOSED) return false;
 
   WebSocketProto_IETF ietf;
   if (ietf.canHandle(requestHeaders, pData, len)) {
@@ -240,12 +241,16 @@ void WebSocketConnection::handshake(const std::string& url,
                                     std::vector<uint8_t>* pResponse) {
   ASSERT_BACKGROUND_THREAD()
   assert(_pParser);
+  if (_connState == WS_CLOSED) return;
+
   _pParser->handshake(url, requestHeaders, ppData, pLen, pResponseHeaders,
                       pResponse);
 }
 
 void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t length) {
   ASSERT_BACKGROUND_THREAD()
+  if (_connState == WS_CLOSED) return;
+
   std::vector<char> header(MAX_HEADER_BYTES);
   std::vector<char> footer(MAX_FOOTER_BYTES);
 
@@ -296,23 +301,34 @@ void WebSocketConnection::closeWS(uint16_t code, std::string reason) {
 
 void WebSocketConnection::read(const char* data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
+  if (_connState == WS_CLOSED) return;
   assert(_pParser);
   _pParser->read(data, len);
 }
 
 void WebSocketConnection::read(boost::shared_ptr<std::vector<char>> buf) {
   ASSERT_BACKGROUND_THREAD()
+  if (_connState == WS_CLOSED) return;
   read(&(*buf)[0], buf->size());
+}
+
+void WebSocketConnection::markClosed() {
+  ASSERT_BACKGROUND_THREAD()
+  _connState = WS_CLOSED;
 }
 
 void WebSocketConnection::onHeaderComplete(const WSFrameHeaderInfo& header) {
   ASSERT_BACKGROUND_THREAD()
+  if (_connState == WS_CLOSED) return;
+
   _header = header;
   if (!header.fin && header.opcode != Continuation)
     _incompleteContentHeader = header;
 }
 void WebSocketConnection::onPayload(const char* data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
+  if (_connState == WS_CLOSED) return;
+
   size_t origSize = _payload.size();
   std::copy(data, data + len, std::back_inserter(_payload));
 
@@ -326,6 +342,7 @@ void WebSocketConnection::onPayload(const char* data, size_t len) {
 void WebSocketConnection::onFrameComplete() {
   ASSERT_BACKGROUND_THREAD()
   trace("WebSocketConnection::onFrameComplete");
+  if (_connState == WS_CLOSED) return;
 
   if (!_header.fin) {
     std::copy(_payload.begin(), _payload.end(),
