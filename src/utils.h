@@ -52,7 +52,7 @@ inline void err_printf(const char *fmt, ...) {
   ssize_t res = write(STDERR_FILENO, buf, n);
   // This is here simply to avoid a warning about "ignoring return value" of
   // the write(), on some compilers. (Seen with gcc 4.4.7 on RHEL 6)
-  res = 0;
+  res += 0;
 }
 
 
