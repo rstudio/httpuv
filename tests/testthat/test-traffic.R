@@ -1,5 +1,12 @@
 context("traffic")
 
+skip_if_not_possible <- function() {
+  skip_on_cran()
+
+  if (Sys.which("ab")[[1]] == "") {
+    skip("ab (Apache bench) not available for running traffic tests")
+  }
+}
 
 random_open_port <- function(min = 3000, max = 9000, n = 20) {
   # Unsafe port list from shiny::runApp()
@@ -72,7 +79,7 @@ start_ab <- function(port, path, n = 400, concurrent = 100) {
 
 
 test_that("Basic traffic test", {
-  skip_on_cran()
+  skip_if_not_possible()
   port <- random_open_port()
   p <- start_app(port)
   Sys.sleep(1)
@@ -89,7 +96,7 @@ test_that("Basic traffic test", {
 })
 
 test_that("Two concurrent", {
-  skip_on_cran()
+  skip_if_not_possible()
   port <- random_open_port()
   p <- start_app(port)
   Sys.sleep(1)
@@ -116,7 +123,7 @@ test_that("Two concurrent", {
 
 
 test_that("/header /sync endpoints", {
-  skip_on_cran()
+  skip_if_not_possible()
   port <- random_open_port()
   p <- start_app(port)
 
@@ -143,7 +150,7 @@ test_that("/header /sync endpoints", {
 })
 
 test_that("/header /async endpoints", {
-  skip_on_cran()
+  skip_if_not_possible()
   port <- random_open_port()
   p <- start_app(port)
 
@@ -171,7 +178,7 @@ test_that("/header /async endpoints", {
 
 
 test_that("/header /async-error endpoints", {
-  skip_on_cran()
+  skip_if_not_possible()
   port <- random_open_port()
   p <- start_app(port)
 
@@ -199,7 +206,7 @@ test_that("/header /async-error endpoints", {
 
 
 test_that("/async /async-error endpoints", {
-  skip_on_cran()
+  skip_if_not_possible()
   port <- random_open_port()
   p <- start_app(port)
 
@@ -228,7 +235,7 @@ test_that("/async /async-error endpoints", {
 
 
 test_that("/body-error /async-error endpoints", {
-  skip_on_cran()
+  skip_if_not_possible()
   port <- random_open_port()
   p <- start_app(port)
 
