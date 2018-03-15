@@ -12,7 +12,6 @@
 #include <iostream>
 #include <sstream>
 #include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
 
 
 // TODO: Streaming response body (with chunked transfer encoding)

@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include "utils.h"
@@ -136,11 +137,17 @@ public:
   void read(const char* data, size_t len);
 };
 
-typedef uint8_t WSConnState;
-const WSConnState WS_OPEN = 0;
-const WSConnState WS_CLOSE_RECEIVED = 1;
-const WSConnState WS_CLOSE_SENT = 2;
-const WSConnState WS_CLOSE = WS_CLOSE_RECEIVED | WS_CLOSE_SENT;
+
+enum WSConnState {
+  WS_OPEN,
+  WS_CLOSE_RECEIVED,
+  WS_CLOSE_SENT,
+  // This can represent two cases:
+  //   1. When a close message is received, and a close message is sent.
+  //   2. When the connection was simply closed without any messages.
+  // It may be useful in the future to split this up.
+  WS_CLOSED
+};
 
 class WebSocketConnectionCallbacks {
 public:
@@ -186,6 +193,8 @@ public:
   void sendWSMessage(Opcode opcode, const char* pData, size_t length);
   void closeWS(uint16_t code = 1000, std::string reason = "");
   void read(const char* data, size_t len);
+  void read(boost::shared_ptr<std::vector<char>> buf);
+  void markClosed();
 
 protected:
   void onHeaderComplete(const WSFrameHeaderInfo& header);
