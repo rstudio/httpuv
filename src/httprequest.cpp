@@ -771,7 +771,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* 
       _pWebSocketConnection->read(buf->base, nread);
     }
   } else if (nread < 0) {
-    if (nread == UV_EOF /*|| err.code == UV_ECONNRESET*/) {
+    if (nread == UV_EOF || nread == UV_ECONNRESET) {
     } else {
       fatal_error("on_request_read", uv_strerror(nread));
     }
