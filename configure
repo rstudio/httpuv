@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# This is the list of packages we need
+REQUIRED_PKGS=(autoconf automake libtool)
+
+# Next, search for each required tool and if found, remove it from the array
+
+if which autoconf >/dev/null
+then
+  unset REQUIRED_PKGS[0]
+fi
+
+if which automake >/dev/null
+then
+  unset REQUIRED_PKGS[1]
+fi
+
+if which libtoolize >/dev/null || which glibtoolize >/dev/null
+then
+  unset REQUIRED_PKGS[2]
+fi
+
+
+# If there's anything left in the array, print and exit
+
+if [ ${#REQUIRED_PKGS[*]} -gt 0 ]
+then
+  echo "------------------------- CONFIGURE ERROR --------------------------"
+  echo "Config failed because build tools were not found. Try installing:"
+  echo " * deb: ${REQUIRED_PKGS[*]} (Debian, Ubuntu, etc)"
+  echo " * rpm: ${REQUIRED_PKGS[*]} (Fedora, CentOS, RHEL)"
+  echo " * csw: ${REQUIRED_PKGS[*]} (Solaris)"
+  echo " * brew: ${REQUIRED_PKGS[*]} (Mac OSX)"
+  echo "--------------------------------------------------------------------"
+  exit 1;
+fi
