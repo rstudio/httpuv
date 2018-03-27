@@ -706,7 +706,7 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
     if (p_wsc->accept(_headers, pData, pDataLen)) {
       // Freed in on_response_written
       InMemoryDataSource* pDS = new InMemoryDataSource();
-      boost::shared_ptr<HttpResponse> pResp = boost::shared_ptr<HttpResponse>(
+      boost::shared_ptr<HttpResponse> pResp(
         new HttpResponse(shared_from_this(), 101, "Switching Protocols", pDS),
         auto_deleter_background<HttpResponse>
       );

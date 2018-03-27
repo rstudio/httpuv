@@ -225,12 +225,11 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // this should be deleted when it goes out of scope.
-  boost::shared_ptr<RWebApplication> pHandler =
-    boost::shared_ptr<RWebApplication>(
-      new RWebApplication(onHeaders, onBodyData, onRequest,
-                          onWSOpen, onWSMessage, onWSClose),
-      auto_deleter_main<RWebApplication>
-    );
+  boost::shared_ptr<RWebApplication> pHandler(
+    new RWebApplication(onHeaders, onBodyData, onRequest,
+                        onWSOpen, onWSMessage, onWSClose),
+    auto_deleter_main<RWebApplication>
+  );
 
   ensure_io_thread();
 
@@ -279,12 +278,11 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // this should be deleted when it goes out of scope.
-  boost::shared_ptr<RWebApplication> pHandler =
-    boost::shared_ptr<RWebApplication>(
-      new RWebApplication(onHeaders, onBodyData, onRequest,
-                          onWSOpen, onWSMessage, onWSClose),
-      auto_deleter_main<RWebApplication>
-    );
+  boost::shared_ptr<RWebApplication> pHandler(
+    new RWebApplication(onHeaders, onBodyData, onRequest,
+                        onWSOpen, onWSMessage, onWSClose),
+    auto_deleter_main<RWebApplication>
+  );
 
   ensure_io_thread();
 

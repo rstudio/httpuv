@@ -176,7 +176,7 @@ boost::shared_ptr<HttpResponse> listToResponse(
     pDataSource = new InMemoryDataSource(responseBytes);
   }
 
-  boost::shared_ptr<HttpResponse> pResp = boost::shared_ptr<HttpResponse>(
+  boost::shared_ptr<HttpResponse> pResp(
     new HttpResponse(pRequest, status, statusDesc, pDataSource),
     auto_deleter_background<HttpResponse>
   );

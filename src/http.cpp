@@ -12,6 +12,7 @@
 #include <iostream>
 #include <sstream>
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 
 
 // TODO: Streaming response body (with chunked transfer encoding)
@@ -54,8 +55,8 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
   // the future we have failure cases that stop execution before we get
   // that far, we MUST delete pWebApplication ourselves.
 
-  boost::shared_ptr<Socket> pSocket = boost::shared_ptr<Socket>(
-    new Socket(pWebApplication, background_queue)
+  boost::shared_ptr<Socket> pSocket = boost::make_shared<Socket>(
+    pWebApplication, background_queue
   );
 
   // TODO: Handle error
@@ -111,8 +112,8 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   // the future we have failure cases that stop execution before we get
   // that far, we MUST delete pWebApplication ourselves.
 
-  boost::shared_ptr<Socket> pSocket = boost::shared_ptr<Socket>(
-    new Socket(pWebApplication, background_queue)
+  boost::shared_ptr<Socket> pSocket = boost::make_shared<Socket>(
+    pWebApplication, background_queue
   );
 
   // TODO: Handle error
