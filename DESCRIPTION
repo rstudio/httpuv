@@ -24,7 +24,6 @@ Imports:
     promises,
     later (>= 0.7.1)
 Remotes:
-    r-lib/later,
     rstudio/promises
 LinkingTo: Rcpp, BH, later
 URL: https://github.com/rstudio/httpuv
