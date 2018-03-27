@@ -122,13 +122,30 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   // uv_stream_t.data field is a void*.
   pSocket->handle.stream.data = new boost::shared_ptr<Socket>(pSocket);
 
-  struct sockaddr_in address = {0};
-  int r = uv_ip4_addr(host.c_str(), port, &address);
+  int r;
+  // Lifetime of these needs to encompass use of pAddress in uv_tcp_bind()
+  struct sockaddr_in6 addr6;
+  struct sockaddr_in  addr4;
+  sockaddr* pAddress;
+  int ip_family = ipFamily(host);
+  if (ip_family == AF_INET6) {
+    r = uv_ip6_addr(host.c_str(), port, &addr6);
+    pAddress = reinterpret_cast<sockaddr*>(&addr6);
+  } else if (ip_family == AF_INET){
+    r = uv_ip4_addr(host.c_str(), port, &addr4);
+    pAddress = reinterpret_cast<sockaddr*>(&addr4);
+  } else {
+    r = 1;
+    err_printf("%s is not a valid IPv4 or IPv6 address.\n", host.c_str());
+  }
+
   if (r) {
     delete (boost::shared_ptr<Socket>*)pSocket->handle.stream.data;
     return NULL;
   }
-  r = uv_tcp_bind(&pSocket->handle.tcp, (sockaddr*)&address, 0);
+
+  r = uv_tcp_bind(&pSocket->handle.tcp, pAddress, 0);
+
   if (r) {
     delete (boost::shared_ptr<Socket>*)pSocket->handle.stream.data;
     return NULL;

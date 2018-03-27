@@ -7,6 +7,8 @@ httpuv 1.3.6.9006
 
 * Upgraded to http-parser 2.7.1. ([#93](https://github.com/rstudio/httpuv/pull/93))
 
+* Added IPv6 support. ([#115](https://github.com/rstudio/httpuv/pull/115))
+
 * httpuv can now handle request callbacks asynchronously. ([#80](https://github.com/rstudio/httpuv/pull/80), ([#97](https://github.com/rstudio/httpuv/pull/97)))
 
 * Fixed [#72](https://github.com/rstudio/httpuv/issues/72): httpuv previously did not close connections that had the `Connection: close` header, or were HTTP 1.0 (without `Connection: keep-alive`). ([#99](https://github.com/rstudio/httpuv/pull/99))
