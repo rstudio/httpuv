@@ -90,4 +90,18 @@ protected:
 
 };
 
+
+inline int ipFamily(const std::string& ip) {
+  // A buffer big enough for an IPv6 address
+  unsigned char addr[16];
+
+  if (uv_inet_pton(AF_INET6, ip.c_str(), addr) == 0) {
+    return AF_INET6;
+  }
+  if (uv_inet_pton(AF_INET, ip.c_str(), addr) == 0) {
+    return AF_INET;
+  }
+  return -1;
+}
+
 #endif // UVUTIL_HPP
