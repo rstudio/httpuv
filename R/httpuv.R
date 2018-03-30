@@ -494,8 +494,11 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 
   } else if (timeoutMs == 0 || timeoutMs == Inf) {
     .globals$paused <- FALSE
+    # In interactive sessions, wait for a max of 0.1 seconds for better
+    # responsiveness when the user sends an interrupt (like Esc in RStudio.)
+    check_time <- if (interactive()) 0.1 else Inf
     while (!.globals$paused) {
-      run_now(Inf)
+      run_now(check_time)
     }
 
   } else {
