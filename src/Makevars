@@ -37,13 +37,20 @@ endif
 
 $(SHLIB): libuv/.libs/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
 
-libuv/Makefile:
-	(cd libuv && sh autogen.sh && ./configure $(CONFIGURE_FLAGS))
+# We needed to rename lt~obsolete.m4 because the name causes problems with R
+# CMD check. Here we rename it back.
+libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
+	cp -p -f libuv/m4/lt_obsolete.m4 libuv/m4/lt~obsolete.m4
 
+# Run ./configure. We need to touch various autotools-related files to avoid
+# it trying to run autotools programs again.
+libuv/Makefile: libuv/m4/lt~obsolete.m4
+	(cd libuv \
+		&& touch Makefile.in aclocal.m4 configure \
+		&& CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" LDFLAGS="$(LDFLAGS)" ./configure $(CONFIGURE_FLAGS))
 
 libuv/.libs/libuv.a: libuv/Makefile
 	$(MAKE) --directory=libuv \
-		CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" \
 		HAVE_DTRACE=0
 
 clean:
