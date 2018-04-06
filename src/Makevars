@@ -46,7 +46,7 @@ libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
 # it trying to run autotools programs again.
 libuv/Makefile: libuv/m4/lt~obsolete.m4
 	(cd libuv \
-		&& touch Makefile.in aclocal.m4 configure \
+		&& touch Makefile.in aclocal.m4 configure m4/lt~obsolete.m4 \
 		&& CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" LDFLAGS="$(LDFLAGS)" ./configure $(CONFIGURE_FLAGS))
 
 libuv/.libs/libuv.a: libuv/Makefile
