@@ -1,7 +1,10 @@
 context("traffic")
 
 skip_if_not_possible <- function() {
-  skip_on_cran()
+  # Temporarily disable these tests because they may not run reliably on
+  # some platforms.
+  skip("")
+  # skip_on_cran()
 
   if (Sys.which("ab")[[1]] == "") {
     skip("ab (Apache bench) not available for running traffic tests")
