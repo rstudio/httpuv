@@ -8,6 +8,7 @@
 /\.dll$
 ^\.travis\.yml$
 ^appveyor\.yml$
+^src/README.md$
 ^src/libuv/.github$
 ^src/libuv/m4/lt~obsolete.m4$
 ^CONTRIBUTING.md$
