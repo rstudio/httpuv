@@ -1,2 +1,3 @@
 echo    Simple echo server demonstrating WebSockets
 daemon-echo Simple echo server demonstrating daemonized mode
+json-server JSON API endpoint server using WebSockets
