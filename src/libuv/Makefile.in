@@ -277,7 +277,7 @@ check_PROGRAMS = test/run-tests$(EXEEXT)
 
 @OPENBSD_TRUE@am__append_43 = -lutil
 @SUNOS_TRUE@am__append_44 = include/uv-sunos.h
-@SUNOS_TRUE@am__append_45 = -D__EXTENSIONS__ -D_XOPEN_SOURCE=500
+@SUNOS_TRUE@am__append_45 = -D__EXTENSIONS__ -D_XOPEN_SOURCE=500 -DSUNOS_NO_IFADDRS
 @SUNOS_TRUE@am__append_46 = src/unix/no-proctitle.c \
 @SUNOS_TRUE@                    src/unix/sunos.c
 
