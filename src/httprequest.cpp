@@ -141,7 +141,7 @@ void HttpRequest::_initializeEnv() {
   using namespace Rcpp;
 
   Environment base(R_BaseEnv);
-  Function new_env = as<Function>(base["new.env"]);
+  Function new_env = Rcpp::as<Function>(base["new.env"]);
 
   // The deleter is called either when this function is called again, or when
   // the HttpRequest object is deleted. The deletion will happen on the

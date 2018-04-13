@@ -1,7 +1,7 @@
 #ifndef CALLBACKQUEUE_HPP
 #define CALLBACKQUEUE_HPP
 
-#include "queue.h"
+#include "tqueue.h"
 #include <boost/function.hpp>
 #include "libuv/include/uv.h"
 
@@ -15,7 +15,7 @@ public:
 private:
   void flush();
   uv_async_t flush_handle;
-  queue< boost::function<void (void)> > q;
+  tqueue< boost::function<void (void)> > q;
 };
 
 
