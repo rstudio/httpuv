@@ -12,3 +12,5 @@
 ^src/libuv/.github$
 ^src/libuv/m4/lt~obsolete.m4$
 ^CONTRIBUTING.md$
+^.*/\.libs/$
+^.*/\.deps/$
