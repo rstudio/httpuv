@@ -2,7 +2,7 @@
 #define WEBAPPLICATION_HPP
 
 #include <boost/function.hpp>
-#include <uv.h>
+#include "libuv/include/uv.h"
 #include <Rcpp.h>
 #include "websockets.h"
 #include "thread.h"

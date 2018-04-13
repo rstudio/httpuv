@@ -7,8 +7,8 @@
 #include <errno.h>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
-#include <uv.h>
-#include <base64.hpp>
+#include "libuv/include/uv.h"
+#include "base64/base64.hpp"
 #include "uvutil.h"
 #include "webapplication.h"
 #include "http.h"

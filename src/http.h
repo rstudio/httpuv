@@ -1,7 +1,7 @@
 #ifndef HTTP_HPP
 #define HTTP_HPP
 
-#include <uv.h>
+#include "libuv/include/uv.h"
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include "webapplication.h"

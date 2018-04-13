@@ -2,7 +2,7 @@
 #include "queue.h"
 #include "thread.h"
 #include <boost/function.hpp>
-#include <uv.h>
+#include "libuv/include/uv.h"
 
 
 // This non-class function is a plain C wrapper for CallbackQueue::flush(), and

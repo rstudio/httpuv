@@ -3,7 +3,7 @@
 #include "constants.h"
 #include "thread.h"
 #include "utils.h"
-#include <uv.h>
+#include "libuv/include/uv.h"
 
 
 void on_response_written(uv_write_t* handle, int status) {

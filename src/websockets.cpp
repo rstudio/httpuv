@@ -8,8 +8,8 @@
 #include <iomanip>
 #include <memory>
 
-#include <sha1.h>
-#include <base64.hpp>
+#include "sha1/sha1.h"
+#include "base64/base64.hpp"
 
 #include "websockets-ietf.h"
 #include "websockets-hybi03.h"

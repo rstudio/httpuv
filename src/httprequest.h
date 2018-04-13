@@ -8,8 +8,8 @@
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
-#include <uv.h>
-#include <http_parser.h>
+#include "libuv/include/uv.h"
+#include "http-parser/http_parser.h"
 #include "socket.h"
 #include "webapplication.h"
 #include "callbackqueue.h"

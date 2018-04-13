@@ -20,7 +20,7 @@ ifeq ($(UNAME), OpenBSD)
 PKG_LIBS += -lkvm
 endif
 
-PKG_CPPFLAGS = -I./libuv/include -I./http-parser -I./sha1 -I./base64 $(C_VISIBILITY)
+PKG_CPPFLAGS = $(C_VISIBILITY)
 
 # To avoid spurious warnings from `R CMD check --as-cran`, about compiler
 # warning flags like -Werror.
