@@ -1,13 +1,11 @@
-httpuv 1.3.6.9006
-=================
+httpuv 1.4.0
+============
 
 * Changed license from GPL 3 to GPL >= 2. ([#109](https://github.com/rstudio/httpuv/pull/109))
 
-* Upgraded to libuv 1.15.0. ([#91](https://github.com/rstudio/httpuv/pull/91))
-
-* Upgraded to http-parser 2.7.1. ([#93](https://github.com/rstudio/httpuv/pull/93))
-
 * Added IPv6 support. ([#115](https://github.com/rstudio/httpuv/pull/115))
+
+* httpuv now does I/O on a background thread, which should allow for much better performance under load. ([#106](https://github.com/rstudio/httpuv/pull/106))
 
 * httpuv can now handle request callbacks asynchronously. ([#80](https://github.com/rstudio/httpuv/pull/80), ([#97](https://github.com/rstudio/httpuv/pull/97)))
 
@@ -21,6 +19,11 @@ httpuv 1.3.6.9006
 
 * Fixed [#86](https://github.com/rstudio/httpuv/issues/86): `encodeURI()` gave incorrect output for non-ASCII characters. ([#87](https://github.com/rstudio/httpuv/pull/87))
 
+# Fixed [#49](https://github.com/rstudio/httpuv/issues/49): Some information was shared across separate requests.
+
+* Upgraded to libuv 1.15.0. ([#91](https://github.com/rstudio/httpuv/pull/91))
+
+* Upgraded to http-parser 2.7.1. ([#93](https://github.com/rstudio/httpuv/pull/93))
 
 httpuv 1.3.5
 ============
