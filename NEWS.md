@@ -13,6 +13,8 @@ httpuv 1.3.6.9006
 
 * Fixed [#72](https://github.com/rstudio/httpuv/issues/72): httpuv previously did not close connections that had the `Connection: close` header, or were HTTP 1.0 (without `Connection: keep-alive`). ([#99](https://github.com/rstudio/httpuv/pull/99))
 
+* Fixed [#71](https://github.com/rstudio/httpuv/issues/71): In some cases, compiling httpuv would use system copies of library headers, but use local copies of libraries for linking. ([#121](https://github.com/rstudio/httpuv/pull/121))
+
 * Let Rcpp handle symbol registration. ([#85](https://github.com/rstudio/httpuv/pull/85))
 
 * Hide internal symbols from shared library on supported platforms. This reduces the risk of conflicts with other packages bundling libuv. ([#85](https://github.com/rstudio/httpuv/pull/85))

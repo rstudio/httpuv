@@ -4,7 +4,7 @@
 #include "thread.h"
 #include <string>
 #include <vector>
-#include <uv.h>
+#include "libuv/include/uv.h"
 
 /* Prevent naming conflicts for Free() and Calloc() */
 #define R_NO_REMAP

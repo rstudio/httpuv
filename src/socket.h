@@ -3,7 +3,7 @@
 
 #include "http.h"
 #include <boost/shared_ptr.hpp>
-#include <uv.h>
+#include "libuv/include/uv.h"
 
 class HttpRequest;
 class WebApplication;

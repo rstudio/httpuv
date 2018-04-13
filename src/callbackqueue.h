@@ -3,7 +3,7 @@
 
 #include "queue.h"
 #include <boost/function.hpp>
-#include <uv.h>
+#include "libuv/include/uv.h"
 
 class CallbackQueue {
 public:

@@ -1,7 +1,7 @@
 #include "websockets-ietf.h"
 
-#include <sha1.h>
-#include <base64.hpp>
+#include "sha1/sha1.h"
+#include "base64/base64.hpp"
 
 bool WebSocketProto_IETF::canHandle(const RequestHeaders& requestHeaders,
                                     const char* pData, size_t len) const {

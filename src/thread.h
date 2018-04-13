@@ -1,7 +1,7 @@
 #ifndef THREAD_HPP
 #define THREAD_HPP
 
-#include <uv.h>
+#include "libuv/include/uv.h"
 
 // These must be called from the main and background thread, respectively, so
 // that is_main_thread() and is_background_thread() can be tested later.
