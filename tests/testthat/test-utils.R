@@ -1,6 +1,8 @@
 context("utils")
 
 test_that("encodeURI and encodeURIComponent", {
+  skip("Temporarily disabled") # Because of https://github.com/rstudio/httpuv/issues/122
+
   expect_identical(encodeURI("abc å 中"), "abc%20%C3%A5%20%E4%B8%AD")
   expect_identical(encodeURIComponent("abc å 中"), "abc%20%C3%A5%20%E4%B8%AD")
   expect_identical(decodeURI("abc%20%C3%A5%20%E4%B8%AD"), "abc å 中")
