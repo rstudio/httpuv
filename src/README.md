@@ -6,6 +6,10 @@ Build notes
 
 The contents of the libuv/ directory are the canonical libuv sources, with the following changes.
 
+****
+
+The libuv sources contain unnamed structs, which result in warnings on MinGW's GCC. This in turn causes WARNINGS in R CMD check on Windows. Commit f40b733 converted them to named structs.
+
 *****
 
 The Makefile.am file is modified for Solaris support. This is the original line:
