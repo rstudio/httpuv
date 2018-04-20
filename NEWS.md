@@ -3,6 +3,8 @@ httpuv 1.4.0.9000
 
 * Addressed [#123](https://github.com/rstudio/httpuv/issues/123): `service()` now returns `TRUE`.
 
+* Fixed [#124](https://github.com/rstudio/httpuv/issues/124): On some CRAN build machines, the build was failing because of issues with the timestamps of input and output files for autotools in libuv/.
+
 httpuv 1.4.0
 ============
 
