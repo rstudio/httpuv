@@ -24,9 +24,7 @@ PKG_CPPFLAGS = $(C_VISIBILITY)
 
 # To avoid spurious warnings from `R CMD check --as-cran`, about compiler
 # warning flags like -Werror.
-ifdef _R_CHECK_COMPILATION_FLAGS_
 CONFIGURE_FLAGS="--quiet"
-endif
 
 #### Debugging flags ####
 # Uncomment to enable thread assertions
