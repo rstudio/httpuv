@@ -23,7 +23,7 @@ httpuv 1.4.0
 
 * Fixed [#86](https://github.com/rstudio/httpuv/issues/86): `encodeURI()` gave incorrect output for non-ASCII characters. ([#87](https://github.com/rstudio/httpuv/pull/87))
 
-# Fixed [#49](https://github.com/rstudio/httpuv/issues/49): Some information was shared across separate requests.
+* Fixed [#49](https://github.com/rstudio/httpuv/issues/49): Some information was shared across separate requests.
 
 * Upgraded to libuv 1.15.0. ([#91](https://github.com/rstudio/httpuv/pull/91))
 
