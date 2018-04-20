@@ -1,6 +1,7 @@
 httpuv 1.4.0.9000
 =================
 
+* Addressed [#123](https://github.com/rstudio/httpuv/issues/123): `service()` now returns `TRUE`.
 
 httpuv 1.4.0
 ============

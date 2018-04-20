@@ -506,6 +506,9 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
     # anything, it will return immediately.
     run_now(timeoutMs / 1000)
   }
+
+  # Some code expects service() to return TRUE (#123)
+  TRUE
 }
 
 #' Run a server
