@@ -19,6 +19,10 @@ endif
 ifeq ($(UNAME), OpenBSD)
 PKG_LIBS += -lkvm
 endif
+UNAME_ARCH=$(shell uname -m)
+ifeq ($(UNAME_ARCH), ppc64le)
+PKG_LIBS += -lpthread
+endif
 
 PKG_CPPFLAGS = $(C_VISIBILITY)
 
