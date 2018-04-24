@@ -1,6 +1,7 @@
 httpuv 1.4.1.9000
 =================
 
+* Fixed [#126](https://github.com/rstudio/httpuv/issues/126): The Makevars.win file had a line with spaces instead of a tab. This caused problems when installing with the `--clean` flag.
 
 httpuv 1.4.1
 ============
