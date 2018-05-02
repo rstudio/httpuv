@@ -27,7 +27,7 @@ void auto_deleter_main(void* obj) {
     later::later(auto_deleter_main<T>, obj, 0);
 
   } else {
-    throw std::runtime_error("Can't detect correct thread for auto_deleter_main.");
+    trace("Can't detect correct thread for auto_deleter_main.");
   }
 }
 
@@ -46,7 +46,7 @@ void auto_deleter_background(T* obj) {
     } catch (...) {}
 
   } else {
-    throw std::runtime_error("Can't detect correct thread for auto_deleter_background.");
+    trace("Can't detect correct thread for auto_deleter_background.");
   }
 }
 
