@@ -572,6 +572,7 @@ void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
 }
 
 void HttpRequest::closeWSSocket() {
+  trace("HttpRequest::closeWSSocket");
   close();
 }
 
@@ -627,6 +628,7 @@ void HttpRequest::close() {
 // tell the background thread to close the request. The main thread should not
 // close() directly.
 void HttpRequest::schedule_close() {
+  trace("HttpRequest::schedule_close");
   // Schedule on background thread:
   //  pRequest->close()
   _background_queue->push(
