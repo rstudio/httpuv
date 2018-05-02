@@ -599,10 +599,9 @@ void HttpRequest::close() {
 
   if (_is_closing) {
     trace("close() called twice on HttpRequest object");
-    // Shouldn't get here, but just in case close() gets called twice
-    // (probably via a scheduled callback), don't do the closing machinery
-    // twice.
-    _on_closed(NULL);
+    // We can get here in unusual cases when close() is called once directly,
+    // and another time via a scheduled callback. When this happens, don't do
+    // the closing machinery twice.
     return;
   }
   _is_closing = true;
