@@ -584,11 +584,23 @@ void HttpRequest::closeWSSocket() {
 void HttpRequest::_on_closed(uv_handle_t* handle) {
   ASSERT_BACKGROUND_THREAD()
   trace("HttpRequest::_on_closed");
+
+  boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+  // It's possible for _pWebSocketConnection to have had its refcount drop to
+  // zero from another thread or earlier callback in this thread. If that
+  // happened, do nothing.
+  if (!p_wsc) {
+    return;
+  }
+
   // Tell the WebSocketConnection that the connection is closed, before
   // resetting the shared_ptr. This is useful because there may be some
   // callbacks that will execute later, and we want to make sure the WSC
   // doesn't try to do anything with them.
-  _pWebSocketConnection->markClosed();
+  p_wsc->markClosed();
+
+  // Note that this location and the destructor are the only places where
+  // _pWebSocketConnection is reset; both are on the background thread.
   _pWebSocketConnection.reset();
 }
 
@@ -606,14 +618,16 @@ void HttpRequest::close() {
   }
   _is_closing = true;
 
-  if (_protocol == WebSockets) {
+  boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+
+  if (p_wsc && _protocol == WebSockets) {
     // Schedule:
-    // _pWebApplication->onWSClose(_pWebSocketConnection)
+    // _pWebApplication->onWSClose(p_wsc)
     invoke_later(
       boost::bind(
         &WebApplication::onWSClose,
         _pWebApplication,
-        _pWebSocketConnection
+        p_wsc
       )
     );
   }
@@ -769,7 +783,13 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* 
       this->_parse_http_data(buf->base, nread);
 
     } else if (_protocol == WebSockets) {
-      _pWebSocketConnection->read(buf->base, nread);
+      boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+      // It's possible for _pWebSocketConnection to have had its refcount drop to
+      // zero from another thread or earlier callback in this thread. If that
+      // happened, do nothing.
+      if (p_wsc) {
+        p_wsc->read(buf->base, nread);
+      }
     }
   } else if (nread < 0) {
     if (nread == UV_EOF || nread == UV_ECONNRESET) {
