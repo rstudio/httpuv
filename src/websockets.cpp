@@ -50,7 +50,7 @@ WSFrameHeaderInfo WSHyBiFrameHeader::info() const {
   inf.masked = masked();
   if (masked()) {
     inf.maskingKey.resize(4);
-    maskingKey(&inf.maskingKey[0]);
+    maskingKey(safe_vec_addr(inf.maskingKey));
   }
   inf.payloadLength = payloadLength();
   return inf;
@@ -171,7 +171,7 @@ void WSHyBiParser::read(const char* data, size_t len) {
         std::copy(data, data + min(len, MAX_HEADER_BYTES - startingSize),
           std::back_inserter(_header));
 
-        WSHyBiFrameHeader frame(_pProto, &_header[0], _header.size());
+        WSHyBiFrameHeader frame(_pProto, safe_vec_addr(_header), _header.size());
 
         if (frame.isHeaderComplete()) {
           _pCallbacks->onHeaderComplete(frame.info());
@@ -258,14 +258,14 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
   size_t footerLength = 0;
 
   _pParser->createFrameHeaderFooter(opcode, false, length, 0,
-    &header[0], &headerLength,
-    &footer[0], &footerLength);
+    safe_vec_addr(header), &headerLength,
+    safe_vec_addr(footer), &footerLength);
   header.resize(headerLength);
   footer.resize(footerLength);
 
-  _pCallbacks->sendWSFrame(&header[0], header.size(),
+  _pCallbacks->sendWSFrame(safe_vec_addr(header), header.size(),
                            pData, length,
-                           &footer[0], footer.size());
+                           safe_vec_addr(footer), footer.size());
 }
 
 void WebSocketConnection::closeWS(uint16_t code, std::string reason) {
@@ -309,7 +309,7 @@ void WebSocketConnection::read(const char* data, size_t len) {
 void WebSocketConnection::read(boost::shared_ptr<std::vector<char>> buf) {
   ASSERT_BACKGROUND_THREAD()
   if (_connState == WS_CLOSED) return;
-  read(&(*buf)[0], buf->size());
+  read(safe_vec_addr(*buf), buf->size());
 }
 
 void WebSocketConnection::markClosed() {
@@ -353,14 +353,14 @@ void WebSocketConnection::onFrameComplete() {
         std::copy(_payload.begin(), _payload.end(),
           std::back_inserter(_incompleteContentPayload));
         _pCallbacks->onWSMessage(_incompleteContentHeader.opcode == Binary,
-          &_incompleteContentPayload[0], _incompleteContentPayload.size());
+          safe_vec_addr(_incompleteContentPayload), _incompleteContentPayload.size());
 
         _incompleteContentPayload.clear();
         break;
       }
       case Text:
       case Binary: {
-        _pCallbacks->onWSMessage(_header.opcode == Binary, &_payload[0], _payload.size());
+        _pCallbacks->onWSMessage(_header.opcode == Binary, safe_vec_addr(_payload), _payload.size());
         break;
       }
       case Close: {
@@ -375,7 +375,7 @@ void WebSocketConnection::onFrameComplete() {
         // the callback
         if (_connState != WS_CLOSE_SENT && _connState != WS_CLOSED) {
           _connState = WS_CLOSED;
-          sendWSMessage(Close, &_payload[0], _payload.size());
+          sendWSMessage(Close, safe_vec_addr(_payload), _payload.size());
         }
 
         // TODO: Delay closeWSSocket call until close message is actually sent
@@ -388,7 +388,7 @@ void WebSocketConnection::onFrameComplete() {
       }
       case Ping: {
         // Send back a pong
-        sendWSMessage(Pong, &_payload[0], _payload.size());
+        sendWSMessage(Pong, safe_vec_addr(_payload), _payload.size());
         break;
       }
       case Pong: {

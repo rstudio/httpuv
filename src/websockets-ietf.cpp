@@ -1,5 +1,7 @@
 #include "websockets-ietf.h"
 
+#include "utils.h"
+
 #include "sha1/sha1.h"
 #include "base64/base64.hpp"
 
@@ -22,10 +24,10 @@ void WebSocketProto_IETF::handshake(const std::string& url,
   std::string clear = trim(key) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
   SHA1_CTX ctx;
   reid_SHA1_Init(&ctx);
-  reid_SHA1_Update(&ctx, (uint8_t*)&clear[0], clear.size());
+  reid_SHA1_Update(&ctx, (const uint8_t*)safe_str_addr(clear), clear.size());
 
   std::vector<uint8_t> digest(SHA1_DIGEST_SIZE);
-  reid_SHA1_Final(&ctx, &digest[0]);
+  reid_SHA1_Final(&ctx, safe_vec_addr(digest));
 
   std::string response = b64encode(digest.begin(), digest.end());
 

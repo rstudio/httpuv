@@ -32,6 +32,13 @@ CONFIGURE_FLAGS="--quiet"
 # Uncomment to enable printing of trace() messages
 # PKG_CPPFLAGS += -DDEBUG_TRACE
 
+#### Other flags ####
+# Uncomment to suppress lots of warnings on Fedora 28
+# PKG_CPPFLAGS += -Wno-deprecated-declarations -Wno-parentheses
+# Fedora 28 defines _GLIBCXX_ASSERTIONS, so we better define it everywhere
+# to catch issues earlier.
+# PKG_CPPFLAGS += -D_GLIBCXX_ASSERTIONS
+
 
 $(SHLIB): libuv/.libs/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
 

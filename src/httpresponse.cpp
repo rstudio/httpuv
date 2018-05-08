@@ -96,7 +96,7 @@ void HttpResponse::writeResponse() {
     }
   }
 
-  uv_buf_t headerBuf = uv_buf_init(&_responseHeader[0], _responseHeader.size());
+  uv_buf_t headerBuf = uv_buf_init(safe_vec_addr(_responseHeader), _responseHeader.size());
   uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));
   memset(pWriteReq, 0, sizeof(uv_write_t));
   // Pointer to shared_ptr
