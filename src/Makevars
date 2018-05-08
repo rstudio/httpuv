@@ -37,7 +37,7 @@ CONFIGURE_FLAGS="--quiet"
 # PKG_CPPFLAGS += -Wno-deprecated-declarations -Wno-parentheses
 # Fedora 28 defines _GLIBCXX_ASSERTIONS, so we better define it everywhere
 # to catch issues earlier.
-PKG_CPPFLAGS += -D_GLIBCXX_ASSERTIONS
+# PKG_CPPFLAGS += -D_GLIBCXX_ASSERTIONS
 
 
 $(SHLIB): libuv/.libs/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
