@@ -562,9 +562,9 @@ void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
   pSend->pFooter = new std::vector<char>(pFooter, pFooter + footerSize);
 
   uv_buf_t buffers[3];
-  buffers[0] = uv_buf_init(&(*pSend->pHeader)[0], pSend->pHeader->size());
-  buffers[1] = uv_buf_init(&(*pSend->pData)[0], pSend->pData->size());
-  buffers[2] = uv_buf_init(&(*pSend->pFooter)[0], pSend->pFooter->size());
+  buffers[0] = uv_buf_init(safe_vec_addr(*pSend->pHeader), pSend->pHeader->size());
+  buffers[1] = uv_buf_init(safe_vec_addr(*pSend->pData), pSend->pData->size());
+  buffers[2] = uv_buf_init(safe_vec_addr(*pSend->pFooter), pSend->pFooter->size());
 
   // TODO: Handle return code
   uv_write(&pSend->writeReq, (uv_stream_t*)handle(), buffers, 3,
@@ -680,11 +680,11 @@ void HttpRequest::_call_r_on_ws_open() {
 
 
   // Schedule on background thread:
-  // p_wsc->read(&(*req_buffer)[0], req_buffer->size())
+  // p_wsc->read(safe_vec_addr(*req_buffer), req_buffer->size())
   boost::function<void (void)> cb(
     boost::bind(&WebSocketConnection::read,
       p_wsc,
-      &(*req_buffer)[0],
+      safe_vec_addr(*req_buffer),
       req_buffer->size()
     )
   );
@@ -770,7 +770,7 @@ void HttpRequest::_parse_http_data_from_buffer() {
   std::vector<char> req_buffer = _requestBuffer;
   _requestBuffer.clear();
 
-  this->_parse_http_data(&req_buffer[0], req_buffer.size());
+  this->_parse_http_data(safe_vec_addr(req_buffer), req_buffer.size());
 }
 
 void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* buf) {

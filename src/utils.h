@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <string>
+#include <vector>
 #include "thread.h"
 
 // A callback for deleting objects on the main thread using later(). This is
@@ -58,6 +59,17 @@ inline void err_printf(const char *fmt, ...) {
 
 // For debugging. See Makevars for information on how to enable.
 void trace(const std::string& msg);
+
+// Indexing into an empty vector causes assertion failures on some platforms
+template <typename T>
+T* safe_vec_addr(std::vector<T>& vec) {
+  return vec.size() ? &vec[0] : NULL;
+}
+
+// Indexing into an empty vector causes assertion failures on some platforms
+inline const char* safe_str_addr(const std::string& str) {
+  return str.size() ? &str[0] : NULL;
+}
 
 
 #endif

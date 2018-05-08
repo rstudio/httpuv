@@ -7,6 +7,8 @@ extern "C" {
 #include "md5.h"
 }
 
+#include "utils.h"
+
 bool calculateKeyValue(const std::string& key, uint32_t* pResult = NULL) {
   std::string trimmed = trim(key);
   uint32_t value = 0;
@@ -77,7 +79,7 @@ void WebSocketProto_HyBi03::handshake(const std::string& url,
   MD5_Update(&ctx, handshake, 16);
 
   pResponse->resize(16, 0);
-  MD5_Final(&(*pResponse)[0], &ctx);
+  MD5_Final(safe_vec_addr(*pResponse), &ctx);
 
   std::string origin;
   if (requestHeaders.find("sec-websocket-origin") != requestHeaders.end())
