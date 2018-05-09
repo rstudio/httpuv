@@ -1,9 +1,9 @@
 httpuv 1.4.3
 ============
 
-* Fixed [#127](https://github.com/rstudio/httpuv/issues/127): Compilation failed on some platforms because `NULL` was used instead of an `Rcpp::List`. ([#131](https://github.com/rstudio/httpuv/pulls/131))
+* Fixed [#127](https://github.com/rstudio/httpuv/issues/127): Compilation failed on some platforms because `NULL` was used instead of an `Rcpp::List`. ([#131](https://github.com/rstudio/httpuv/pull/131))
 
-* Fixed [#133](https://github.com/rstudio/httpuv/issues/133): Assertion failures when running on Fedora 28. ([#136](https://github.com/rstudio/httpuv/pulls/136))
+* Fixed [#133](https://github.com/rstudio/httpuv/issues/133): Assertion failures when running on Fedora 28. ([#136](https://github.com/rstudio/httpuv/pull/136))
 
 * Fixed [#134](https://github.com/rstudio/httpuv/issues/134): Sanitizer complains when starting app after a failed app start. ([#138](https://github.com/rstudio/httpuv/pull/138))
 
@@ -12,7 +12,7 @@ httpuv 1.4.2
 
 * Fixed [#126](https://github.com/rstudio/httpuv/issues/126): The Makevars.win file had a line with spaces instead of a tab. This caused problems when installing with the `--clean` flag.
 
-* Fixed [#128](https://github.com/rstudio/httpuv/issues/128): It was possible in rare cases for a segfault to occur when httpuv tried to close a connection twice. ([#129](https://github.com/rstudio/httpuv/pulls/129))
+* Fixed [#128](https://github.com/rstudio/httpuv/issues/128): It was possible in rare cases for a segfault to occur when httpuv tried to close a connection twice. ([#129](https://github.com/rstudio/httpuv/pull/129))
 
 httpuv 1.4.1
 ============
