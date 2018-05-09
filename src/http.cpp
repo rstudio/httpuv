@@ -140,6 +140,7 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   }
 
   if (r) {
+    // It's important that close() is explicitly called, so that the uv_tcp_t is cleaned up
     pSocket->close();
     return NULL;
   }
@@ -147,11 +148,13 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   r = uv_tcp_bind(&pSocket->handle.tcp, pAddress, 0);
 
   if (r) {
+    // It's important that close() is explicitly called, so that the uv_tcp_t is cleaned up
     pSocket->close();
     return NULL;
   }
   r = uv_listen((uv_stream_t*)&pSocket->handle.stream, 128, &on_request);
   if (r) {
+    // It's important that close() is explicitly called, so that the uv_tcp_t is cleaned up
     pSocket->close();
     return NULL;
   }
