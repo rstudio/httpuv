@@ -101,10 +101,6 @@ void createPipeServerSync(uv_loop_t* loop, const std::string& name,
   blocker->wait();
 }
 
-void close_complete_cb(uv_handle_t* handle) {
-  delete (boost::shared_ptr<Socket>*)handle->data;
-}
-
 uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   int port, boost::shared_ptr<WebApplication> pWebApplication,
   CallbackQueue* background_queue)
@@ -144,19 +140,19 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   }
 
   if (r) {
-    uv_close((uv_handle_t*)&pSocket->handle.stream, close_complete_cb);
+    pSocket->close();
     return NULL;
   }
 
   r = uv_tcp_bind(&pSocket->handle.tcp, pAddress, 0);
 
   if (r) {
-    uv_close((uv_handle_t*)&pSocket->handle.stream, close_complete_cb);
+    pSocket->close();
     return NULL;
   }
   r = uv_listen((uv_stream_t*)&pSocket->handle.stream, 128, &on_request);
   if (r) {
-    uv_close((uv_handle_t*)&pSocket->handle.stream, close_complete_cb);
+    pSocket->close();
     return NULL;
   }
 
