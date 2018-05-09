@@ -5,6 +5,8 @@ httpuv 1.4.2.9000
 
 * Fixed [#133](https://github.com/rstudio/httpuv/issues/133): Assertion failures when running on Fedora 28. ([#136](https://github.com/rstudio/httpuv/pulls/136))
 
+* Fixed [#134](https://github.com/rstudio/httpuv/issues/134): Sanitizer complains when starting app after a failed app start. ([#138](https://github.com/rstudio/httpuv/pull/138))
+
 httpuv 1.4.2
 ============
 
