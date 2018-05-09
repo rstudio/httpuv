@@ -1,5 +1,5 @@
-httpuv 1.4.2.9000
-=================
+httpuv 1.4.3
+============
 
 * Fixed [#127](https://github.com/rstudio/httpuv/issues/127): Compilation failed on some platforms because `NULL` was used instead of an `Rcpp::List`. ([#131](https://github.com/rstudio/httpuv/pulls/131))
 
