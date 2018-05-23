@@ -280,7 +280,7 @@ void RWebApplication::getResponse(boost::shared_ptr<HttpRequest> pRequest,
   // the R call/_onRequest() function. We need to signal the HttpRequest
   // object to let it know that we had an error.
   if (pRequest->isResponseScheduled()) {
-    invokeCppCallback(NULL, callback_xptr);
+    invokeCppCallback(Rcpp::List(), callback_xptr);
   }
   else {
 

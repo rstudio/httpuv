@@ -562,9 +562,9 @@ void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
   pSend->pFooter = new std::vector<char>(pFooter, pFooter + footerSize);
 
   uv_buf_t buffers[3];
-  buffers[0] = uv_buf_init(&(*pSend->pHeader)[0], pSend->pHeader->size());
-  buffers[1] = uv_buf_init(&(*pSend->pData)[0], pSend->pData->size());
-  buffers[2] = uv_buf_init(&(*pSend->pFooter)[0], pSend->pFooter->size());
+  buffers[0] = uv_buf_init(safe_vec_addr(*pSend->pHeader), pSend->pHeader->size());
+  buffers[1] = uv_buf_init(safe_vec_addr(*pSend->pData), pSend->pData->size());
+  buffers[2] = uv_buf_init(safe_vec_addr(*pSend->pFooter), pSend->pFooter->size());
 
   // TODO: Handle return code
   uv_write(&pSend->writeReq, (uv_stream_t*)handle(), buffers, 3,
@@ -572,6 +572,7 @@ void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
 }
 
 void HttpRequest::closeWSSocket() {
+  trace("HttpRequest::closeWSSocket");
   close();
 }
 
@@ -583,11 +584,23 @@ void HttpRequest::closeWSSocket() {
 void HttpRequest::_on_closed(uv_handle_t* handle) {
   ASSERT_BACKGROUND_THREAD()
   trace("HttpRequest::_on_closed");
+
+  boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+  // It's possible for _pWebSocketConnection to have had its refcount drop to
+  // zero from another thread or earlier callback in this thread. If that
+  // happened, do nothing.
+  if (!p_wsc) {
+    return;
+  }
+
   // Tell the WebSocketConnection that the connection is closed, before
   // resetting the shared_ptr. This is useful because there may be some
   // callbacks that will execute later, and we want to make sure the WSC
   // doesn't try to do anything with them.
-  _pWebSocketConnection->markClosed();
+  p_wsc->markClosed();
+
+  // Note that this location and the destructor are the only places where
+  // _pWebSocketConnection is reset; both are on the background thread.
   _pWebSocketConnection.reset();
 }
 
@@ -598,22 +611,23 @@ void HttpRequest::close() {
 
   if (_is_closing) {
     trace("close() called twice on HttpRequest object");
-    // Shouldn't get here, but just in case close() gets called twice
-    // (probably via a scheduled callback), don't do the closing machinery
-    // twice.
-    _on_closed(NULL);
+    // We can get here in unusual cases when close() is called once directly,
+    // and another time via a scheduled callback. When this happens, don't do
+    // the closing machinery twice.
     return;
   }
   _is_closing = true;
 
-  if (_protocol == WebSockets) {
+  boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+
+  if (p_wsc && _protocol == WebSockets) {
     // Schedule:
-    // _pWebApplication->onWSClose(_pWebSocketConnection)
+    // _pWebApplication->onWSClose(p_wsc)
     invoke_later(
       boost::bind(
         &WebApplication::onWSClose,
         _pWebApplication,
-        _pWebSocketConnection
+        p_wsc
       )
     );
   }
@@ -627,6 +641,7 @@ void HttpRequest::close() {
 // tell the background thread to close the request. The main thread should not
 // close() directly.
 void HttpRequest::schedule_close() {
+  trace("HttpRequest::schedule_close");
   // Schedule on background thread:
   //  pRequest->close()
   _background_queue->push(
@@ -665,11 +680,11 @@ void HttpRequest::_call_r_on_ws_open() {
 
 
   // Schedule on background thread:
-  // p_wsc->read(&(*req_buffer)[0], req_buffer->size())
+  // p_wsc->read(safe_vec_addr(*req_buffer), req_buffer->size())
   boost::function<void (void)> cb(
     boost::bind(&WebSocketConnection::read,
       p_wsc,
-      &(*req_buffer)[0],
+      safe_vec_addr(*req_buffer),
       req_buffer->size()
     )
   );
@@ -755,7 +770,7 @@ void HttpRequest::_parse_http_data_from_buffer() {
   std::vector<char> req_buffer = _requestBuffer;
   _requestBuffer.clear();
 
-  this->_parse_http_data(&req_buffer[0], req_buffer.size());
+  this->_parse_http_data(safe_vec_addr(req_buffer), req_buffer.size());
 }
 
 void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* buf) {
@@ -768,7 +783,13 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* 
       this->_parse_http_data(buf->base, nread);
 
     } else if (_protocol == WebSockets) {
-      _pWebSocketConnection->read(buf->base, nread);
+      boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+      // It's possible for _pWebSocketConnection to have had its refcount drop to
+      // zero from another thread or earlier callback in this thread. If that
+      // happened, do nothing.
+      if (p_wsc) {
+        p_wsc->read(buf->base, nread);
+      }
     }
   } else if (nread < 0) {
     if (nread == UV_EOF || nread == UV_ECONNRESET) {

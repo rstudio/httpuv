@@ -110,12 +110,7 @@ public:
   virtual ~HttpRequest() {
     ASSERT_BACKGROUND_THREAD()
     trace("HttpRequest::~HttpRequest");
-
-    try {
-      // Call reset instead of letting the lifetime end, because we want it
-      // inside a try-catch.
-      _pWebSocketConnection.reset();
-    } catch (...) {}
+    _pWebSocketConnection.reset();
   }
 
   uv_stream_t* handle();

@@ -179,7 +179,7 @@ void sendWSMessage(SEXP conn,
   boost::function<void (void)> cb(
     boost::bind(&WebSocketConnection::sendWSMessage, wsc,
       mode,
-      &(*str)[0],
+      safe_vec_addr(*str),
       str->size()
     )
   );
