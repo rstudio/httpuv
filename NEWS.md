@@ -3,7 +3,7 @@ httpuv 1.4.3.9000
 
 * Templated C++ code with the format `A<B<C>>` has been changed to `A<B<C> >`. Allowing consecutive `>>` is a feature of C++11.
 
-* httpuv is now compiled with `_GLIBCXX_ASSERTIONS`, to help catch bugs.
+* httpuv is now compiled with `_GLIBCXX_ASSERTIONS`, to help catch bugs. ([#137](https://github.com/rstudio/httpuv/pull/137))
 
 httpuv 1.4.3
 ============
