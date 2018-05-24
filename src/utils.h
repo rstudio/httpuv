@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <algorithm>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -71,5 +72,10 @@ inline const char* safe_str_addr(const std::string& str) {
   return str.size() ? &str[0] : NULL;
 }
 
+inline std::string to_lower(const std::string& str) {
+  std::string lowered = str;
+  std::transform(lowered.begin(), lowered.end(), lowered.begin(), tolower);
+  return lowered;
+}
 
 #endif
