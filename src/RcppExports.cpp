@@ -188,7 +188,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_invokeCppCallback", (DL_FUNC) &_httpuv_invokeCppCallback, 2},
     {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
     {"_httpuv_wsconn_address", (DL_FUNC) &_httpuv_wsconn_address, 1},
-    {"httpuv_decodeURIComponent",  (DL_FUNC) &httpuv_decodeURIComponent,  1},
+    {"httpuv_decodeURIComponent", (DL_FUNC) &httpuv_decodeURIComponent, 1},
     {NULL, NULL, 0}
 };
 
