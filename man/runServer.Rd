@@ -29,6 +29,24 @@ interrupted or an error occurs.
 If you have multiple hosts and/or ports to listen on, call the individual 
 functions instead of \code{runServer}.
 }
+\examples{
+\dontrun{
+# A very basic application
+runServer("0.0.0.0", 5000,
+  list(
+    call = function(req) {
+      list(
+        status = 200L,
+        headers = list(
+          'Content-Type' = 'text/html'
+        ),
+        body = "Hello world!"
+      )
+    }
+  )
+)
+}
+}
 \seealso{
 \code{\link{startServer}}, \code{\link{service}},
   \code{\link{stopServer}}

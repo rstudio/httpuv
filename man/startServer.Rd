@@ -83,6 +83,26 @@ Creates an HTTP/WebSocket server on the specified host and port.
   \code{startServer} to listen on a Unix domain socket or named pipe rather
   than a TCP socket (this is not common).
 }
+\examples{
+\dontrun{
+# A very basic application
+handle <- startServer("0.0.0.0", 5000,
+  list(
+    call = function(req) {
+      list(
+        status = 200L,
+        headers = list(
+          'Content-Type' = 'text/html'
+        ),
+        body = "Hello world!"
+      )
+    }
+  )
+)
+
+stopServer(handle)
+}
+}
 \seealso{
 \code{\link{stopServer}}, \code{\link{runServer}}
 }

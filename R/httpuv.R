@@ -408,6 +408,26 @@ WebSocket <- setRefClass(
 #'   than a TCP socket (this is not common).
 #' @seealso \code{\link{stopServer}}, \code{\link{runServer}}
 #' @aliases startPipeServer
+#'
+#' @examples
+#' \dontrun{
+#' # A very basic application
+#' handle <- startServer("0.0.0.0", 5000,
+#'   list(
+#'     call = function(req) {
+#'       list(
+#'         status = 200L,
+#'         headers = list(
+#'           'Content-Type' = 'text/html'
+#'         ),
+#'         body = "Hello world!"
+#'       )
+#'     }
+#'   )
+#' )
+#'
+#' stopServer(handle)
+#' }
 #' @export
 startServer <- function(host, port, app) {
   
@@ -532,6 +552,24 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 #'   
 #' @seealso \code{\link{startServer}}, \code{\link{service}},
 #'   \code{\link{stopServer}}
+#'
+#' @examples
+#' \dontrun{
+#' # A very basic application
+#' runServer("0.0.0.0", 5000,
+#'   list(
+#'     call = function(req) {
+#'       list(
+#'         status = 200L,
+#'         headers = list(
+#'           'Content-Type' = 'text/html'
+#'         ),
+#'         body = "Hello world!"
+#'       )
+#'     }
+#'   )
+#' )
+#' }
 #' @export
 runServer <- function(host, port, app, interruptIntervalMs = NULL) {
   server <- startServer(host, port, app)
