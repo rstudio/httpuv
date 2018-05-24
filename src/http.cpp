@@ -127,11 +127,11 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   struct sockaddr_in6 addr6;
   struct sockaddr_in  addr4;
   sockaddr* pAddress;
-  int ip_family = ipFamily(host);
-  if (ip_family == AF_INET6) {
+  int family = ip_family(host);
+  if (family == AF_INET6) {
     r = uv_ip6_addr(host.c_str(), port, &addr6);
     pAddress = reinterpret_cast<sockaddr*>(&addr6);
-  } else if (ip_family == AF_INET){
+  } else if (family == AF_INET){
     r = uv_ip4_addr(host.c_str(), port, &addr4);
     pAddress = reinterpret_cast<sockaddr*>(&addr4);
   } else {

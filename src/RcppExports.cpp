@@ -139,6 +139,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ipFamily
+int ipFamily(const std::string& ip);
+RcppExport SEXP _httpuv_ipFamily(SEXP ipSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type ip(ipSEXP);
+    rcpp_result_gen = Rcpp::wrap(ipFamily(ip));
+    return rcpp_result_gen;
+END_RCPP
+}
 // invokeCppCallback
 void invokeCppCallback(Rcpp::List data, SEXP callback_xptr);
 RcppExport SEXP _httpuv_invokeCppCallback(SEXP dataSEXP, SEXP callback_xptrSEXP) {
@@ -185,10 +196,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_encodeURIComponent", (DL_FUNC) &_httpuv_encodeURIComponent, 1},
     {"_httpuv_decodeURI", (DL_FUNC) &_httpuv_decodeURI, 1},
     {"_httpuv_decodeURIComponent", (DL_FUNC) &_httpuv_decodeURIComponent, 1},
+    {"_httpuv_ipFamily", (DL_FUNC) &_httpuv_ipFamily, 1},
     {"_httpuv_invokeCppCallback", (DL_FUNC) &_httpuv_invokeCppCallback, 2},
     {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
     {"_httpuv_wsconn_address", (DL_FUNC) &_httpuv_wsconn_address, 1},
-    {"httpuv_decodeURIComponent",  (DL_FUNC) &httpuv_decodeURIComponent,  1},
+    {"httpuv_decodeURIComponent", (DL_FUNC) &httpuv_decodeURIComponent, 1},
     {NULL, NULL, 0}
 };
 

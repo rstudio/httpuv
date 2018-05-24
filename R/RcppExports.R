@@ -101,6 +101,29 @@ decodeURIComponent <- function(value) {
     .Call('_httpuv_decodeURIComponent', PACKAGE = 'httpuv', value)
 }
 
+#' Check whether an address is IPv4 or IPv6
+#'
+#' Given an IP address, this checks whether it is an IPv4 or IPv6 address.
+#'
+#' @param ip A single string representing an IP address.
+#'
+#' @return
+#' For IPv4 addresses, \code{4}; for IPv6 addresses, \code{6}. If the address is
+#' neither, \code{-1}.
+#'
+#' @examples
+#' ipFamily("127.0.0.1")   # 4
+#' ipFamily("500.0.0.500") # -1
+#' ipFamily("500.0.0.500") # -1
+#'
+#' ipFamily("::")          # 6
+#' ipFamily("::1")         # 6
+#' ipFamily("fe80::1ff:fe23:4567:890a") # 6
+#' @export
+ipFamily <- function(ip) {
+    .Call('_httpuv_ipFamily', PACKAGE = 'httpuv', ip)
+}
+
 invokeCppCallback <- function(data, callback_xptr) {
     invisible(.Call('_httpuv_invokeCppCallback', PACKAGE = 'httpuv', data, callback_xptr))
 }

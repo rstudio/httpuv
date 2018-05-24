@@ -599,6 +599,37 @@ std::vector<std::string> decodeURIComponent(std::vector<std::string> value) {
   return value;
 }
 
+//' Check whether an address is IPv4 or IPv6
+//'
+//' Given an IP address, this checks whether it is an IPv4 or IPv6 address.
+//'
+//' @param ip A single string representing an IP address.
+//'
+//' @return
+//' For IPv4 addresses, \code{4}; for IPv6 addresses, \code{6}. If the address is
+//' neither, \code{-1}.
+//'
+//' @examples
+//' ipFamily("127.0.0.1")   # 4
+//' ipFamily("500.0.0.500") # -1
+//' ipFamily("500.0.0.500") # -1
+//'
+//' ipFamily("::")          # 6
+//' ipFamily("::1")         # 6
+//' ipFamily("fe80::1ff:fe23:4567:890a") # 6
+//' @export
+// [[Rcpp::export]]
+int ipFamily(const std::string& ip) {
+  int family = ip_family(ip);
+  if (family == AF_INET6)
+    return 6;
+  else if (family == AF_INET)
+    return 4;
+  else
+    return -1;
+}
+
+
 // Given a List and an external pointer to a C++ function that takes a List,
 // invoke the function with the List as the single argument. This also clears
 // the external pointer so that the C++ function can't be called again.
