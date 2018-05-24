@@ -362,7 +362,7 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
 
   // Copy pAt because the source data is deleted right after calling this
   // function.
-  boost::shared_ptr<std::vector<char>> buf = boost::make_shared<std::vector<char>>(pAt, pAt + length);
+  boost::shared_ptr<std::vector<char> > buf = boost::make_shared<std::vector<char> >(pAt, pAt + length);
 
   boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
     boost::bind(&HttpRequest::_schedule_on_body_error, shared_from_this(), _1)
@@ -490,7 +490,7 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
 
   // Copy data because the source data is deleted right after calling this
   // function.
-  boost::shared_ptr<std::vector<char>> buf = boost::make_shared<std::vector<char>>(data, data + len);
+  boost::shared_ptr<std::vector<char> > buf = boost::make_shared<std::vector<char> >(data, data + len);
 
   boost::function<void (void)> error_callback(
     boost::bind(&HttpRequest::schedule_close, shared_from_this())
@@ -675,7 +675,7 @@ void HttpRequest::_call_r_on_ws_open() {
   // _requestBuffer is likely empty at this point, but copy its contents and
   // _pass along just in case.
 
-  boost::shared_ptr<std::vector<char>> req_buffer = boost::make_shared<std::vector<char>>(_requestBuffer);
+  boost::shared_ptr<std::vector<char> > req_buffer = boost::make_shared<std::vector<char> >(_requestBuffer);
   _requestBuffer.clear();
 
 

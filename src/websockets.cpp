@@ -306,7 +306,7 @@ void WebSocketConnection::read(const char* data, size_t len) {
   _pParser->read(data, len);
 }
 
-void WebSocketConnection::read(boost::shared_ptr<std::vector<char>> buf) {
+void WebSocketConnection::read(boost::shared_ptr<std::vector<char> > buf) {
   ASSERT_BACKGROUND_THREAD()
   if (_connState == WS_CLOSED) return;
   read(safe_vec_addr(*buf), buf->size());

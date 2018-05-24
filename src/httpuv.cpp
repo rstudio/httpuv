@@ -152,7 +152,7 @@ void sendWSMessage(SEXP conn,
   ASSERT_MAIN_THREAD()
   Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             auto_deleter_background<boost::shared_ptr<WebSocketConnection>>,
+             auto_deleter_background<boost::shared_ptr<WebSocketConnection> >,
              true> conn_xptr(conn);
   boost::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
 
@@ -187,7 +187,7 @@ void sendWSMessage(SEXP conn,
   background_queue->push(cb);
   // Free str after data is written
   // deleter_background<std::vector<char>>(str)
-  background_queue->push(boost::bind(deleter_background<std::vector<char>>, str));
+  background_queue->push(boost::bind(deleter_background<std::vector<char> >, str));
 }
 
 // [[Rcpp::export]]
@@ -199,7 +199,7 @@ void closeWS(SEXP conn,
   trace("closeWS\n");
   Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             auto_deleter_background<boost::shared_ptr<WebSocketConnection>>,
+             auto_deleter_background<boost::shared_ptr<WebSocketConnection> >,
              true> conn_xptr(conn);
   boost::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
 
@@ -643,7 +643,7 @@ void getRNGState() {
 //
 //[[Rcpp::export]]
 std::string wsconn_address(SEXP external_ptr) {
-  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>> xptr(external_ptr);
+  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection> > xptr(external_ptr);
   std::ostringstream os;
   os << std::hex << reinterpret_cast<uintptr_t>(xptr.get()->get());
   return os.str();

@@ -70,7 +70,7 @@ bool runNonBlocking(uv_loop_t* loop);
 // argument (finalizeOnExit) to true.
 inline Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
                   Rcpp::PreserveStorage,
-                  auto_deleter_background<boost::shared_ptr<WebSocketConnection>>,
+                  auto_deleter_background<boost::shared_ptr<WebSocketConnection> >,
                   true> externalize_shared_ptr(boost::shared_ptr<WebSocketConnection> obj)
 {
   ASSERT_MAIN_THREAD()
@@ -78,7 +78,7 @@ inline Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
 
   Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             auto_deleter_background<boost::shared_ptr<WebSocketConnection>>,
+             auto_deleter_background<boost::shared_ptr<WebSocketConnection> >,
              true> obj_xptr(obj_copy, true);
 
   return obj_xptr;
@@ -89,7 +89,7 @@ inline Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
 inline boost::shared_ptr<WebSocketConnection> internalize_shared_ptr(
   Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             auto_deleter_background<boost::shared_ptr<WebSocketConnection>>,
+             auto_deleter_background<boost::shared_ptr<WebSocketConnection> >,
              true> obj_xptr)
 {
   ASSERT_MAIN_THREAD()

@@ -13,7 +13,7 @@ public:
   VariantHandle handle;
   boost::shared_ptr<WebApplication> pWebApplication;
   CallbackQueue* background_queue;
-  std::vector<boost::shared_ptr<HttpRequest>> connections;
+  std::vector<boost::shared_ptr<HttpRequest> > connections;
 
   Socket(boost::shared_ptr<WebApplication> pWebApplication,
          CallbackQueue* background_queue)

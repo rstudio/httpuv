@@ -234,7 +234,7 @@ void RWebApplication::onHeaders(boost::shared_ptr<HttpRequest> pRequest,
 }
 
 void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
-      boost::shared_ptr<std::vector<char>> data,
+      boost::shared_ptr<std::vector<char> > data,
       boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback)
 {
   ASSERT_MAIN_THREAD()
@@ -328,7 +328,7 @@ void RWebApplication::onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
 
 void RWebApplication::onWSMessage(boost::shared_ptr<WebSocketConnection> pConn,
                                   bool binary,
-                                  boost::shared_ptr<std::vector<char>> data,
+                                  boost::shared_ptr<std::vector<char> > data,
                                   boost::function<void(void)> error_callback)
 {
   ASSERT_MAIN_THREAD()

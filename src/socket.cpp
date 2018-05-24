@@ -34,7 +34,7 @@ void delete_ppsocket(uv_handle_t* pHandle) {
 void Socket::close() {
   ASSERT_BACKGROUND_THREAD()
   trace("Socket::close");
-  for (std::vector<boost::shared_ptr<HttpRequest>>::reverse_iterator it = connections.rbegin();
+  for (std::vector<boost::shared_ptr<HttpRequest> >::reverse_iterator it = connections.rbegin();
     it != connections.rend();
     it++) {
 
