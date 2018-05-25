@@ -1,5 +1,7 @@
-httpuv 1.4.3.9000
+httpuv 1.4.3.9001
 =================
+
+* Exported `ipFamily()` function, which tests whether a string represents an IPv4 address, IPv6 address, or neither. ([#142](https://github.com/rstudio/httpuv/pull/142))
 
 * Templated C++ code with the format `A<B<C>>` has been changed to `A<B<C> >`. Allowing consecutive `>>` is a feature of C++11.
 
