@@ -21,3 +21,31 @@ test_that("encodeURI and encodeURIComponent", {
   expect_identical(decodeURI(",/?:@"), ",/?:@")
   expect_identical(decodeURIComponent(",/?:@"), ",/?:@")
 })
+
+
+test_that("ipFamily works correctly", {
+  expect_identical(ipFamily("127.0.0.1"), 4L)
+  expect_identical(ipFamily("0.0.0.0"), 4L)
+  expect_identical(ipFamily("192.168.0.1"), 4L)
+
+  expect_identical(ipFamily("::1"), 6L)
+  expect_identical(ipFamily("::"), 6L)
+  expect_identical(ipFamily("fe80::91:5800:400a:075c"), 6L)
+  expect_identical(ipFamily("fe80::1"), 6L)
+
+  # IPv6 with zone ID
+  expect_identical(ipFamily("::1%lo0"), 6L)
+  expect_identical(ipFamily("::%1"), 6L)
+  expect_identical(ipFamily("fe80::91:5800:400a:075c%en0"), 6L)
+  expect_identical(ipFamily("fe80::1%abcd"), 6L)
+
+
+  expect_identical(ipFamily("fe80::91:5800:400a:%075c"), -1L)
+  expect_identical(ipFamily(":::1"), -1L)
+  expect_identical(ipFamily(":1"), -1L)
+  expect_identical(ipFamily("127.0.0.1%1"), -1L)
+  expect_identical(ipFamily("10.0.0.500"), -1L)
+  expect_identical(ipFamily("0.0.200"), -1L)
+  expect_identical(ipFamily("123"), -1L)
+  expect_identical(ipFamily("localhost"), -1L)
+})
