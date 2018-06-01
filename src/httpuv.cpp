@@ -83,7 +83,9 @@ uv_async_t async_stop_io_loop;
 
 void close_handle_cb(uv_handle_t* handle, void* arg) {
   ASSERT_BACKGROUND_THREAD()
-  uv_close(handle, NULL);
+  if (!uv_is_closing(handle)) {
+    uv_close(handle, NULL);
+  }
 }
 
 void stop_io_loop(uv_async_t *handle) {
