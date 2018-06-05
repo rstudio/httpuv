@@ -9,6 +9,8 @@ httpuv 1.4.3.9001
 
 * httpuv is now compiled with `_GLIBCXX_ASSERTIONS`, to help catch bugs. ([#137](https://github.com/rstudio/httpuv/pull/137))
 
+* Fixed [#101](https://github.com/rstudio/httpuv/issues/101): If server creation fails, report reason why. ([#146](https://github.com/rstudio/httpuv/pull/146))
+
 httpuv 1.4.3
 ============
 
