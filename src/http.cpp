@@ -74,12 +74,14 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
     umask(oldMask);
 
   if (r) {
+    err_printf("createPipeServer: %s\n", uv_strerror(r));
     // It's important that close() is explicitly called, so that the uv_pipe_t is cleaned up
     pSocket->close();
     return NULL;
   }
   r = uv_listen((uv_stream_t*)&pSocket->handle.stream, 128, &on_request);
   if (r) {
+    err_printf("createPipeServer: %s\n", uv_strerror(r));
     // It's important that close() is explicitly called, so that the uv_pipe_t is cleaned up
     pSocket->close();
     return NULL;
