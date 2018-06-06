@@ -9,7 +9,9 @@ httpuv 1.4.3.9002
 
 * httpuv is now compiled with `_GLIBCXX_ASSERTIONS`, to help catch bugs. ([#137](https://github.com/rstudio/httpuv/pull/137))
 
-* Fixed [#101](https://github.com/rstudio/httpuv/issues/101): If server creation fails, report reason why. ([#146](https://github.com/rstudio/httpuv/pull/146))
+* Fixed [#101](https://github.com/rstudio/httpuv/issues/101): If server creation fails, report reason why. ([#146](https://github.com/rstudio/httpuv/pull/146), [#149](https://github.com/rstudio/httpuv/pull/149))
+
+* Fixed [#147](https://github.com/rstudio/httpuv/issues/147): Santizer complained when starting app with `startPipeServer` after a failed app start. ([#149](https://github.com/rstudio/httpuv/pull/149))
 
 httpuv 1.4.3
 ============
