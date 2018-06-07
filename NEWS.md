@@ -13,6 +13,9 @@ httpuv 1.4.3.9002
 
 * Fixed [#147](https://github.com/rstudio/httpuv/issues/147): Santizer complained when starting app with `startPipeServer` after a failed app start. ([#149](https://github.com/rstudio/httpuv/pull/149))
 
+* Fixed [#150](https://github.com/rstudio/httpuv/issues/150), [#151](https://github.com/rstudio/httpuv/issues/151): On some platforms, httpuv would fail to install from a zip file because R's `unzip()` function did not preserve the executable permission for `src/libuv/configure`. ([#152](https://github.com/rstudio/httpuv/pull/152))
+
+
 httpuv 1.4.3
 ============
 
