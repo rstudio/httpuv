@@ -15,6 +15,7 @@ httpuv 1.4.3.9002
 
 * Fixed [#150](https://github.com/rstudio/httpuv/issues/150), [#151](https://github.com/rstudio/httpuv/issues/151): On some platforms, httpuv would fail to install from a zip file because R's `unzip()` function did not preserve the executable permission for `src/libuv/configure`. ([#152](https://github.com/rstudio/httpuv/pull/152))
 
+* Worked around an issue where Shiny apps couldn't be viewed when launched from RStudio Server using Firefox. ([#153](https://github.com/rstudio/httpuv/pull/153))
 
 httpuv 1.4.3
 ============
