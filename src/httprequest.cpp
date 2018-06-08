@@ -414,11 +414,20 @@ void HttpRequest::_on_body_error(boost::shared_ptr<HttpResponse> pResponse) {
 // Message complete
 // ============================================================================
 
+bool HttpRequest::isUpgrade() const {
+  // Normally this should just be _parser.upgrade. But we also want to allow
+  // Upgrade: WebSocket + Connection: close, in order to work around an issue
+  // in RStudio Server's http proxying code with Firefox (only):
+  // https://github.com/rstudio/rstudio/issues/2940
+  // https://github.com/rstudio/shiny/issues/2064
+  return _parser.upgrade || _parser.flags & F_UPGRADE;
+}
+
 int HttpRequest::_on_message_complete(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
   trace("HttpRequest::_on_message_complete");
 
-  if (pParser->upgrade)
+  if (isUpgrade())
     return 0;
 
   boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
@@ -706,7 +715,7 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
     // buffer.
     _requestBuffer.insert(_requestBuffer.end(), buffer + parsed, buffer + n);
 
-  } else if (_parser.upgrade) {
+  } else if (isUpgrade()) {
     char* pData = buffer + parsed;
     size_t pDataLen = n - parsed;
 
