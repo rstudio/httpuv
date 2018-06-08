@@ -126,7 +126,9 @@ public:
   std::string method() const;
   std::string url() const;
   const RequestHeaders& headers() const;
-
+  // Is the request an Upgrade (i.e. WebSocket connection)?
+  bool isUpgrade() const;
+  
   void sendWSFrame(const char* pHeader, size_t headerSize,
                    const char* pData, size_t dataSize,
                    const char* pFooter, size_t footerSize);
