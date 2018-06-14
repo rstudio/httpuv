@@ -91,7 +91,7 @@ protected:
 };
 
 
-inline int ipFamily(const std::string& ip) {
+inline int ip_family(const std::string& ip) {
   // A buffer big enough for an IPv6 address
   unsigned char addr[16];
 

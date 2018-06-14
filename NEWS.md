@@ -1,11 +1,23 @@
-httpuv 1.4.3.9000
+httpuv 1.4.3.9002
 =================
+
+* Fixed [#144](https://github.com/rstudio/httpuv/issues/144): Before closing a handle, make sure that it is not already closing. ([#145](https://github.com/rstudio/httpuv/pull/145))
+
+* Exported `ipFamily()` function, which tests whether a string represents an IPv4 address, IPv6 address, or neither. ([#142](https://github.com/rstudio/httpuv/pull/142))
 
 * Templated C++ code with the format `A<B<C>>` has been changed to `A<B<C> >`. Allowing consecutive `>>` is a feature of C++11.
 
 * httpuv is now compiled with `_GLIBCXX_ASSERTIONS`, to help catch bugs. ([#137](https://github.com/rstudio/httpuv/pull/137))
 
 * The Rook `req` environment now includes an item `req$HEADERS`, which is a named character vector of request headers. ([#143](https://github.com/rstudio/httpuv/pull/143))
+
+* Fixed [#101](https://github.com/rstudio/httpuv/issues/101): If server creation fails, report reason why. ([#146](https://github.com/rstudio/httpuv/pull/146), [#149](https://github.com/rstudio/httpuv/pull/149))
+
+* Fixed [#147](https://github.com/rstudio/httpuv/issues/147): Santizer complained when starting app with `startPipeServer` after a failed app start. ([#149](https://github.com/rstudio/httpuv/pull/149))
+
+* Fixed [#150](https://github.com/rstudio/httpuv/issues/150), [#151](https://github.com/rstudio/httpuv/issues/151): On some platforms, httpuv would fail to install from a zip file because R's `unzip()` function did not preserve the executable permission for `src/libuv/configure`. ([#152](https://github.com/rstudio/httpuv/pull/152))
+
+* Worked around an issue where Shiny apps couldn't be viewed when launched from RStudio Server using Firefox. ([#153](https://github.com/rstudio/httpuv/pull/153))
 
 httpuv 1.4.3
 ============

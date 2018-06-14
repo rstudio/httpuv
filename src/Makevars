@@ -9,7 +9,7 @@ ifeq ($(UNAME), Darwin)
 FRAMEWORK = -framework CoreServices
 endif
 
-PKG_LIBS = ./libuv/.libs/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o $(FRAMEWORK)
+PKG_LIBS = ./libuv/.libs/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o $(FRAMEWORK) -pthread
 ifeq ($(UNAME), SunOS)
 PKG_LIBS += -lkstat -lsendfile -lsocket -lxnet
 endif
@@ -20,7 +20,7 @@ ifeq ($(UNAME), OpenBSD)
 PKG_LIBS += -lkvm
 endif
 
-PKG_CPPFLAGS = $(C_VISIBILITY)
+PKG_CPPFLAGS = $(C_VISIBILITY) -pthread
 
 # To avoid spurious warnings from `R CMD check --as-cran`, about compiler
 # warning flags like -Werror.
@@ -48,7 +48,9 @@ libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
 	cp -p -f libuv/m4/lt_obsolete.m4 libuv/m4/lt~obsolete.m4
 
 # Run ./configure. We need to touch various autotools-related files to avoid
-# it trying to run autotools programs again.
+# it trying to run autotools programs again. We also need to make sure
+# configure is executable, because on some platforms, calling unzip() in R
+# does not preserve the executable bit.
 #
 # It's VERY IMPORTANT that mtime(aclocal.m4) <= mtime(configure), and also
 # mtime(aclocal.m4) <= mtime(Makefile.in). On some platforms, passing multiple
@@ -61,6 +63,7 @@ libuv/Makefile: libuv/m4/lt~obsolete.m4
 	(cd libuv \
 		&& touch aclocal.m4 \
 		&& touch -r aclocal.m4 configure Makefile.in \
+		&& chmod +x configure \
 		&& CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" LDFLAGS="$(LDFLAGS)" ./configure $(CONFIGURE_FLAGS))
 
 libuv/.libs/libuv.a: libuv/Makefile
