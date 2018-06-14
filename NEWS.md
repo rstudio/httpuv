@@ -5,6 +5,8 @@ httpuv 1.4.3.9000
 
 * httpuv is now compiled with `_GLIBCXX_ASSERTIONS`, to help catch bugs. ([#137](https://github.com/rstudio/httpuv/pull/137))
 
+* The Rook `req` environment now includes an item `req$HEADERS`, which is a named character vector of request headers. ([#143](https://github.com/rstudio/httpuv/pull/143))
+
 httpuv 1.4.3
 ============
 
