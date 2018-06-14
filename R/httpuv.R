@@ -392,7 +392,8 @@ WebSocket <- setRefClass(
 #'     \item{\code{call(req)}}{Process the given HTTP request, and return an 
 #'     HTTP response. This method should be implemented in accordance with the
 #'     \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
-#'     specification.}
+#'     specification.} Note that httpuv augments \code{req} with an additional item,
+#'     \code{req$HEADERS}, which is a named character vector of request headers.
 #'     \item{\code{onHeaders(req)}}{Optional. Similar to \code{call}, but occurs
 #'     when headers are received. Return \code{NULL} to continue normal
 #'     processing of the request, or a Rook response to send that response,
