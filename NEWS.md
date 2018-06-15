@@ -1,5 +1,5 @@
-httpuv 1.4.3.9002
-=================
+httpuv 1.4.4
+============
 
 * Fixed [#144](https://github.com/rstudio/httpuv/issues/144): Before closing a handle, make sure that it is not already closing. ([#145](https://github.com/rstudio/httpuv/pull/145))
 
