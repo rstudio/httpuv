@@ -22,7 +22,7 @@ Imports:
     Rcpp (>= 0.11.0),
     utils,
     promises,
-    later (>= 0.7.2)
+    later (>= 0.7.3)
 LinkingTo: Rcpp, BH, later
 URL: https://github.com/rstudio/httpuv
 SystemRequirements: GNU make
