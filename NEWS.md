@@ -1,3 +1,8 @@
+httpuv 1.4.4.1
+=============
+
+* Remove `_GLIBCXX_ASSERTIONS` compile flag, which caused CRAN checks to fail on gcc 7.
+
 httpuv 1.4.4
 ============
 
