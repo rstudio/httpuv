@@ -1,5 +1,10 @@
+httpuv 1.4.4.9000
+==============
+
+* Changed compiler flags to work with gcc 8.10 on Windows, so that httpuv will build with the new versions of Rtools. ([#160](https://github.com/rstudio/httpuv/pull/160))
+
 httpuv 1.4.4.1
-=============
+==============
 
 * Remove `_GLIBCXX_ASSERTIONS` compile flag, which caused CRAN checks to fail on gcc 7.
 
