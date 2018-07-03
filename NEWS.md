@@ -1,3 +1,8 @@
+httpuv 1.4.4.9001
+==============
+
+* Fixed [#161](https://github.com/rstudio/httpuv/issues/161): An HTTP connection could get upgraded to a WebSocket too early, which sometimes resulted in closed connections. ([#162](https://github.com/rstudio/httpuv/pull/162))
+
 httpuv 1.4.4.2
 ==============
 

@@ -60,6 +60,10 @@ private:
 
   bool _is_closing;
 
+  // This starts false, and in the case of a connection upgrade, gets set to
+  // true after the headers are complete.
+  bool _is_upgrade;
+
   bool _hasHeader(const std::string& name) const;
   bool _hasHeader(const std::string& name, const std::string& value, bool ci = false) const;
 
@@ -92,6 +96,7 @@ public:
       _protocol(HTTP),
       _ignoreNewData(false),
       _is_closing(false),
+      _is_upgrade(false),
       _response_scheduled(false),
       _handling_request(false),
       _background_queue(backgroundQueue)
@@ -126,6 +131,7 @@ public:
   std::string method() const;
   std::string url() const;
   const RequestHeaders& headers() const;
+
   // Is the request an Upgrade (i.e. WebSocket connection)?
   bool isUpgrade() const;
   
@@ -168,6 +174,10 @@ public:
 
   virtual void onWSMessage(bool binary, const char* data, size_t len);
   virtual void onWSClose(int code);
+
+  // Update whether or not this HttpRequest is to be upgraded. This is called
+  // from _on_headers_complete().
+  void updateUpgradeStatus();
 
   void fatal_error(const char* method, const char* message);
   void _on_closed(uv_handle_t* handle);
