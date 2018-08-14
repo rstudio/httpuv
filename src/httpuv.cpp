@@ -94,6 +94,20 @@ void stop_io_loop(uv_async_t *handle) {
   uv_stop(io_loop.get());
 }
 
+#ifndef _WIN32
+// Blocks SIGPIPE on the current thread.
+void block_sigpipe() {
+  sigset_t set;
+  int result;
+  sigemptyset(&set);
+  sigaddset(&set, SIGPIPE);
+  result = pthread_sigmask(SIG_BLOCK, &set, NULL);
+  if (result) {
+    err_printf("Error blocking SIGPIPE on httpuv background thread.\n");
+  }
+}
+#endif
+
 void io_thread(void* data) {
   register_background_thread();
   Barrier* blocker = reinterpret_cast<Barrier*>(data);
@@ -110,6 +124,11 @@ void io_thread(void* data) {
   // Tell other thread that it can continue.
   blocker->wait();
 
+  // Must ignore SIGPIPE for libuv code; otherwise unexpectedly closed
+  // connections kill us. https://github.com/rstudio/httpuv/issues/168
+#ifndef _WIN32
+  block_sigpipe();
+#endif
   // Run io_loop. When it stops, this fuction continues and the thread exits.
   uv_run(io_loop.get(), UV_RUN_DEFAULT);
 
