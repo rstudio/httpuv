@@ -4,13 +4,69 @@ Build notes
 
 ## libuv
 
-The contents of the libuv/ directory are the canonical libuv sources, with the following changes.
+The contents of the libuv/ directory are the canonical libuv sources, with changes as described below.
 
-****
+### Step-by-step instructions
 
-The libuv sources contain unnamed structs, which result in warnings on MinGW's GCC. This in turn causes WARNINGS in R CMD check on Windows. Commit f40b733 converted them to named structs.
+To update libuv to a new version, do the following:
 
-*****
+* Edit `tools/update_libuv.R` so that `version` is the new version number, then commit.
+* Run that script, do a `git add src/libuv`, then commit.
+
+    ```
+    tools/update_libuv.R
+    git add src/libuv
+    git commit
+    ```
+
+* Cherry-pick some fixes:
+
+    ```
+    # Fix for unnamed structs on MinGW
+    git cherry-pick 327a0a9
+    # Fix for Solaris
+    git cherry-pick f7b4ff8
+    ```
+
+* Run libuv's `autogen.sh`, and commit the files.
+
+    ```
+    cd src/libuv
+    ./autogen.sh
+    mv m4/lt~obsolete.m4 m4/lt_obsolete.m4
+
+    # Add these generated files. -f is needed because they are listed in src/libuv/.gitignore.
+    git add -f Makefile.in
+    git add -f aclocal.m4
+    git add -f ar-lib
+    git add -f compile
+    git add -f config.guess
+    git add -f config.sub
+    git add -f configure
+    git add -f depcomp
+    git add -f install-sh
+    git add -f ltmain.sh
+    git add -f m4/libtool.m4
+    git add -f m4/libuv-extra-automake-flags.m4
+    git add -f m4/lt_obsolete.m4
+    git add -f m4/ltoptions.m4
+    git add -f m4/ltsugar.m4
+    git add -f m4/ltversion.m4
+    git add -f missing
+
+    git commit
+    ```
+
+* Update this README to refer to the new cherry-picked commits, then commit.
+
+
+### Details
+
+#### MinGW and unnamed structs
+
+The libuv sources contain unnamed structs, which result in warnings on MinGW's GCC. This in turn causes WARNINGS in R CMD check on Windows. They were converted to named structs.
+
+#### Solaris support
 
 The Makefile.am file is modified for Solaris support. This is the original line:
 
@@ -24,7 +80,7 @@ It has `-DSUNOS_NO_IFADDRS` added to it. See [here](https://github.com/libuv/lib
 libuv_la_CFLAGS += -D__EXTENSIONS__ -D_XOPEN_SOURCE=500 -DSUNOS_NO_IFADDRS
 ```
 
-*****
+#### Run `autogen.sh`
 
 After modifying Makefile.am, run `./autogen.sh`. This requires automake and libtool, and generates the `configure` script, along with a number of other related files. These generated files are checked into the repository so that other systems to not need automake and libtool to build libuv.
 
@@ -37,8 +93,6 @@ If this is not done, then the `configure` script may generate a Makefile which t
 The following generated files are checked into the repository:
 
 ```
-configure
-src/Makevars
 src/libuv/Makefile.in
 src/libuv/aclocal.m4
 src/libuv/ar-lib
