@@ -8,6 +8,32 @@
 #include "utils.h"
 #include <Rinternals.h>
 
+std::map<std::string, std::string> toStringMap(Rcpp::CharacterVector x) {
+  ASSERT_MAIN_THREAD()
+
+  std::map<std::string, std::string> strmap;
+
+  if (x.size() == 0) {
+    return strmap;
+  }
+
+  Rcpp::CharacterVector names = x.names();
+  if (names.isNULL()) {
+    throw Rcpp::exception("Error converting CharacterVector to map<string, string>: vector does not have names.");
+  }
+
+
+  for (int i=0; i<x.size(); i++) {
+    std::string name  = Rcpp::as<std::string>(names[i]);
+    std::string value = Rcpp::as<std::string>(x[i]);
+    strmap.insert(
+      std::pair<std::string, std::string>(name, value)
+    );
+  }
+
+  return strmap;
+}
+
 std::string normalizeHeaderName(const std::string& name) {
   std::string result = name;
   for (std::string::iterator it = result.begin();
@@ -173,8 +199,11 @@ boost::shared_ptr<HttpResponse> listToResponse(
   // - body: Character vector (which is charToRaw-ed) or raw vector, or NULL
   if (std::find(names.begin(), names.end(), "bodyFile") != names.end()) {
     FileDataSource* pFDS = new FileDataSource();
-    pFDS->initialize(Rcpp::as<std::string>(response["bodyFile"]),
-        Rcpp::as<bool>(response["bodyFileOwned"]));
+    int ret = pFDS->initialize(Rcpp::as<std::string>(response["bodyFile"]),
+                               Rcpp::as<bool>(response["bodyFileOwned"]));
+    if (ret != 0) {
+      REprintf(pFDS->lastErrorMessage().c_str());
+    }
     pDataSource = pFDS;
   }
   else if (Rf_isString(response["body"])) {
@@ -209,6 +238,23 @@ void invokeResponseFun(boost::function<void(boost::shared_ptr<HttpResponse>)> fu
   // HttpResponse->writeResponse().
   boost::shared_ptr<HttpResponse> pResponse = listToResponse(pRequest, response);
   fun(pResponse);
+}
+
+RWebApplication::RWebApplication(
+    Rcpp::Function onHeaders,
+    Rcpp::Function onBodyData,
+    Rcpp::Function onRequest,
+    Rcpp::Function onWSOpen,
+    Rcpp::Function onWSMessage,
+    Rcpp::Function onWSClose,
+    Rcpp::Function getStaticPaths) :
+    _onHeaders(onHeaders), _onBodyData(onBodyData), _onRequest(onRequest),
+    _onWSOpen(onWSOpen), _onWSMessage(onWSMessage), _onWSClose(onWSClose),
+    _getStaticPaths(getStaticPaths)
+{
+  ASSERT_MAIN_THREAD()
+
+  _staticPaths = toStringMap(Rcpp::CharacterVector(_getStaticPaths()));
 }
 
 
@@ -363,4 +409,108 @@ void RWebApplication::onWSMessage(boost::shared_ptr<WebSocketConnection> pConn,
 void RWebApplication::onWSClose(boost::shared_ptr<WebSocketConnection> pConn) {
   ASSERT_MAIN_THREAD()
   _onWSClose(externalize_shared_ptr(pConn));
+}
+
+
+// ============================================================================
+// Static file serving
+// ============================================================================
+//
+// Unlike most of the methods for an RWebApplication, these ones are called on
+// the background thread.
+
+bool RWebApplication::isStaticPath(const std::string& url_path) {
+  ASSERT_BACKGROUND_THREAD()
+
+  // Strip off leading '/' if present
+  size_t start_idx = 0;
+  if (url_path.at(0) == '/') {
+    start_idx = 1;
+  }
+
+  // Trim off last part of path
+  size_t found_idx = url_path.find_last_of('/');
+
+  if (found_idx <= 0) {
+    return false;
+  }
+
+  std::string dirname  = url_path.substr(start_idx, found_idx - 1);
+  std::string filename = url_path.substr(found_idx + 1);
+
+  std::map<std::string, std::string>::iterator it = _staticPaths.find(dirname);
+  if (it != _staticPaths.end()) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+boost::shared_ptr<HttpResponse> response_404(boost::shared_ptr<HttpRequest> pRequest) {
+    std::string content = "404 file not found";
+    std::vector<uint8_t> responseData(content.begin(), content.end());
+
+    // Freed in on_response_written
+    DataSource* pDataSource = new InMemoryDataSource(responseData);
+
+    return boost::shared_ptr<HttpResponse>(
+      new HttpResponse(pRequest, 404, getStatusDescription(404), pDataSource),
+      auto_deleter_background<HttpResponse>
+    );
+}
+
+
+boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
+  boost::shared_ptr<HttpRequest> pRequest,
+  const std::string& url_path)
+{
+  ASSERT_BACKGROUND_THREAD()
+
+  // Strip off leading '/' if present
+  size_t start_idx = 0;
+  if (url_path.at(0) == '/') {
+    start_idx = 1;
+  }
+
+  // Get dirname and filename from url
+  size_t found_idx = url_path.find_last_of('/');
+  if (found_idx <= 0) {
+    return response_404(pRequest);
+  }
+
+  std::string url_dirname  = url_path.substr(start_idx, found_idx - 1);
+  std::string filename = url_path.substr(found_idx + 1);
+
+  std::string local_dirname = "";
+
+  std::map<std::string, std::string>::iterator it = _staticPaths.find(url_dirname);
+  if (it != _staticPaths.end()) {
+    local_dirname = it->second;
+  }
+
+  if (local_dirname == "") {
+    // Typically shouldn't get here, since user should have checked for
+    // existence using isStaticPath().
+    return response_404(pRequest);
+  }
+
+  std::string local_path = local_dirname + "/" + filename;
+
+  // Self-frees when response is written
+  FileDataSource* pDataSource = new FileDataSource();
+  // TODO: Figure out how to deal with `owned` parameter.
+  int ret = pDataSource->initialize(local_path, false);
+
+  if (ret != 0) {
+    // Couldn't read the file
+    delete pDataSource;
+    return response_404(pRequest);
+  }
+
+  return boost::shared_ptr<HttpResponse>(
+    new HttpResponse(pRequest, 200, getStatusDescription(200), pDataSource),
+    auto_deleter_background<HttpResponse>
+  );
+
 }

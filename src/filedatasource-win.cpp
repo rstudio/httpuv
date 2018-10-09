@@ -9,7 +9,7 @@
 // using the POSIX file functions.
 
 int FileDataSource::initialize(const std::string& path, bool owned) {
-  ASSERT_MAIN_THREAD()
+  // This can be called from either the main thread or background thread.
 
   DWORD flags = FILE_FLAG_SEQUENTIAL_SCAN;
   if (owned)
@@ -24,13 +24,17 @@ int FileDataSource::initialize(const std::string& path, bool owned) {
                       NULL);
 
   if (_hFile == INVALID_HANDLE_VALUE) {
-    REprintf("Error opening file: %d\n", GetLastError());
+    std::ostringstream ss;
+    ss << "Error opening file: " << GetLastError() << "\n";
+    _lastErrorMessage = ss.str();
     return 1;
   }
 
   if (!GetFileSizeEx(_hFile, &_length)) {
     CloseHandle(_hFile);
-    REprintf("Error retrieving file size: %d\n", GetLastError());
+    std::ostringstream ss;
+    ss << "Error retrieving file size: " << GetLastError() << "\n";
+    _lastErrorMessage = ss.str();
     return 1;
   }
 

@@ -248,6 +248,39 @@ AppWrapper <- setRefClass(
       for (handler in ws$.closeCallbacks) {
         handler()
       }
+    },
+    getStaticPaths = function() {
+      # This method always returns a named character vector.
+      # .app$staticPaths must be NULL, a named list (of strings), or a named
+      # character vector.
+
+      # If .app is a reference class, accessing .app$staticPaths can error if
+      # not present.
+      if (class(try(.app$staticPaths, silent = TRUE)) == "try-error") {
+        return(empty_named_vec())
+      }
+
+      paths <- .app$staticPaths
+
+      if (is.null(paths) || length(paths) == 0) {
+        return(empty_named_vec())
+      }
+
+      if (any_unnamed(paths)) {
+        stop(".app$staticPaths must be a named character vector, NULL, a or named list (of strings).")
+      }
+
+      # If list, convert to vector.
+      if (is.list(paths)) {
+        paths <- unlist(paths, recursive = FALSE)
+      }
+
+      # Make sure it's a named character vector.
+      if (is.character(paths)) {
+        return(paths)
+      }
+
+      stop(".app$staticPaths must be a named character vector, NULL, a or named list (of strings).")
     }
   )
 )
@@ -440,7 +473,8 @@ startServer <- function(host, port, app) {
     appWrapper$call,
     appWrapper$onWSOpen,
     appWrapper$onWSMessage,
-    appWrapper$onWSClose
+    appWrapper$onWSClose,
+    appWrapper$getStaticPaths
   )
 
   if (is.null(server)) {

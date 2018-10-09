@@ -7,24 +7,30 @@
 #include <errno.h>
 
 int FileDataSource::initialize(const std::string& path, bool owned) {
-  ASSERT_MAIN_THREAD()
+  // This can be called from either the main thread or background thread.
 
   _fd = open(path.c_str(), O_RDONLY);
   if (_fd == -1) {
-    REprintf("Error opening file: %d\n", errno);
+    std::ostringstream ss;
+    ss << "Error opening file: " << errno << "\n";
+    _lastErrorMessage = ss.str();
     return 1;
   }
   else {
     struct stat info = {0};
     if (fstat(_fd, &info)) {
-      REprintf("Error opening path: %d\n", errno);
+      std::ostringstream ss;
+      ss << "Error opening path: " << errno << "\n";
+      _lastErrorMessage = ss.str();
       ::close(_fd);
       return 1;
     }
     _length = info.st_size;
 
     if (owned && unlink(path.c_str())) {
-      REprintf("Couldn't delete temp file: %d\n", errno);
+      // Print this (on either main or background thread), since we're not
+      // returning 1 to indicate an error.
+      err_printf("Couldn't delete temp file: %d\n", errno);
       // It's OK to continue
     }
 
@@ -65,5 +71,10 @@ void FileDataSource::close() {
     ::close(_fd);
   _fd = -1;
 }
+
+std::string FileDataSource::lastErrorMessage() const {
+  return _lastErrorMessage;
+}
+
 
 #endif // #ifndef _WIN32

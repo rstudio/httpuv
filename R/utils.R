@@ -12,3 +12,23 @@ httpuv_version <- local({
     version
   }
 })
+
+
+# Return a zero-element named character vector
+empty_named_vec <- function() {
+  c(a = "")[0]
+}
+
+# Given a vector/list, return TRUE if any elements are unnamed, FALSE otherwise.
+any_unnamed <- function(x) {
+  # Zero-length vector
+  if (length(x) == 0) return(FALSE)
+
+  nms <- names(x)
+
+  # List with no name attribute
+  if (is.null(nms)) return(TRUE)
+
+  # List with name attribute; check for any ""
+  any(!nzchar(nms))
+}

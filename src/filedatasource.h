@@ -11,6 +11,7 @@ class FileDataSource : public DataSource {
   int _fd;
   off_t _length;
 #endif
+  std::string _lastErrorMessage = "";
 
 public:
   FileDataSource() {}
@@ -20,6 +21,7 @@ public:
   uv_buf_t getData(size_t bytesDesired);
   void freeData(uv_buf_t buffer);
   void close();
+  std::string lastErrorMessage() const;
 };
 
 #endif // FILEDATASOURCE_H

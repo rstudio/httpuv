@@ -288,6 +288,18 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
   trace("HttpRequest::_on_headers_complete");
   updateUpgradeStatus();
 
+  // Attempt static serving here
+  if (_pWebApplication->isStaticPath(_url)) {
+    boost::shared_ptr<HttpResponse> pResponse =
+      _pWebApplication->staticFileResponse(shared_from_this(), _url);
+
+    // TODO: Should this be called asynchronously?
+    // Skip over the webapplication code, which calls back into R on the main thread.
+    _on_headers_complete_complete(pResponse);
+    return 0;
+  }
+
+
   boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
     boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, shared_from_this(), _1)
   );

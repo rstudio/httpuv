@@ -239,7 +239,8 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
                             Rcpp::Function onRequest,
                             Rcpp::Function onWSOpen,
                             Rcpp::Function onWSMessage,
-                            Rcpp::Function onWSClose) {
+                            Rcpp::Function onWSClose,
+                            Rcpp::Function getStaticPaths) {
 
   using namespace Rcpp;
   register_main_thread();
@@ -248,7 +249,8 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
   // this should be deleted when it goes out of scope.
   boost::shared_ptr<RWebApplication> pHandler(
     new RWebApplication(onHeaders, onBodyData, onRequest,
-                        onWSOpen, onWSMessage, onWSClose),
+                        onWSOpen, onWSMessage, onWSClose,
+                        getStaticPaths),
     auto_deleter_main<RWebApplication>
   );
 
@@ -292,7 +294,8 @@ Rcpp::RObject makePipeServer(const std::string& name,
                              Rcpp::Function onRequest,
                              Rcpp::Function onWSOpen,
                              Rcpp::Function onWSMessage,
-                             Rcpp::Function onWSClose) {
+                             Rcpp::Function onWSClose,
+                             Rcpp::Function getStaticPaths) {
 
   using namespace Rcpp;
   register_main_thread();
@@ -301,7 +304,8 @@ Rcpp::RObject makePipeServer(const std::string& name,
   // this should be deleted when it goes out of scope.
   boost::shared_ptr<RWebApplication> pHandler(
     new RWebApplication(onHeaders, onBodyData, onRequest,
-                        onWSOpen, onWSMessage, onWSClose),
+                        onWSOpen, onWSMessage, onWSClose,
+                        getStaticPaths),
     auto_deleter_main<RWebApplication>
   );
 

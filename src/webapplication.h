@@ -27,6 +27,11 @@ public:
                            boost::shared_ptr<std::vector<char> > data,
                            boost::function<void(void)> error_callback) = 0;
   virtual void onWSClose(boost::shared_ptr<WebSocketConnection>) = 0;
+  virtual bool isStaticPath(const std::string& url_path) = 0;
+  virtual boost::shared_ptr<HttpResponse> staticFileResponse(
+    boost::shared_ptr<HttpRequest> pRequest,
+    const std::string& url_path
+  ) = 0;
 };
 
 
@@ -38,6 +43,12 @@ private:
   Rcpp::Function _onWSOpen;
   Rcpp::Function _onWSMessage;
   Rcpp::Function _onWSClose;
+  Rcpp::Function _getStaticPaths;
+
+  // TODO: need to be careful with this - it's created and destroyed on the
+  // main thread, but when it is accessed, it is always on the background thread.
+  // Probably need to lock at those times.
+  std::map<std::string, std::string> _staticPaths;
 
 public:
   RWebApplication(Rcpp::Function onHeaders,
@@ -45,11 +56,8 @@ public:
                   Rcpp::Function onRequest,
                   Rcpp::Function onWSOpen,
                   Rcpp::Function onWSMessage,
-                  Rcpp::Function onWSClose) :
-    _onHeaders(onHeaders), _onBodyData(onBodyData), _onRequest(onRequest),
-    _onWSOpen(onWSOpen), _onWSMessage(onWSMessage), _onWSClose(onWSClose) {
-    ASSERT_MAIN_THREAD()
-  }
+                  Rcpp::Function onWSClose,
+                  Rcpp::Function getStaticPaths);
 
   virtual ~RWebApplication() {
     ASSERT_MAIN_THREAD()
@@ -69,6 +77,12 @@ public:
                            boost::shared_ptr<std::vector<char> > data,
                            boost::function<void(void)> error_callback);
   virtual void onWSClose(boost::shared_ptr<WebSocketConnection> conn);
+
+  virtual bool isStaticPath(const std::string& url_path);
+  virtual boost::shared_ptr<HttpResponse> staticFileResponse(
+    boost::shared_ptr<HttpRequest> pRequest,
+    const std::string& url_path
+  );
 };
 
 
