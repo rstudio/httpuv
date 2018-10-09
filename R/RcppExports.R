@@ -9,12 +9,12 @@ closeWS <- function(conn, code, reason) {
     invisible(.Call('_httpuv_closeWS', PACKAGE = 'httpuv', conn, code, reason))
 }
 
-makeTcpServer <- function(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose) {
-    .Call('_httpuv_makeTcpServer', PACKAGE = 'httpuv', host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose)
+makeTcpServer <- function(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose, getStaticPaths) {
+    .Call('_httpuv_makeTcpServer', PACKAGE = 'httpuv', host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose, getStaticPaths)
 }
 
-makePipeServer <- function(name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose) {
-    .Call('_httpuv_makePipeServer', PACKAGE = 'httpuv', name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose)
+makePipeServer <- function(name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose, getStaticPaths) {
+    .Call('_httpuv_makePipeServer', PACKAGE = 'httpuv', name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose, getStaticPaths)
 }
 
 #' Stop a server

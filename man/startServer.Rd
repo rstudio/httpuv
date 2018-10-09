@@ -3,7 +3,6 @@
 \name{startServer}
 \alias{startServer}
 \alias{startPipeServer}
-\alias{startPipeServer}
 \title{Create an HTTP/WebSocket server}
 \usage{
 startServer(host, port, app)
