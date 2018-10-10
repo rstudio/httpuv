@@ -50,6 +50,8 @@ private:
   // Probably need to lock at those times.
   std::map<std::string, std::string> _staticPaths;
 
+  std::pair<std::string, std::string> _matchStaticPath(const std::string& url_path) const;
+
 public:
   RWebApplication(Rcpp::Function onHeaders,
                   Rcpp::Function onBodyData,

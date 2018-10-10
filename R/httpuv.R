@@ -170,7 +170,8 @@ AppWrapper <- setRefClass(
   fields = list(
     .app = 'ANY',
     .wsconns = 'environment',
-    .supportsOnHeaders = 'logical'
+    .supportsOnHeaders = 'logical',
+    .staticPaths = 'character'
   ),
   methods = list(
     initialize = function(app) {
@@ -181,6 +182,22 @@ AppWrapper <- setRefClass(
 
       # .app$onHeaders can error (e.g. if .app is a reference class)
       .supportsOnHeaders <<- isTRUE(try(!is.null(.app$onHeaders), silent=TRUE))
+
+      # staticPaths are saved in a field on this object, because they are read
+      # from the app object only during initialization. This is the only time
+      # it makes sense to read them from the app object, since they're
+      # subsequently used on the background thread, and for performance
+      # reasons it can't call back into R. Note that if the app object is a
+      # reference object and app$staticPaths is changed later, it will have no
+      # effect on the behavior of the application.
+      #
+      # If .app is a reference class, accessing .app$staticPaths can error if
+      # not present.
+      if (class(try(.app$staticPaths, silent = TRUE)) == "try-error") {
+        .staticPaths <<- .normalizeStaticPaths(NULL)
+      } else {
+        .staticPaths <<- .normalizeStaticPaths(.app$staticPaths)
+      }
     },
     onHeaders = function(req) {
       if (!.supportsOnHeaders)
@@ -250,24 +267,17 @@ AppWrapper <- setRefClass(
       }
     },
     getStaticPaths = function() {
-      # This method always returns a named character vector.
-      # .app$staticPaths must be NULL, a named list (of strings), or a named
-      # character vector.
-
-      # If .app is a reference class, accessing .app$staticPaths can error if
-      # not present.
-      if (class(try(.app$staticPaths, silent = TRUE)) == "try-error") {
-        return(empty_named_vec())
-      }
-
-      paths <- .app$staticPaths
+      .staticPaths
+    },
+    .normalizeStaticPaths = function(paths) {
+      # This function always returns a named character vector.
 
       if (is.null(paths) || length(paths) == 0) {
         return(empty_named_vec())
       }
 
       if (any_unnamed(paths)) {
-        stop(".app$staticPaths must be a named character vector, NULL, a or named list (of strings).")
+        stop("staticPaths must be a named character vector, a named list of strings, or NULL.")
       }
 
       # If list, convert to vector.
@@ -275,13 +285,31 @@ AppWrapper <- setRefClass(
         paths <- unlist(paths, recursive = FALSE)
       }
 
-      # Make sure it's a named character vector.
-      if (is.character(paths)) {
-        return(paths)
+      if (!is.character(paths)) {
+        stop("staticPaths must be a named character vector, a named list of strings, or NULL.")
       }
 
-      stop(".app$staticPaths must be a named character vector, NULL, a or named list (of strings).")
+      # If we got here, it is a named character vector.
+
+      # Make sure paths have a leading '/'. Save in a separate var because
+      # we later call normalizePath(), which drops names.
+      path_names <- vapply(names(paths), function(path) {
+        if (path == "") {
+          stop("All paths must be non-empty strings.")
+        }
+        # Ensure there's a leading / for every path
+        if (substr(path, 1, 1) != "/") {
+          path <- paste0("/", path)
+        }
+        path
+      }, "")
+
+      paths <- normalizePath(paths, mustWork = TRUE)
+      names(paths) <- path_names
+
+      paths
     }
+
   )
 )
 

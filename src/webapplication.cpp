@@ -26,6 +26,10 @@ std::map<std::string, std::string> toStringMap(Rcpp::CharacterVector x) {
   for (int i=0; i<x.size(); i++) {
     std::string name  = Rcpp::as<std::string>(names[i]);
     std::string value = Rcpp::as<std::string>(x[i]);
+    if (name == "") {
+      throw Rcpp::exception("Error converting CharacterVector to map<string, string>: element has empty name.");
+    }
+
     strmap.insert(
       std::pair<std::string, std::string>(name, value)
     );
@@ -419,31 +423,48 @@ void RWebApplication::onWSClose(boost::shared_ptr<WebSocketConnection> pConn) {
 // Unlike most of the methods for an RWebApplication, these ones are called on
 // the background thread.
 
-bool RWebApplication::isStaticPath(const std::string& url_path) {
+
+// Returns a pair where the first element is the local directory, and the
+// second element is the filename.
+std::pair<std::string, std::string> RWebApplication::_matchStaticPath(const std::string& url_path) const {
   ASSERT_BACKGROUND_THREAD()
 
-  // Strip off leading '/' if present
-  size_t start_idx = 0;
-  if (url_path.at(0) == '/') {
-    start_idx = 1;
+  std::string path = url_path;
+  size_t last_split_idx = std::string::npos;
+
+  // This loop splits the string on '/', starting with the last one, and then
+  // searches for a match in _staticPaths of the first part. If found, it
+  // returns a pair with the part before the slash, and the part after the
+  // slash. If not found, it splits on the previous '/' and searches again,
+  // and so on, until there are no more to split on.
+  while (true) {
+    // Split the string on '/'
+    size_t found_idx = path.find_last_of('/', last_split_idx);
+
+    if (found_idx <= 0) {
+      return std::pair<std::string, std::string>("", "");
+    }
+
+    std::string pre_slash  = path.substr(0, found_idx);
+    std::string post_slash = path.substr(found_idx + 1);
+  
+    std::map<std::string, std::string>::const_iterator it = _staticPaths.find(pre_slash);
+    if (it != _staticPaths.end()) {
+      // Pair with dirname, filename
+      return std::pair<std::string, std::string>(it->second, post_slash);
+    }
+
+    last_split_idx = found_idx - 1 ;
   }
+}
 
-  // Trim off last part of path
-  size_t found_idx = url_path.find_last_of('/');
 
-  if (found_idx <= 0) {
+bool RWebApplication::isStaticPath(const std::string& url_path) {
+  ASSERT_BACKGROUND_THREAD()
+  if (_matchStaticPath(url_path).first == "")
     return false;
-  }
-
-  std::string dirname  = url_path.substr(start_idx, found_idx - 1);
-  std::string filename = url_path.substr(found_idx + 1);
-
-  std::map<std::string, std::string>::iterator it = _staticPaths.find(dirname);
-  if (it != _staticPaths.end()) {
+  else
     return true;
-  } else {
-    return false;
-  }
 }
 
 
@@ -467,27 +488,9 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
 {
   ASSERT_BACKGROUND_THREAD()
 
-  // Strip off leading '/' if present
-  size_t start_idx = 0;
-  if (url_path.at(0) == '/') {
-    start_idx = 1;
-  }
-
-  // Get dirname and filename from url
-  size_t found_idx = url_path.find_last_of('/');
-  if (found_idx <= 0) {
-    return response_404(pRequest);
-  }
-
-  std::string url_dirname  = url_path.substr(start_idx, found_idx - 1);
-  std::string filename = url_path.substr(found_idx + 1);
-
-  std::string local_dirname = "";
-
-  std::map<std::string, std::string>::iterator it = _staticPaths.find(url_dirname);
-  if (it != _staticPaths.end()) {
-    local_dirname = it->second;
-  }
+  std::pair<std::string, std::string> static_path = _matchStaticPath(url_path);
+  std::string local_dirname = static_path.first;
+  std::string filename      = static_path.second;
 
   if (local_dirname == "") {
     // Typically shouldn't get here, since user should have checked for
@@ -512,5 +515,4 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     new HttpResponse(pRequest, 200, getStatusDescription(200), pDataSource),
     auto_deleter_background<HttpResponse>
   );
-
 }
