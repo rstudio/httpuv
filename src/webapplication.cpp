@@ -469,16 +469,16 @@ bool RWebApplication::isStaticPath(const std::string& url_path) {
 
 
 boost::shared_ptr<HttpResponse> response_404(boost::shared_ptr<HttpRequest> pRequest) {
-    std::string content = "404 file not found";
-    std::vector<uint8_t> responseData(content.begin(), content.end());
+  std::string content = "404 file not found";
+  std::vector<uint8_t> responseData(content.begin(), content.end());
 
-    // Freed in on_response_written
-    DataSource* pDataSource = new InMemoryDataSource(responseData);
+  // Freed in on_response_written
+  DataSource* pDataSource = new InMemoryDataSource(responseData);
 
-    return boost::shared_ptr<HttpResponse>(
-      new HttpResponse(pRequest, 404, getStatusDescription(404), pDataSource),
-      auto_deleter_background<HttpResponse>
-    );
+  return boost::shared_ptr<HttpResponse>(
+    new HttpResponse(pRequest, 404, getStatusDescription(404), pDataSource),
+    auto_deleter_background<HttpResponse>
+  );
 }
 
 
