@@ -293,9 +293,13 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
     boost::shared_ptr<HttpResponse> pResponse =
       _pWebApplication->staticFileResponse(shared_from_this(), _url);
 
-    // TODO: Should this be called asynchronously?
-    // Skip over the webapplication code, which calls back into R on the main thread.
-    _on_headers_complete_complete(pResponse);
+    // Skip over the webapplication code (which calls back into R on the main
+    // thread). Just add a call to _on_headers_complete_complete to the queue
+    // on the background thread.
+    boost::function<void (void)> cb(
+      boost::bind(&HttpRequest::_on_headers_complete_complete, shared_from_this(), pResponse)
+    );
+    _background_queue->push(cb);
     return 0;
   }
 
