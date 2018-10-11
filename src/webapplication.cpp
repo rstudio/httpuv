@@ -468,34 +468,47 @@ bool RWebApplication::isStaticPath(const std::string& url_path) {
 }
 
 
-boost::shared_ptr<HttpResponse> response_404(boost::shared_ptr<HttpRequest> pRequest) {
-  std::string content = "404 file not found";
+boost::shared_ptr<HttpResponse> error_response(boost::shared_ptr<HttpRequest> pRequest, int code) {
+  std::ostringstream ss;
+  std::string description = getStatusDescription(code);
+  ss << code << " " << description << "\n";
+  std::string content = ss.str();
+
   std::vector<uint8_t> responseData(content.begin(), content.end());
 
   // Freed in on_response_written
   DataSource* pDataSource = new InMemoryDataSource(responseData);
 
   return boost::shared_ptr<HttpResponse>(
-    new HttpResponse(pRequest, 404, getStatusDescription(404), pDataSource),
+    new HttpResponse(pRequest, code, description, pDataSource),
     auto_deleter_background<HttpResponse>
   );
 }
 
 
 boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
-  boost::shared_ptr<HttpRequest> pRequest,
-  const std::string& url_path)
-{
+  boost::shared_ptr<HttpRequest> pRequest
+) {
   ASSERT_BACKGROUND_THREAD()
 
-  std::pair<std::string, std::string> static_path = _matchStaticPath(url_path);
+  std::pair<std::string, std::string> static_path = _matchStaticPath(pRequest->url());
   std::string local_dirname = static_path.first;
   std::string filename      = static_path.second;
 
   if (local_dirname == "") {
-    // Typically shouldn't get here, since user should have checked for
-    // existence using isStaticPath().
-    return response_404(pRequest);
+    // This was not a static path.
+    return nullptr;
+  }
+
+  // Check that method is GET or HEAD; error otherwise.
+  std::string method = pRequest->method();
+  if (method != "GET" && method != "HEAD") {
+    return error_response(pRequest, 400);
+  }
+
+  // Make sure that there's no message body.
+  if (pRequest->hasHeader("Content-Length") || pRequest->hasHeader("Transfer-Encoding")) {
+    return error_response(pRequest, 400);
   }
 
   std::string local_path = local_dirname + "/" + filename;
@@ -508,7 +521,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   if (ret != 0) {
     // Couldn't read the file
     delete pDataSource;
-    return response_404(pRequest);
+    return error_response(pRequest, 404);
   }
 
   return boost::shared_ptr<HttpResponse>(

@@ -29,9 +29,7 @@ public:
   virtual void onWSClose(boost::shared_ptr<WebSocketConnection>) = 0;
   virtual bool isStaticPath(const std::string& url_path) = 0;
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
-    boost::shared_ptr<HttpRequest> pRequest,
-    const std::string& url_path
-  ) = 0;
+    boost::shared_ptr<HttpRequest> pRequest) = 0;
 };
 
 
@@ -82,9 +80,7 @@ public:
 
   virtual bool isStaticPath(const std::string& url_path);
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
-    boost::shared_ptr<HttpRequest> pRequest,
-    const std::string& url_path
-  );
+    boost::shared_ptr<HttpRequest> pRequest);
 };
 
 
