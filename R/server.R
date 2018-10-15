@@ -1,10 +1,22 @@
+#' @include httpuv.R
+
 #' @importFrom R6 R6Class
 Server <- R6Class("Server",
   cloneable = FALSE,
   public = list(
     stop = function() {
-      # TODO: what if is already running?
+      if (!private$running) {
+        stop("Server is already stopped.")
+      }
       stopServer_(private$handle)
+      private$running <- FALSE
+      deregisterServer(self)
+    },
+    isRunning = function() {
+      # This doesn't map exactly to whether the app is running, since the
+      # server's uv_loop runs on the background thread. This could be changed
+      # to something that queries the C++ side about what's running.
+      private$running
     },
     getStaticPaths = function() {
       getStaticPaths_(private$handle)
@@ -20,7 +32,8 @@ Server <- R6Class("Server",
   ),
   private = list(
     appWrapper = NULL,
-    handle = NULL
+    handle = NULL,
+    running = FALSE
   )
 )
 
@@ -49,6 +62,12 @@ WebServer <- R6Class("WebServer",
       if (is.null(private$handle)) {
         stop("Failed to create server")
       }
+
+      private$running <- TRUE
+      registerServer(self)
+    },
+    getID = function() {
+      paste0(private$host, ":", private$port)
     }
   ),
   private = list(
@@ -64,7 +83,6 @@ PipeServer <- R6Class("PipeServer",
   inherit = Server,
   public = list(
     initialize = function(name, mask, app) {
-      private$name <- name
       if (is.null(private$mask)) {
         private$mask <- -1
       }
@@ -79,9 +97,16 @@ PipeServer <- R6Class("PipeServer",
         private$appWrapper$onWSMessage,
         private$appWrapper$onWSClose
       )
+
+      # Save the full path. normalizePath must be called after makePipeServer 
+      private$name <- normalizePath(name)
+
       if (is.null(private$handle)) {
         stop("Failed to create server")
       }
+    },
+    getID = function() {
+      private$name
     }
   ),
   private = list(
@@ -109,6 +134,47 @@ stopServer <- function(server) {
   }
   server$stop()
 }
+
+
+#' Stop all servers
+#'
+#' This will stop all applications which were created by
+#' \code{\link{startServer}} or \code{\link{startPipeServer}}.
+#'
+#' @seealso \code{\link{stopServer}} to stop a specific server.
+#'
+#' @export
+stopAllServers <- function() {
+  lapply(.globals$servers, function(server) {
+    server$stop()
+  })
+  invisible()
+}
+
+
+.globals$servers <- list()
+
+#' @export
+listServers <- function() {
+  .globals$servers
+}
+
+registerServer <- function(server) {
+  id <- server$getID()
+  .globals$servers[[id]] <- server
+}
+
+deregisterServer <- function(server) {
+  if (is.character(server)) {
+    id <- server
+  } else {
+    # Assume it's a Server object
+    id <- server$getID()
+  }
+  .globals$servers[[id]] <- NULL
+}
+
+
 
 
 #' Stop a running daemonized server in Unix environments (deprecated)

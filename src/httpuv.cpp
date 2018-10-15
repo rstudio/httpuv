@@ -374,32 +374,6 @@ void stopServer_(std::string handle) {
   stopServer_(pServer);
 }
 
-//' Stop all applications
-//'
-//' This will stop all applications which were created by
-//' \code{\link{startServer}} or \code{\link{startPipeServer}}.
-//'
-//' @seealso \code{\link{stopServer}} to stop a specific server.
-//'
-//' @export
-// [[Rcpp::export]]
-void stopAllServers() {
-  ASSERT_MAIN_THREAD()
-
-  if (!io_thread_running.get())
-    return;
-
-  // Each call to stopServer also removes it from the pServers list.
-  while (pServers.size() > 0) {
-    stopServer_(pServers[0]);
-  }
-
-  uv_async_send(&async_stop_io_loop);
-
-  trace("io_thread stopped");
-  uv_thread_join(&io_thread_id);
-}
-
 void stop_loop_timer_cb(uv_timer_t* handle) {
   uv_stop(handle->loop);
 }

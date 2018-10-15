@@ -21,18 +21,6 @@ stopServer_ <- function(handle) {
     invisible(.Call('_httpuv_stopServer_', PACKAGE = 'httpuv', handle))
 }
 
-#' Stop all applications
-#'
-#' This will stop all applications which were created by
-#' \code{\link{startServer}} or \code{\link{startPipeServer}}.
-#'
-#' @seealso \code{\link{stopServer}} to stop a specific server.
-#'
-#' @export
-stopAllServers <- function() {
-    invisible(.Call('_httpuv_stopAllServers', PACKAGE = 'httpuv'))
-}
-
 #' @export
 getStaticPaths_ <- function(handle) {
     .Call('_httpuv_getStaticPaths_', PACKAGE = 'httpuv', handle)

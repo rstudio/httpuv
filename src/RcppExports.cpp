@@ -77,15 +77,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// stopAllServers
-void stopAllServers();
-RcppExport SEXP _httpuv_stopAllServers() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    stopAllServers();
-    return R_NilValue;
-END_RCPP
-}
 // getStaticPaths_
 Rcpp::CharacterVector getStaticPaths_(std::string handle);
 RcppExport SEXP _httpuv_getStaticPaths_(SEXP handleSEXP) {
@@ -227,7 +218,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_makeTcpServer", (DL_FUNC) &_httpuv_makeTcpServer, 9},
     {"_httpuv_makePipeServer", (DL_FUNC) &_httpuv_makePipeServer, 9},
     {"_httpuv_stopServer_", (DL_FUNC) &_httpuv_stopServer_, 1},
-    {"_httpuv_stopAllServers", (DL_FUNC) &_httpuv_stopAllServers, 0},
     {"_httpuv_getStaticPaths_", (DL_FUNC) &_httpuv_getStaticPaths_, 1},
     {"_httpuv_addStaticPaths_", (DL_FUNC) &_httpuv_addStaticPaths_, 2},
     {"_httpuv_removeStaticPaths_", (DL_FUNC) &_httpuv_removeStaticPaths_, 2},

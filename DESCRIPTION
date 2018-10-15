@@ -33,6 +33,6 @@ Suggests:
     callr
 Collate:
     'RcppExports.R'
-    'server.R'
     'httpuv.R'
+    'server.R'
     'utils.R'
