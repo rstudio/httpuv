@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <string>
 #include <vector>
+#include <Rcpp.h>
 #include "thread.h"
 
 // A callback for deleting objects on the main thread using later(). This is
@@ -77,5 +78,9 @@ inline std::string to_lower(const std::string& str) {
   std::transform(lowered.begin(), lowered.end(), lowered.begin(), tolower);
   return lowered;
 }
+
+// Convert between map<string, string> and CharacterVector
+std::map<std::string, std::string> toStringMap(Rcpp::CharacterVector x);
+Rcpp::CharacterVector toCharacterVector(const std::map<std::string, std::string>& strmap);
 
 #endif

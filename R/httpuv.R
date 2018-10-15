@@ -194,9 +194,9 @@ AppWrapper <- setRefClass(
       # If .app is a reference class, accessing .app$staticPaths can error if
       # not present.
       if (class(try(.app$staticPaths, silent = TRUE)) == "try-error") {
-        .staticPaths <<- .normalizeStaticPaths(NULL)
+        .staticPaths <<- normalizeStaticPaths(NULL)
       } else {
-        .staticPaths <<- .normalizeStaticPaths(.app$staticPaths)
+        .staticPaths <<- normalizeStaticPaths(.app$staticPaths)
       }
     },
     onHeaders = function(req) {
@@ -268,48 +268,7 @@ AppWrapper <- setRefClass(
     },
     getStaticPaths = function() {
       .staticPaths
-    },
-    .normalizeStaticPaths = function(paths) {
-      # This function always returns a named character vector.
-
-      if (is.null(paths) || length(paths) == 0) {
-        return(empty_named_vec())
-      }
-
-      if (any_unnamed(paths)) {
-        stop("staticPaths must be a named character vector, a named list of strings, or NULL.")
-      }
-
-      # If list, convert to vector.
-      if (is.list(paths)) {
-        paths <- unlist(paths, recursive = FALSE)
-      }
-
-      if (!is.character(paths)) {
-        stop("staticPaths must be a named character vector, a named list of strings, or NULL.")
-      }
-
-      # If we got here, it is a named character vector.
-
-      # Make sure paths have a leading '/'. Save in a separate var because
-      # we later call normalizePath(), which drops names.
-      path_names <- vapply(names(paths), function(path) {
-        if (path == "") {
-          stop("All paths must be non-empty strings.")
-        }
-        # Ensure there's a leading / for every path
-        if (substr(path, 1, 1) != "/") {
-          path <- paste0("/", path)
-        }
-        path
-      }, "")
-
-      paths <- normalizePath(paths, mustWork = TRUE)
-      names(paths) <- path_names
-
-      paths
     }
-
   )
 )
 
@@ -696,6 +655,20 @@ startDaemonizedServer <- startServer
 #'
 #' @export
 stopDaemonizedServer <- stopServer
+
+
+
+#' @export
+addStaticPaths <- function(handle, paths) {
+  paths <- normalizeStaticPaths(paths)
+  invisible(addStaticPaths_(handle, paths))
+}
+
+#' @export
+removeStaticPaths <- function(handle, paths) {
+  paths <- as.character(paths)
+  invisible(removeStaticPaths_(handle, paths))
+}
 
 
 # Needed so that Rcpp registers the 'httpuv_decodeURIComponent' symbol

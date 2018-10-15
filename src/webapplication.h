@@ -30,6 +30,12 @@ public:
   virtual bool isStaticPath(const std::string& url_path) = 0;
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
     boost::shared_ptr<HttpRequest> pRequest) = 0;
+  // Get current set of static paths.
+  virtual std::map<std::string, std::string> getStaticPaths() const = 0;
+  virtual std::map<std::string, std::string> addStaticPaths(
+    const std::map<std::string, std::string>& paths) = 0;
+  virtual std::map<std::string, std::string> removeStaticPaths(
+    const std::vector<std::string>& paths) = 0;
 };
 
 
@@ -41,6 +47,8 @@ private:
   Rcpp::Function _onWSOpen;
   Rcpp::Function _onWSMessage;
   Rcpp::Function _onWSClose;
+  // Note this is different from the public getStaticPaths function - this is
+  // the R function passed in that is used for initialization only.
   Rcpp::Function _getStaticPaths;
 
   // TODO: need to be careful with this - it's created and destroyed on the
@@ -81,6 +89,11 @@ public:
   virtual bool isStaticPath(const std::string& url_path);
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
     boost::shared_ptr<HttpRequest> pRequest);
+  virtual std::map<std::string, std::string> getStaticPaths() const;
+  virtual std::map<std::string, std::string> addStaticPaths(
+    const std::map<std::string, std::string>& paths);
+  virtual std::map<std::string, std::string> removeStaticPaths(
+    const std::vector<std::string>& paths);
 };
 
 

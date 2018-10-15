@@ -32,3 +32,45 @@ any_unnamed <- function(x) {
   # List with name attribute; check for any ""
   any(!nzchar(nms))
 }
+
+
+# This function always returns a named character vector of path mappings. The
+# names will all start with "/".
+normalizeStaticPaths <- function(paths) {
+  if (is.null(paths) || length(paths) == 0) {
+    return(empty_named_vec())
+  }
+
+  if (any_unnamed(paths)) {
+    stop("paths must be a named character vector, a named list of strings, or NULL.")
+  }
+
+  # If list, convert to vector.
+  if (is.list(paths)) {
+    paths <- unlist(paths, recursive = FALSE)
+  }
+
+  if (!is.character(paths)) {
+    stop("paths must be a named character vector, a named list of strings, or NULL.")
+  }
+
+  # If we got here, it is a named character vector.
+
+  # Make sure paths have a leading '/'. Save in a separate var because
+  # we later call normalizePath(), which drops names.
+  path_names <- vapply(names(paths), function(path) {
+    if (path == "") {
+      stop("All paths must be non-empty strings.")
+    }
+    # Ensure there's a leading / for every path
+    if (substr(path, 1, 1) != "/") {
+      path <- paste0("/", path)
+    }
+    path
+  }, "")
+
+  paths <- normalizePath(paths, mustWork = TRUE)
+  names(paths) <- path_names
+
+  paths
+}

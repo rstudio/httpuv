@@ -8,36 +8,6 @@
 #include "utils.h"
 #include <Rinternals.h>
 
-std::map<std::string, std::string> toStringMap(Rcpp::CharacterVector x) {
-  ASSERT_MAIN_THREAD()
-
-  std::map<std::string, std::string> strmap;
-
-  if (x.size() == 0) {
-    return strmap;
-  }
-
-  Rcpp::CharacterVector names = x.names();
-  if (names.isNULL()) {
-    throw Rcpp::exception("Error converting CharacterVector to map<string, string>: vector does not have names.");
-  }
-
-
-  for (int i=0; i<x.size(); i++) {
-    std::string name  = Rcpp::as<std::string>(names[i]);
-    std::string value = Rcpp::as<std::string>(x[i]);
-    if (name == "") {
-      throw Rcpp::exception("Error converting CharacterVector to map<string, string>: element has empty name.");
-    }
-
-    strmap.insert(
-      std::pair<std::string, std::string>(name, value)
-    );
-  }
-
-  return strmap;
-}
-
 std::string normalizeHeaderName(const std::string& name) {
   std::string result = name;
   for (std::string::iterator it = result.begin();
@@ -529,3 +499,39 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     auto_deleter_background<HttpResponse>
   );
 }
+
+
+std::map<std::string, std::string> RWebApplication::getStaticPaths() const {
+  // TODO: always lock staticPaths
+  return _staticPaths;
+};
+
+std::map<std::string, std::string> RWebApplication::addStaticPaths(
+  const std::map<std::string, std::string>& paths
+) {
+
+  std::map<std::string, std::string>::const_iterator it;
+  for (it = paths.begin(); it != paths.end(); it++) {
+    _staticPaths[it->first] = it->second;
+  }
+
+  return _staticPaths;
+};
+
+std::map<std::string, std::string> RWebApplication::removeStaticPaths(
+  const std::vector<std::string>& paths
+) {
+
+  std::vector<std::string>::const_iterator path_it = paths.begin();
+
+  for (path_it = paths.begin(); path_it != paths.end(); path_it++) {
+    std::map<std::string, std::string>::const_iterator static_paths_it = _staticPaths.find(*path_it);
+    if (static_paths_it == _staticPaths.end()) {
+      err_printf("Tried to remove static path, but it wasn't present: %s\n", path_it->c_str());
+    } else {
+      _staticPaths.erase(static_paths_it);
+    }
+  }
+
+  return _staticPaths;
+};

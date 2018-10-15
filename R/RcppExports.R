@@ -45,6 +45,19 @@ stopAllServers <- function() {
     invisible(.Call('_httpuv_stopAllServers', PACKAGE = 'httpuv'))
 }
 
+#' @export
+getStaticPaths <- function(handle) {
+    .Call('_httpuv_getStaticPaths', PACKAGE = 'httpuv', handle)
+}
+
+addStaticPaths_ <- function(handle, paths) {
+    .Call('_httpuv_addStaticPaths_', PACKAGE = 'httpuv', handle, paths)
+}
+
+removeStaticPaths_ <- function(handle, paths) {
+    .Call('_httpuv_removeStaticPaths_', PACKAGE = 'httpuv', handle, paths)
+}
+
 base64encode <- function(x) {
     .Call('_httpuv_base64encode', PACKAGE = 'httpuv', x)
 }

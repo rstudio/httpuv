@@ -86,6 +86,41 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// getStaticPaths
+Rcpp::CharacterVector getStaticPaths(std::string handle);
+RcppExport SEXP _httpuv_getStaticPaths(SEXP handleSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP);
+    rcpp_result_gen = Rcpp::wrap(getStaticPaths(handle));
+    return rcpp_result_gen;
+END_RCPP
+}
+// addStaticPaths_
+Rcpp::CharacterVector addStaticPaths_(std::string handle, Rcpp::CharacterVector paths);
+RcppExport SEXP _httpuv_addStaticPaths_(SEXP handleSEXP, SEXP pathsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type paths(pathsSEXP);
+    rcpp_result_gen = Rcpp::wrap(addStaticPaths_(handle, paths));
+    return rcpp_result_gen;
+END_RCPP
+}
+// removeStaticPaths_
+Rcpp::CharacterVector removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths);
+RcppExport SEXP _httpuv_removeStaticPaths_(SEXP handleSEXP, SEXP pathsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type paths(pathsSEXP);
+    rcpp_result_gen = Rcpp::wrap(removeStaticPaths_(handle, paths));
+    return rcpp_result_gen;
+END_RCPP
+}
 // base64encode
 std::string base64encode(const Rcpp::RawVector& x);
 RcppExport SEXP _httpuv_base64encode(SEXP xSEXP) {
@@ -193,6 +228,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_makePipeServer", (DL_FUNC) &_httpuv_makePipeServer, 9},
     {"_httpuv_stopServer", (DL_FUNC) &_httpuv_stopServer, 1},
     {"_httpuv_stopAllServers", (DL_FUNC) &_httpuv_stopAllServers, 0},
+    {"_httpuv_getStaticPaths", (DL_FUNC) &_httpuv_getStaticPaths, 1},
+    {"_httpuv_addStaticPaths_", (DL_FUNC) &_httpuv_addStaticPaths_, 2},
+    {"_httpuv_removeStaticPaths_", (DL_FUNC) &_httpuv_removeStaticPaths_, 2},
     {"_httpuv_base64encode", (DL_FUNC) &_httpuv_base64encode, 1},
     {"_httpuv_encodeURI", (DL_FUNC) &_httpuv_encodeURI, 1},
     {"_httpuv_encodeURIComponent", (DL_FUNC) &_httpuv_encodeURIComponent, 1},

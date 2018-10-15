@@ -17,6 +17,7 @@
 #include "thread.h"
 #include "httpuv.h"
 #include "auto_deleter.h"
+#include "socket.h"
 #include <Rinternals.h>
 
 
@@ -232,6 +233,10 @@ void closeWS(SEXP conn,
 }
 
 
+// ============================================================================
+// Create/stop servers
+// ============================================================================
+
 // [[Rcpp::export]]
 Rcpp::RObject makeTcpServer(const std::string& host, int port,
                             Rcpp::Function onHeaders,
@@ -409,6 +414,46 @@ void stopAllServers() {
 
 void stop_loop_timer_cb(uv_timer_t* handle) {
   uv_stop(handle->loop);
+}
+
+
+// ============================================================================
+// Static file serving
+// ============================================================================
+
+boost::shared_ptr<WebApplication> get_pWebApplication(uv_stream_t* pServer) {
+  // Copy the Socket shared_ptr
+  boost::shared_ptr<Socket> pSocket(*(boost::shared_ptr<Socket>*)pServer->data);
+  return pSocket->pWebApplication;
+}
+
+boost::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
+  uv_stream_t* pServer = internalize_str<uv_stream_t>(handle);
+  return get_pWebApplication(pServer);
+}
+
+//' @export
+// [[Rcpp::export]]
+Rcpp::CharacterVector getStaticPaths(std::string handle) {
+  ASSERT_MAIN_THREAD()
+  std::map<std::string, std::string> paths = get_pWebApplication(handle)->getStaticPaths();
+  return toCharacterVector(paths);
+}
+
+// [[Rcpp::export]]
+Rcpp::CharacterVector addStaticPaths_(std::string handle, Rcpp::CharacterVector paths) {
+  ASSERT_MAIN_THREAD()
+  std::map<std::string, std::string> new_paths = toStringMap(paths);
+  std::map<std::string, std::string> all_paths = get_pWebApplication(handle)->addStaticPaths(new_paths);
+  return toCharacterVector(all_paths);
+}
+
+// [[Rcpp::export]]
+Rcpp::CharacterVector removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths) {
+  ASSERT_MAIN_THREAD()
+  std::vector<std::string> rm_paths = Rcpp::as<std::vector<std::string>>(paths);
+  std::map<std::string, std::string> all_paths = get_pWebApplication(handle)->removeStaticPaths(rm_paths);
+  return toCharacterVector(all_paths);
 }
 
 
