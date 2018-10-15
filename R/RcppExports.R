@@ -17,20 +17,8 @@ makePipeServer <- function(name, mask, onHeaders, onBodyData, onRequest, onWSOpe
     .Call('_httpuv_makePipeServer', PACKAGE = 'httpuv', name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose, getStaticPaths)
 }
 
-#' Stop a server
-#' 
-#' Given a handle that was returned from a previous invocation of 
-#' \code{\link{startServer}} or \code{\link{startPipeServer}}, this closes all
-#' open connections for that server and  unbinds the port.
-#' 
-#' @param handle A handle that was previously returned from
-#'   \code{\link{startServer}} or \code{\link{startPipeServer}}.
-#'
-#' @seealso \code{\link{stopAllServers}} to stop all servers.
-#'
-#' @export
-stopServer <- function(handle) {
-    invisible(.Call('_httpuv_stopServer', PACKAGE = 'httpuv', handle))
+stopServer_ <- function(handle) {
+    invisible(.Call('_httpuv_stopServer_', PACKAGE = 'httpuv', handle))
 }
 
 #' Stop all applications
@@ -46,8 +34,8 @@ stopAllServers <- function() {
 }
 
 #' @export
-getStaticPaths <- function(handle) {
-    .Call('_httpuv_getStaticPaths', PACKAGE = 'httpuv', handle)
+getStaticPaths_ <- function(handle) {
+    .Call('_httpuv_getStaticPaths_', PACKAGE = 'httpuv', handle)
 }
 
 addStaticPaths_ <- function(handle, paths) {

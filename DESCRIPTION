@@ -21,6 +21,7 @@ Depends:
 Imports:
     Rcpp (>= 0.11.0),
     utils,
+    R6,
     promises,
     later (>= 0.7.3)
 LinkingTo: Rcpp, BH, later
@@ -30,3 +31,8 @@ RoxygenNote: 6.1.0.9000
 Suggests:
     testthat,
     callr
+Collate:
+    'RcppExports.R'
+    'server.R'
+    'httpuv.R'
+    'utils.R'

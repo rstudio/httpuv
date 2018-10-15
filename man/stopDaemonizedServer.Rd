@@ -4,11 +4,7 @@
 \alias{stopDaemonizedServer}
 \title{Stop a running daemonized server in Unix environments (deprecated)}
 \usage{
-stopDaemonizedServer(handle)
-}
-\arguments{
-\item{handle}{A handle that was previously returned from
-\code{\link{startServer}} or \code{\link{startPipeServer}}.}
+stopDaemonizedServer(server)
 }
 \description{
 This function will be removed in a future release of httpuv. Instead, use

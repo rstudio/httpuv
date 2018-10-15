@@ -67,13 +67,13 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// stopServer
-void stopServer(std::string handle);
-RcppExport SEXP _httpuv_stopServer(SEXP handleSEXP) {
+// stopServer_
+void stopServer_(std::string handle);
+RcppExport SEXP _httpuv_stopServer_(SEXP handleSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP);
-    stopServer(handle);
+    stopServer_(handle);
     return R_NilValue;
 END_RCPP
 }
@@ -86,14 +86,14 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// getStaticPaths
-Rcpp::CharacterVector getStaticPaths(std::string handle);
-RcppExport SEXP _httpuv_getStaticPaths(SEXP handleSEXP) {
+// getStaticPaths_
+Rcpp::CharacterVector getStaticPaths_(std::string handle);
+RcppExport SEXP _httpuv_getStaticPaths_(SEXP handleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP);
-    rcpp_result_gen = Rcpp::wrap(getStaticPaths(handle));
+    rcpp_result_gen = Rcpp::wrap(getStaticPaths_(handle));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -226,9 +226,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_closeWS", (DL_FUNC) &_httpuv_closeWS, 3},
     {"_httpuv_makeTcpServer", (DL_FUNC) &_httpuv_makeTcpServer, 9},
     {"_httpuv_makePipeServer", (DL_FUNC) &_httpuv_makePipeServer, 9},
-    {"_httpuv_stopServer", (DL_FUNC) &_httpuv_stopServer, 1},
+    {"_httpuv_stopServer_", (DL_FUNC) &_httpuv_stopServer_, 1},
     {"_httpuv_stopAllServers", (DL_FUNC) &_httpuv_stopAllServers, 0},
-    {"_httpuv_getStaticPaths", (DL_FUNC) &_httpuv_getStaticPaths, 1},
+    {"_httpuv_getStaticPaths_", (DL_FUNC) &_httpuv_getStaticPaths_, 1},
     {"_httpuv_addStaticPaths_", (DL_FUNC) &_httpuv_addStaticPaths_, 2},
     {"_httpuv_removeStaticPaths_", (DL_FUNC) &_httpuv_removeStaticPaths_, 2},
     {"_httpuv_base64encode", (DL_FUNC) &_httpuv_base64encode, 1},

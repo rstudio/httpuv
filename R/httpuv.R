@@ -451,23 +451,7 @@ WebSocket <- setRefClass(
 #' }
 #' @export
 startServer <- function(host, port, app) {
-  
-  appWrapper <- AppWrapper$new(app)
-  server <- makeTcpServer(
-    host, port,
-    appWrapper$onHeaders,
-    appWrapper$onBodyData,
-    appWrapper$call,
-    appWrapper$onWSOpen,
-    appWrapper$onWSMessage,
-    appWrapper$onWSClose,
-    appWrapper$getStaticPaths
-  )
-
-  if (is.null(server)) {
-    stop("Failed to create server")
-  }
-  return(server)
+  WebServer$new(host, port, app)
 }
 
 #' @param name A string that indicates the path for the domain socket (on 
@@ -481,21 +465,7 @@ startServer <- function(host, port, app) {
 #' @rdname startServer
 #' @export
 startPipeServer <- function(name, mask, app) {
-  
-  appWrapper <- AppWrapper$new(app)
-  if (is.null(mask))
-    mask <- -1
-  server <- makePipeServer(name, mask,
-                           appWrapper$onHeaders,
-                           appWrapper$onBodyData,
-                           appWrapper$call,
-                           appWrapper$onWSOpen,
-                           appWrapper$onWSMessage,
-                           appWrapper$onWSClose)
-  if (is.null(server)) {
-    stop("Failed to create server")
-  }
-  return(server)
+  PipeServer$new(name, mask, app)
 }
 
 #' Process requests
@@ -645,30 +615,6 @@ rawToBase64 <- function(x) {
 #' @inheritParams startServer
 #' @export
 startDaemonizedServer <- startServer
-
-#' Stop a running daemonized server in Unix environments (deprecated)
-#'
-#' This function will be removed in a future release of httpuv. Instead, use
-#' \code{\link{stopServer}}.
-#'
-#' @inheritParams stopServer
-#'
-#' @export
-stopDaemonizedServer <- stopServer
-
-
-
-#' @export
-addStaticPaths <- function(handle, paths) {
-  paths <- normalizeStaticPaths(paths)
-  invisible(addStaticPaths_(handle, paths))
-}
-
-#' @export
-removeStaticPaths <- function(handle, paths) {
-  paths <- as.character(paths)
-  invisible(removeStaticPaths_(handle, paths))
-}
 
 
 # Needed so that Rcpp registers the 'httpuv_decodeURIComponent' symbol

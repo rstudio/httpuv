@@ -347,7 +347,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
 }
 
 
-void stopServer(uv_stream_t* pServer) {
+void stopServer_(uv_stream_t* pServer) {
   ASSERT_MAIN_THREAD()
 
   // Remove it from the list of running servers.
@@ -367,23 +367,11 @@ void stopServer(uv_stream_t* pServer) {
   );
 }
 
-//' Stop a server
-//' 
-//' Given a handle that was returned from a previous invocation of 
-//' \code{\link{startServer}} or \code{\link{startPipeServer}}, this closes all
-//' open connections for that server and  unbinds the port.
-//' 
-//' @param handle A handle that was previously returned from
-//'   \code{\link{startServer}} or \code{\link{startPipeServer}}.
-//'
-//' @seealso \code{\link{stopAllServers}} to stop all servers.
-//'
-//' @export
 // [[Rcpp::export]]
-void stopServer(std::string handle) {
+void stopServer_(std::string handle) {
   ASSERT_MAIN_THREAD()
   uv_stream_t* pServer = internalize_str<uv_stream_t>(handle);
-  stopServer(pServer);
+  stopServer_(pServer);
 }
 
 //' Stop all applications
@@ -403,7 +391,7 @@ void stopAllServers() {
 
   // Each call to stopServer also removes it from the pServers list.
   while (pServers.size() > 0) {
-    stopServer(pServers[0]);
+    stopServer_(pServers[0]);
   }
 
   uv_async_send(&async_stop_io_loop);
@@ -434,7 +422,7 @@ boost::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
 
 //' @export
 // [[Rcpp::export]]
-Rcpp::CharacterVector getStaticPaths(std::string handle) {
+Rcpp::CharacterVector getStaticPaths_(std::string handle) {
   ASSERT_MAIN_THREAD()
   std::map<std::string, std::string> paths = get_pWebApplication(handle)->getStaticPaths();
   return toCharacterVector(paths);
