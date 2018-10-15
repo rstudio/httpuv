@@ -439,10 +439,8 @@ bool RWebApplication::isStaticPath(const std::string& url_path) {
 
 
 boost::shared_ptr<HttpResponse> error_response(boost::shared_ptr<HttpRequest> pRequest, int code) {
-  std::ostringstream ss;
   std::string description = getStatusDescription(code);
-  ss << code << " " << description << "\n";
-  std::string content = ss.str();
+  std::string content = toString(code) + " " + description + "\n";
 
   std::vector<uint8_t> responseData(content.begin(), content.end());
 

@@ -24,17 +24,13 @@ int FileDataSource::initialize(const std::string& path, bool owned) {
                       NULL);
 
   if (_hFile == INVALID_HANDLE_VALUE) {
-    std::ostringstream ss;
-    ss << "Error opening file: " << GetLastError() << "\n";
-    _lastErrorMessage = ss.str();
+    _lastErrorMessage = "Error opening file: " + toString(GetLastError()) + "\n";
     return 1;
   }
 
   if (!GetFileSizeEx(_hFile, &_length)) {
     CloseHandle(_hFile);
-    std::ostringstream ss;
-    ss << "Error retrieving file size: " << GetLastError() << "\n";
-    _lastErrorMessage = ss.str();
+    _lastErrorMessage = "Error retrieving file size: " + toString(GetLastError()) + "\n";
     return 1;
   }
 

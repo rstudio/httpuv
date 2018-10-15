@@ -79,6 +79,13 @@ inline std::string to_lower(const std::string& str) {
   return lowered;
 }
 
+template <typename T>
+std::string toString(T x) {
+  std::stringstream ss;
+  ss << x;
+  return ss.str();
+}
+
 // Convert between map<string, string> and CharacterVector
 std::map<std::string, std::string> toStringMap(Rcpp::CharacterVector x);
 Rcpp::CharacterVector toCharacterVector(const std::map<std::string, std::string>& strmap);

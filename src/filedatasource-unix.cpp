@@ -11,17 +11,13 @@ int FileDataSource::initialize(const std::string& path, bool owned) {
 
   _fd = open(path.c_str(), O_RDONLY);
   if (_fd == -1) {
-    std::ostringstream ss;
-    ss << "Error opening file: " << errno << "\n";
-    _lastErrorMessage = ss.str();
+    _lastErrorMessage = "Error opening file: " + toString(errno) + "\n";
     return 1;
   }
   else {
     struct stat info = {0};
     if (fstat(_fd, &info)) {
-      std::ostringstream ss;
-      ss << "Error opening path: " << errno << "\n";
-      _lastErrorMessage = ss.str();
+      _lastErrorMessage = "Error opening path: " + toString(errno) + "\n";
       ::close(_fd);
       return 1;
     }
