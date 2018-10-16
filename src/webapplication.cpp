@@ -492,10 +492,29 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     return error_response(pRequest, 404);
   }
 
-  return boost::shared_ptr<HttpResponse>(
+  int file_size = pDataSource->size();
+
+  if (method == "HEAD") {
+    // For HEAD requests, we created the FileDataSource to get the size and
+    // validate that the file exists, but don't actually send the file's data.
+    delete pDataSource;
+    pDataSource = NULL;
+  }
+
+  boost::shared_ptr<HttpResponse> pResponse(
     new HttpResponse(pRequest, 200, getStatusDescription(200), pDataSource),
     auto_deleter_background<HttpResponse>
   );
+
+  // Set the Content-Length here so that both GET and HEAD requests will get
+  // it. If we didn't set it here, the response for the GET would
+  // automatically set the Content-Length (by using the FileDataSource), but
+  // the response for the HEAD would not.
+  pResponse->headers().push_back(
+    std::make_pair("Content-Length", toString(file_size))
+  );
+
+  return pResponse;
 }
 
 
