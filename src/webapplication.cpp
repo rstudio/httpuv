@@ -6,6 +6,7 @@
 #include "http.h"
 #include "thread.h"
 #include "utils.h"
+#include "mime.h"
 #include <Rinternals.h>
 
 std::string normalizeHeaderName(const std::string& name) {
@@ -493,6 +494,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   }
 
   int file_size = pDataSource->size();
+  std::string mime_type = find_mime_type(find_extension(filename));
 
   if (method == "HEAD") {
     // For HEAD requests, we created the FileDataSource to get the size and
@@ -506,13 +508,15 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     auto_deleter_background<HttpResponse>
   );
 
+  ResponseHeaders& respHeaders = pResponse->headers();
   // Set the Content-Length here so that both GET and HEAD requests will get
   // it. If we didn't set it here, the response for the GET would
   // automatically set the Content-Length (by using the FileDataSource), but
   // the response for the HEAD would not.
-  pResponse->headers().push_back(
-    std::make_pair("Content-Length", toString(file_size))
-  );
+  respHeaders.push_back(std::make_pair("Content-Length", toString(file_size)));
+  if (mime_type != "") {
+    respHeaders.push_back(std::make_pair("Content-Type", mime_type));
+  }
 
   return pResponse;
 }
