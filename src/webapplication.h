@@ -27,7 +27,6 @@ public:
                            boost::shared_ptr<std::vector<char> > data,
                            boost::function<void(void)> error_callback) = 0;
   virtual void onWSClose(boost::shared_ptr<WebSocketConnection>) = 0;
-  virtual bool isStaticPath(const std::string& url_path) = 0;
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
     boost::shared_ptr<HttpRequest> pRequest) = 0;
   // Get current set of static paths.
@@ -86,7 +85,6 @@ public:
                            boost::function<void(void)> error_callback);
   virtual void onWSClose(boost::shared_ptr<WebSocketConnection> conn);
 
-  virtual bool isStaticPath(const std::string& url_path);
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
     boost::shared_ptr<HttpRequest> pRequest);
   virtual std::map<std::string, std::string> getStaticPaths() const;

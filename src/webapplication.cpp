@@ -430,15 +430,6 @@ std::pair<std::string, std::string> RWebApplication::_matchStaticPath(const std:
 }
 
 
-bool RWebApplication::isStaticPath(const std::string& url_path) {
-  ASSERT_BACKGROUND_THREAD()
-  if (_matchStaticPath(url_path).first == "")
-    return false;
-  else
-    return true;
-}
-
-
 boost::shared_ptr<HttpResponse> error_response(boost::shared_ptr<HttpRequest> pRequest, int code) {
   std::string description = getStatusDescription(code);
   std::string content = toString(code) + " " + description + "\n";
