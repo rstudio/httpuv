@@ -7,4 +7,7 @@
 
 void invokeCppCallback(Rcpp::List data, SEXP callback_xptr);
 
+std::string doEncodeURI(std::string value, bool encodeReserved);
+std::string doDecodeURI(std::string value, bool component);
+
 #endif

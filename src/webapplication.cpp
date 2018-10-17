@@ -451,7 +451,8 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
 ) {
   ASSERT_BACKGROUND_THREAD()
 
-  std::pair<std::string, std::string> static_path = _matchStaticPath(pRequest->url());
+  std::string url_path = doDecodeURI(pRequest->url(), true);
+  std::pair<std::string, std::string> static_path = _matchStaticPath(url_path);
   std::string local_dirname = static_path.first;
   std::string filename      = static_path.second;
 
