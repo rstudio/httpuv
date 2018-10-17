@@ -487,6 +487,9 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
 
   int file_size = pDataSource->size();
   std::string mime_type = find_mime_type(find_extension(filename));
+  if (mime_type == "") {
+    mime_type = "application/octet-stream";
+  }
 
   if (method == "HEAD") {
     // For HEAD requests, we created the FileDataSource to get the size and
@@ -506,9 +509,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   // automatically set the Content-Length (by using the FileDataSource), but
   // the response for the HEAD would not.
   respHeaders.push_back(std::make_pair("Content-Length", toString(file_size)));
-  if (mime_type != "") {
-    respHeaders.push_back(std::make_pair("Content-Type", mime_type));
-  }
+  respHeaders.push_back(std::make_pair("Content-Type", mime_type));
 
   return pResponse;
 }
