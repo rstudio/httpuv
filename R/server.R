@@ -11,6 +11,7 @@ Server <- R6Class("Server",
       stopServer_(private$handle)
       private$running <- FALSE
       deregisterServer(self)
+      invisible()
     },
     isRunning = function() {
       # This doesn't map exactly to whether the app is running, since the
@@ -65,9 +66,6 @@ WebServer <- R6Class("WebServer",
 
       private$running <- TRUE
       registerServer(self)
-    },
-    getID = function() {
-      paste0(private$host, ":", private$port)
     }
   ),
   private = list(
@@ -104,9 +102,6 @@ PipeServer <- R6Class("PipeServer",
       if (is.null(private$handle)) {
         stop("Failed to create server")
       }
-    },
-    getID = function() {
-      private$name
     }
   ),
   private = list(
@@ -160,18 +155,18 @@ listServers <- function() {
 }
 
 registerServer <- function(server) {
-  id <- server$getID()
-  .globals$servers[[id]] <- server
+  .globals$servers[[length(.globals$servers) + 1]] <- server
 }
 
 deregisterServer <- function(server) {
-  if (is.character(server)) {
-    id <- server
-  } else {
-    # Assume it's a Server object
-    id <- server$getID()
+  for (i in seq_along(.globals$servers)) {
+    if (identical(server, .globals$servers[[i]])) {
+      .globals$servers[[i]] <- NULL
+      return()
+    }
   }
-  .globals$servers[[id]] <- NULL
+
+  warning("Unable to deregister server: server not found in list of running servers.")
 }
 
 
