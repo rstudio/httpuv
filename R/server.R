@@ -39,7 +39,6 @@ Server <- R6Class("Server",
 )
 
 
-#' @export
 WebServer <- R6Class("WebServer",
   cloneable = FALSE,
   inherit = Server,
@@ -75,7 +74,6 @@ WebServer <- R6Class("WebServer",
 )
 
 
-#' @export
 PipeServer <- R6Class("PipeServer",
   cloneable = FALSE,
   inherit = Server,
@@ -112,12 +110,12 @@ PipeServer <- R6Class("PipeServer",
 
 
 #' Stop a server
-#' 
-#' Given a handle that was returned from a previous invocation of 
+#'
+#' Given a server object that was returned from a previous invocation of
 #' \code{\link{startServer}} or \code{\link{startPipeServer}}, this closes all
-#' open connections for that server and  unbinds the port.
-#' 
-#' @param handle A handle that was previously returned from
+#' open connections for that server and unbinds the port.
+#'
+#' @param server A server object that was previously returned from
 #'   \code{\link{startServer}} or \code{\link{startPipeServer}}.
 #'
 #' @seealso \code{\link{stopAllServers}} to stop all servers.
@@ -149,6 +147,10 @@ stopAllServers <- function() {
 
 .globals$servers <- list()
 
+#' List all running httpuv servers
+#'
+#' This returns a list of all running httpuv server applications.
+#'
 #' @export
 listServers <- function() {
   .globals$servers

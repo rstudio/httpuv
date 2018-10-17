@@ -6,6 +6,10 @@
 \usage{
 stopDaemonizedServer(server)
 }
+\arguments{
+\item{server}{A server object that was previously returned from
+\code{\link{startServer}} or \code{\link{startPipeServer}}.}
+}
 \description{
 This function will be removed in a future release of httpuv. Instead, use
 \code{\link{stopServer}}.

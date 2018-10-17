@@ -21,7 +21,6 @@ stopServer_ <- function(handle) {
     invisible(.Call('_httpuv_stopServer_', PACKAGE = 'httpuv', handle))
 }
 
-#' @export
 getStaticPaths_ <- function(handle) {
     .Call('_httpuv_getStaticPaths_', PACKAGE = 'httpuv', handle)
 }

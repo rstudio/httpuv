@@ -7,13 +7,13 @@
 stopServer(server)
 }
 \arguments{
-\item{handle}{A handle that was previously returned from
+\item{server}{A server object that was previously returned from
 \code{\link{startServer}} or \code{\link{startPipeServer}}.}
 }
 \description{
-Given a handle that was returned from a previous invocation of 
+Given a server object that was returned from a previous invocation of
 \code{\link{startServer}} or \code{\link{startPipeServer}}, this closes all
-open connections for that server and  unbinds the port.
+open connections for that server and unbinds the port.
 }
 \seealso{
 \code{\link{stopAllServers}} to stop all servers.

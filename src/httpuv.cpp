@@ -394,7 +394,6 @@ boost::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
   return get_pWebApplication(pServer);
 }
 
-//' @export
 // [[Rcpp::export]]
 Rcpp::CharacterVector getStaticPaths_(std::string handle) {
   ASSERT_MAIN_THREAD()
