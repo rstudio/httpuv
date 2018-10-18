@@ -86,6 +86,13 @@ boost::optional<const StaticPath&> StaticPaths::get(const Rcpp::CharacterVector&
 
 void StaticPaths::set(const std::string& path, const StaticPath& sp) {
   guard guard(mutex);
+  // If the key already exists, replace the value.
+  std::map<std::string, StaticPath>::iterator it = path_map.find(path);
+  if (it != path_map.end()) {
+    it->second = sp;
+  }
+
+  // Otherwise, insert the pair.
   path_map.insert(
     std::pair<std::string, StaticPath>(path, sp)
   );
