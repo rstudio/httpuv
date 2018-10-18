@@ -485,7 +485,12 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   if (ret != 0) {
     // Couldn't read the file
     delete pDataSource;
-    return error_response(pRequest, 404);
+
+    if (sp.fallthrough) {
+      return nullptr;
+    } else {
+      return error_response(pRequest, 404);
+    }
   }
 
   int file_size = pDataSource->size();
