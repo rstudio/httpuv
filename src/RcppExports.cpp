@@ -78,7 +78,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // getStaticPaths_
-Rcpp::CharacterVector getStaticPaths_(std::string handle);
+Rcpp::List getStaticPaths_(std::string handle);
 RcppExport SEXP _httpuv_getStaticPaths_(SEXP handleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -88,20 +88,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// addStaticPaths_
-Rcpp::CharacterVector addStaticPaths_(std::string handle, Rcpp::CharacterVector paths);
-RcppExport SEXP _httpuv_addStaticPaths_(SEXP handleSEXP, SEXP pathsSEXP) {
+// setStaticPaths_
+Rcpp::List setStaticPaths_(std::string handle, Rcpp::List sp);
+RcppExport SEXP _httpuv_setStaticPaths_(SEXP handleSEXP, SEXP spSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::string >::type handle(handleSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type paths(pathsSEXP);
-    rcpp_result_gen = Rcpp::wrap(addStaticPaths_(handle, paths));
+    Rcpp::traits::input_parameter< Rcpp::List >::type sp(spSEXP);
+    rcpp_result_gen = Rcpp::wrap(setStaticPaths_(handle, sp));
     return rcpp_result_gen;
 END_RCPP
 }
 // removeStaticPaths_
-Rcpp::CharacterVector removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths);
+Rcpp::List removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths);
 RcppExport SEXP _httpuv_removeStaticPaths_(SEXP handleSEXP, SEXP pathsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -219,7 +219,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_makePipeServer", (DL_FUNC) &_httpuv_makePipeServer, 9},
     {"_httpuv_stopServer_", (DL_FUNC) &_httpuv_stopServer_, 1},
     {"_httpuv_getStaticPaths_", (DL_FUNC) &_httpuv_getStaticPaths_, 1},
-    {"_httpuv_addStaticPaths_", (DL_FUNC) &_httpuv_addStaticPaths_, 2},
+    {"_httpuv_setStaticPaths_", (DL_FUNC) &_httpuv_setStaticPaths_, 2},
     {"_httpuv_removeStaticPaths_", (DL_FUNC) &_httpuv_removeStaticPaths_, 2},
     {"_httpuv_base64encode", (DL_FUNC) &_httpuv_base64encode, 1},
     {"_httpuv_encodeURI", (DL_FUNC) &_httpuv_encodeURI, 1},

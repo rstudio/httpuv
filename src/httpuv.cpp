@@ -395,26 +395,23 @@ boost::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
 }
 
 // [[Rcpp::export]]
-Rcpp::CharacterVector getStaticPaths_(std::string handle) {
+Rcpp::List getStaticPaths_(std::string handle) {
   ASSERT_MAIN_THREAD()
-  std::map<std::string, std::string> paths = get_pWebApplication(handle)->getStaticPaths();
-  return toCharacterVector(paths);
+  return get_pWebApplication(handle)->getStaticPaths().asRObject();
 }
 
 // [[Rcpp::export]]
-Rcpp::CharacterVector addStaticPaths_(std::string handle, Rcpp::CharacterVector paths) {
+Rcpp::List setStaticPaths_(std::string handle, Rcpp::List sp) {
   ASSERT_MAIN_THREAD()
-  std::map<std::string, std::string> new_paths = toStringMap(paths);
-  std::map<std::string, std::string> all_paths = get_pWebApplication(handle)->addStaticPaths(new_paths);
-  return toCharacterVector(all_paths);
+  get_pWebApplication(handle)->getStaticPaths().set(sp);
+  return getStaticPaths_(handle);
 }
 
 // [[Rcpp::export]]
-Rcpp::CharacterVector removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths) {
+Rcpp::List removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths) {
   ASSERT_MAIN_THREAD()
-  std::vector<std::string> rm_paths = Rcpp::as<std::vector<std::string>>(paths);
-  std::map<std::string, std::string> all_paths = get_pWebApplication(handle)->removeStaticPaths(rm_paths);
-  return toCharacterVector(all_paths);
+  get_pWebApplication(handle)->getStaticPaths().remove(paths);
+  return getStaticPaths_(handle);
 }
 
 

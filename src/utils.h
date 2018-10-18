@@ -86,11 +86,6 @@ std::string toString(T x) {
   return ss.str();
 }
 
-// Convert between map<string, string> and CharacterVector
-std::map<std::string, std::string> toStringMap(Rcpp::CharacterVector x);
-Rcpp::CharacterVector toCharacterVector(const std::map<std::string, std::string>& strmap);
-
-
 // Given a path, return just the filename part.
 inline std::string basename(const std::string &path) {
   // TODO: handle Windows separators
@@ -112,6 +107,37 @@ inline std::string find_extension(const std::string &filename) {
   } else {
     return filename.substr(found_idx + 1);
   }
+}
+
+// This is used for converting an Rcpp named vector (T2) to a std::map.
+template <typename T, typename T2>
+std::map<std::string, T> toMap(T2 x) {
+  ASSERT_MAIN_THREAD()
+
+  std::map<std::string, T> strmap;
+
+  if (x.size() == 0) {
+    return strmap;
+  }
+
+  Rcpp::CharacterVector names = x.names();
+  if (names.isNULL()) {
+    throw Rcpp::exception("Error converting R object to map<string, T>: vector does not have names.");
+  }
+
+  for (int i=0; i<x.size(); i++) {
+    std::string name  = Rcpp::as<std::string>(names[i]);
+    T           value = Rcpp::as<T>          (x[i]);
+    if (name == "") {
+      throw Rcpp::exception("Error converting R object to map<string, T>: element has empty name.");
+    }
+
+    strmap.insert(
+      std::pair<std::string, T>(name, value)
+    );
+  }
+
+  return strmap;
 }
 
 

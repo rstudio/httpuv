@@ -6,6 +6,7 @@
 #include <Rcpp.h>
 #include "websockets.h"
 #include "thread.h"
+#include "staticpaths.h"
 
 class HttpRequest;
 class HttpResponse;
@@ -27,14 +28,10 @@ public:
                            boost::shared_ptr<std::vector<char> > data,
                            boost::function<void(void)> error_callback) = 0;
   virtual void onWSClose(boost::shared_ptr<WebSocketConnection>) = 0;
+
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
     boost::shared_ptr<HttpRequest> pRequest) = 0;
-  // Get current set of static paths.
-  virtual std::map<std::string, std::string> getStaticPaths() const = 0;
-  virtual std::map<std::string, std::string> addStaticPaths(
-    const std::map<std::string, std::string>& paths) = 0;
-  virtual std::map<std::string, std::string> removeStaticPaths(
-    const std::vector<std::string>& paths) = 0;
+  virtual StaticPaths& getStaticPaths() = 0;
 };
 
 
@@ -50,12 +47,10 @@ private:
   // the R function passed in that is used for initialization only.
   Rcpp::Function _getStaticPaths;
 
-  // TODO: need to be careful with this - it's created and destroyed on the
-  // main thread, but when it is accessed, it is always on the background thread.
-  // Probably need to lock at those times.
-  std::map<std::string, std::string> _staticPaths;
+  StaticPaths _staticPaths;
 
-  std::pair<std::string, std::string> _matchStaticPath(const std::string& url_path) const;
+  boost::optional<std::pair<const StaticPath&, std::string>> _matchStaticPath(
+    const std::string& url_path) const;
 
 public:
   RWebApplication(Rcpp::Function onHeaders,
@@ -87,11 +82,7 @@ public:
 
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
     boost::shared_ptr<HttpRequest> pRequest);
-  virtual std::map<std::string, std::string> getStaticPaths() const;
-  virtual std::map<std::string, std::string> addStaticPaths(
-    const std::map<std::string, std::string>& paths);
-  virtual std::map<std::string, std::string> removeStaticPaths(
-    const std::vector<std::string>& paths);
+  virtual StaticPaths& getStaticPaths();
 };
 
 

@@ -25,8 +25,8 @@ getStaticPaths_ <- function(handle) {
     .Call('_httpuv_getStaticPaths_', PACKAGE = 'httpuv', handle)
 }
 
-addStaticPaths_ <- function(handle, paths) {
-    .Call('_httpuv_addStaticPaths_', PACKAGE = 'httpuv', handle, paths)
+setStaticPaths_ <- function(handle, sp) {
+    .Call('_httpuv_setStaticPaths_', PACKAGE = 'httpuv', handle, sp)
 }
 
 removeStaticPaths_ <- function(handle, paths) {

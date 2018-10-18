@@ -171,7 +171,7 @@ AppWrapper <- setRefClass(
     .app = 'ANY',
     .wsconns = 'environment',
     .supportsOnHeaders = 'logical',
-    .staticPaths = 'character'
+    .staticPaths = 'list'
   ),
   methods = list(
     initialize = function(app) {

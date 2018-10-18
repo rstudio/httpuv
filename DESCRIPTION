@@ -35,4 +35,5 @@ Collate:
     'RcppExports.R'
     'httpuv.R'
     'server.R'
+    'static_paths.R'
     'utils.R'

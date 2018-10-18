@@ -7,6 +7,7 @@
 #include "thread.h"
 #include "utils.h"
 #include "mime.h"
+#include "staticpaths.h"
 #include <Rinternals.h>
 
 std::string normalizeHeaderName(const std::string& name) {
@@ -229,7 +230,7 @@ RWebApplication::RWebApplication(
 {
   ASSERT_MAIN_THREAD()
 
-  _staticPaths = toStringMap(Rcpp::CharacterVector(_getStaticPaths()));
+  _staticPaths = StaticPaths(Rcpp::List(_getStaticPaths()));
 }
 
 
@@ -394,10 +395,11 @@ void RWebApplication::onWSClose(boost::shared_ptr<WebSocketConnection> pConn) {
 // Unlike most of the methods for an RWebApplication, these ones are called on
 // the background thread.
 
-
-// Returns a pair where the first element is the local directory, and the
-// second element is the filename.
-std::pair<std::string, std::string> RWebApplication::_matchStaticPath(const std::string& url_path) const {
+// Returns a pair where the first element is the StaticPath object, and the
+// second element is the filename portion of the input url_path.
+boost::optional<std::pair<const StaticPath&, std::string>> RWebApplication::_matchStaticPath(
+  const std::string& url_path
+) const {
   ASSERT_BACKGROUND_THREAD()
 
   std::string path = url_path;
@@ -413,16 +415,16 @@ std::pair<std::string, std::string> RWebApplication::_matchStaticPath(const std:
     size_t found_idx = path.find_last_of('/', last_split_idx);
 
     if (found_idx <= 0) {
-      return std::pair<std::string, std::string>("", "");
+      return boost::none;
     }
 
     std::string pre_slash  = path.substr(0, found_idx);
     std::string post_slash = path.substr(found_idx + 1);
   
-    std::map<std::string, std::string>::const_iterator it = _staticPaths.find(pre_slash);
-    if (it != _staticPaths.end()) {
+    boost::optional<const StaticPath&> sp = _staticPaths.get(pre_slash);
+    if (sp) {
       // Pair with dirname, filename
-      return std::pair<std::string, std::string>(it->second, post_slash);
+      return std::pair<const StaticPath&, std::string>(*sp, post_slash);
     }
 
     last_split_idx = found_idx - 1 ;
@@ -452,11 +454,10 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   ASSERT_BACKGROUND_THREAD()
 
   std::string url_path = doDecodeURI(pRequest->url(), true);
-  std::pair<std::string, std::string> static_path = _matchStaticPath(url_path);
-  std::string local_dirname = static_path.first;
-  std::string filename      = static_path.second;
 
-  if (local_dirname == "") {
+  boost::optional<std::pair<const StaticPath&, std::string>> sp_pair = _matchStaticPath(url_path);
+
+  if (!sp_pair) {
     // This was not a static path.
     return nullptr;
   }
@@ -472,11 +473,13 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     return error_response(pRequest, 400);
   }
 
-  std::string local_path = local_dirname + "/" + filename;
+  const StaticPath&  sp       = sp_pair->first;
+  const std::string& filename = sp_pair->second;
+
+  std::string local_path = sp.path + "/" + filename;
 
   // Self-frees when response is written
   FileDataSource* pDataSource = new FileDataSource();
-  // TODO: Figure out how to deal with `owned` parameter.
   int ret = pDataSource->initialize(local_path, false);
 
   if (ret != 0) {
@@ -514,38 +517,6 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   return pResponse;
 }
 
-
-std::map<std::string, std::string> RWebApplication::getStaticPaths() const {
-  // TODO: always lock staticPaths
+StaticPaths& RWebApplication::getStaticPaths() {
   return _staticPaths;
-};
-
-std::map<std::string, std::string> RWebApplication::addStaticPaths(
-  const std::map<std::string, std::string>& paths
-) {
-
-  std::map<std::string, std::string>::const_iterator it;
-  for (it = paths.begin(); it != paths.end(); it++) {
-    _staticPaths[it->first] = it->second;
-  }
-
-  return _staticPaths;
-};
-
-std::map<std::string, std::string> RWebApplication::removeStaticPaths(
-  const std::vector<std::string>& paths
-) {
-
-  std::vector<std::string>::const_iterator path_it = paths.begin();
-
-  for (path_it = paths.begin(); path_it != paths.end(); path_it++) {
-    std::map<std::string, std::string>::const_iterator static_paths_it = _staticPaths.find(*path_it);
-    if (static_paths_it == _staticPaths.end()) {
-      err_printf("Tried to remove static path, but it wasn't present: %s\n", path_it->c_str());
-    } else {
-      _staticPaths.erase(static_paths_it);
-    }
-  }
-
-  return _staticPaths;
-};
+}

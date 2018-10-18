@@ -22,9 +22,9 @@ Server <- R6Class("Server",
     getStaticPaths = function() {
       getStaticPaths_(private$handle)
     },
-    addStaticPaths = function(paths) {
+    setStaticPaths = function(paths) {
       paths <- normalizeStaticPaths(paths)
-      invisible(addStaticPaths_(private$handle, paths))
+      invisible(setStaticPaths_(private$handle, paths))
     },
     removeStaticPaths = function(paths) {
       paths <- as.character(paths)
