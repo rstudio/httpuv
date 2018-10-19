@@ -482,9 +482,12 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   // Use local_path instead of subpath, because if the subpath is "/foo/" and
   // sp.indexhtml is true, then the local_path will be "/foo/index.html". We
   // need to use the latter to determine mime type.
-  std::string mime_type = find_mime_type(find_extension(basename(local_path)));
-  if (mime_type == "") {
-    mime_type = "application/octet-stream";
+  std::string content_type = find_mime_type(find_extension(basename(local_path)));
+  if (content_type == "") {
+    content_type = "application/octet-stream";
+  } else if (content_type == "text/html") {
+    // Always specify that encoding UTF-8 for HTML.
+    content_type = "text/html; charset=utf-8";
   }
 
   if (method == "HEAD") {
@@ -505,7 +508,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   // automatically set the Content-Length (by using the FileDataSource), but
   // the response for the HEAD would not.
   respHeaders.push_back(std::make_pair("Content-Length", toString(file_size)));
-  respHeaders.push_back(std::make_pair("Content-Type", mime_type));
+  respHeaders.push_back(std::make_pair("Content-Type", content_type));
 
   return pResponse;
 }
