@@ -12,6 +12,10 @@ StaticPath::StaticPath(const Rcpp::List& sp) {
   path        = Rcpp::as<std::string>(sp["path"]);
   index       = Rcpp::as<bool>       (sp["index"]);
   fallthrough = Rcpp::as<bool>       (sp["fallthrough"]);
+
+  if (path.at(path.length() - 1) == '/') {
+    throw std::runtime_error("Static path must not have trailing slash.");
+  }
 }
 
 Rcpp::List StaticPath::asRObject() const {

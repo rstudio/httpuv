@@ -14,7 +14,11 @@ public:
   bool fallthrough;
 
   StaticPath(std::string _path, bool _index, bool _fallthrough) :
-    path(_path), index(_index), fallthrough(_fallthrough) {
+    path(_path), index(_index), fallthrough(_fallthrough)
+  {
+    if (path.at(path.length() - 1) == '/') {
+      throw std::runtime_error("Static path must not have trailing slash.");
+    }
   }
 
   StaticPath(const Rcpp::List& sp);
