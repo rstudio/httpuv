@@ -81,7 +81,7 @@ normalizeStaticPaths <- function(paths) {
   # as.staticPath because of S3 dispatch for non-registered methods.
   paths <- lapply(paths, function(path) as.staticPath(path))
 
-  # Make sure URL paths have a leading '/'.
+  # Make sure URL paths have a leading '/' and no trailing '/'.
   names(paths) <- vapply(names(paths), function(path) {
     if (path == "") {
       stop("All paths must be non-empty strings.")
@@ -90,6 +90,9 @@ normalizeStaticPaths <- function(paths) {
     if (substr(path, 1, 1) != "/") {
       path <- paste0("/", path)
     }
+    # Strip trailing slashes
+    path <- sub("/+$", "", path)
+
     path
   }, "")
 
