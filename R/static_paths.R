@@ -3,7 +3,7 @@
 #' This function creates a \code{staticPath} object.
 #'
 #' @param path The local path.
-#' @param index If an index.html file is present, should it be served up when
+#' @param indexhtml If an index.html file is present, should it be served up when
 #'   the client requests \code{/} or any subdirectory?
 #' @param fallthrough With the default value, \code{FALSE}, if a request is made
 #'   for a file that doesn't exist, then httpuv will immediately send a 404
@@ -12,7 +12,7 @@
 #'   \code{TRUE}, then instead of sending a 404 response, httpuv will call the
 #'   application's \code{call} function, and allow it to handle the request.
 #' @export
-staticPath <- function(path, index = TRUE, fallthrough = FALSE) {
+staticPath <- function(path, indexhtml = TRUE, fallthrough = FALSE) {
   if (!is.character(path) || length(path) != 1 || path == "") {
     stop("`path` must be a non-empty string.")
   }
@@ -22,7 +22,7 @@ staticPath <- function(path, index = TRUE, fallthrough = FALSE) {
   structure(
     list(
       path = path,
-      index = index,
+      indexhtml = indexhtml,
       fallthrough = fallthrough
     ),
     class = "staticPath"
@@ -56,7 +56,7 @@ format.staticPath <- function(x, ...) {
   ret <- paste0(
     "<staticPath>\n",
     "  Local path:       ", x$path, "\n",
-    "  Use index.html:   ", x$index, "\n",
+    "  Use index.html:   ", x$indexhtml, "\n",
     "  Fallthrough to R: ", x$fallthrough
   )
 }

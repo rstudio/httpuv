@@ -10,7 +10,7 @@
 StaticPath::StaticPath(const Rcpp::List& sp) {
   ASSERT_MAIN_THREAD()
   path        = Rcpp::as<std::string>(sp["path"]);
-  index       = Rcpp::as<bool>       (sp["index"]);
+  indexhtml   = Rcpp::as<bool>       (sp["indexhtml"]);
   fallthrough = Rcpp::as<bool>       (sp["fallthrough"]);
 
   if (path.at(path.length() - 1) == '/') {
@@ -24,7 +24,7 @@ Rcpp::List StaticPath::asRObject() const {
 
   List obj = List::create(
     _["path"]        = path,
-    _["index"]       = index,
+    _["indexhtml"]   = indexhtml,
     _["fallthrough"] = fallthrough
   );
   

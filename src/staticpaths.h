@@ -10,11 +10,11 @@
 class StaticPath {
 public:
   std::string path;
-  bool index;
+  bool indexhtml;
   bool fallthrough;
 
-  StaticPath(std::string _path, bool _index, bool _fallthrough) :
-    path(_path), index(_index), fallthrough(_fallthrough)
+  StaticPath(std::string _path, bool _indexhtml, bool _fallthrough) :
+    path(_path), indexhtml(_indexhtml), fallthrough(_fallthrough)
   {
     if (path.at(path.length() - 1) == '/') {
       throw std::runtime_error("Static path must not have trailing slash.");

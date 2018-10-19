@@ -451,7 +451,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   }
 
   if (is_directory(local_path)) {
-    if (sp.index) {
+    if (sp.indexhtml) {
       local_path = local_path + "/" + "index.html";
     }
   }
@@ -474,8 +474,8 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   int file_size = pDataSource->size();
 
   // Use local_path instead of subpath, because if the subpath is "/foo/" and
-  // sp.index is true, then the local_path will be "/foo/index.html". We need
-  // to use the latter to determine mime type.
+  // sp.indexhtml is true, then the local_path will be "/foo/index.html". We
+  // need to use the latter to determine mime type.
   std::string mime_type = find_mime_type(find_extension(basename(local_path)));
   if (mime_type == "") {
     mime_type = "application/octet-stream";
