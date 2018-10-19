@@ -90,13 +90,8 @@ Rcpp::List errorResponse() {
   );
 }
 
-void requestToEnv(boost::shared_ptr<HttpRequest> pRequest, Rcpp::Environment* pEnv) {
-  ASSERT_MAIN_THREAD()
-  using namespace Rcpp;
-
-  Environment& env = *pEnv;
-
-  std::string url = pRequest->url();
+// Given a URL path like "/foo?abc=123", removes the '?' and everything after.
+std::pair<std::string, std::string> splitQueryString(const std::string& url) {
   size_t qsIndex = url.find('?');
   std::string path, queryString;
   if (qsIndex == std::string::npos)
@@ -105,6 +100,20 @@ void requestToEnv(boost::shared_ptr<HttpRequest> pRequest, Rcpp::Environment* pE
     path = url.substr(0, qsIndex);
     queryString = url.substr(qsIndex);
   }
+
+  return std::pair<std::string, std::string>(path, queryString);
+}
+
+
+void requestToEnv(boost::shared_ptr<HttpRequest> pRequest, Rcpp::Environment* pEnv) {
+  ASSERT_MAIN_THREAD()
+  using namespace Rcpp;
+
+  Environment& env = *pEnv;
+
+  std::pair<std::string, std::string> url_query = splitQueryString(pRequest->url());
+  std::string& path        = url_query.first;
+  std::string& queryString = url_query.second;
 
   // When making assignments into the Environment, the value must be wrapped
   // in a Rcpp object -- letting Rcpp automatically do the wrapping can result
@@ -423,7 +432,11 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     return nullptr;
   }
 
-  std::string url_path = doDecodeURI(pRequest->url(), true);
+  std::string url = doDecodeURI(pRequest->url(), true);
+
+  // Strip off query string
+  std::pair<std::string, std::string> url_query = splitQueryString(url);
+  std::string& url_path = url_query.first;
 
   boost::optional<std::pair<const StaticPath&, std::string>> sp_pair =
     _staticPaths.matchStaticPath(url_path);
