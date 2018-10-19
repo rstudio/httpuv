@@ -417,6 +417,12 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
 ) {
   ASSERT_BACKGROUND_THREAD()
 
+  // If it has a Connection: Upgrade header, don't try to serve a static file.
+  // Just fall through.
+  if (pRequest->hasHeader("Connection", "Upgrade", true)) {
+    return nullptr;
+  }
+
   std::string url_path = doDecodeURI(pRequest->url(), true);
 
   boost::optional<std::pair<const StaticPath&, std::string>> sp_pair =
