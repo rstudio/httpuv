@@ -445,7 +445,10 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   const std::string& subpath = sp_pair->second;
 
   // Path to local file on disk
-  std::string local_path = sp.path + "/" + subpath;
+  std::string local_path = sp.path;
+  if (subpath != "") {
+    local_path += "/" + subpath;
+  }
 
   if (is_directory(local_path)) {
     if (sp.index) {
