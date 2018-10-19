@@ -13,12 +13,6 @@ httpuv_version <- local({
   }
 })
 
-
-# Return a zero-element named character vector
-empty_named_vec <- function() {
-  c(a = "")[0]
-}
-
 # Given a vector/list, return TRUE if any elements are unnamed, FALSE otherwise.
 any_unnamed <- function(x) {
   # Zero-length vector
