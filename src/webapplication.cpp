@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "mime.h"
 #include "staticpaths.h"
+#include "fs.h"
 #include <Rinternals.h>
 
 std::string normalizeHeaderName(const std::string& name) {
@@ -395,43 +396,6 @@ void RWebApplication::onWSClose(boost::shared_ptr<WebSocketConnection> pConn) {
 // Unlike most of the methods for an RWebApplication, these ones are called on
 // the background thread.
 
-// Returns a pair where the first element is the StaticPath object, and the
-// second element is the filename portion of the input url_path.
-boost::optional<std::pair<const StaticPath&, std::string>> RWebApplication::_matchStaticPath(
-  const std::string& url_path
-) const {
-  ASSERT_BACKGROUND_THREAD()
-
-  std::string path = url_path;
-  size_t last_split_idx = std::string::npos;
-
-  // This loop splits the string on '/', starting with the last one, and then
-  // searches for a match in _staticPaths of the first part. If found, it
-  // returns a pair with the part before the slash, and the part after the
-  // slash. If not found, it splits on the previous '/' and searches again,
-  // and so on, until there are no more to split on.
-  while (true) {
-    // Split the string on '/'
-    size_t found_idx = path.find_last_of('/', last_split_idx);
-
-    if (found_idx <= 0) {
-      return boost::none;
-    }
-
-    std::string pre_slash  = path.substr(0, found_idx);
-    std::string post_slash = path.substr(found_idx + 1);
-  
-    boost::optional<const StaticPath&> sp = _staticPaths.get(pre_slash);
-    if (sp) {
-      // Pair with dirname, filename
-      return std::pair<const StaticPath&, std::string>(*sp, post_slash);
-    }
-
-    last_split_idx = found_idx - 1 ;
-  }
-}
-
-
 boost::shared_ptr<HttpResponse> error_response(boost::shared_ptr<HttpRequest> pRequest, int code) {
   std::string description = getStatusDescription(code);
   std::string content = toString(code) + " " + description + "\n";
@@ -455,12 +419,15 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
 
   std::string url_path = doDecodeURI(pRequest->url(), true);
 
-  boost::optional<std::pair<const StaticPath&, std::string>> sp_pair = _matchStaticPath(url_path);
+  boost::optional<std::pair<const StaticPath&, std::string>> sp_pair =
+    _staticPaths.matchStaticPath(url_path);
 
   if (!sp_pair) {
     // This was not a static path.
     return nullptr;
   }
+
+  // If we get here, we've matched a static path.
 
   // Check that method is GET or HEAD; error otherwise.
   std::string method = pRequest->method();
@@ -473,10 +440,18 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     return error_response(pRequest, 400);
   }
 
-  const StaticPath&  sp       = sp_pair->first;
-  const std::string& filename = sp_pair->second;
+  const StaticPath&  sp      = sp_pair->first;
+  // Note that the subpath may include leading dirs, as in "foo/bar/abc.txt".
+  const std::string& subpath = sp_pair->second;
 
-  std::string local_path = sp.path + "/" + filename;
+  // Path to local file on disk
+  std::string local_path = sp.path + "/" + subpath;
+
+  if (is_directory(local_path)) {
+    if (sp.index) {
+      local_path = local_path + "/" + "index.html";
+    }
+  }
 
   // Self-frees when response is written
   FileDataSource* pDataSource = new FileDataSource();
@@ -494,7 +469,11 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   }
 
   int file_size = pDataSource->size();
-  std::string mime_type = find_mime_type(find_extension(filename));
+
+  // Use local_path instead of subpath, because if the subpath is "/foo/" and
+  // sp.index is true, then the local_path will be "/foo/index.html". We need
+  // to use the latter to determine mime type.
+  std::string mime_type = find_mime_type(find_extension(basename(local_path)));
   if (mime_type == "") {
     mime_type = "application/octet-stream";
   }

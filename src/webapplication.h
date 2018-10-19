@@ -49,9 +49,6 @@ private:
 
   StaticPaths _staticPaths;
 
-  boost::optional<std::pair<const StaticPath&, std::string>> _matchStaticPath(
-    const std::string& url_path) const;
-
 public:
   RWebApplication(Rcpp::Function onHeaders,
                   Rcpp::Function onBodyData,

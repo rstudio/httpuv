@@ -42,6 +42,9 @@ public:
   void remove(const std::vector<std::string>& paths);
   void remove(const Rcpp::CharacterVector& paths);
 
+  boost::optional<std::pair<const StaticPath&, std::string>> matchStaticPath(
+    const std::string& url_path) const;
+
   Rcpp::List asRObject() const;
 };
 

@@ -21,6 +21,13 @@ int FileDataSource::initialize(const std::string& path, bool owned) {
       ::close(_fd);
       return 1;
     }
+
+    if (S_ISDIR(info.st_mode)) {
+      _lastErrorMessage = "File data source is a directory.\n";
+      ::close(_fd);
+      return 1;
+    }
+
     _length = info.st_size;
 
     if (owned && unlink(path.c_str())) {
