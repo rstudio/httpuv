@@ -1,5 +1,5 @@
-#ifndef STATICPATHS_HPP
-#define STATICPATHS_HPP
+#ifndef STATICPATH_HPP
+#define STATICPATH_HPP
 
 #include <string>
 #include <map>
@@ -27,13 +27,14 @@ public:
 };
 
 
-class StaticPaths {
+class StaticPathList {
   std::map<std::string, StaticPath> path_map;
+  // Mutex is used whenever path_map is accessed.
   mutable uv_mutex_t mutex;
 
 public:
-  StaticPaths();  
-  StaticPaths(const Rcpp::List& source);
+  StaticPathList();  
+  StaticPathList(const Rcpp::List& source);
 
   boost::optional<const StaticPath&> get(const std::string& path) const;
   boost::optional<const StaticPath&> get(const Rcpp::CharacterVector& path) const;

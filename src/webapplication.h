@@ -6,7 +6,7 @@
 #include <Rcpp.h>
 #include "websockets.h"
 #include "thread.h"
-#include "staticpaths.h"
+#include "staticpath.h"
 
 class HttpRequest;
 class HttpResponse;
@@ -31,7 +31,7 @@ public:
 
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
     boost::shared_ptr<HttpRequest> pRequest) = 0;
-  virtual StaticPaths& getStaticPaths() = 0;
+  virtual StaticPathList& getStaticPathList() = 0;
 };
 
 
@@ -43,11 +43,11 @@ private:
   Rcpp::Function _onWSOpen;
   Rcpp::Function _onWSMessage;
   Rcpp::Function _onWSClose;
-  // Note this is different from the public getStaticPaths function - this is
+  // Note this differs from the public getStaticPathList function - this is
   // the R function passed in that is used for initialization only.
   Rcpp::Function _getStaticPaths;
 
-  StaticPaths _staticPaths;
+  StaticPathList _staticPathList;
 
 public:
   RWebApplication(Rcpp::Function onHeaders,
@@ -79,7 +79,7 @@ public:
 
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
     boost::shared_ptr<HttpRequest> pRequest);
-  virtual StaticPaths& getStaticPaths();
+  virtual StaticPathList& getStaticPathList();
 };
 
 

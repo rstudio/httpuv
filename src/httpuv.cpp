@@ -397,20 +397,20 @@ boost::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
 // [[Rcpp::export]]
 Rcpp::List getStaticPaths_(std::string handle) {
   ASSERT_MAIN_THREAD()
-  return get_pWebApplication(handle)->getStaticPaths().asRObject();
+  return get_pWebApplication(handle)->getStaticPathList().asRObject();
 }
 
 // [[Rcpp::export]]
 Rcpp::List setStaticPaths_(std::string handle, Rcpp::List sp) {
   ASSERT_MAIN_THREAD()
-  get_pWebApplication(handle)->getStaticPaths().set(sp);
+  get_pWebApplication(handle)->getStaticPathList().set(sp);
   return getStaticPaths_(handle);
 }
 
 // [[Rcpp::export]]
 Rcpp::List removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths) {
   ASSERT_MAIN_THREAD()
-  get_pWebApplication(handle)->getStaticPaths().remove(paths);
+  get_pWebApplication(handle)->getStaticPathList().remove(paths);
   return getStaticPaths_(handle);
 }
 

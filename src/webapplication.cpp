@@ -7,7 +7,7 @@
 #include "thread.h"
 #include "utils.h"
 #include "mime.h"
-#include "staticpaths.h"
+#include "staticpath.h"
 #include "fs.h"
 #include <Rinternals.h>
 
@@ -240,7 +240,7 @@ RWebApplication::RWebApplication(
 {
   ASSERT_MAIN_THREAD()
 
-  _staticPaths = StaticPaths(Rcpp::List(_getStaticPaths()));
+  _staticPathList = StaticPathList(Rcpp::List(_getStaticPaths()));
 }
 
 
@@ -439,7 +439,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   std::string& url_path = url_query.first;
 
   boost::optional<std::pair<const StaticPath&, std::string>> sp_pair =
-    _staticPaths.matchStaticPath(url_path);
+    _staticPathList.matchStaticPath(url_path);
 
   if (!sp_pair) {
     // This was not a static path.
@@ -526,6 +526,6 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   return pResponse;
 }
 
-StaticPaths& RWebApplication::getStaticPaths() {
-  return _staticPaths;
+StaticPathList& RWebApplication::getStaticPathList() {
+  return _staticPathList;
 }

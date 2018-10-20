@@ -1,4 +1,4 @@
-#include "staticpaths.h"
+#include "staticpath.h"
 #include "thread.h"
 #include "utils.h"
 #include <boost/optional.hpp>
@@ -35,13 +35,13 @@ Rcpp::List StaticPath::asRObject() const {
 
 
 // ============================================================================
-// StaticPaths
+// StaticPathList
 // ============================================================================
-StaticPaths::StaticPaths() {
+StaticPathList::StaticPathList() {
   uv_mutex_init(&mutex);
 }
 
-StaticPaths::StaticPaths(const Rcpp::List& source) {
+StaticPathList::StaticPathList(const Rcpp::List& source) {
   ASSERT_MAIN_THREAD()
   uv_mutex_init(&mutex);
 
@@ -70,7 +70,7 @@ StaticPaths::StaticPaths(const Rcpp::List& source) {
 }
 
 
-boost::optional<const StaticPath&> StaticPaths::get(const std::string& path) const {
+boost::optional<const StaticPath&> StaticPathList::get(const std::string& path) const {
   guard guard(mutex);
   std::map<std::string, StaticPath>::const_iterator it = path_map.find(path);
   if (it == path_map.end()) {
@@ -79,7 +79,7 @@ boost::optional<const StaticPath&> StaticPaths::get(const std::string& path) con
   return it->second;
 }
 
-boost::optional<const StaticPath&> StaticPaths::get(const Rcpp::CharacterVector& path) const {
+boost::optional<const StaticPath&> StaticPathList::get(const Rcpp::CharacterVector& path) const {
   ASSERT_MAIN_THREAD()
   if (path.size() != 1) {
     throw Rcpp::exception("Can only get a single StaticPath object.");
@@ -88,7 +88,7 @@ boost::optional<const StaticPath&> StaticPaths::get(const Rcpp::CharacterVector&
 }
 
 
-void StaticPaths::set(const std::string& path, const StaticPath& sp) {
+void StaticPathList::set(const std::string& path, const StaticPath& sp) {
   guard guard(mutex);
   // If the key already exists, replace the value.
   std::map<std::string, StaticPath>::iterator it = path_map.find(path);
@@ -102,21 +102,21 @@ void StaticPaths::set(const std::string& path, const StaticPath& sp) {
   );
 }
 
-void StaticPaths::set(const std::map<std::string, StaticPath>& pmap) {
+void StaticPathList::set(const std::map<std::string, StaticPath>& pmap) {
   std::map<std::string, StaticPath>::const_iterator it;
   for (it = pmap.begin(); it != pmap.end(); it++) {
     set(it->first, it->second);
   }
 }
 
-void StaticPaths::set(const Rcpp::List& pmap) {
+void StaticPathList::set(const Rcpp::List& pmap) {
   ASSERT_MAIN_THREAD()
   std::map<std::string, StaticPath> pmap2 = toMap<StaticPath, Rcpp::List>(pmap);
   set(pmap2);
 }
 
 
-void StaticPaths::remove(const std::string& path) {
+void StaticPathList::remove(const std::string& path) {
   guard guard(mutex);
   std::map<std::string, StaticPath>::const_iterator it = path_map.find(path);
   if (it != path_map.end()) {
@@ -124,14 +124,14 @@ void StaticPaths::remove(const std::string& path) {
   }
 }
 
-void StaticPaths::remove(const std::vector<std::string>& paths) {
+void StaticPathList::remove(const std::vector<std::string>& paths) {
   std::vector<std::string>::const_iterator it;
   for (it = paths.begin(); it != paths.end(); it++) {
     remove(*it);
   }
 }
 
-void StaticPaths::remove(const Rcpp::CharacterVector& paths) {
+void StaticPathList::remove(const Rcpp::CharacterVector& paths) {
   ASSERT_MAIN_THREAD()
   std::vector<std::string> paths_vec = Rcpp::as<std::vector<std::string>>(paths);
   remove(paths_vec);
@@ -157,7 +157,7 @@ void StaticPaths::remove(const Rcpp::CharacterVector& paths) {
 // 
 // If no matching static path is found, then it returns boost::none.
 //
-boost::optional<std::pair<const StaticPath&, std::string>> StaticPaths::matchStaticPath(
+boost::optional<std::pair<const StaticPath&, std::string>> StaticPathList::matchStaticPath(
   const std::string& url_path) const
 {
 
@@ -186,7 +186,7 @@ boost::optional<std::pair<const StaticPath&, std::string>> StaticPaths::matchSta
   // previous '/' and searches again, and so on, until there are no more to
   // split on.
   while (true) {
-    // Check if the part before the split-on '/' is in the staticPaths.
+    // Check if the part before the split-on '/' is in the staticPath.
     boost::optional<const StaticPath&> sp = this->get(pre_slash);
     if (sp) {
       return std::pair<const StaticPath&, std::string>(*sp, post_slash);
@@ -218,7 +218,7 @@ boost::optional<std::pair<const StaticPath&, std::string>> StaticPaths::matchSta
 }
 
 
-Rcpp::List StaticPaths::asRObject() const {
+Rcpp::List StaticPathList::asRObject() const {
   ASSERT_MAIN_THREAD()
   guard guard(mutex);
   Rcpp::List obj;
