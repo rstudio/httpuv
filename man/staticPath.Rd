@@ -4,12 +4,13 @@
 \alias{staticPath}
 \title{Create a staticPath object}
 \usage{
-staticPath(path, index = TRUE, fallthrough = FALSE)
+staticPath(path, indexhtml = NULL, fallthrough = NULL,
+  html_charset = NULL, headers = NULL, validation = NULL)
 }
 \arguments{
 \item{path}{The local path.}
 
-\item{index}{If an index.html file is present, should it be served up when
+\item{indexhtml}{If an index.html file is present, should it be served up when
 the client requests \code{/} or any subdirectory?}
 
 \item{fallthrough}{With the default value, \code{FALSE}, if a request is made

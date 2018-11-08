@@ -4,14 +4,76 @@
 #include <boost/optional.hpp>
 
 // ============================================================================
+// StaticPathOptions
+// ============================================================================
+
+// (Use boost::optional instead of optional_as)
+StaticPathOptions::StaticPathOptions(const Rcpp::List& options) {
+  ASSERT_MAIN_THREAD()
+  
+  std::string obj_class = options.attr("class");
+  if (obj_class != "staticPathOptions") {
+    throw Rcpp::exception("staticPath options object must have class 'staticPathOptions'.");
+  }
+
+  // There's probably a more concise way to do this assignment.
+  Rcpp::RObject temp;
+  temp = options["indexhtml"];   indexhtml   = optional_as<bool>(temp);
+  temp = options["fallthrough"]; fallthrough = optional_as<bool>(temp);
+}
+
+void StaticPathOptions::setOptions(const Rcpp::List& options) {
+  ASSERT_MAIN_THREAD()
+  Rcpp::RObject temp;
+  if (options.containsElementNamed("indexhtml")) {
+    temp = options["indexhtml"];
+    if (!temp.isNULL()) {
+      indexhtml = optional_as<bool>(temp);
+    }
+  }
+  if (options.containsElementNamed("fallthrough")) {
+    temp = options["fallthrough"];
+    if (!temp.isNULL()) {
+      fallthrough = optional_as<bool>(temp);
+    }
+  }
+}
+
+Rcpp::List StaticPathOptions::asRObject() const {
+  ASSERT_MAIN_THREAD()
+  using namespace Rcpp;
+
+  List obj = List::create(
+    _["indexhtml"]   = optional_wrap(indexhtml),
+    _["fallthrough"] = optional_wrap(fallthrough)
+  );
+  
+  obj.attr("class") = "staticPathOptions";
+
+  return obj;
+}
+
+StaticPathOptions StaticPathOptions::merge(
+  const StaticPathOptions& a,
+  const StaticPathOptions& b)
+{
+  StaticPathOptions new_sp = a;
+  if (new_sp.indexhtml   == boost::none) new_sp.indexhtml   = b.indexhtml;
+  if (new_sp.fallthrough == boost::none) new_sp.fallthrough = b.fallthrough;
+  return new_sp;
+}
+
+
+// ============================================================================
 // StaticPath
 // ============================================================================
 
 StaticPath::StaticPath(const Rcpp::List& sp) {
   ASSERT_MAIN_THREAD()
-  path        = Rcpp::as<std::string>(sp["path"]);
-  indexhtml   = Rcpp::as<bool>       (sp["indexhtml"]);
-  fallthrough = Rcpp::as<bool>       (sp["fallthrough"]);
+  path = Rcpp::as<std::string>(sp["path"]);
+  
+  Rcpp::List options_list = sp["options"];
+  options = StaticPathOptions(options_list);
 
   if (path.at(path.length() - 1) == '/') {
     throw std::runtime_error("Static path must not have trailing slash.");
@@ -23,11 +85,10 @@ Rcpp::List StaticPath::asRObject() const {
   using namespace Rcpp;
 
   List obj = List::create(
-    _["path"]        = path,
-    _["indexhtml"]   = indexhtml,
-    _["fallthrough"] = fallthrough
+    _["path"]    = path,
+    _["options"] = options.asRObject()
   );
-  
+
   obj.attr("class") = "staticPath";
 
   return obj;
@@ -41,45 +102,53 @@ StaticPathList::StaticPathList() {
   uv_mutex_init(&mutex);
 }
 
-StaticPathList::StaticPathList(const Rcpp::List& source) {
+StaticPathList::StaticPathList(const Rcpp::List& path_list, const Rcpp::List& options_list) {
   ASSERT_MAIN_THREAD()
   uv_mutex_init(&mutex);
 
-  if (source.size() == 0) {
+  this->options = StaticPathOptions(options_list);
+
+  if (path_list.size() == 0) {
     return;
   }
 
-  Rcpp::CharacterVector names = source.names();
+  Rcpp::CharacterVector names = path_list.names();
   if (names.isNULL()) {
-    throw Rcpp::exception("Error processing static paths.");
+    throw Rcpp::exception("Error processing static paths: all static paths must be named.");
   }
 
-  for (int i=0; i<source.size(); i++) {
+  for (int i=0; i<path_list.size(); i++) {
     std::string name = Rcpp::as<std::string>(names[i]);
     if (name == "") {
       throw Rcpp::exception("Error processing static paths.");
     }
 
-    Rcpp::List sp(source[i]);
+    Rcpp::List sp(path_list[i]);
     StaticPath staticpath(sp);
 
-    path_map.insert(
+    this->path_map.insert(
       std::pair<std::string, StaticPath>(name, staticpath)
     );
   }
 }
 
 
-boost::optional<const StaticPath&> StaticPathList::get(const std::string& path) const {
+// Returns a StaticPath object, which has its options merged with the overall ones.
+boost::optional<StaticPath> StaticPathList::get(const std::string& path) const {
   guard guard(mutex);
   std::map<std::string, StaticPath>::const_iterator it = path_map.find(path);
   if (it == path_map.end()) {
     return boost::none;
   }
-  return it->second;
+
+  // Get a copy of the StaticPath object; we'll modify the options in the copy
+  // by merging it with the overall options.
+  StaticPath sp = it->second;
+  sp.options = StaticPathOptions::merge(sp.options, this->options);
+  return sp;
 }
 
-boost::optional<const StaticPath&> StaticPathList::get(const Rcpp::CharacterVector& path) const {
+boost::optional<StaticPath> StaticPathList::get(const Rcpp::CharacterVector& path) const {
   ASSERT_MAIN_THREAD()
   if (path.size() != 1) {
     throw Rcpp::exception("Can only get a single StaticPath object.");
@@ -157,7 +226,7 @@ void StaticPathList::remove(const Rcpp::CharacterVector& paths) {
 // 
 // If no matching static path is found, then it returns boost::none.
 //
-boost::optional<std::pair<const StaticPath&, std::string>> StaticPathList::matchStaticPath(
+boost::optional<std::pair<StaticPath, std::string>> StaticPathList::matchStaticPath(
   const std::string& url_path) const
 {
 
@@ -187,9 +256,9 @@ boost::optional<std::pair<const StaticPath&, std::string>> StaticPathList::match
   // split on.
   while (true) {
     // Check if the part before the split-on '/' is in the staticPath.
-    boost::optional<const StaticPath&> sp = this->get(pre_slash);
+    boost::optional<StaticPath> sp = this->get(pre_slash);
     if (sp) {
-      return std::pair<const StaticPath&, std::string>(*sp, post_slash);
+      return std::pair<StaticPath, std::string>(*sp, post_slash);
     }
 
     if (found_idx == 0) {
@@ -217,7 +286,15 @@ boost::optional<std::pair<const StaticPath&, std::string>> StaticPathList::match
   }
 }
 
+const StaticPathOptions& StaticPathList::getOptions() const {
+  return options;
+};
 
+void StaticPathList::setOptions(const Rcpp::List& opts) {
+  options.setOptions(opts);
+};
+
+// Returns the R objects, without option merging.
 Rcpp::List StaticPathList::asRObject() const {
   ASSERT_MAIN_THREAD()
   guard guard(mutex);

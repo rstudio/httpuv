@@ -11,6 +11,10 @@
 #include "fs.h"
 #include <Rinternals.h>
 
+// ============================================================================
+// Utility functions
+// ============================================================================
+
 std::string normalizeHeaderName(const std::string& name) {
   std::string result = name;
   for (std::string::iterator it = result.begin();
@@ -226,6 +230,11 @@ void invokeResponseFun(boost::function<void(boost::shared_ptr<HttpResponse>)> fu
   fun(pResponse);
 }
 
+
+// ============================================================================
+// Methods
+// ============================================================================
+
 RWebApplication::RWebApplication(
     Rcpp::Function onHeaders,
     Rcpp::Function onBodyData,
@@ -233,14 +242,14 @@ RWebApplication::RWebApplication(
     Rcpp::Function onWSOpen,
     Rcpp::Function onWSMessage,
     Rcpp::Function onWSClose,
-    Rcpp::Function getStaticPaths) :
+    Rcpp::List     staticPaths,
+    Rcpp::List     staticPathOptions) :
     _onHeaders(onHeaders), _onBodyData(onBodyData), _onRequest(onRequest),
-    _onWSOpen(onWSOpen), _onWSMessage(onWSMessage), _onWSClose(onWSClose),
-    _getStaticPaths(getStaticPaths)
+    _onWSOpen(onWSOpen), _onWSMessage(onWSMessage), _onWSClose(onWSClose)
 {
   ASSERT_MAIN_THREAD()
 
-  _staticPathList = StaticPathList(Rcpp::List(_getStaticPaths()));
+  _staticPathList = StaticPathList(staticPaths, staticPathOptions);
 }
 
 
@@ -427,7 +436,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   ASSERT_BACKGROUND_THREAD()
 
   // If it has a Connection: Upgrade header, don't try to serve a static file.
-  // Just fall through.
+  // Just fall through, even if the path is one that is in the StaticPathList.
   if (pRequest->hasHeader("Connection", "Upgrade", true)) {
     return nullptr;
   }
@@ -438,7 +447,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   std::pair<std::string, std::string> url_query = splitQueryString(url);
   std::string& url_path = url_query.first;
 
-  boost::optional<std::pair<const StaticPath&, std::string>> sp_pair =
+  boost::optional<std::pair<StaticPath, std::string>> sp_pair =
     _staticPathList.matchStaticPath(url_path);
 
   if (!sp_pair) {
@@ -470,7 +479,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   }
 
   if (is_directory(local_path)) {
-    if (sp.indexhtml) {
+    if (*(sp.options.indexhtml)) {
       local_path = local_path + "/" + "index.html";
     }
   }
@@ -480,10 +489,11 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   int ret = pDataSource->initialize(local_path, false);
 
   if (ret != 0) {
+    std::cout << pDataSource->lastErrorMessage() << "\n";
     // Couldn't read the file
     delete pDataSource;
 
-    if (sp.fallthrough) {
+    if (*(sp.options.fallthrough)) {
       return nullptr;
     } else {
       return error_response(pRequest, 404);
@@ -493,8 +503,8 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   int file_size = pDataSource->size();
 
   // Use local_path instead of subpath, because if the subpath is "/foo/" and
-  // sp.indexhtml is true, then the local_path will be "/foo/index.html". We
-  // need to use the latter to determine mime type.
+  // *(sp.options.indexhtml) is true, then the local_path will be
+  // "/foo/index.html". We need to use the latter to determine mime type.
   std::string content_type = find_mime_type(find_extension(basename(local_path)));
   if (content_type == "") {
     content_type = "application/octet-stream";

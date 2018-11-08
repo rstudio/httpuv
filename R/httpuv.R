@@ -171,7 +171,8 @@ AppWrapper <- setRefClass(
     .app = 'ANY',
     .wsconns = 'environment',
     .supportsOnHeaders = 'logical',
-    .staticPaths = 'list'
+    .staticPaths = 'list',
+    .staticPathOptions = 'ANY'
   ),
   methods = list(
     initialize = function(app) {
@@ -193,10 +194,23 @@ AppWrapper <- setRefClass(
       #
       # If .app is a reference class, accessing .app$staticPaths can error if
       # not present.
-      if (class(try(.app$staticPaths, silent = TRUE)) == "try-error") {
-        .staticPaths <<- normalizeStaticPaths(NULL)
+      if (class(try(.app$staticPaths, silent = TRUE)) == "try-error" ||
+          is.null(.app$staticPaths))
+      {
+        .staticPaths <<- list()
       } else {
         .staticPaths <<- normalizeStaticPaths(.app$staticPaths)
+      }
+
+      if (class(try(.app$staticPathOptions, silent = TRUE)) == "try-error" ||
+          is.null(.app$staticPathOptions))
+      {
+        # Use defaults
+        .staticPathOptions <<- staticPathOptions()
+      } else if (inherits(.app$staticPathOptions, "staticPathOptions")) {
+        .staticPathOptions <<- .app$staticPathOptions
+      } else {
+        stop("staticPathOptions must be an object of class staticPathOptions.")
       }
     },
     onHeaders = function(req) {
@@ -265,9 +279,6 @@ AppWrapper <- setRefClass(
       for (handler in ws$.closeCallbacks) {
         handler()
       }
-    },
-    getStaticPaths = function() {
-      .staticPaths
     }
   )
 )

@@ -43,9 +43,6 @@ private:
   Rcpp::Function _onWSOpen;
   Rcpp::Function _onWSMessage;
   Rcpp::Function _onWSClose;
-  // Note this differs from the public getStaticPathList function - this is
-  // the R function passed in that is used for initialization only.
-  Rcpp::Function _getStaticPaths;
 
   StaticPathList _staticPathList;
 
@@ -56,7 +53,8 @@ public:
                   Rcpp::Function onWSOpen,
                   Rcpp::Function onWSMessage,
                   Rcpp::Function onWSClose,
-                  Rcpp::Function getStaticPaths);
+                  Rcpp::List     staticPaths,
+                  Rcpp::List     staticPathOptions);
 
   virtual ~RWebApplication() {
     ASSERT_MAIN_THREAD()

@@ -12,7 +12,14 @@
 #'   \code{TRUE}, then instead of sending a 404 response, httpuv will call the
 #'   application's \code{call} function, and allow it to handle the request.
 #' @export
-staticPath <- function(path, indexhtml = TRUE, fallthrough = FALSE) {
+staticPath <- function(
+  path,
+  indexhtml    = NULL,
+  fallthrough  = NULL,
+  html_charset = NULL,
+  headers      = NULL,
+  validation   = NULL
+) {
   if (!is.character(path) || length(path) != 1 || path == "") {
     stop("`path` must be a non-empty string.")
   }
@@ -22,8 +29,13 @@ staticPath <- function(path, indexhtml = TRUE, fallthrough = FALSE) {
   structure(
     list(
       path = path,
-      indexhtml = indexhtml,
-      fallthrough = fallthrough
+      options = staticPathOptions(
+        indexhtml    = indexhtml,
+        fallthrough  = fallthrough,
+        html_charset = html_charset,
+        headers      = headers,
+        validation   = validation
+      )
     ),
     class = "staticPath"
   )
@@ -53,13 +65,64 @@ print.staticPath <- function(x, ...) {
 
 #' @export
 format.staticPath <- function(x, ...) {
+  format_option <- function(opt) {
+    if (is.null(opt)) {
+      "<default>"
+    } else {
+      as.character(opt)
+    }
+  }
   ret <- paste0(
     "<staticPath>\n",
     "  Local path:       ", x$path, "\n",
-    "  Use index.html:   ", x$indexhtml, "\n",
-    "  Fallthrough to R: ", x$fallthrough
+    "  Use index.html:   ", format_option(x$options$indexhtml), "\n",
+    "  Fallthrough to R: ", format_option(x$options$fallthrough)
   )
 }
+
+#' @export
+staticPathOptions <- function(
+  indexhtml    = TRUE,
+  fallthrough  = FALSE,
+  html_charset = "utf-8",
+  headers      = list(),
+  validation   = list()
+) {
+  structure(
+    list(
+      indexhtml    = indexhtml,
+      fallthrough  = fallthrough,
+      html_charset = html_charset,
+      headers      = headers,
+      validation   = validation
+    ),
+    class = "staticPathOptions"
+  )
+}
+
+#' @export
+print.staticPathOptions <- function(x, ...) {
+  cat(format(x, ...), sep = "\n")
+  invisible(x)
+}
+
+
+#' @export
+format.staticPathOptions <- function(x, ...) {
+  format_option <- function(opt) {
+    if (is.null(opt)) {
+      "<default>"
+    } else {
+      as.character(opt)
+    }
+  }
+  ret <- paste0(
+    "<staticPathOptions>\n",
+    "  Use index.html:   ", format_option(x$indexhtml), "\n",
+    "  Fallthrough to R: ", format_option(x$fallthrough)
+  )
+}
+
 
 # This function always returns a named list of staticPath objects. The names
 # will all start with "/". The input can be a named character vector or a

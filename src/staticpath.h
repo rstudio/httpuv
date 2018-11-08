@@ -7,19 +7,26 @@
 #include <boost/optional.hpp>
 #include "thread.h"
 
+class StaticPathOptions {
+public:
+  boost::optional<bool> indexhtml   = boost::none;
+  boost::optional<bool> fallthrough = boost::none;
+
+  StaticPathOptions() {};
+  StaticPathOptions(const Rcpp::List& options);
+
+  void setOptions(const Rcpp::List& options);
+
+  Rcpp::List asRObject() const;
+
+  static StaticPathOptions merge(const StaticPathOptions& a, const StaticPathOptions& b);
+};
+
+
 class StaticPath {
 public:
   std::string path;
-  bool indexhtml;
-  bool fallthrough;
-
-  StaticPath(std::string _path, bool _indexhtml, bool _fallthrough) :
-    path(_path), indexhtml(_indexhtml), fallthrough(_fallthrough)
-  {
-    if (path.at(path.length() - 1) == '/') {
-      throw std::runtime_error("Static path must not have trailing slash.");
-    }
-  }
+  StaticPathOptions options;
 
   StaticPath(const Rcpp::List& sp);
 
@@ -32,12 +39,14 @@ class StaticPathList {
   // Mutex is used whenever path_map is accessed.
   mutable uv_mutex_t mutex;
 
-public:
-  StaticPathList();  
-  StaticPathList(const Rcpp::List& source);
+  StaticPathOptions options;
 
-  boost::optional<const StaticPath&> get(const std::string& path) const;
-  boost::optional<const StaticPath&> get(const Rcpp::CharacterVector& path) const;
+public:
+  StaticPathList();
+  StaticPathList(const Rcpp::List& path_list, const Rcpp::List& options_list);
+
+  boost::optional<StaticPath> get(const std::string& path) const;
+  boost::optional<StaticPath> get(const Rcpp::CharacterVector& path) const;
 
   void set(const std::string& path, const StaticPath& sp);
   void set(const std::map<std::string, StaticPath>& pmap);
@@ -47,8 +56,12 @@ public:
   void remove(const std::vector<std::string>& paths);
   void remove(const Rcpp::CharacterVector& paths);
 
-  boost::optional<std::pair<const StaticPath&, std::string>> matchStaticPath(
+  boost::optional<std::pair<StaticPath, std::string>> matchStaticPath(
     const std::string& url_path) const;
+
+
+  const StaticPathOptions& getOptions() const;
+  void setOptions(const Rcpp::List& opts);
 
   Rcpp::List asRObject() const;
 };

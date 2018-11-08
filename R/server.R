@@ -22,13 +22,29 @@ Server <- R6Class("Server",
     getStaticPaths = function() {
       getStaticPaths_(private$handle)
     },
-    setStaticPaths = function(paths) {
+    setStaticPath = function(..., .list = NULL) {
+      paths <- c(list(...), .list)
+      paths <- drop_duplicate_names(paths)
       paths <- normalizeStaticPaths(paths)
       invisible(setStaticPaths_(private$handle, paths))
     },
-    removeStaticPaths = function(paths) {
-      paths <- as.character(paths)
-      invisible(removeStaticPaths_(private$handle, paths))
+    removeStaticPath = function(path) {
+      path <- as.character(path)
+      invisible(removeStaticPaths_(private$handle, path))
+    },
+    getStaticPathOptions = function() {
+      getStaticPathOptions_(private$handle)
+    },
+    setStaticPathOption = function(..., .list = NULL) {
+      opts <- c(list(...), .list)
+      opts <- drop_duplicate_names(opts)
+
+      unknown_opt_idx <- !(names(opts) %in% names(formals(staticPathOptions)))
+      if (any(unknown_opt_idx)) {
+        stop("Unknown options: ", paste(names(opts)[unknown_opt_idx], ", "))
+      }
+
+      invisible(setStaticPathOptions_(private$handle, opts))
     }
   ),
   private = list(
@@ -56,7 +72,8 @@ WebServer <- R6Class("WebServer",
         private$appWrapper$onWSOpen,
         private$appWrapper$onWSMessage,
         private$appWrapper$onWSClose,
-        private$appWrapper$getStaticPaths
+        private$appWrapper$.staticPaths,
+        private$appWrapper$.staticPathOptions
       )
 
       if (is.null(private$handle)) {
@@ -91,7 +108,9 @@ PipeServer <- R6Class("PipeServer",
         private$appWrapper$call,
         private$appWrapper$onWSOpen,
         private$appWrapper$onWSMessage,
-        private$appWrapper$onWSClose
+        private$appWrapper$onWSClose,
+        private$appWrapper$.staticPaths,
+        private$appWrapper$.staticPathOptions
       )
 
       # Save the full path. normalizePath must be called after makePipeServer 

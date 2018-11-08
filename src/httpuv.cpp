@@ -245,7 +245,8 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
                             Rcpp::Function onWSOpen,
                             Rcpp::Function onWSMessage,
                             Rcpp::Function onWSClose,
-                            Rcpp::Function getStaticPaths) {
+                            Rcpp::List     staticPaths,
+                            Rcpp::List     staticPathOptions) {
 
   using namespace Rcpp;
   register_main_thread();
@@ -255,7 +256,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
   boost::shared_ptr<RWebApplication> pHandler(
     new RWebApplication(onHeaders, onBodyData, onRequest,
                         onWSOpen, onWSMessage, onWSClose,
-                        getStaticPaths),
+                        staticPaths, staticPathOptions),
     auto_deleter_main<RWebApplication>
   );
 
@@ -300,7 +301,8 @@ Rcpp::RObject makePipeServer(const std::string& name,
                              Rcpp::Function onWSOpen,
                              Rcpp::Function onWSMessage,
                              Rcpp::Function onWSClose,
-                             Rcpp::Function getStaticPaths) {
+                             Rcpp::List     staticPaths,
+                             Rcpp::List     staticPathOptions) {
 
   using namespace Rcpp;
   register_main_thread();
@@ -310,7 +312,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
   boost::shared_ptr<RWebApplication> pHandler(
     new RWebApplication(onHeaders, onBodyData, onRequest,
                         onWSOpen, onWSMessage, onWSClose,
-                        getStaticPaths),
+                        staticPaths, staticPathOptions),
     auto_deleter_main<RWebApplication>
   );
 
@@ -412,6 +414,20 @@ Rcpp::List removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths) {
   ASSERT_MAIN_THREAD()
   get_pWebApplication(handle)->getStaticPathList().remove(paths);
   return getStaticPaths_(handle);
+}
+
+// [[Rcpp::export]]
+Rcpp::List getStaticPathOptions_(std::string handle) {
+  ASSERT_MAIN_THREAD()
+  return get_pWebApplication(handle)->getStaticPathList().getOptions().asRObject();
+}
+
+
+// [[Rcpp::export]]
+Rcpp::List setStaticPathOptions_(std::string handle, Rcpp::List opts) {
+  ASSERT_MAIN_THREAD()
+  get_pWebApplication(handle)->getStaticPathList().setOptions(opts);
+  return getStaticPathOptions_(handle);
 }
 
 

@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <Rcpp.h>
+#include <boost/optional.hpp>
 #include "thread.h"
 
 // A callback for deleting objects on the main thread using later(). This is
@@ -87,11 +88,11 @@ std::string toString(T x) {
 }
 
 // This is used for converting an Rcpp named vector (T2) to a std::map.
-template <typename T, typename T2>
-std::map<std::string, T> toMap(T2 x) {
+template <typename T1, typename T2>
+std::map<std::string, T1> toMap(T2 x) {
   ASSERT_MAIN_THREAD()
 
-  std::map<std::string, T> strmap;
+  std::map<std::string, T1> strmap;
 
   if (x.size() == 0) {
     return strmap;
@@ -104,17 +105,36 @@ std::map<std::string, T> toMap(T2 x) {
 
   for (int i=0; i<x.size(); i++) {
     std::string name  = Rcpp::as<std::string>(names[i]);
-    T           value = Rcpp::as<T>          (x[i]);
+    T1          value = Rcpp::as<T1>         (x[i]);
     if (name == "") {
       throw Rcpp::exception("Error converting R object to map<string, T>: element has empty name.");
     }
 
     strmap.insert(
-      std::pair<std::string, T>(name, value)
+      std::pair<std::string, T1>(name, value)
     );
   }
 
   return strmap;
+}
+
+// A wrapper for Rcpp::as. If the R value is NULL, this returns boost::none;
+// otherwise it returns the usual value that Rcpp::as returns, wrapped in
+// boost::optional<T2>.
+template <typename T1, typename T2>
+boost::optional<T1> optional_as(T2 value) {
+  if (value.isNULL()) {
+    return boost::none;
+  }
+  return boost::optional<T1>( Rcpp::as<T1>(value) );
+}
+
+template <typename T>
+Rcpp::RObject optional_wrap(boost::optional<T> value) {
+  if (value == boost::none) {
+    return R_NilValue;
+  }
+  return Rcpp::wrap(*value);
 }
 
 
