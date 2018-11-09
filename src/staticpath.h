@@ -34,7 +34,7 @@ public:
 };
 
 
-class StaticPathList {
+class StaticPathManager {
   std::map<std::string, StaticPath> path_map;
   // Mutex is used whenever path_map is accessed.
   mutable uv_mutex_t mutex;
@@ -42,8 +42,8 @@ class StaticPathList {
   StaticPathOptions options;
 
 public:
-  StaticPathList();
-  StaticPathList(const Rcpp::List& path_list, const Rcpp::List& options_list);
+  StaticPathManager();
+  StaticPathManager(const Rcpp::List& path_list, const Rcpp::List& options_list);
 
   boost::optional<StaticPath> get(const std::string& path) const;
   boost::optional<StaticPath> get(const Rcpp::CharacterVector& path) const;
@@ -63,7 +63,7 @@ public:
   const StaticPathOptions& getOptions() const;
   void setOptions(const Rcpp::List& opts);
 
-  Rcpp::List asRObject() const;
+  Rcpp::List pathsAsRObject() const;
 };
 
 #endif

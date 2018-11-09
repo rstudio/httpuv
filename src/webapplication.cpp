@@ -249,7 +249,7 @@ RWebApplication::RWebApplication(
 {
   ASSERT_MAIN_THREAD()
 
-  _staticPathList = StaticPathList(staticPaths, staticPathOptions);
+  _staticPathManager = StaticPathManager(staticPaths, staticPathOptions);
 }
 
 
@@ -436,7 +436,8 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   ASSERT_BACKGROUND_THREAD()
 
   // If it has a Connection: Upgrade header, don't try to serve a static file.
-  // Just fall through, even if the path is one that is in the StaticPathList.
+  // Just fall through, even if the path is one that is in the
+  // StaticPathManager.
   if (pRequest->hasHeader("Connection", "Upgrade", true)) {
     return nullptr;
   }
@@ -448,7 +449,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   std::string& url_path = url_query.first;
 
   boost::optional<std::pair<StaticPath, std::string>> sp_pair =
-    _staticPathList.matchStaticPath(url_path);
+    _staticPathManager.matchStaticPath(url_path);
 
   if (!sp_pair) {
     // This was not a static path.
@@ -536,6 +537,6 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   return pResponse;
 }
 
-StaticPathList& RWebApplication::getStaticPathList() {
-  return _staticPathList;
+StaticPathManager& RWebApplication::getStaticPathManager() {
+  return _staticPathManager;
 }

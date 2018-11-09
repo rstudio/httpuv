@@ -399,34 +399,34 @@ boost::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
 // [[Rcpp::export]]
 Rcpp::List getStaticPaths_(std::string handle) {
   ASSERT_MAIN_THREAD()
-  return get_pWebApplication(handle)->getStaticPathList().asRObject();
+  return get_pWebApplication(handle)->getStaticPathManager().pathsAsRObject();
 }
 
 // [[Rcpp::export]]
 Rcpp::List setStaticPaths_(std::string handle, Rcpp::List sp) {
   ASSERT_MAIN_THREAD()
-  get_pWebApplication(handle)->getStaticPathList().set(sp);
+  get_pWebApplication(handle)->getStaticPathManager().set(sp);
   return getStaticPaths_(handle);
 }
 
 // [[Rcpp::export]]
 Rcpp::List removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths) {
   ASSERT_MAIN_THREAD()
-  get_pWebApplication(handle)->getStaticPathList().remove(paths);
+  get_pWebApplication(handle)->getStaticPathManager().remove(paths);
   return getStaticPaths_(handle);
 }
 
 // [[Rcpp::export]]
 Rcpp::List getStaticPathOptions_(std::string handle) {
   ASSERT_MAIN_THREAD()
-  return get_pWebApplication(handle)->getStaticPathList().getOptions().asRObject();
+  return get_pWebApplication(handle)->getStaticPathManager().getOptions().asRObject();
 }
 
 
 // [[Rcpp::export]]
 Rcpp::List setStaticPathOptions_(std::string handle, Rcpp::List opts) {
   ASSERT_MAIN_THREAD()
-  get_pWebApplication(handle)->getStaticPathList().setOptions(opts);
+  get_pWebApplication(handle)->getStaticPathManager().setOptions(opts);
   return getStaticPathOptions_(handle);
 }
 

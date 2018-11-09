@@ -129,6 +129,9 @@ boost::optional<T1> optional_as(T2 value) {
   return boost::optional<T1>( Rcpp::as<T1>(value) );
 }
 
+// A wrapper for Rcpp::wrap. If the C++ value is boost::none, this returns the
+// R value NULL; otherwise it returns the usual value that Rcpp::wrap returns, after
+// unwrapping from the boost::optional<T>.
 template <typename T>
 Rcpp::RObject optional_wrap(boost::optional<T> value) {
   if (value == boost::none) {

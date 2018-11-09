@@ -31,7 +31,7 @@ public:
 
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
     boost::shared_ptr<HttpRequest> pRequest) = 0;
-  virtual StaticPathList& getStaticPathList() = 0;
+  virtual StaticPathManager& getStaticPathManager() = 0;
 };
 
 
@@ -44,7 +44,7 @@ private:
   Rcpp::Function _onWSMessage;
   Rcpp::Function _onWSClose;
 
-  StaticPathList _staticPathList;
+  StaticPathManager _staticPathManager;
 
 public:
   RWebApplication(Rcpp::Function onHeaders,
@@ -77,7 +77,7 @@ public:
 
   virtual boost::shared_ptr<HttpResponse> staticFileResponse(
     boost::shared_ptr<HttpRequest> pRequest);
-  virtual StaticPathList& getStaticPathList();
+  virtual StaticPathManager& getStaticPathManager();
 };
 
 

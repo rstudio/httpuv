@@ -53,6 +53,7 @@ Rcpp::List StaticPathOptions::asRObject() const {
   return obj;
 }
 
+// Merge StaticPathOptions object `a` with `b`. Values in `a` take precedence.
 StaticPathOptions StaticPathOptions::merge(
   const StaticPathOptions& a,
   const StaticPathOptions& b)
@@ -96,13 +97,13 @@ Rcpp::List StaticPath::asRObject() const {
 
 
 // ============================================================================
-// StaticPathList
+// StaticPathManager
 // ============================================================================
-StaticPathList::StaticPathList() {
+StaticPathManager::StaticPathManager() {
   uv_mutex_init(&mutex);
 }
 
-StaticPathList::StaticPathList(const Rcpp::List& path_list, const Rcpp::List& options_list) {
+StaticPathManager::StaticPathManager(const Rcpp::List& path_list, const Rcpp::List& options_list) {
   ASSERT_MAIN_THREAD()
   uv_mutex_init(&mutex);
 
@@ -134,7 +135,7 @@ StaticPathList::StaticPathList(const Rcpp::List& path_list, const Rcpp::List& op
 
 
 // Returns a StaticPath object, which has its options merged with the overall ones.
-boost::optional<StaticPath> StaticPathList::get(const std::string& path) const {
+boost::optional<StaticPath> StaticPathManager::get(const std::string& path) const {
   guard guard(mutex);
   std::map<std::string, StaticPath>::const_iterator it = path_map.find(path);
   if (it == path_map.end()) {
@@ -148,7 +149,7 @@ boost::optional<StaticPath> StaticPathList::get(const std::string& path) const {
   return sp;
 }
 
-boost::optional<StaticPath> StaticPathList::get(const Rcpp::CharacterVector& path) const {
+boost::optional<StaticPath> StaticPathManager::get(const Rcpp::CharacterVector& path) const {
   ASSERT_MAIN_THREAD()
   if (path.size() != 1) {
     throw Rcpp::exception("Can only get a single StaticPath object.");
@@ -157,7 +158,7 @@ boost::optional<StaticPath> StaticPathList::get(const Rcpp::CharacterVector& pat
 }
 
 
-void StaticPathList::set(const std::string& path, const StaticPath& sp) {
+void StaticPathManager::set(const std::string& path, const StaticPath& sp) {
   guard guard(mutex);
   // If the key already exists, replace the value.
   std::map<std::string, StaticPath>::iterator it = path_map.find(path);
@@ -171,21 +172,21 @@ void StaticPathList::set(const std::string& path, const StaticPath& sp) {
   );
 }
 
-void StaticPathList::set(const std::map<std::string, StaticPath>& pmap) {
+void StaticPathManager::set(const std::map<std::string, StaticPath>& pmap) {
   std::map<std::string, StaticPath>::const_iterator it;
   for (it = pmap.begin(); it != pmap.end(); it++) {
     set(it->first, it->second);
   }
 }
 
-void StaticPathList::set(const Rcpp::List& pmap) {
+void StaticPathManager::set(const Rcpp::List& pmap) {
   ASSERT_MAIN_THREAD()
   std::map<std::string, StaticPath> pmap2 = toMap<StaticPath, Rcpp::List>(pmap);
   set(pmap2);
 }
 
 
-void StaticPathList::remove(const std::string& path) {
+void StaticPathManager::remove(const std::string& path) {
   guard guard(mutex);
   std::map<std::string, StaticPath>::const_iterator it = path_map.find(path);
   if (it != path_map.end()) {
@@ -193,14 +194,14 @@ void StaticPathList::remove(const std::string& path) {
   }
 }
 
-void StaticPathList::remove(const std::vector<std::string>& paths) {
+void StaticPathManager::remove(const std::vector<std::string>& paths) {
   std::vector<std::string>::const_iterator it;
   for (it = paths.begin(); it != paths.end(); it++) {
     remove(*it);
   }
 }
 
-void StaticPathList::remove(const Rcpp::CharacterVector& paths) {
+void StaticPathManager::remove(const Rcpp::CharacterVector& paths) {
   ASSERT_MAIN_THREAD()
   std::vector<std::string> paths_vec = Rcpp::as<std::vector<std::string>>(paths);
   remove(paths_vec);
@@ -226,7 +227,7 @@ void StaticPathList::remove(const Rcpp::CharacterVector& paths) {
 // 
 // If no matching static path is found, then it returns boost::none.
 //
-boost::optional<std::pair<StaticPath, std::string>> StaticPathList::matchStaticPath(
+boost::optional<std::pair<StaticPath, std::string>> StaticPathManager::matchStaticPath(
   const std::string& url_path) const
 {
 
@@ -286,16 +287,17 @@ boost::optional<std::pair<StaticPath, std::string>> StaticPathList::matchStaticP
   }
 }
 
-const StaticPathOptions& StaticPathList::getOptions() const {
+const StaticPathOptions& StaticPathManager::getOptions() const {
   return options;
 };
 
-void StaticPathList::setOptions(const Rcpp::List& opts) {
+void StaticPathManager::setOptions(const Rcpp::List& opts) {
   options.setOptions(opts);
 };
 
-// Returns the R objects, without option merging.
-Rcpp::List StaticPathList::asRObject() const {
+// Returns a list of R objects that reflect the StaticPaths, without merging
+// the overall options.
+Rcpp::List StaticPathManager::pathsAsRObject() const {
   ASSERT_MAIN_THREAD()
   guard guard(mutex);
   Rcpp::List obj;
