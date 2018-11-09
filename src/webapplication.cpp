@@ -510,8 +510,10 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   if (content_type == "") {
     content_type = "application/octet-stream";
   } else if (content_type == "text/html") {
-    // Always specify that encoding UTF-8 for HTML.
-    content_type = "text/html; charset=utf-8";
+    // Add the encoding if specified by the options.
+    if (sp.options.html_charset) {
+      content_type = "text/html; charset=" + *(sp.options.html_charset);
+    }
   }
 
   if (method == "HEAD") {

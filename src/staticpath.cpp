@@ -8,7 +8,11 @@
 // ============================================================================
 
 // (Use boost::optional instead of optional_as)
-StaticPathOptions::StaticPathOptions(const Rcpp::List& options) {
+StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
+  indexhtml(boost::none),
+  fallthrough(boost::none),
+  html_charset(boost::none)
+{
   ASSERT_MAIN_THREAD()
   
   std::string obj_class = options.attr("class");
@@ -18,8 +22,9 @@ StaticPathOptions::StaticPathOptions(const Rcpp::List& options) {
 
   // There's probably a more concise way to do this assignment.
   Rcpp::RObject temp;
-  temp = options["indexhtml"];   indexhtml   = optional_as<bool>(temp);
-  temp = options["fallthrough"]; fallthrough = optional_as<bool>(temp);
+  temp = options["indexhtml"];    indexhtml    = optional_as<bool>(temp);
+  temp = options["fallthrough"];  fallthrough  = optional_as<bool>(temp);
+  temp = options["html_charset"]; html_charset = optional_as<std::string>(temp);
 }
 
 void StaticPathOptions::setOptions(const Rcpp::List& options) {
@@ -37,6 +42,12 @@ void StaticPathOptions::setOptions(const Rcpp::List& options) {
       fallthrough = optional_as<bool>(temp);
     }
   }
+  if (options.containsElementNamed("html_charset")) {
+    temp = options["html_charset"];
+    if (!temp.isNULL()) {
+      html_charset = optional_as<std::string>(temp);
+    }
+  }
 }
 
 Rcpp::List StaticPathOptions::asRObject() const {
@@ -44,8 +55,9 @@ Rcpp::List StaticPathOptions::asRObject() const {
   using namespace Rcpp;
 
   List obj = List::create(
-    _["indexhtml"]   = optional_wrap(indexhtml),
-    _["fallthrough"] = optional_wrap(fallthrough)
+    _["indexhtml"]    = optional_wrap(indexhtml),
+    _["fallthrough"]  = optional_wrap(fallthrough),
+    _["html_charset"] = optional_wrap(html_charset)
   );
   
   obj.attr("class") = "staticPathOptions";
@@ -59,8 +71,9 @@ StaticPathOptions StaticPathOptions::merge(
   const StaticPathOptions& b)
 {
   StaticPathOptions new_sp = a;
-  if (new_sp.indexhtml   == boost::none) new_sp.indexhtml   = b.indexhtml;
-  if (new_sp.fallthrough == boost::none) new_sp.fallthrough = b.fallthrough;
+  if (new_sp.indexhtml    == boost::none) new_sp.indexhtml    = b.indexhtml;
+  if (new_sp.fallthrough  == boost::none) new_sp.fallthrough  = b.fallthrough;
+  if (new_sp.html_charset == boost::none) new_sp.html_charset = b.html_charset;
   return new_sp;
 }
 

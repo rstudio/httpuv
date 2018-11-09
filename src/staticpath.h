@@ -9,10 +9,14 @@
 
 class StaticPathOptions {
 public:
-  boost::optional<bool> indexhtml   = boost::none;
-  boost::optional<bool> fallthrough = boost::none;
-
-  StaticPathOptions() {};
+  boost::optional<bool> indexhtml;
+  boost::optional<bool> fallthrough;
+  boost::optional<std::string> html_charset;
+  StaticPathOptions() :
+    indexhtml(boost::none),
+    fallthrough(boost::none),
+    html_charset(boost::none)
+  { };
   StaticPathOptions(const Rcpp::List& options);
 
   void setOptions(const Rcpp::List& options);

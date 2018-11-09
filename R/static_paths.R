@@ -67,7 +67,7 @@ print.staticPath <- function(x, ...) {
 format.staticPath <- function(x, ...) {
   format_option <- function(opt) {
     if (is.null(opt)) {
-      "<default>"
+      "<inherit>"
     } else {
       as.character(opt)
     }
@@ -75,8 +75,9 @@ format.staticPath <- function(x, ...) {
   ret <- paste0(
     "<staticPath>\n",
     "  Local path:       ", x$path, "\n",
-    "  Use index.html:   ", format_option(x$options$indexhtml), "\n",
-    "  Fallthrough to R: ", format_option(x$options$fallthrough)
+    "  Use index.html:    ", format_option(x$options$indexhtml),    "\n",
+    "  Fallthrough to R:  ", format_option(x$options$fallthrough),  "\n",
+    "  HTML charset:      ", format_option(x$options$html_charset), "\n"
   )
 }
 
@@ -111,15 +112,16 @@ print.staticPathOptions <- function(x, ...) {
 format.staticPathOptions <- function(x, ...) {
   format_option <- function(opt) {
     if (is.null(opt)) {
-      "<default>"
+      "<inherit>"
     } else {
       as.character(opt)
     }
   }
   ret <- paste0(
     "<staticPathOptions>\n",
-    "  Use index.html:   ", format_option(x$indexhtml), "\n",
-    "  Fallthrough to R: ", format_option(x$fallthrough)
+    "  Use index.html:    ", format_option(x$indexhtml),    "\n",
+    "  Fallthrough to R:  ", format_option(x$fallthrough),  "\n",
+    "  HTML charset:      ", format_option(x$html_charset), "\n"
   )
 }
 
