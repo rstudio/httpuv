@@ -1,20 +1,53 @@
 #include "staticpath.h"
 #include "thread.h"
 #include "utils.h"
+#include "constants.h"
 #include <boost/optional.hpp>
+#include <boost/algorithm/string.hpp>
 
 // ============================================================================
 // StaticPathOptions
 // ============================================================================
 
+// Takes an R object (should be a character vector with 3 elements), converts
+// it to a native C++ vector<string>, and checks that the validation string
+// pattern is OK. Throws an exception if not. Finally, it returns the
+// vector<string>.
+boost::optional<std::vector<std::string>> processValidationPattern(Rcpp::RObject pattern) {
+  ASSERT_MAIN_THREAD()
+
+  boost::optional<std::string> pattern_str_opt = optional_as<std::string>(pattern);
+  if (pattern_str_opt == boost::none) {
+    return boost::none;
+  }
+
+  const std::string& pattern_str = pattern_str_opt.get();
+
+  std::vector<std::string> pattern_vec;
+  // Split a string like "aaa ==   bbb", collapsing whitespace. This is a
+  // little crude because it requires whitespace.
+  boost::split(pattern_vec, pattern_str, boost::algorithm::is_space(), boost::token_compress_on);
+
+  if (pattern_vec.size() != 3 ||
+      pattern_vec[1] != "==" ||
+      pattern_vec[0].length() == 0 ||
+      pattern_vec[2].length() == 2)
+  {
+    throw Rcpp::exception("Validation pattern must be of the form \"xx == yy\".");
+  }
+
+  return boost::optional<std::vector<std::string>>(pattern_vec);
+}
+
 // (Use boost::optional instead of optional_as)
 StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
   indexhtml(boost::none),
   fallthrough(boost::none),
-  html_charset(boost::none)
+  html_charset(boost::none),
+  validation(boost::none)
 {
   ASSERT_MAIN_THREAD()
-  
+
   std::string obj_class = options.attr("class");
   if (obj_class != "staticPathOptions") {
     throw Rcpp::exception("staticPath options object must have class 'staticPathOptions'.");
@@ -25,6 +58,7 @@ StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
   temp = options["indexhtml"];    indexhtml    = optional_as<bool>(temp);
   temp = options["fallthrough"];  fallthrough  = optional_as<bool>(temp);
   temp = options["html_charset"]; html_charset = optional_as<std::string>(temp);
+  temp = options["validation"];   validation   = processValidationPattern(temp);
 }
 
 void StaticPathOptions::setOptions(const Rcpp::List& options) {
@@ -48,6 +82,12 @@ void StaticPathOptions::setOptions(const Rcpp::List& options) {
       html_charset = optional_as<std::string>(temp);
     }
   }
+  if (options.containsElementNamed("validation")) {
+    temp = options["validation"];
+    if (!temp.isNULL()) {
+      validation = processValidationPattern(temp);
+    }
+  }
 }
 
 Rcpp::List StaticPathOptions::asRObject() const {
@@ -57,7 +97,8 @@ Rcpp::List StaticPathOptions::asRObject() const {
   List obj = List::create(
     _["indexhtml"]    = optional_wrap(indexhtml),
     _["fallthrough"]  = optional_wrap(fallthrough),
-    _["html_charset"] = optional_wrap(html_charset)
+    _["html_charset"] = optional_wrap(html_charset),
+    _["validation"]   = optional_wrap(validation)
   );
   
   obj.attr("class") = "staticPathOptions";
@@ -74,7 +115,31 @@ StaticPathOptions StaticPathOptions::merge(
   if (new_sp.indexhtml    == boost::none) new_sp.indexhtml    = b.indexhtml;
   if (new_sp.fallthrough  == boost::none) new_sp.fallthrough  = b.fallthrough;
   if (new_sp.html_charset == boost::none) new_sp.html_charset = b.html_charset;
+  if (new_sp.validation   == boost::none) new_sp.validation   = b.validation;
   return new_sp;
+}
+
+// Check if a set of request headers satisfies the condition specified by
+// `validation`.
+bool StaticPathOptions::validateRequestHeaders(const RequestHeaders& headers) const {
+  if (validation == boost::none) {
+    return true;
+  }
+
+  const std::vector<std::string>& pattern = validation.get();
+
+  if (pattern[1] != "==") {
+    // TODO: some sort of error here (background thread)
+  }
+
+  RequestHeaders::const_iterator it = headers.find(pattern[0]);
+  if (it != headers.end() &&
+      it->second == pattern[2])
+  {
+    return true;
+  }
+
+  return false;
 }
 
 

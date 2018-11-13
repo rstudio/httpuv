@@ -77,7 +77,8 @@ format.staticPath <- function(x, ...) {
     "  Local path:       ", x$path, "\n",
     "  Use index.html:    ", format_option(x$options$indexhtml),    "\n",
     "  Fallthrough to R:  ", format_option(x$options$fallthrough),  "\n",
-    "  HTML charset:      ", format_option(x$options$html_charset), "\n"
+    "  HTML charset:      ", format_option(x$options$html_charset), "\n",
+    "  Validation params: ", format_option(x$options$validation),   "\n"
   )
 }
 
@@ -87,7 +88,7 @@ staticPathOptions <- function(
   fallthrough  = FALSE,
   html_charset = "utf-8",
   headers      = list(),
-  validation   = list()
+  validation   = NULL
 ) {
   structure(
     list(
@@ -121,7 +122,8 @@ format.staticPathOptions <- function(x, ...) {
     "<staticPathOptions>\n",
     "  Use index.html:    ", format_option(x$indexhtml),    "\n",
     "  Fallthrough to R:  ", format_option(x$fallthrough),  "\n",
-    "  HTML charset:      ", format_option(x$html_charset), "\n"
+    "  HTML charset:      ", format_option(x$html_charset), "\n",
+    "  Validation params: ", format_option(x$validation),   "\n"
   )
 }
 
