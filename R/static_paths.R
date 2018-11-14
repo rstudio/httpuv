@@ -29,13 +29,13 @@ staticPath <- function(
   structure(
     list(
       path = path,
-      options = staticPathOptions(
+      options = normalizeStaticPathOptions(staticPathOptions(
         indexhtml    = indexhtml,
         fallthrough  = fallthrough,
         html_charset = html_charset,
         headers      = headers,
         validation   = validation
-      )
+      ))
     ),
     class = "staticPath"
   )
@@ -74,7 +74,7 @@ format.staticPath <- function(x, ...) {
   }
   ret <- paste0(
     "<staticPath>\n",
-    "  Local path:       ", x$path, "\n",
+    "  Local path:        ", x$path, "\n",
     "  Use index.html:    ", format_option(x$options$indexhtml),    "\n",
     "  Fallthrough to R:  ", format_option(x$options$fallthrough),  "\n",
     "  HTML charset:      ", format_option(x$options$html_charset), "\n",
@@ -115,7 +115,7 @@ format.staticPathOptions <- function(x, ...) {
     if (is.null(opt)) {
       "<inherit>"
     } else {
-      as.character(opt)
+      paste(as.character(opt), collapse = " ")
     }
   }
   ret <- paste0(
@@ -130,7 +130,8 @@ format.staticPathOptions <- function(x, ...) {
 
 # This function always returns a named list of staticPath objects. The names
 # will all start with "/". The input can be a named character vector or a
-# named list containing a mix of strings and staticPath objects.
+# named list containing a mix of strings and staticPath objects. This function
+# is idempotent.
 normalizeStaticPaths <- function(paths) {
   if (is.null(paths) || length(paths) == 0) {
     return(list())
@@ -164,4 +165,46 @@ normalizeStaticPaths <- function(paths) {
   }, "")
 
   paths
+}
+
+# Takes a staticPathOptions object and modifies it so that the resulting
+# object is easier to work with on the C++ side. The resulting object is not
+# meant to be modified on the R side. This function is idempotent; if the
+# object has already been normalized, it will not be modified.
+normalizeStaticPathOptions <- function(opts) {
+  if (isTRUE(attr(opts, "normalized", exact = TRUE))) {
+    return(opts)
+  }
+
+  if (!is.null(opts$validation)) {
+    if (!is.character(opts$validation) || length(opts$validation) != 0) {
+      "`validation` option must be a single-element character vector."
+    }
+
+    fail <- FALSE
+    tryCatch(
+      p <- parse(text = opts$validation)[[1]],
+      error = function(e) fail <<- TRUE
+    )
+    if (!fail) {
+      if (length(p) != 3            ||
+          p[[1]] != as.symbol("==") ||
+          !is.character(p[[2]])     ||
+          length(p[[2]]) != 1       ||
+          !is.character(p[[3]])     ||
+          length(p[[3]]) != 1)
+      {
+        fail <- TRUE
+      }
+    }
+    if (fail) {
+      stop("`validation` must be a string of the form: '\"xxx\" == \"yyy\"'")
+    }
+
+    # Turn it into a char vector for easier processing in C++
+    opts$validation <- as.character(p)
+  }
+
+  attr(opts, "normalized") <- TRUE
+  opts
 }

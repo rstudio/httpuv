@@ -9,35 +9,6 @@
 // StaticPathOptions
 // ============================================================================
 
-// Takes an R object (should be a character vector with 3 elements), converts
-// it to a native C++ vector<string>, and checks that the validation string
-// pattern is OK. Throws an exception if not. Finally, it returns the
-// vector<string>.
-boost::optional<std::vector<std::string>> processValidationPattern(Rcpp::RObject pattern) {
-  ASSERT_MAIN_THREAD()
-
-  boost::optional<std::string> pattern_str_opt = optional_as<std::string>(pattern);
-  if (pattern_str_opt == boost::none) {
-    return boost::none;
-  }
-
-  const std::string& pattern_str = pattern_str_opt.get();
-
-  std::vector<std::string> pattern_vec;
-  // Split a string like "aaa ==   bbb", collapsing whitespace. This is a
-  // little crude because it requires whitespace.
-  boost::split(pattern_vec, pattern_str, boost::algorithm::is_space(), boost::token_compress_on);
-
-  if (pattern_vec.size() != 3 ||
-      pattern_vec[1] != "==" ||
-      pattern_vec[0].length() == 0 ||
-      pattern_vec[2].length() == 2)
-  {
-    throw Rcpp::exception("Validation pattern must be of the form \"xx == yy\".");
-  }
-
-  return boost::optional<std::vector<std::string>>(pattern_vec);
-}
 
 // (Use boost::optional instead of optional_as)
 StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
@@ -53,12 +24,21 @@ StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
     throw Rcpp::exception("staticPath options object must have class 'staticPathOptions'.");
   }
 
-  // There's probably a more concise way to do this assignment.
+  // This seems to be a necessary intermediary for passing objects to
+  // `optional_as()`.
   Rcpp::RObject temp;
+
+  temp = options.attr("normalized");
+  boost::optional<bool> normalized = optional_as<bool>(temp);
+  if (!normalized || !normalized.get()) {
+    throw Rcpp::exception("staticPathOptions object must be normalized.");
+  }
+
+  // There's probably a more concise way to do this assignment than by using temp.
   temp = options["indexhtml"];    indexhtml    = optional_as<bool>(temp);
   temp = options["fallthrough"];  fallthrough  = optional_as<bool>(temp);
   temp = options["html_charset"]; html_charset = optional_as<std::string>(temp);
-  temp = options["validation"];   validation   = processValidationPattern(temp);
+  temp = options["validation"];   validation   = optional_as<std::vector<std::string>>(temp);
 }
 
 void StaticPathOptions::setOptions(const Rcpp::List& options) {
@@ -85,7 +65,7 @@ void StaticPathOptions::setOptions(const Rcpp::List& options) {
   if (options.containsElementNamed("validation")) {
     temp = options["validation"];
     if (!temp.isNULL()) {
-      validation = processValidationPattern(temp);
+      validation = optional_as<std::vector<std::string>>(temp);
     }
   }
 }
@@ -128,11 +108,11 @@ bool StaticPathOptions::validateRequestHeaders(const RequestHeaders& headers) co
 
   const std::vector<std::string>& pattern = validation.get();
 
-  if (pattern[1] != "==") {
+  if (pattern[0] != "==") {
     // TODO: some sort of error here (background thread)
   }
 
-  RequestHeaders::const_iterator it = headers.find(pattern[0]);
+  RequestHeaders::const_iterator it = headers.find(pattern[1]);
   if (it != headers.end() &&
       it->second == pattern[2])
   {

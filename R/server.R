@@ -38,6 +38,7 @@ Server <- R6Class("Server",
     setStaticPathOption = function(..., .list = NULL) {
       opts <- c(list(...), .list)
       opts <- drop_duplicate_names(opts)
+      opts <- normalizeStaticPathOptions(opts)
 
       unknown_opt_idx <- !(names(opts) %in% names(formals(staticPathOptions)))
       if (any(unknown_opt_idx)) {

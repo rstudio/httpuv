@@ -208,7 +208,7 @@ AppWrapper <- setRefClass(
         # Use defaults
         .staticPathOptions <<- staticPathOptions()
       } else if (inherits(.app$staticPathOptions, "staticPathOptions")) {
-        .staticPathOptions <<- .app$staticPathOptions
+        .staticPathOptions <<- normalizeStaticPathOptions(.app$staticPathOptions)
       } else {
         stop("staticPathOptions must be an object of class staticPathOptions.")
       }
