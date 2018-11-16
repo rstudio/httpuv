@@ -1,16 +1,15 @@
 #' Create a staticPath object
 #'
-#' This function creates a \code{staticPath} object.
+#' This function creates a \code{staticPath} object. Note that if any of the
+#' arguments (other than \code{path}) are \code{NULL}, then that means that
+#' for this particular static path, it should inherit the behavior from the
+#' staticPathOptions set for the application as a whole.
 #'
 #' @param path The local path.
-#' @param indexhtml If an index.html file is present, should it be served up when
-#'   the client requests \code{/} or any subdirectory?
-#' @param fallthrough With the default value, \code{FALSE}, if a request is made
-#'   for a file that doesn't exist, then httpuv will immediately send a 404
-#'   response from the background I/O thread, without needing to call back into
-#'   the main R thread. This offers the best performance. If the value is
-#'   \code{TRUE}, then instead of sending a 404 response, httpuv will call the
-#'   application's \code{call} function, and allow it to handle the request.
+#' @inheritParams staticPathOptions
+#'
+#' @seealso \code{\link{staticPathOptions}}.
+#'
 #' @export
 staticPath <- function(
   path,
@@ -78,10 +77,36 @@ format.staticPath <- function(x, ...) {
     "  Use index.html:    ", format_option(x$options$indexhtml),    "\n",
     "  Fallthrough to R:  ", format_option(x$options$fallthrough),  "\n",
     "  HTML charset:      ", format_option(x$options$html_charset), "\n",
+    "  Extra headers:     ", format_option(x$options$headers),      "\n",
     "  Validation params: ", format_option(x$options$validation),   "\n"
   )
 }
 
+#' Create options for static paths
+#'
+#'
+#' @param indexhtml If an index.html file is present, should it be served up
+#'   when the client requests \code{/} or any subdirectory?
+#' @param fallthrough With the default value, \code{FALSE}, if a request is made
+#'   for a file that doesn't exist, then httpuv will immediately send a 404
+#'   response from the background I/O thread, without needing to call back into
+#'   the main R thread. This offers the best performance. If the value is
+#'   \code{TRUE}, then instead of sending a 404 response, httpuv will call the
+#'   application's \code{call} function, and allow it to handle the request.
+#' @param html_charset When HTML files are served, the value that will be
+#'   provided for \code{charset} in the Content-Type header. For example, with
+#'   the default value, \code{"utf-8"}, the header is \code{Content-Type:
+#'   text/html; charset=utf-8}. If \code{""} is used, then no \code{charset}
+#'   will be added in the Content-Type header.
+#' @param headers Additional headers and values that will be included in the response.
+#' @param validation An optional validation pattern. Presently, the only type of
+#'   validation supported is an exact string match of a header. For example, if
+#'   \code{validation} is \code{'"abc" = "xyz"'}, then HTTP requests must have a
+#'   header named \code{abc} (case-insensitive) with the value \code{xyz}
+#'   (case-sensitive). If a request does not have a matching header, than httpuv
+#'   will give a 403 Forbidden response. If the \code{character(0)} (the
+#'   default), then no validation check will be performed.
+#'
 #' @export
 staticPathOptions <- function(
   indexhtml    = TRUE,
@@ -123,6 +148,7 @@ format.staticPathOptions <- function(x, ...) {
     "  Use index.html:    ", format_option(x$indexhtml),    "\n",
     "  Fallthrough to R:  ", format_option(x$fallthrough),  "\n",
     "  HTML charset:      ", format_option(x$html_charset), "\n",
+    "  Extra headers:     ", format_option(x$headers),      "\n",
     "  Validation params: ", format_option(x$validation),   "\n"
   )
 }
@@ -189,30 +215,36 @@ normalizeStaticPathOptions <- function(opts) {
       "`validation` option must be a character vector with zero or one element."
     }
 
-    # If it's length 0, do nothing; if length 1, we need to parse it.
+    # Both "" and character(0) result in character(0). Length-1 strings other
+    # than "" will be parsed.
     if (length(opts$validation) == 1) {
-      fail <- FALSE
-      tryCatch(
-        p <- parse(text = opts$validation)[[1]],
-        error = function(e) fail <<- TRUE
-      )
-      if (!fail) {
-        if (length(p) != 3            ||
-            p[[1]] != as.symbol("==") ||
-            !is.character(p[[2]])     ||
-            length(p[[2]]) != 1       ||
-            !is.character(p[[3]])     ||
-            length(p[[3]]) != 1)
-        {
-          fail <- TRUE
+      if (opts$validation == "") {
+        opts$validation <- character(0)
+      
+      } else {
+        fail <- FALSE
+        tryCatch(
+          p <- parse(text = opts$validation)[[1]],
+          error = function(e) fail <<- TRUE
+        )
+        if (!fail) {
+          if (length(p) != 3            ||
+              p[[1]] != as.symbol("==") ||
+              !is.character(p[[2]])     ||
+              length(p[[2]]) != 1       ||
+              !is.character(p[[3]])     ||
+              length(p[[3]]) != 1)
+          {
+            fail <- TRUE
+          }
         }
+        if (fail) {
+          stop("`validation` must be a string of the form: '\"xxx\" == \"yyy\"'")
+        }
+  
+        # Turn it into a char vector for easier processing in C++
+        opts$validation <- as.character(p)
       }
-      if (fail) {
-        stop("`validation` must be a string of the form: '\"xxx\" == \"yyy\"'")
-      }
-
-      # Turn it into a char vector for easier processing in C++
-      opts$validation <- as.character(p)
     }
   }
 
