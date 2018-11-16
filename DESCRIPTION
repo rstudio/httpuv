@@ -31,4 +31,4 @@ Suggests:
     testthat,
     callr
 Remotes:
-    r-lib/later#75
+    r-lib/later
