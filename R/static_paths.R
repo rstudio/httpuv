@@ -69,7 +69,7 @@ format.staticPath <- function(x, ...) {
     if (is.null(opt)) {
       "<inherit>"
     } else {
-      as.character(opt)
+      paste(as.character(opt), collapse = " ")
     }
   }
   ret <- paste0(
@@ -88,7 +88,7 @@ staticPathOptions <- function(
   fallthrough  = FALSE,
   html_charset = "utf-8",
   headers      = list(),
-  validation   = NULL
+  validation   = character(0)
 ) {
   structure(
     list(
@@ -176,33 +176,44 @@ normalizeStaticPathOptions <- function(opts) {
     return(opts)
   }
 
+  # html_charset can accept "" or character(0). But on the C++ side, we want
+  # "".
+  if (!is.null(opts$html_charset)) {
+    if (length(opts$html_charset) == 0) {
+      opts$html_charset <- ""
+    }
+  }
+
   if (!is.null(opts$validation)) {
-    if (!is.character(opts$validation) || length(opts$validation) != 0) {
-      "`validation` option must be a single-element character vector."
+    if (!is.character(opts$validation) || length(opts$validation) > 1) {
+      "`validation` option must be a character vector with zero or one element."
     }
 
-    fail <- FALSE
-    tryCatch(
-      p <- parse(text = opts$validation)[[1]],
-      error = function(e) fail <<- TRUE
-    )
-    if (!fail) {
-      if (length(p) != 3            ||
-          p[[1]] != as.symbol("==") ||
-          !is.character(p[[2]])     ||
-          length(p[[2]]) != 1       ||
-          !is.character(p[[3]])     ||
-          length(p[[3]]) != 1)
-      {
-        fail <- TRUE
+    # If it's length 0, do nothing; if length 1, we need to parse it.
+    if (length(opts$validation) == 1) {
+      fail <- FALSE
+      tryCatch(
+        p <- parse(text = opts$validation)[[1]],
+        error = function(e) fail <<- TRUE
+      )
+      if (!fail) {
+        if (length(p) != 3            ||
+            p[[1]] != as.symbol("==") ||
+            !is.character(p[[2]])     ||
+            length(p[[2]]) != 1       ||
+            !is.character(p[[3]])     ||
+            length(p[[3]]) != 1)
+        {
+          fail <- TRUE
+        }
       }
-    }
-    if (fail) {
-      stop("`validation` must be a string of the form: '\"xxx\" == \"yyy\"'")
-    }
+      if (fail) {
+        stop("`validation` must be a string of the form: '\"xxx\" == \"yyy\"'")
+      }
 
-    # Turn it into a char vector for easier processing in C++
-    opts$validation <- as.character(p)
+      # Turn it into a char vector for easier processing in C++
+      opts$validation <- as.character(p)
+    }
   }
 
   attr(opts, "normalized") <- TRUE

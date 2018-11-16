@@ -103,19 +103,23 @@ StaticPathOptions StaticPathOptions::merge(
 // `validation`.
 bool StaticPathOptions::validateRequestHeaders(const RequestHeaders& headers) const {
   if (validation == boost::none) {
+    throw std::runtime_error("Cannot validate request headers because validation pattern is not set.");
+  }
+
+  // Should have the format {"==", "aaa", "bbb"}, or {} if there's no
+  // validation pattern.
+  const std::vector<std::string>& pattern = validation.get();
+
+  if (pattern.size() == 0) {
     return true;
   }
 
-  const std::vector<std::string>& pattern = validation.get();
-
   if (pattern[0] != "==") {
-    // TODO: some sort of error here (background thread)
+    throw std::runtime_error("Validation only knows the == operator.");
   }
 
   RequestHeaders::const_iterator it = headers.find(pattern[1]);
-  if (it != headers.end() &&
-      it->second == pattern[2])
-  {
+  if (it != headers.end() && it->second == pattern[2]) {
     return true;
   }
 

@@ -485,7 +485,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   }
 
   if (is_directory(local_path)) {
-    if (*(sp.options.indexhtml)) {
+    if (sp.options.indexhtml.get()) {
       local_path = local_path + "/" + "index.html";
     }
   }
@@ -499,7 +499,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     // Couldn't read the file
     delete pDataSource;
 
-    if (*(sp.options.fallthrough)) {
+    if (sp.options.fallthrough.get()) {
       return nullptr;
     } else {
       return error_response(pRequest, 404);
@@ -516,8 +516,8 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     content_type = "application/octet-stream";
   } else if (content_type == "text/html") {
     // Add the encoding if specified by the options.
-    if (sp.options.html_charset) {
-      content_type = "text/html; charset=" + *(sp.options.html_charset);
+    if (sp.options.html_charset.get() != "") {
+      content_type = "text/html; charset=" + sp.options.html_charset.get();
     }
   }
 
