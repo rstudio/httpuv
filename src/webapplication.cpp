@@ -540,6 +540,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   // the response for the HEAD would not.
   respHeaders.push_back(std::make_pair("Content-Length", toString(file_size)));
   respHeaders.push_back(std::make_pair("Content-Type", content_type));
+  respHeaders.push_back(std::make_pair("Date", http_date_string(time(NULL))));
 
   return pResponse;
 }

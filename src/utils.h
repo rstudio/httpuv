@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string>
 #include <vector>
 #include <Rcpp.h>
@@ -140,5 +141,59 @@ Rcpp::RObject optional_wrap(boost::optional<T> value) {
   return Rcpp::wrap(*value);
 }
 
+
+// Return a date string in the format required for the HTTP Date header. For
+// example: "Wed, 21 Oct 2015 07:28:00 GMT"
+inline std::string http_date_string(const time_t& t) {
+  struct tm timeptr;
+  #ifdef _WIN32
+  gmtime_s(&timeptr, &t);
+  #else
+  gmtime_r(&t, &timeptr);
+  #endif
+
+  std::string day_name;
+  switch(timeptr.tm_wday) {
+    case 0:  day_name = "Sun"; break;
+    case 1:  day_name = "Mon"; break;
+    case 2:  day_name = "Tue"; break;
+    case 3:  day_name = "Wed"; break;
+    case 4:  day_name = "Thu"; break;
+    case 5:  day_name = "Fri"; break;
+    case 6:  day_name = "Sat"; break;
+    default: day_name = "Err"; // Throw?
+  }
+
+  std::string month_name;
+  switch(timeptr.tm_mon) {
+    case 0:  month_name = "Jan"; break;
+    case 1:  month_name = "Feb"; break;
+    case 2:  month_name = "Mar"; break;
+    case 3:  month_name = "Apr"; break;
+    case 4:  month_name = "May"; break;
+    case 5:  month_name = "Jun"; break;
+    case 6:  month_name = "Jul"; break;
+    case 7:  month_name = "Aug"; break;
+    case 8:  month_name = "Sep"; break;
+    case 9:  month_name = "Oct"; break;
+    case 10: month_name = "Nov"; break;
+    case 11: month_name = "Dec"; break;
+    default: month_name = "Err"; // Throw?
+  }
+
+  const int maxlen = 30;
+  char res[maxlen];
+  snprintf(res, maxlen, "%s, %02d %s %04d %02d:%02d:%02d GMT",
+    day_name.c_str(),
+    timeptr.tm_mday,
+    month_name.c_str(),
+    timeptr.tm_year + 1900,
+    timeptr.tm_hour,
+    timeptr.tm_min,
+    timeptr.tm_sec
+  );
+
+  return std::string(res);
+}
 
 #endif
