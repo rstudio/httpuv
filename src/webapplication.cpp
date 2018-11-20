@@ -534,6 +534,16 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   );
 
   ResponseHeaders& respHeaders = pResponse->headers();
+  
+  // Add any extra headers
+  ResponseHeaders extraRespHeaders = sp.options.headers.get();
+  if (extraRespHeaders.size() != 0) {
+    ResponseHeaders::const_iterator it;
+    for (it = extraRespHeaders.begin(); it != extraRespHeaders.end(); it++) {
+      respHeaders.push_back(*it);
+    }
+  }
+
   // Set the Content-Length here so that both GET and HEAD requests will get
   // it. If we didn't set it here, the response for the GET would
   // automatically set the Content-Length (by using the FileDataSource), but

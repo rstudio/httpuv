@@ -142,6 +142,56 @@ Rcpp::RObject optional_wrap(boost::optional<T> value) {
 }
 
 
+// as() and wrap() for ResponseHeaders. Since the ResponseHeaders typedef is
+// in constants.h and this file doesn't include constants.h, we'll define them
+// using the actual vector type instead of the ResponseHeaders typedef.
+// (constants.h doesn't include Rcpp.h so we can't define these functions
+// there.)
+namespace Rcpp {
+  template <> inline std::vector<std::pair<std::string, std::string>> as(SEXP x) {
+    ASSERT_MAIN_THREAD()
+    Rcpp::CharacterVector headers(x);
+    Rcpp::CharacterVector names = headers.names();
+
+    if (names.isNULL()) {
+      throw Rcpp::exception("All values must be named.");
+    }
+
+    std::vector<std::pair<std::string, std::string>> result;
+
+    for (int i=0; i<headers.size(); i++) {
+      std::string name = Rcpp::as<std::string>(names[i]);
+      if (name == "") {
+        throw Rcpp::exception("All values must be named.");
+      }
+
+      std::string value = Rcpp::as<std::string>(headers[i]);
+
+      result.push_back(std::make_pair(name, value));
+    }
+
+    return result;
+  }
+
+  template <> inline SEXP wrap(const std::vector<std::pair<std::string, std::string>> &x) {
+    ASSERT_MAIN_THREAD()
+
+    std::vector<std::string> values(x.size());
+    std::vector<std::string> names(x.size());
+
+    for (int i=0; i<x.size(); i++) {
+      names[i]  = x[i].first;
+      values[i] = x[i].second;
+    }
+
+    Rcpp::CharacterVector result = Rcpp::wrap(values);
+    result.attr("names") = Rcpp::wrap(names);
+
+    return result;
+  }
+}
+
+
 // Return a date string in the format required for the HTTP Date header. For
 // example: "Wed, 21 Oct 2015 07:28:00 GMT"
 inline std::string http_date_string(const time_t& t) {

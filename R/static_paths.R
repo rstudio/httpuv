@@ -64,21 +64,10 @@ print.staticPath <- function(x, ...) {
 
 #' @export
 format.staticPath <- function(x, ...) {
-  format_option <- function(opt) {
-    if (is.null(opt)) {
-      "<inherit>"
-    } else {
-      paste(as.character(opt), collapse = " ")
-    }
-  }
   ret <- paste0(
     "<staticPath>\n",
     "  Local path:        ", x$path, "\n",
-    "  Use index.html:    ", format_option(x$options$indexhtml),    "\n",
-    "  Fallthrough to R:  ", format_option(x$options$fallthrough),  "\n",
-    "  HTML charset:      ", format_option(x$options$html_charset), "\n",
-    "  Extra headers:     ", format_option(x$options$headers),      "\n",
-    "  Validation params: ", format_option(x$options$validation),   "\n"
+    format_opts(x$options)
   )
 }
 
@@ -115,7 +104,7 @@ staticPathOptions <- function(
   headers      = list(),
   validation   = character(0)
 ) {
-  structure(
+  res <- structure(
     list(
       indexhtml    = indexhtml,
       fallthrough  = fallthrough,
@@ -125,6 +114,8 @@ staticPathOptions <- function(
     ),
     class = "staticPathOptions"
   )
+
+  normalizeStaticPathOptions(res)
 }
 
 #' @export
@@ -136,15 +127,36 @@ print.staticPathOptions <- function(x, ...) {
 
 #' @export
 format.staticPathOptions <- function(x, ...) {
+  paste0(
+    "<staticPathOptions>\n",
+    format_opts(x)
+  )
+}
+
+format_opts <- function(x) {
   format_option <- function(opt) {
-    if (is.null(opt)) {
-      "<inherit>"
+    if (is.null(opt) || length(opt) == 0) {
+      "<none>"
+
+    } else if (!is.null(names(opt))) {
+      # Named character vector
+      lines <- mapply(
+        function(name, value) paste0('    "', name, '" = "', value, '"'),
+        names(opt),
+        opt,
+        SIMPLIFY = FALSE,
+        USE.NAMES = FALSE
+      )
+
+      lines <- paste(as.character(lines), collapse = "\n")
+      lines <- paste0("\n", lines)
+      lines
+
     } else {
       paste(as.character(opt), collapse = " ")
     }
   }
   ret <- paste0(
-    "<staticPathOptions>\n",
     "  Use index.html:    ", format_option(x$indexhtml),    "\n",
     "  Fallthrough to R:  ", format_option(x$fallthrough),  "\n",
     "  HTML charset:      ", format_option(x$html_charset), "\n",
@@ -207,6 +219,16 @@ normalizeStaticPathOptions <- function(opts) {
   if (!is.null(opts$html_charset)) {
     if (length(opts$html_charset) == 0) {
       opts$html_charset <- ""
+    }
+  }
+
+  # Can be a named list of strings, or a named character vector. On the C++
+  # side, we want a named character vector.
+  if (is.list(opts$headers)) {
+    # Convert list to named character vector
+    opts$headers <- unlist(opts$headers, recursive = FALSE)
+    if (!is.character(opts$headers) || any_unnamed(opts$headers)) {
+      "`headers` option must be a named list or character vector."
     }
   }
 

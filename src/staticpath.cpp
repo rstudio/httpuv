@@ -9,12 +9,11 @@
 // StaticPathOptions
 // ============================================================================
 
-
-// (Use boost::optional instead of optional_as)
 StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
   indexhtml(boost::none),
   fallthrough(boost::none),
   html_charset(boost::none),
+  headers(boost::none),
   validation(boost::none)
 {
   ASSERT_MAIN_THREAD()
@@ -38,8 +37,10 @@ StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
   temp = options["indexhtml"];    indexhtml    = optional_as<bool>(temp);
   temp = options["fallthrough"];  fallthrough  = optional_as<bool>(temp);
   temp = options["html_charset"]; html_charset = optional_as<std::string>(temp);
+  temp = options["headers"];      headers      = optional_as<ResponseHeaders>(temp);
   temp = options["validation"];   validation   = optional_as<std::vector<std::string>>(temp);
 }
+
 
 void StaticPathOptions::setOptions(const Rcpp::List& options) {
   ASSERT_MAIN_THREAD()
@@ -62,6 +63,12 @@ void StaticPathOptions::setOptions(const Rcpp::List& options) {
       html_charset = optional_as<std::string>(temp);
     }
   }
+  if (options.containsElementNamed("headers")) {
+    temp = options["headers"];
+    if (!temp.isNULL()) {
+      headers = optional_as<ResponseHeaders>(temp);
+    }
+  }
   if (options.containsElementNamed("validation")) {
     temp = options["validation"];
     if (!temp.isNULL()) {
@@ -78,6 +85,7 @@ Rcpp::List StaticPathOptions::asRObject() const {
     _["indexhtml"]    = optional_wrap(indexhtml),
     _["fallthrough"]  = optional_wrap(fallthrough),
     _["html_charset"] = optional_wrap(html_charset),
+    _["headers"]      = optional_wrap(headers),
     _["validation"]   = optional_wrap(validation)
   );
   
@@ -95,6 +103,7 @@ StaticPathOptions StaticPathOptions::merge(
   if (new_sp.indexhtml    == boost::none) new_sp.indexhtml    = b.indexhtml;
   if (new_sp.fallthrough  == boost::none) new_sp.fallthrough  = b.fallthrough;
   if (new_sp.html_charset == boost::none) new_sp.html_charset = b.html_charset;
+  if (new_sp.headers      == boost::none) new_sp.headers      = b.headers;
   if (new_sp.validation   == boost::none) new_sp.validation   = b.validation;
   return new_sp;
 }

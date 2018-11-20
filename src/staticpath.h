@@ -13,11 +13,13 @@ public:
   boost::optional<bool> indexhtml;
   boost::optional<bool> fallthrough;
   boost::optional<std::string> html_charset;
+  boost::optional<ResponseHeaders> headers;
   boost::optional<std::vector<std::string>> validation;
   StaticPathOptions() :
     indexhtml(boost::none),
     fallthrough(boost::none),
     html_charset(boost::none),
+    headers(boost::none),
     validation(boost::none)
   { };
   StaticPathOptions(const Rcpp::List& options);
