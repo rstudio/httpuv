@@ -452,11 +452,21 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     _staticPathManager.matchStaticPath(url_path);
 
   if (!sp_pair) {
-    // This was not a static path.
+    // This was not a static path. Fall through to the R code to handle this
+    // path.
     return nullptr;
   }
 
   // If we get here, we've matched a static path.
+
+  const StaticPath&  sp      = sp_pair->first;
+  // Note that the subpath may include leading dirs, as in "foo/bar/abc.txt".
+  const std::string& subpath = sp_pair->second;
+
+  // Validate headers (if validation pattern was provided).
+  if (!sp.options.validateRequestHeaders(pRequest->headers())) {
+    return error_response(pRequest, 403);
+  }
 
   // Check that method is GET or HEAD; error otherwise.
   std::string method = pRequest->method();
@@ -469,13 +479,19 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     return error_response(pRequest, 400);
   }
 
-  const StaticPath&  sp      = sp_pair->first;
-  // Note that the subpath may include leading dirs, as in "foo/bar/abc.txt".
-  const std::string& subpath = sp_pair->second;
-
-  // Validate headers (if validation pattern was provided).
-  if (!sp.options.validateRequestHeaders(pRequest->headers())) {
-    return error_response(pRequest, 403);
+  // Disallow ".." in paths. (Browsers collapse them anyway, so no normal
+  // requests should contain them.) The ones we care about will always be
+  // between two slashes, as in "/foo/../bar", except in the case where it's
+  // at the end of the URL, as in "/foo/..". Paths like "/foo../" or "/..foo/"
+  // are OK.
+  if (url_path.find("/../") != std::string::npos ||
+      (url_path.length() >= 3 && url_path.substr(url_path.length()-3, 3) == "/..")
+  ) {
+    if (sp.options.fallthrough.get()) {
+      return nullptr;
+    } else {
+      return error_response(pRequest, 400);
+    }
   }
 
   // Path to local file on disk
