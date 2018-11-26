@@ -11,19 +11,19 @@ int FileDataSource::initialize(const std::string& path, bool owned) {
 
   _fd = open(path.c_str(), O_RDONLY);
   if (_fd == -1) {
-    _lastErrorMessage = "Error opening file: " + toString(errno) + "\n";
+    _lastErrorMessage = "Error opening file " + path + ": " + toString(errno) + "\n";
     return 1;
   }
   else {
     struct stat info = {0};
     if (fstat(_fd, &info)) {
-      _lastErrorMessage = "Error opening path: " + toString(errno) + "\n";
+      _lastErrorMessage = "Error opening path " + path + ": " + toString(errno) + "\n";
       ::close(_fd);
       return 1;
     }
 
     if (S_ISDIR(info.st_mode)) {
-      _lastErrorMessage = "File data source is a directory.\n";
+      _lastErrorMessage = "File data source is a directory: " + path + "\n";
       ::close(_fd);
       return 1;
     }
@@ -33,7 +33,7 @@ int FileDataSource::initialize(const std::string& path, bool owned) {
     if (owned && unlink(path.c_str())) {
       // Print this (on either main or background thread), since we're not
       // returning 1 to indicate an error.
-      err_printf("Couldn't delete temp file: %d\n", errno);
+      err_printf("Couldn't delete temp file %s: %d\n", path.c_str(), errno);
       // It's OK to continue
     }
 
