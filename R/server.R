@@ -83,6 +83,12 @@ WebServer <- R6Class("WebServer",
 
       private$running <- TRUE
       registerServer(self)
+    },
+    getHost = function() {
+      private$host
+    },
+    getPort = function() {
+      private$port
     }
   ),
   private = list(

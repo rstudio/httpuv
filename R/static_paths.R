@@ -196,8 +196,10 @@ normalizeStaticPaths <- function(paths) {
     if (substr(path, 1, 1) != "/") {
       path <- paste0("/", path)
     }
-    # Strip trailing slashes
-    path <- sub("/+$", "", path)
+    # Strip trailing slashes, except when the path is just "/".
+    if (path != "/") {
+      path <- sub("/+$", "\\1", path)
+    }
 
     path
   }, "")
@@ -227,14 +229,20 @@ normalizeStaticPathOptions <- function(opts) {
   if (is.list(opts$headers)) {
     # Convert list to named character vector
     opts$headers <- unlist(opts$headers, recursive = FALSE)
+    # Special case: if opts$headers was an empty list before unlist(), it is
+    # now NULL. Replace it with an empty named character vector.
+    if (length(opts$headers) == 0) {
+      opts$headers <- c(a="a")[0]
+    }
+
     if (!is.character(opts$headers) || any_unnamed(opts$headers)) {
-      "`headers` option must be a named list or character vector."
+      stop("`headers` option must be a named list or character vector.")
     }
   }
 
   if (!is.null(opts$validation)) {
     if (!is.character(opts$validation) || length(opts$validation) > 1) {
-      "`validation` option must be a character vector with zero or one element."
+      stop("`validation` option must be a character vector with zero or one element.")
     }
 
     # Both "" and character(0) result in character(0). Length-1 strings other

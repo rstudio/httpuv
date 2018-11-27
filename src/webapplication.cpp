@@ -511,7 +511,6 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   int ret = pDataSource->initialize(local_path, false);
 
   if (ret != 0) {
-    std::cout << pDataSource->lastErrorMessage() << "\n";
     // Couldn't read the file
     delete pDataSource;
 
@@ -552,7 +551,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   ResponseHeaders& respHeaders = pResponse->headers();
   
   // Add any extra headers
-  ResponseHeaders extraRespHeaders = sp.options.headers.get();
+  const ResponseHeaders& extraRespHeaders = sp.options.headers.get();
   if (extraRespHeaders.size() != 0) {
     ResponseHeaders::const_iterator it;
     for (it = extraRespHeaders.begin(); it != extraRespHeaders.end(); it++) {

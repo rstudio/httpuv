@@ -138,7 +138,7 @@ Rcpp::RObject optional_wrap(boost::optional<T> value) {
   if (value == boost::none) {
     return R_NilValue;
   }
-  return Rcpp::wrap(*value);
+  return Rcpp::wrap(value.get());
 }
 
 
