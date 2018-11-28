@@ -30,7 +30,8 @@ SystemRequirements: GNU make
 RoxygenNote: 6.1.0.9000
 Suggests:
     testthat,
-    callr
+    callr,
+    curl
 Collate:
     'RcppExports.R'
     'httpuv.R'
