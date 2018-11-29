@@ -420,7 +420,9 @@ test_that("Escaped characters in paths", {
   # Need to create files with weird names
   static_dir <- tempfile("httpuv_test")
   dir.create(static_dir)
-  cat("This is file content.\n", file = file.path(static_dir, "file with space.txt"))
+  # Use writeBin() instead of cat() because in Windows, cat() will convert "\n"
+  # to "\r\n".
+  writeBin(charToRaw("This is file content.\n"), file.path(static_dir, "file with space.txt"))
   on.exit(unlink(static_dir, recursive = TRUE))
 
 
