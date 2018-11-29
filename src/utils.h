@@ -179,7 +179,7 @@ namespace Rcpp {
     std::vector<std::string> values(x.size());
     std::vector<std::string> names(x.size());
 
-    for (int i=0; i<x.size(); i++) {
+    for (unsigned int i=0; i<x.size(); i++) {
       names[i]  = x[i].first;
       values[i] = x[i].second;
     }
