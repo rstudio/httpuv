@@ -11,7 +11,7 @@ staticPath(path, indexhtml = NULL, fallthrough = NULL,
 \item{path}{The local path.}
 
 \item{indexhtml}{If an index.html file is present, should it be served up
-when the client requests \code{/} or any subdirectory?}
+when the client requests the static path or any subdirectory?}
 
 \item{fallthrough}{With the default value, \code{FALSE}, if a request is made
 for a file that doesn't exist, then httpuv will immediately send a 404

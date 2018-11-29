@@ -5,9 +5,8 @@ Server <- R6Class("Server",
   cloneable = FALSE,
   public = list(
     stop = function() {
-      if (!private$running) {
-        stop("Server is already stopped.")
-      }
+      if (!private$running) return(invisible())
+
       stopServer_(private$handle)
       private$running <- FALSE
       deregisterServer(self)
@@ -24,7 +23,6 @@ Server <- R6Class("Server",
     },
     setStaticPath = function(..., .list = NULL) {
       paths <- c(list(...), .list)
-      paths <- drop_duplicate_names(paths)
       paths <- normalizeStaticPaths(paths)
       invisible(setStaticPaths_(private$handle, paths))
     },

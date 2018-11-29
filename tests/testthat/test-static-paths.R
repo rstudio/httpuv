@@ -172,7 +172,7 @@ test_that("Options and option inheritance", {
         # This path unsets some options
         "/unset" = staticPath(
           test_path("apps/content"),
-          html_charset = character(),
+          html_charset = "",
           headers = list()
         )
       ),
