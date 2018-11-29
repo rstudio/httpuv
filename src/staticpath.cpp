@@ -307,7 +307,6 @@ boost::optional<std::pair<StaticPath, std::string>> StaticPathManager::matchStat
   }
 
   std::string path = url_path;
-  size_t found_idx = std::string::npos;
 
   std::string pre_slash;
   std::string post_slash;
@@ -320,6 +319,8 @@ boost::optional<std::pair<StaticPath, std::string>> StaticPathManager::matchStat
 
   pre_slash  = path;
   post_slash = "";
+
+  size_t found_idx = path.length() + 1;
 
   // This loop searches for a match in path_map of pre_slash, the part before
   // the last split-on '/'. If found, it returns a pair with the part before
