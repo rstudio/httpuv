@@ -88,7 +88,7 @@ Rcpp::List StaticPathOptions::asRObject() const {
     _["headers"]      = optional_wrap(headers),
     _["validation"]   = optional_wrap(validation)
   );
-  
+
   obj.attr("class") = "staticPathOptions";
 
   return obj;
@@ -143,7 +143,7 @@ bool StaticPathOptions::validateRequestHeaders(const RequestHeaders& headers) co
 StaticPath::StaticPath(const Rcpp::List& sp) {
   ASSERT_MAIN_THREAD()
   path = Rcpp::as<std::string>(sp["path"]);
-  
+
   Rcpp::List options_list = sp["options"];
   options = StaticPathOptions(options_list);
 
@@ -295,7 +295,7 @@ void StaticPathManager::remove(const Rcpp::CharacterVector& paths) {
 // a static path in its entirety (e.g., the url_path is "/foo" or "/foo/" and
 // there is a static path "/foo"), then the returned pair consists of the
 // matching StaticPath object and an empty string "".
-// 
+//
 // If no matching static path is found, then it returns boost::none.
 //
 boost::optional<std::pair<StaticPath, std::string>> StaticPathManager::matchStaticPath(
@@ -327,7 +327,7 @@ boost::optional<std::pair<StaticPath, std::string>> StaticPathManager::matchStat
   // previous '/' and searches again, and so on, until there are no more to
   // split on.
   while (true) {
-    // Check if the part before the split-on '/' is in the staticPath.
+    // Check if the part before the split-on '/' is a staticPath.
     boost::optional<StaticPath> sp = this->get(pre_slash);
     if (sp) {
       return std::pair<StaticPath, std::string>(*sp, post_slash);
@@ -377,7 +377,7 @@ Rcpp::List StaticPathManager::pathsAsRObject() const {
   for (it = path_map.begin(); it != path_map.end(); it++) {
     obj[it->first] = it->second.asRObject();
   }
-  
+
   return obj;
 }
 
