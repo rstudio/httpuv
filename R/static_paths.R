@@ -23,7 +23,7 @@ staticPath <- function(
     stop("`path` must be a non-empty string.")
   }
 
-  path <- normalizePath(path, mustWork = TRUE)  
+  path <- normalizePath(path, winslash = "/", mustWork = TRUE)
 
   structure(
     list(

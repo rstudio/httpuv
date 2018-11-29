@@ -75,4 +75,9 @@ void FileDataSource::close() {
   }
 }
 
+std::string FileDataSource::lastErrorMessage() const {
+  return _lastErrorMessage;
+}
+
+
 #endif // #ifdef _WIN32

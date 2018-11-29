@@ -4,6 +4,7 @@
 #include <string>
 
 #ifdef _WIN32
+#include <windows.h>
 #else
 #include <sys/stat.h>
 #endif
@@ -38,7 +39,15 @@ inline std::string find_extension(const std::string &filename) {
 inline bool is_directory(const std::string &filename) {
 #ifdef _WIN32
 
-  // TODO: implement
+  DWORD file_attr = GetFileAttributes(filename.c_str());
+  if (file_attr == INVALID_FILE_ATTRIBUTES) {
+    return false;
+  }
+  if (file_attr & FILE_ATTRIBUTE_DIRECTORY) {
+    return true;
+  }
+
+  return false;
 
 #else
 
