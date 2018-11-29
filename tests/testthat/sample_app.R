@@ -1,5 +1,6 @@
 library(httpuv)
 library(promises)
+library(testthat)
 
 content <- list(
   status = 200L,
@@ -67,6 +68,13 @@ app_handle <- startServer("0.0.0.0", app_port,
       } else {
         stop("Unknown request path:", req$PATH_INFO)
       }
-    }
+    },
+    staticPaths = list(
+      "/static" = test_path("apps/content"),
+      "/static_fallthrough" = staticPath(
+        test_path("apps/content"),
+        fallthrough = TRUE
+      )
+    )
   )
 )

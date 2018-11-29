@@ -447,8 +447,6 @@ test_that("Escaped characters in paths", {
 
 
 test_that("Paths with ..", {
-  # TODO: Figure out how to send a request with ..
-
   s <- startServer("127.0.0.1", random_open_port(),
     list(
       call = function(req) {
@@ -465,6 +463,8 @@ test_that("Paths with ..", {
   )
   on.exit(s$stop())
 
+  # Need to use http_request_con() instead of fetch() to send custom requests
+  # with "..".
   res <- http_request_con("GET /", "127.0.0.1", s$getPort())
   expect_identical(res[1], "HTTP/1.1 404 Not Found")
   expect_true(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
