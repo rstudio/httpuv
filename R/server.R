@@ -1,5 +1,45 @@
 #' @include httpuv.R
+NULL
 
+# Note that the methods listed for Server, WebServer, and PipeServer were copied
+# and pasted among all three, with a few additional methods added to WebServer
+# and PipeServer. When changes are made in the future, make sure that they're
+# duplicated among all three.
+
+#' Server class
+#'
+#' The \code{Server} class is the parent class for \code{\link{WebServer}} and
+#' \code{\link{PipeServer}}. This class defines an interface and is not meant to
+#' be instantiated.
+#' 
+#' @section Methods:
+#' 
+#' \describe{
+#'   \item{\code{stop()}}{Stops a running server.}
+#'   \item{\code{isRunning()}}{Returns TRUE if the server is currently running.}
+#'   \item{\code{getStaticPaths()}}{Returns a list of \code{\link{staticPath}}
+#'     objects for the server.
+#'   }
+#'   \item{\code{setStaticPath(..., .list = NULL)}}{Sets a static path for the
+#'     current server. Each static path can be given as a named argument, or as
+#'     an named item in \code{.list}. If there already exists a static path with
+#'     the same name, it will be replaced.
+#'   }
+#'   \item{\code{removeStaticPath(path)}}{Removes a static path with the given
+#'     name.
+#'   }
+#'   \item{\code{getStaticPathOptions()}}{Returns a list of default
+#'     \code{staticPathOptions} for the current server. Each static path will
+#'     use these options by default, but they can be overridden for each static
+#'     path.
+#'   }
+#'   \item{\code{setStaticPathOption(..., .list = NULL)}}{Sets one or more
+#'     static path options. Each option can be given as a named argument, or as
+#'     a named item in \code{.list}.
+#'   }
+#' }
+#'
+#' @keywords internal
 #' @importFrom R6 R6Class
 Server <- R6Class("Server",
   cloneable = FALSE,
@@ -54,6 +94,49 @@ Server <- R6Class("Server",
 )
 
 
+#' WebServer class
+#'
+#' This class represents a web server running one application. Multiple servers
+#' can be running at the same time.
+#' 
+#' @section Methods:
+#' 
+#' \describe{
+#'   \item{\code{initialize(host, port, app)}}{
+#'     Create a new \code{WebServer} object. \code{app} is an httpuv application
+#'     object as described in \code{\link{startServer}}.
+#'   }
+#'   \item{\code{getHost()}}{Return the value of \code{host} that was passed to
+#'     \code{initialize()}.
+#'   }
+#'   \item{\code{getPort()}}{Return the value of \code{port} that was passed to
+#'     \code{initialize()}.
+#'   }
+#'   \item{\code{stop()}}{Stops a running server.}
+#'   \item{\code{isRunning()}}{Returns TRUE if the server is currently running.}
+#'   \item{\code{getStaticPaths()}}{Returns a list of \code{\link{staticPath}}
+#'     objects for the server.
+#'   }
+#'   \item{\code{setStaticPath(..., .list = NULL)}}{Sets a static path for the
+#'     current server. Each static path can be given as a named argument, or as
+#'     an named item in \code{.list}. If there already exists a static path with
+#'     the same name, it will be replaced.
+#'   }
+#'   \item{\code{removeStaticPath(path)}}{Removes a static path with the given
+#'     name.
+#'   }
+#'   \item{\code{getStaticPathOptions()}}{Returns a list of default
+#'     \code{staticPathOptions} for the current server. Each static path will
+#'     use these options by default, but they can be overridden for each static
+#'     path.
+#'   }
+#'   \item{\code{setStaticPathOption(..., .list = NULL)}}{Sets one or more
+#'     static path options. Each option can be given as a named argument, or as
+#'     a named item in \code{.list}.
+#'   }
+#' }
+#'
+#' @keywords internal
 WebServer <- R6Class("WebServer",
   cloneable = FALSE,
   inherit = Server,

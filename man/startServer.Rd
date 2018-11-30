@@ -33,6 +33,8 @@ umask is left unchanged. (This parameter has no effect on Windows.)}
 \value{
 A handle for this server that can be passed to
   \code{\link{stopServer}} to shut the server down.
+
+A \code{\link{WebServer}} or \code{\link{PipeServer}} object.
 }
 \description{
 Creates an HTTP/WebSocket server on the specified host and port.
@@ -60,9 +62,16 @@ Creates an HTTP/WebSocket server on the specified host and port.
   If the port cannot be bound (most likely due to permissions or because it
   is already bound), an error is raised.
 
+  The application can also specify paths on the filesystem which will be
+  served from the background thread, without invoking \code{$call()} or
+  \code{$onHeaders()}. Files served this way will be only use a C++ code,
+  which is faster than going through R, and will not be blocked when R code
+  is executing. This can greatly improve performance when serving static
+  assets.
+
   The \code{app} parameter is where your application logic will be provided 
   to the server. This can be a list, environment, or reference class that 
-  contains the following named functions/methods:
+  contains the following methods and fields:
   
   \describe{
     \item{\code{call(req)}}{Process the given HTTP request, and return an 
@@ -78,6 +87,17 @@ Creates an HTTP/WebSocket server on the specified host and port.
     \item{\code{onWSOpen(ws)}}{Called back when a WebSocket connection is established.
     The given object can be used to be notified when a message is received from
     the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}
+    \item{\code{staticPaths}}{
+      A named list of paths that will be served without invoking
+      \code{call()} or \code{onHeaders}. The name of each one is the URL
+      path, and the value is either a string referring to a local path, or an
+      object created by the \code{\link{staticPath}} function.
+    }
+    \item{\code{staticPathOptions}}{
+      A set of default options to use when serving static paths. If
+      not set or \code{NULL}, then it will use the result from calling
+      \code{\link{staticPathOptions}()} with no arguments.
+    }
   }
   
   The \code{startPipeServer} variant can be used instead of 
@@ -87,7 +107,7 @@ Creates an HTTP/WebSocket server on the specified host and port.
 \examples{
 \dontrun{
 # A very basic application
-handle <- startServer("0.0.0.0", 5000,
+s <- startServer("0.0.0.0", 5000,
   list(
     call = function(req) {
       list(
@@ -101,9 +121,35 @@ handle <- startServer("0.0.0.0", 5000,
   )
 )
 
-stopServer(handle)
+s$stop()
+
+
+# An application that serves static assets at the URL paths /assets and /lib
+s <- startServer("0.0.0.0", 5000,
+  list(
+    call = function(req) {
+      list(
+        status = 200L,
+        headers = list(
+          'Content-Type' = 'text/html'
+        ),
+        body = "Hello world!"
+      )
+    },
+    staticPaths = list(
+      "/assets" = "content/assets/"
+      "/lib" = staticPath(
+        "content/lib",
+        indexhtml = FALSE
+    ),
+    staticPathOptions = staticPathOptions(
+      indexhtml = TRUE
+    )
+  )
+)
 }
 }
 \seealso{
-\code{\link{stopServer}}, \code{\link{runServer}}
+\code{\link{stopServer}}, \code{\link{runServer}},
+  \code{\link{listServers}}, \code{\link{stopAllServers}}.
 }
