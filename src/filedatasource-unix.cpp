@@ -6,26 +6,31 @@
 #include <unistd.h>
 #include <errno.h>
 
-int FileDataSource::initialize(const std::string& path, bool owned) {
+FileDataSourceResult FileDataSource::initialize(const std::string& path, bool owned) {
   // This can be called from either the main thread or background thread.
 
   _fd = open(path.c_str(), O_RDONLY);
   if (_fd == -1) {
-    _lastErrorMessage = "Error opening file " + path + ": " + toString(errno) + "\n";
-    return 1;
+    if (errno == ENOENT) {
+      _lastErrorMessage = "File does not exist: " + path + "\n";
+      return FDS_NOT_EXIST;
+    } else {
+      _lastErrorMessage = "Error opening file " + path + ": " + toString(errno) + "\n";
+      return FDS_ERROR;
+    }
   }
   else {
     struct stat info = {0};
     if (fstat(_fd, &info)) {
       _lastErrorMessage = "Error opening path " + path + ": " + toString(errno) + "\n";
       ::close(_fd);
-      return 1;
+      return FDS_ERROR;
     }
 
     if (S_ISDIR(info.st_mode)) {
       _lastErrorMessage = "File data source is a directory: " + path + "\n";
       ::close(_fd);
-      return 1;
+      return FDS_ISDIR;
     }
 
     _length = info.st_size;
@@ -37,7 +42,7 @@ int FileDataSource::initialize(const std::string& path, bool owned) {
       // It's OK to continue
     }
 
-    return 0;
+    return FDS_OK;
   }
 }
 

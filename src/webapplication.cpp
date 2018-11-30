@@ -189,9 +189,11 @@ boost::shared_ptr<HttpResponse> listToResponse(
   // - body: Character vector (which is charToRaw-ed) or raw vector, or NULL
   if (std::find(names.begin(), names.end(), "bodyFile") != names.end()) {
     FileDataSource* pFDS = new FileDataSource();
-    int ret = pFDS->initialize(Rcpp::as<std::string>(response["bodyFile"]),
-                               Rcpp::as<bool>(response["bodyFileOwned"]));
-    if (ret != 0) {
+    FileDataSourceResult ret = pFDS->initialize(
+      Rcpp::as<std::string>(response["bodyFile"]),
+      Rcpp::as<bool>(response["bodyFileOwned"])
+    );
+    if (ret != FDS_OK) {
       REprintf(pFDS->lastErrorMessage().c_str());
     }
     pDataSource = pFDS;
@@ -508,16 +510,20 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
 
   // Self-frees when response is written
   FileDataSource* pDataSource = new FileDataSource();
-  int ret = pDataSource->initialize(local_path, false);
+  FileDataSourceResult ret = pDataSource->initialize(local_path, false);
 
-  if (ret != 0) {
+  if (ret != FDS_OK) {
     // Couldn't read the file
     delete pDataSource;
 
-    if (sp.options.fallthrough.get()) {
-      return nullptr;
+    if (ret == FDS_NOT_EXIST || ret == FDS_ISDIR) {
+      if (sp.options.fallthrough.get()) {
+        return nullptr;
+      } else {
+        return error_response(pRequest, 404);
+      }
     } else {
-      return error_response(pRequest, 404);
+      return error_response(pRequest, 500);
     }
   }
 
