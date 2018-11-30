@@ -444,11 +444,9 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     return nullptr;
   }
 
-  std::string url = doDecodeURI(pRequest->url(), true);
-
   // Strip off query string
-  std::pair<std::string, std::string> url_query = splitQueryString(url);
-  std::string& url_path = url_query.first;
+  std::pair<std::string, std::string> url_query = splitQueryString(pRequest->url());
+  std::string url_path = doDecodeURI(url_query.first, true);
 
   boost::optional<std::pair<StaticPath, std::string>> sp_pair =
     _staticPathManager.matchStaticPath(url_path);
