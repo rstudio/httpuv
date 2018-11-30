@@ -96,14 +96,58 @@ WebServer <- R6Class("WebServer",
 )
 
 
+#' PipeServer class
+#'
+#' This class represents a server running one application that listens on a
+#' named pipe.
+#' 
+#' @section Methods:
+#' 
+#' \describe{
+#'   \item{\code{initialize(name, mask, app)}}{
+#'     Create a new \code{PipeServer} object. \code{app} is an httpuv application
+#'     object as described in \code{\link{startServer}}.
+#'   }
+#'   \item{\code{getName()}}{Return the value of \code{name} that was passed to
+#'     \code{initialize()}.
+#'   }
+#'   \item{\code{getMask()}}{Return the value of \code{mask} that was passed to
+#'     \code{initialize()}.
+#'   }
+#'   \item{\code{stop()}}{Stops a running server.}
+#'   \item{\code{isRunning()}}{Returns TRUE if the server is currently running.}
+#'   \item{\code{getStaticPaths()}}{Returns a list of \code{\link{staticPath}}
+#'     objects for the server.
+#'   }
+#'   \item{\code{setStaticPath(..., .list = NULL)}}{Sets a static path for the
+#'     current server. Each static path can be given as a named argument, or as
+#'     an named item in \code{.list}. If there already exists a static path with
+#'     the same name, it will be replaced.
+#'   }
+#'   \item{\code{removeStaticPath(path)}}{Removes a static path with the given
+#'     name.
+#'   }
+#'   \item{\code{getStaticPathOptions()}}{Returns a list of default
+#'     \code{staticPathOptions} for the current server. Each static path will
+#'     use these options by default, but they can be overridden for each static
+#'     path.
+#'   }
+#'   \item{\code{setStaticPathOption(..., .list = NULL)}}{Sets one or more
+#'     static path options. Each option can be given as a named argument, or as
+#'     a named item in \code{.list}.
+#'   }
+#' }
+#'
+#' @keywords internal
 PipeServer <- R6Class("PipeServer",
   cloneable = FALSE,
   inherit = Server,
   public = list(
     initialize = function(name, mask, app) {
-      if (is.null(private$mask)) {
-        private$mask <- -1
+      if (is.null(mask)) {
+        mask <- -1
       }
+      private$mask <- mask
       private$appWrapper <- AppWrapper$new(app)
 
       private$handle <- makePipeServer(
@@ -124,6 +168,12 @@ PipeServer <- R6Class("PipeServer",
       if (is.null(private$handle)) {
         stop("Failed to create server")
       }
+    },
+    getName = function() {
+      private$name
+    },
+    getMask = function() {
+      private$mask
     }
   ),
   private = list(
