@@ -59,21 +59,31 @@ Server <- R6Class("Server",
       private$running
     },
     getStaticPaths = function() {
+      if (!private$running) return(NULL)
+
       getStaticPaths_(private$handle)
     },
     setStaticPath = function(..., .list = NULL) {
+      if (!private$running) return(invisible())
+
       paths <- c(list(...), .list)
       paths <- normalizeStaticPaths(paths)
       invisible(setStaticPaths_(private$handle, paths))
     },
     removeStaticPath = function(path) {
+      if (!private$running) return(invisible())
+
       path <- as.character(path)
       invisible(removeStaticPaths_(private$handle, path))
     },
     getStaticPathOptions = function() {
+      if (!private$running) return(NULL)
+
       getStaticPathOptions_(private$handle)
     },
     setStaticPathOption = function(..., .list = NULL) {
+      if (!private$running) return(invisible())
+
       opts <- c(list(...), .list)
       opts <- drop_duplicate_names(opts)
       opts <- normalizeStaticPathOptions(opts)
