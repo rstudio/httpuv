@@ -129,14 +129,14 @@ print.staticPathOptions <- function(x, ...) {
 format.staticPathOptions <- function(x, ...) {
   paste0(
     "<staticPathOptions>\n",
-    format_opts(x)
+    format_opts(x, format_empty = "<none>")
   )
 }
 
-format_opts <- function(x) {
+format_opts <- function(x, format_empty = "<inherit>") {
   format_option <- function(opt) {
     if (is.null(opt) || length(opt) == 0) {
-      "<none>"
+      format_empty
 
     } else if (!is.null(names(opt))) {
       # Named character vector
