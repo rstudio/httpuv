@@ -8,15 +8,15 @@ random_open_port <- function(min = 3000, max = 9000, n = 20) {
 
   # Try up to n ports
   for (port in sample(valid_ports, n)) {
-    handle <- NULL
+    s <- NULL
 
     # Check if port is open
     tryCatch(
-      handle <- httpuv::startServer("127.0.0.1", port, list()),
+      s <- httpuv::startServer("127.0.0.1", port, list()),
       error = function(e) { }
     )
-    if (!is.null(handle)) {
-      httpuv::stopServer(handle)
+    if (!is.null(s)) {
+      s$stop()
       return(port)
     }
   }
@@ -29,7 +29,7 @@ curl_fetch_async <- function(url, pool = NULL, data = NULL, handle = new_handle(
   p <- promises::promise(function(resolve, reject) {
     curl_fetch_multi(url, done = resolve, fail = reject, pool = pool, data = data, handle = handle)
   })
-  
+
   finished <- FALSE
   poll <- function() {
     if (!finished) {
@@ -38,7 +38,7 @@ curl_fetch_async <- function(url, pool = NULL, data = NULL, handle = new_handle(
     }
   }
   poll()
-  
+
   p %>% finally(function() {
     finished <<- TRUE
   })
@@ -58,7 +58,7 @@ http_request_con_async <- function(request, host, port) {
     con <<- socketConnection(host, port)
     writeLines(c(request, ""), con)
   })
-  
+
   result   <- NULL
   # finished <- FALSE
   poll <- function() {
@@ -70,7 +70,7 @@ http_request_con_async <- function(request, host, port) {
     }
   }
   poll()
-  
+
   p %>% finally(function() {
     close(con)
   })
@@ -121,7 +121,7 @@ local_url <- function(path, port) {
 }
 
 parse_http_date <- function(x) {
-  strptime(x, format = "%a, %d %b %Y %H:%M:%S GMT", tz = "GMT")  
+  strptime(x, format = "%a, %d %b %Y %H:%M:%S GMT", tz = "GMT")
 }
 
 raw_file_content <- function(filename) {
