@@ -1,4 +1,4 @@
-httpuv 1.4.5.9000
+httpuv 1.4.5.9001
 ============
 
 * Fixed [#168](https://github.com/rstudio/httpuv/issues/168): A SIGPIPE signal on the httpuv background thread could cause the process to quit. This can happen in some instances when the server is under heavy load. ([#169](https://github.com/rstudio/httpuv/pull/169))

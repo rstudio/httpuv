@@ -2,6 +2,7 @@
 #define HTTPRESPONSE_HPP
 
 #include "uvutil.h"
+#include "utils.h"
 #include "constants.h"
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -30,6 +31,7 @@ public:
       _pBody(pBody),
       _closeAfterWritten(false)
   {
+    _headers.push_back(std::make_pair("Date", http_date_string(time(NULL))));
   }
 
   ~HttpResponse();
