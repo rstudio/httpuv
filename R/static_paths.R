@@ -250,7 +250,7 @@ normalizeStaticPathOptions <- function(opts) {
     if (length(opts$validation) == 1) {
       if (opts$validation == "") {
         opts$validation <- character(0)
-      
+
       } else {
         fail <- FALSE
         tryCatch(
@@ -271,7 +271,7 @@ normalizeStaticPathOptions <- function(opts) {
         if (fail) {
           stop("`validation` must be a string of the form: '\"xxx\" == \"yyy\"'")
         }
-  
+
         # Turn it into a char vector for easier processing in C++
         opts$validation <- as.character(p)
       }

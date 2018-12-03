@@ -1,21 +1,21 @@
 #' HTTP and WebSocket server
-#' 
-#' Allows R code to listen for and interact with HTTP and WebSocket clients, so 
+#'
+#' Allows R code to listen for and interact with HTTP and WebSocket clients, so
 #' you can serve web traffic directly out of your R process. Implementation is
 #' based on \href{https://github.com/joyent/libuv}{libuv} and
 #' \href{https://github.com/joyent/http-parser}{http-parser}.
-#' 
-#' This is a low-level library that provides little more than network I/O and 
-#' implementations of the HTTP and WebSocket protocols. For an easy way to 
+#'
+#' This is a low-level library that provides little more than network I/O and
+#' implementations of the HTTP and WebSocket protocols. For an easy way to
 #' create web applications, try \href{http://rstudio.com/shiny/}{Shiny} instead.
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' demo("echo", package="httpuv")
 #' }
-#' 
+#'
 #' @seealso \link{startServer}
-#'   
+#'
 #' @name httpuv-package
 #' @aliases httpuv
 #' @docType package
@@ -47,7 +47,7 @@ InputStream <- setRefClass(
       # l < 0 means read all remaining bytes
       if (l < 0)
         l <- .length - seek(.conn)
-      
+
       if (l == 0)
         return(raw())
       else
@@ -284,14 +284,14 @@ AppWrapper <- setRefClass(
 )
 
 #' WebSocket object
-#' 
+#'
 #' An object that represents a single WebSocket connection. The object can be
 #' used to send messages and close the connection, and to receive notifications
 #' when messages are received or the connection is closed.
-#' 
+#'
 #' WebSocket objects should never be created directly. They are obtained by
 #' passing an \code{onWSOpen} function to \code{\link{startServer}}.
-#' 
+#'
 #' @section Fields:
 #'
 #'   \describe{
@@ -301,9 +301,9 @@ AppWrapper <- setRefClass(
 #'     }
 #'   }
 #'
-#' 
+#'
 #' @section Methods:
-#' 
+#'
 #'   \describe{
 #'     \item{\code{onMessage(func)}}{
 #'       Registers a callback function that will be invoked whenever a message
@@ -327,7 +327,7 @@ AppWrapper <- setRefClass(
 #'   }
 #'
 #' @param ... For internal use only.
-#' 
+#'
 #' @export
 WebSocket <- setRefClass(
   'WebSocket',
@@ -351,7 +351,7 @@ WebSocket <- setRefClass(
     send = function(message) {
       if (is.null(.handle))
         return()
-      
+
       if (is.raw(message))
         sendWSMessage(.handle, TRUE, message)
       else {
@@ -379,19 +379,19 @@ WebSocket <- setRefClass(
 )
 
 #' Create an HTTP/WebSocket server
-#' 
+#'
 #' Creates an HTTP/WebSocket server on the specified host and port.
-#' 
-#' @param host A string that is a valid IPv4 address that is owned by this 
+#'
+#' @param host A string that is a valid IPv4 address that is owned by this
 #'   server, or \code{"0.0.0.0"} to listen on all IP addresses.
 #' @param port A number or integer that indicates the server port that should be
 #'   listened on. Note that on most Unix-like systems including Linux and Mac OS
 #'   X, port numbers smaller than 1025 require root privileges.
-#' @param app A collection of functions that define your application. See 
+#' @param app A collection of functions that define your application. See
 #'   Details.
 #' @return A handle for this server that can be passed to
 #'   \code{\link{stopServer}} to shut the server down.
-#'   
+#'
 
 #' @details \code{startServer} binds the specified port and listens for
 #'   connections on an thread running in the background. This background thread
@@ -422,12 +422,12 @@ WebSocket <- setRefClass(
 #'   is executing. This can greatly improve performance when serving static
 #'   assets.
 #'
-#'   The \code{app} parameter is where your application logic will be provided 
-#'   to the server. This can be a list, environment, or reference class that 
+#'   The \code{app} parameter is where your application logic will be provided
+#'   to the server. This can be a list, environment, or reference class that
 #'   contains the following methods and fields:
-#'   
+#'
 #'   \describe{
-#'     \item{\code{call(req)}}{Process the given HTTP request, and return an 
+#'     \item{\code{call(req)}}{Process the given HTTP request, and return an
 #'     HTTP response. This method should be implemented in accordance with the
 #'     \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
 #'     specification.} Note that httpuv augments \code{req} with an additional item,
@@ -452,8 +452,8 @@ WebSocket <- setRefClass(
 #'       \code{\link{staticPathOptions}()} with no arguments.
 #'     }
 #'   }
-#'   
-#'   The \code{startPipeServer} variant can be used instead of 
+#'
+#'   The \code{startPipeServer} variant can be used instead of
 #'   \code{startServer} to listen on a Unix domain socket or named pipe rather
 #'   than a TCP socket (this is not common).
 #'
@@ -514,11 +514,11 @@ startServer <- function(host, port, app) {
   WebServer$new(host, port, app)
 }
 
-#' @param name A string that indicates the path for the domain socket (on 
+#' @param name A string that indicates the path for the domain socket (on
 #'   Unix-like systems) or the name of the named pipe (on Windows).
-#' @param mask If non-\code{NULL} and non-negative, this numeric value is used 
-#'   to temporarily modify the process's umask while the domain socket is being 
-#'   created. To ensure that only root can access the domain socket, use 
+#' @param mask If non-\code{NULL} and non-negative, this numeric value is used
+#'   to temporarily modify the process's umask while the domain socket is being
+#'   created. To ensure that only root can access the domain socket, use
 #'   \code{strtoi("777", 8)}; or to allow owner and group read/write access, use
 #'   \code{strtoi("117", 8)}. If the value is \code{NULL} then the process's
 #'   umask is left unchanged. (This parameter has no effect on Windows.)
@@ -584,24 +584,24 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 }
 
 #' Run a server
-#' 
-#' This is a convenience function that provides a simple way to call 
-#' \code{\link{startServer}}, \code{\link{service}}, and 
-#' \code{\link{stopServer}} in the correct sequence. It does not return unless 
+#'
+#' This is a convenience function that provides a simple way to call
+#' \code{\link{startServer}}, \code{\link{service}}, and
+#' \code{\link{stopServer}} in the correct sequence. It does not return unless
 #' interrupted or an error occurs.
-#' 
-#' If you have multiple hosts and/or ports to listen on, call the individual 
+#'
+#' If you have multiple hosts and/or ports to listen on, call the individual
 #' functions instead of \code{runServer}.
-#' 
-#' @param host A string that is a valid IPv4 address that is owned by this 
+#'
+#' @param host A string that is a valid IPv4 address that is owned by this
 #'   server, or \code{"0.0.0.0"} to listen on all IP addresses.
 #' @param port A number or integer that indicates the server port that should be
 #'   listened on. Note that on most Unix-like systems including Linux and Mac OS
 #'   X, port numbers smaller than 1025 require root privileges.
-#' @param app A collection of functions that define your application. See 
+#' @param app A collection of functions that define your application. See
 #'   \code{\link{startServer}}.
 #' @param interruptIntervalMs Deprecated (last used in httpuv 1.3.5).
-#'   
+#'
 #' @seealso \code{\link{startServer}}, \code{\link{service}},
 #'   \code{\link{stopServer}}
 #'
@@ -626,7 +626,7 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 runServer <- function(host, port, app, interruptIntervalMs = NULL) {
   server <- startServer(host, port, app)
   on.exit(stopServer(server))
-  
+
   # TODO: in the future, add deprecation message to interruptIntervalMs.
   service(0)
 }
@@ -645,17 +645,17 @@ interrupt <- function() {
 }
 
 #' Convert raw vector to Base64-encoded string
-#' 
+#'
 #' Converts a raw vector to its Base64 encoding as a single-element character
 #' vector.
-#' 
+#'
 #' @param x A raw vector.
-#'   
+#'
 #' @examples
 #' set.seed(100)
 #' result <- rawToBase64(as.raw(runif(19, min=0, max=256)))
 #' stopifnot(identical(result, "TkGNDnd7z16LK5/hR2bDqzRbXA=="))
-#' 
+#'
 #' @export
 rawToBase64 <- function(x) {
   base64encode(x)

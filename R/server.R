@@ -11,9 +11,9 @@ NULL
 #' The \code{Server} class is the parent class for \code{\link{WebServer}} and
 #' \code{\link{PipeServer}}. This class defines an interface and is not meant to
 #' be instantiated.
-#' 
+#'
 #' @section Methods:
-#' 
+#'
 #' \describe{
 #'   \item{\code{stop()}}{Stops a running server.}
 #'   \item{\code{isRunning()}}{Returns TRUE if the server is currently running.}
@@ -108,9 +108,9 @@ Server <- R6Class("Server",
 #'
 #' This class represents a web server running one application. Multiple servers
 #' can be running at the same time.
-#' 
+#'
 #' @section Methods:
-#' 
+#'
 #' \describe{
 #'   \item{\code{initialize(host, port, app)}}{
 #'     Create a new \code{WebServer} object. \code{app} is an httpuv application
@@ -193,9 +193,9 @@ WebServer <- R6Class("WebServer",
 #'
 #' This class represents a server running one application that listens on a
 #' named pipe.
-#' 
+#'
 #' @section Methods:
-#' 
+#'
 #' \describe{
 #'   \item{\code{initialize(name, mask, app)}}{
 #'     Create a new \code{PipeServer} object. \code{app} is an httpuv application
@@ -255,7 +255,7 @@ PipeServer <- R6Class("PipeServer",
         private$appWrapper$.staticPathOptions
       )
 
-      # Save the full path. normalizePath must be called after makePipeServer 
+      # Save the full path. normalizePath must be called after makePipeServer
       private$name <- normalizePath(name)
 
       if (is.null(private$handle)) {
