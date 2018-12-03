@@ -147,6 +147,8 @@ s <- startServer("0.0.0.0", 5000,
     )
   )
 )
+
+s$stop()
 }
 }
 \seealso{
