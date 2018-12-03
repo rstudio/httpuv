@@ -174,8 +174,8 @@ WebServer <- R6Class("WebServer",
         private$appWrapper$onWSOpen,
         private$appWrapper$onWSMessage,
         private$appWrapper$onWSClose,
-        private$appWrapper$.staticPaths,
-        private$appWrapper$.staticPathOptions
+        private$appWrapper$staticPaths,
+        private$appWrapper$staticPathOptions
       )
 
       if (is.null(private$handle)) {
@@ -266,8 +266,8 @@ PipeServer <- R6Class("PipeServer",
         private$appWrapper$onWSOpen,
         private$appWrapper$onWSMessage,
         private$appWrapper$onWSClose,
-        private$appWrapper$.staticPaths,
-        private$appWrapper$.staticPathOptions
+        private$appWrapper$staticPaths,
+        private$appWrapper$staticPathOptions
       )
 
       # Save the full path. normalizePath must be called after makePipeServer
