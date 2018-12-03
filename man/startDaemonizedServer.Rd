@@ -7,14 +7,14 @@
 startDaemonizedServer(host, port, app)
 }
 \arguments{
-\item{host}{A string that is a valid IPv4 address that is owned by this 
+\item{host}{A string that is a valid IPv4 address that is owned by this
 server, or \code{"0.0.0.0"} to listen on all IP addresses.}
 
 \item{port}{A number or integer that indicates the server port that should be
 listened on. Note that on most Unix-like systems including Linux and Mac OS
 X, port numbers smaller than 1025 require root privileges.}
 
-\item{app}{A collection of functions that define your application. See 
+\item{app}{A collection of functions that define your application. See
 Details.}
 }
 \description{

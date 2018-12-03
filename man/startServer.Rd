@@ -10,22 +10,22 @@ startServer(host, port, app)
 startPipeServer(name, mask, app)
 }
 \arguments{
-\item{host}{A string that is a valid IPv4 address that is owned by this 
+\item{host}{A string that is a valid IPv4 address that is owned by this
 server, or \code{"0.0.0.0"} to listen on all IP addresses.}
 
 \item{port}{A number or integer that indicates the server port that should be
 listened on. Note that on most Unix-like systems including Linux and Mac OS
 X, port numbers smaller than 1025 require root privileges.}
 
-\item{app}{A collection of functions that define your application. See 
+\item{app}{A collection of functions that define your application. See
 Details.}
 
-\item{name}{A string that indicates the path for the domain socket (on 
+\item{name}{A string that indicates the path for the domain socket (on
 Unix-like systems) or the name of the named pipe (on Windows).}
 
-\item{mask}{If non-\code{NULL} and non-negative, this numeric value is used 
-to temporarily modify the process's umask while the domain socket is being 
-created. To ensure that only root can access the domain socket, use 
+\item{mask}{If non-\code{NULL} and non-negative, this numeric value is used
+to temporarily modify the process's umask while the domain socket is being
+created. To ensure that only root can access the domain socket, use
 \code{strtoi("777", 8)}; or to allow owner and group read/write access, use
 \code{strtoi("117", 8)}. If the value is \code{NULL} then the process's
 umask is left unchanged. (This parameter has no effect on Windows.)}
@@ -69,12 +69,12 @@ Creates an HTTP/WebSocket server on the specified host and port.
   is executing. This can greatly improve performance when serving static
   assets.
 
-  The \code{app} parameter is where your application logic will be provided 
-  to the server. This can be a list, environment, or reference class that 
+  The \code{app} parameter is where your application logic will be provided
+  to the server. This can be a list, environment, or reference class that
   contains the following methods and fields:
-  
+
   \describe{
-    \item{\code{call(req)}}{Process the given HTTP request, and return an 
+    \item{\code{call(req)}}{Process the given HTTP request, and return an
     HTTP response. This method should be implemented in accordance with the
     \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
     specification.} Note that httpuv augments \code{req} with an additional item,
@@ -99,8 +99,8 @@ Creates an HTTP/WebSocket server on the specified host and port.
       \code{\link{staticPathOptions}()} with no arguments.
     }
   }
-  
-  The \code{startPipeServer} variant can be used instead of 
+
+  The \code{startPipeServer} variant can be used instead of
   \code{startServer} to listen on a Unix domain socket or named pipe rather
   than a TCP socket (this is not common).
 }
