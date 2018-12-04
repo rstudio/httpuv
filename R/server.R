@@ -12,6 +12,10 @@ NULL
 #' \code{\link{PipeServer}}. This class defines an interface and is not meant to
 #' be instantiated.
 #'
+#' @usage NULL
+#'
+#' @format NULL
+#'
 #' @section Methods:
 #'
 #' \describe{
@@ -39,6 +43,7 @@ NULL
 #'   }
 #' }
 #'
+#' @seealso \code{\link{WebServer}} and \code{\link{PipeServer}}.
 #' @keywords internal
 #' @importFrom R6 R6Class
 Server <- R6Class("Server",
@@ -109,6 +114,10 @@ Server <- R6Class("Server",
 #' This class represents a web server running one application. Multiple servers
 #' can be running at the same time.
 #'
+#' @usage NULL
+#'
+#' @format NULL
+#'
 #' @section Methods:
 #'
 #' \describe{
@@ -146,6 +155,7 @@ Server <- R6Class("Server",
 #'   }
 #' }
 #'
+#' @seealso \code{\link{Server}} and \code{\link{PipeServer}}.
 #' @keywords internal
 WebServer <- R6Class("WebServer",
   cloneable = FALSE,
@@ -194,6 +204,10 @@ WebServer <- R6Class("WebServer",
 #' This class represents a server running one application that listens on a
 #' named pipe.
 #'
+#' @usage NULL
+#'
+#' @format NULL
+#'
 #' @section Methods:
 #'
 #' \describe{
@@ -231,6 +245,7 @@ WebServer <- R6Class("WebServer",
 #'   }
 #' }
 #'
+#' @seealso \code{\link{Server}} and \code{\link{WebServer}}.
 #' @keywords internal
 PipeServer <- R6Class("PipeServer",
   cloneable = FALSE,

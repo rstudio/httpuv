@@ -4,10 +4,6 @@
 \name{WebServer}
 \alias{WebServer}
 \title{WebServer class}
-\format{An object of class \code{R6ClassGenerator} of length 24.}
-\usage{
-WebServer
-}
 \description{
 This class represents a web server running one application. Multiple servers
 can be running at the same time.
@@ -51,4 +47,7 @@ can be running at the same time.
 }
 }
 
+\seealso{
+\code{\link{Server}} and \code{\link{PipeServer}}.
+}
 \keyword{internal}

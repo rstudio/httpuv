@@ -4,10 +4,6 @@
 \name{Server}
 \alias{Server}
 \title{Server class}
-\format{An object of class \code{R6ClassGenerator} of length 24.}
-\usage{
-Server
-}
 \description{
 The \code{Server} class is the parent class for \code{\link{WebServer}} and
 \code{\link{PipeServer}}. This class defines an interface and is not meant to
@@ -42,4 +38,7 @@ be instantiated.
 }
 }
 
+\seealso{
+\code{\link{WebServer}} and \code{\link{PipeServer}}.
+}
 \keyword{internal}

@@ -4,10 +4,6 @@
 \name{PipeServer}
 \alias{PipeServer}
 \title{PipeServer class}
-\format{An object of class \code{R6ClassGenerator} of length 24.}
-\usage{
-PipeServer
-}
 \description{
 This class represents a server running one application that listens on a
 named pipe.
@@ -51,4 +47,7 @@ named pipe.
 }
 }
 
+\seealso{
+\code{\link{Server}} and \code{\link{WebServer}}.
+}
 \keyword{internal}
