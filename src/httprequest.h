@@ -131,6 +131,7 @@ public:
 
   bool hasHeader(const std::string& name) const;
   bool hasHeader(const std::string& name, const std::string& value, bool ci = false) const;
+  std::string getHeader(const std::string& name) const;
 
   // Is the request an Upgrade (i.e. WebSocket connection)?
   bool isUpgrade() const;

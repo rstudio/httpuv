@@ -547,28 +547,66 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     pDataSource = NULL;
   }
 
-  boost::shared_ptr<HttpResponse> pResponse(
-    new HttpResponse(pRequest, 200, getStatusDescription(200), pDataSource),
-    auto_deleter_background<HttpResponse>
-  );
+  // Check if the client has an up-to-date copy of the file in cache. To do
+  // this, compare the If-Modified-Since header to the file's mtime.
+  bool client_cache_is_valid = false;
+  if (pRequest->hasHeader("If-Modified-Since")) {
+    time_t file_mtime = pDataSource->getMtime();
+    time_t if_mod_since = parse_http_date_string(pRequest->getHeader("If-Modified-Since"));
+
+    if (if_mod_since != 0 && file_mtime <= if_mod_since) {
+      client_cache_is_valid = true;
+      delete pDataSource;
+      pDataSource = NULL;
+    }
+  }
+
+  boost::shared_ptr<HttpResponse> pResponse;
+  if (client_cache_is_valid) {
+    pResponse = boost::shared_ptr<HttpResponse>(
+      new HttpResponse(pRequest, 304, getStatusDescription(304), NULL),
+      auto_deleter_background<HttpResponse>
+    );
+  } else {
+    pResponse = boost::shared_ptr<HttpResponse>(
+      new HttpResponse(pRequest, 200, getStatusDescription(200), pDataSource),
+      auto_deleter_background<HttpResponse>
+    );
+  }
 
   ResponseHeaders& respHeaders = pResponse->headers();
-  
-  // Add any extra headers
+
+  // Add extra user-specified headers.
   const ResponseHeaders& extraRespHeaders = sp.options.headers.get();
   if (extraRespHeaders.size() != 0) {
     ResponseHeaders::const_iterator it;
     for (it = extraRespHeaders.begin(); it != extraRespHeaders.end(); it++) {
-      respHeaders.push_back(*it);
+      if (client_cache_is_valid) {
+        // For a 304 response, only a few headers should be added. See
+        // https://tools.ietf.org/html/rfc7232#section-4.1
+        // (Date is automatically added in the HttpResponse.)
+        if (it->first == "Cache-Control" || it->first == "Content-Location" ||
+            it->first == "ETag" || it->first == "Expires" || it->first == "Vary")
+        {
+          respHeaders.push_back(*it);
+        }
+
+      } else {
+        // For a normal 200 response, add all headers.
+        respHeaders.push_back(*it);
+      }
     }
   }
 
-  // Set the Content-Length here so that both GET and HEAD requests will get
-  // it. If we didn't set it here, the response for the GET would
-  // automatically set the Content-Length (by using the FileDataSource), but
-  // the response for the HEAD would not.
-  respHeaders.push_back(std::make_pair("Content-Length", toString(file_size)));
-  respHeaders.push_back(std::make_pair("Content-Type", content_type));
+  if (!client_cache_is_valid) {
+    // Set the Content-Length here so that both GET and HEAD requests will get
+    // it. If we didn't set it here, the response for the GET would
+    // automatically set the Content-Length (by using the FileDataSource), but
+    // the response for the HEAD would not.
+    respHeaders.push_back(std::make_pair("Content-Length", toString(file_size)));
+    respHeaders.push_back(std::make_pair("Content-Type", content_type));
+    respHeaders.push_back(std::make_pair("Last-Modified", http_date_string(pDataSource->getMtime())));
+  }
 
   return pResponse;
 }

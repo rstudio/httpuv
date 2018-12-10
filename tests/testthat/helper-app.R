@@ -128,3 +128,21 @@ raw_file_content <- function(filename) {
   size <- file.info(filename)$size
   readBin(filename, "raw", n = size)
 }
+
+# Given a POSIXct object, return a date string in the format required for a
+# HTTP Date header. For example: "Wed, 21 Oct 2015 07:28:00 GMT"
+http_date_string <- function(time) {
+  weekday_names <- c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+  weekday_num <- as.integer(strftime(time, format = "%w", tz = "GMT"))
+  weekday_name <- weekday_names[weekday_num + 1]
+
+  month_names <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+  month_num   <- as.integer(strftime(time, format = "%m", tz = "GMT"))
+  month_name <- month_names[month_num]
+
+  strftime(time,
+    paste0(weekday_name, ", %d ", month_name, " %Y %H:%M:%S GMT"),
+    tz = "GMT"
+  )
+}

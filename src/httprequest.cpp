@@ -50,6 +50,16 @@ bool HttpRequest::hasHeader(const std::string& name, const std::string& value, b
   }
 }
 
+// Return the value of a specified header. If the specified header isn't
+// found, return "".
+std::string HttpRequest::getHeader(const std::string& name) const {
+  RequestHeaders::const_iterator item = _headers.find(name);
+  if (item == _headers.end())
+    return "";
+
+  return item->second;
+}
+
 uv_stream_t* HttpRequest::handle() {
   return &_handle.stream;
 }
