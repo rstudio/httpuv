@@ -23,7 +23,7 @@ Imports:
     utils,
     R6,
     promises,
-    later (>= 0.7.3)
+    later (>= 0.7.5.9000)
 LinkingTo: Rcpp, BH, later
 URL: https://github.com/rstudio/httpuv
 SystemRequirements: GNU make
@@ -32,6 +32,8 @@ Suggests:
     testthat,
     callr,
     curl
+Remotes:
+    r-lib/later
 Collate:
     'RcppExports.R'
     'httpuv.R'

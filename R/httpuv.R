@@ -560,9 +560,14 @@ startPipeServer <- function(name, mask, app) {
 #' @export
 #' @importFrom later run_now
 service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
+  # In all cases, call `run_now` with `all = FALSE` so that if there is a lot of
+  # incoming traffic (relative to the time it takes to process it) we give the
+  # owning event loop opportunities to do housekeeping in between httpuv related
+  # callbacks.
+  
   if (is.na(timeoutMs)) {
     # NA means to run non-blocking
-    run_now(0)
+    run_now(0, all = FALSE)
 
   } else if (timeoutMs == 0 || timeoutMs == Inf) {
     .globals$paused <- FALSE
@@ -570,13 +575,13 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
     # responsiveness when the user sends an interrupt (like Esc in RStudio.)
     check_time <- if (interactive()) 0.1 else Inf
     while (!.globals$paused) {
-      run_now(check_time)
+      run_now(check_time, all = FALSE)
     }
 
   } else {
     # No need to check for .globals$paused because if run_now() executes
     # anything, it will return immediately.
-    run_now(timeoutMs / 1000)
+    run_now(timeoutMs / 1000, all = FALSE)
   }
 
   # Some code expects service() to return TRUE (#123)
