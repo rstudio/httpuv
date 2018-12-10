@@ -1,21 +1,21 @@
 #' HTTP and WebSocket server
-#' 
-#' Allows R code to listen for and interact with HTTP and WebSocket clients, so 
+#'
+#' Allows R code to listen for and interact with HTTP and WebSocket clients, so
 #' you can serve web traffic directly out of your R process. Implementation is
 #' based on \href{https://github.com/joyent/libuv}{libuv} and
 #' \href{https://github.com/joyent/http-parser}{http-parser}.
-#' 
-#' This is a low-level library that provides little more than network I/O and 
-#' implementations of the HTTP and WebSocket protocols. For an easy way to 
+#'
+#' This is a low-level library that provides little more than network I/O and
+#' implementations of the HTTP and WebSocket protocols. For an easy way to
 #' create web applications, try \href{http://rstudio.com/shiny/}{Shiny} instead.
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' demo("echo", package="httpuv")
 #' }
-#' 
+#'
 #' @seealso \link{startServer}
-#'   
+#'
 #' @name httpuv-package
 #' @aliases httpuv
 #' @docType package
@@ -47,7 +47,7 @@ InputStream <- setRefClass(
       # l < 0 means read all remaining bytes
       if (l < 0)
         l <- .length - seek(.conn)
-      
+
       if (l == 0)
         return(raw())
       else
@@ -170,7 +170,9 @@ AppWrapper <- setRefClass(
   fields = list(
     .app = 'ANY',
     .wsconns = 'environment',
-    .supportsOnHeaders = 'logical'
+    .supportsOnHeaders = 'logical',
+    .staticPaths = 'list',
+    .staticPathOptions = 'ANY'
   ),
   methods = list(
     initialize = function(app) {
@@ -181,6 +183,35 @@ AppWrapper <- setRefClass(
 
       # .app$onHeaders can error (e.g. if .app is a reference class)
       .supportsOnHeaders <<- isTRUE(try(!is.null(.app$onHeaders), silent=TRUE))
+
+      # staticPaths are saved in a field on this object, because they are read
+      # from the app object only during initialization. This is the only time
+      # it makes sense to read them from the app object, since they're
+      # subsequently used on the background thread, and for performance
+      # reasons it can't call back into R. Note that if the app object is a
+      # reference object and app$staticPaths is changed later, it will have no
+      # effect on the behavior of the application.
+      #
+      # If .app is a reference class, accessing .app$staticPaths can error if
+      # not present.
+      if (class(try(.app$staticPaths, silent = TRUE)) == "try-error" ||
+          is.null(.app$staticPaths))
+      {
+        .staticPaths <<- list()
+      } else {
+        .staticPaths <<- normalizeStaticPaths(.app$staticPaths)
+      }
+
+      if (class(try(.app$staticPathOptions, silent = TRUE)) == "try-error" ||
+          is.null(.app$staticPathOptions))
+      {
+        # Use defaults
+        .staticPathOptions <<- staticPathOptions()
+      } else if (inherits(.app$staticPathOptions, "staticPathOptions")) {
+        .staticPathOptions <<- normalizeStaticPathOptions(.app$staticPathOptions)
+      } else {
+        stop("staticPathOptions must be an object of class staticPathOptions.")
+      }
     },
     onHeaders = function(req) {
       if (!.supportsOnHeaders)
@@ -253,14 +284,14 @@ AppWrapper <- setRefClass(
 )
 
 #' WebSocket object
-#' 
+#'
 #' An object that represents a single WebSocket connection. The object can be
 #' used to send messages and close the connection, and to receive notifications
 #' when messages are received or the connection is closed.
-#' 
+#'
 #' WebSocket objects should never be created directly. They are obtained by
 #' passing an \code{onWSOpen} function to \code{\link{startServer}}.
-#' 
+#'
 #' @section Fields:
 #'
 #'   \describe{
@@ -270,9 +301,9 @@ AppWrapper <- setRefClass(
 #'     }
 #'   }
 #'
-#' 
+#'
 #' @section Methods:
-#' 
+#'
 #'   \describe{
 #'     \item{\code{onMessage(func)}}{
 #'       Registers a callback function that will be invoked whenever a message
@@ -296,7 +327,7 @@ AppWrapper <- setRefClass(
 #'   }
 #'
 #' @param ... For internal use only.
-#' 
+#'
 #' @export
 WebSocket <- setRefClass(
   'WebSocket',
@@ -320,7 +351,7 @@ WebSocket <- setRefClass(
     send = function(message) {
       if (is.null(.handle))
         return()
-      
+
       if (is.raw(message))
         sendWSMessage(.handle, TRUE, message)
       else {
@@ -348,19 +379,19 @@ WebSocket <- setRefClass(
 )
 
 #' Create an HTTP/WebSocket server
-#' 
+#'
 #' Creates an HTTP/WebSocket server on the specified host and port.
-#' 
-#' @param host A string that is a valid IPv4 address that is owned by this 
+#'
+#' @param host A string that is a valid IPv4 address that is owned by this
 #'   server, or \code{"0.0.0.0"} to listen on all IP addresses.
 #' @param port A number or integer that indicates the server port that should be
 #'   listened on. Note that on most Unix-like systems including Linux and Mac OS
 #'   X, port numbers smaller than 1025 require root privileges.
-#' @param app A collection of functions that define your application. See 
+#' @param app A collection of functions that define your application. See
 #'   Details.
 #' @return A handle for this server that can be passed to
 #'   \code{\link{stopServer}} to shut the server down.
-#'   
+#'
 
 #' @details \code{startServer} binds the specified port and listens for
 #'   connections on an thread running in the background. This background thread
@@ -384,12 +415,19 @@ WebSocket <- setRefClass(
 #'   If the port cannot be bound (most likely due to permissions or because it
 #'   is already bound), an error is raised.
 #'
-#'   The \code{app} parameter is where your application logic will be provided 
-#'   to the server. This can be a list, environment, or reference class that 
-#'   contains the following named functions/methods:
-#'   
+#'   The application can also specify paths on the filesystem which will be
+#'   served from the background thread, without invoking \code{$call()} or
+#'   \code{$onHeaders()}. Files served this way will be only use a C++ code,
+#'   which is faster than going through R, and will not be blocked when R code
+#'   is executing. This can greatly improve performance when serving static
+#'   assets.
+#'
+#'   The \code{app} parameter is where your application logic will be provided
+#'   to the server. This can be a list, environment, or reference class that
+#'   contains the following methods and fields:
+#'
 #'   \describe{
-#'     \item{\code{call(req)}}{Process the given HTTP request, and return an 
+#'     \item{\code{call(req)}}{Process the given HTTP request, and return an
 #'     HTTP response. This method should be implemented in accordance with the
 #'     \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
 #'     specification.} Note that httpuv augments \code{req} with an additional item,
@@ -402,18 +440,33 @@ WebSocket <- setRefClass(
 #'     \item{\code{onWSOpen(ws)}}{Called back when a WebSocket connection is established.
 #'     The given object can be used to be notified when a message is received from
 #'     the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}
+#'     \item{\code{staticPaths}}{
+#'       A named list of paths that will be served without invoking
+#'       \code{call()} or \code{onHeaders}. The name of each one is the URL
+#'       path, and the value is either a string referring to a local path, or an
+#'       object created by the \code{\link{staticPath}} function.
+#'     }
+#'     \item{\code{staticPathOptions}}{
+#'       A set of default options to use when serving static paths. If
+#'       not set or \code{NULL}, then it will use the result from calling
+#'       \code{\link{staticPathOptions}()} with no arguments.
+#'     }
 #'   }
-#'   
-#'   The \code{startPipeServer} variant can be used instead of 
+#'
+#'   The \code{startPipeServer} variant can be used instead of
 #'   \code{startServer} to listen on a Unix domain socket or named pipe rather
 #'   than a TCP socket (this is not common).
-#' @seealso \code{\link{stopServer}}, \code{\link{runServer}}
+#'
+#' @return A \code{\link{WebServer}} or \code{\link{PipeServer}} object.
+#'
+#' @seealso \code{\link{stopServer}}, \code{\link{runServer}},
+#'   \code{\link{listServers}}, \code{\link{stopAllServers}}.
 #' @aliases startPipeServer
 #'
 #' @examples
 #' \dontrun{
 #' # A very basic application
-#' handle <- startServer("0.0.0.0", 5000,
+#' s <- startServer("0.0.0.0", 5000,
 #'   list(
 #'     call = function(req) {
 #'       list(
@@ -427,54 +480,52 @@ WebSocket <- setRefClass(
 #'   )
 #' )
 #'
-#' stopServer(handle)
+#' s$stop()
+#'
+#'
+#' # An application that serves static assets at the URL paths /assets and /lib
+#' s <- startServer("0.0.0.0", 5000,
+#'   list(
+#'     call = function(req) {
+#'       list(
+#'         status = 200L,
+#'         headers = list(
+#'           'Content-Type' = 'text/html'
+#'         ),
+#'         body = "Hello world!"
+#'       )
+#'     },
+#'     staticPaths = list(
+#'       "/assets" = "content/assets/"
+#'       "/lib" = staticPath(
+#'         "content/lib",
+#'         indexhtml = FALSE
+#'     ),
+#'     staticPathOptions = staticPathOptions(
+#'       indexhtml = TRUE
+#'     )
+#'   )
+#' )
+#'
+#' s$stop()
 #' }
 #' @export
 startServer <- function(host, port, app) {
-  
-  appWrapper <- AppWrapper$new(app)
-  server <- makeTcpServer(
-    host, port,
-    appWrapper$onHeaders,
-    appWrapper$onBodyData,
-    appWrapper$call,
-    appWrapper$onWSOpen,
-    appWrapper$onWSMessage,
-    appWrapper$onWSClose
-  )
-
-  if (is.null(server)) {
-    stop("Failed to create server")
-  }
-  return(server)
+  WebServer$new(host, port, app)
 }
 
-#' @param name A string that indicates the path for the domain socket (on 
+#' @param name A string that indicates the path for the domain socket (on
 #'   Unix-like systems) or the name of the named pipe (on Windows).
-#' @param mask If non-\code{NULL} and non-negative, this numeric value is used 
-#'   to temporarily modify the process's umask while the domain socket is being 
-#'   created. To ensure that only root can access the domain socket, use 
+#' @param mask If non-\code{NULL} and non-negative, this numeric value is used
+#'   to temporarily modify the process's umask while the domain socket is being
+#'   created. To ensure that only root can access the domain socket, use
 #'   \code{strtoi("777", 8)}; or to allow owner and group read/write access, use
 #'   \code{strtoi("117", 8)}. If the value is \code{NULL} then the process's
 #'   umask is left unchanged. (This parameter has no effect on Windows.)
 #' @rdname startServer
 #' @export
 startPipeServer <- function(name, mask, app) {
-  
-  appWrapper <- AppWrapper$new(app)
-  if (is.null(mask))
-    mask <- -1
-  server <- makePipeServer(name, mask,
-                           appWrapper$onHeaders,
-                           appWrapper$onBodyData,
-                           appWrapper$call,
-                           appWrapper$onWSOpen,
-                           appWrapper$onWSMessage,
-                           appWrapper$onWSClose)
-  if (is.null(server)) {
-    stop("Failed to create server")
-  }
-  return(server)
+  PipeServer$new(name, mask, app)
 }
 
 #' Process requests
@@ -538,24 +589,24 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 }
 
 #' Run a server
-#' 
-#' This is a convenience function that provides a simple way to call 
-#' \code{\link{startServer}}, \code{\link{service}}, and 
-#' \code{\link{stopServer}} in the correct sequence. It does not return unless 
+#'
+#' This is a convenience function that provides a simple way to call
+#' \code{\link{startServer}}, \code{\link{service}}, and
+#' \code{\link{stopServer}} in the correct sequence. It does not return unless
 #' interrupted or an error occurs.
-#' 
-#' If you have multiple hosts and/or ports to listen on, call the individual 
+#'
+#' If you have multiple hosts and/or ports to listen on, call the individual
 #' functions instead of \code{runServer}.
-#' 
-#' @param host A string that is a valid IPv4 address that is owned by this 
+#'
+#' @param host A string that is a valid IPv4 address that is owned by this
 #'   server, or \code{"0.0.0.0"} to listen on all IP addresses.
 #' @param port A number or integer that indicates the server port that should be
 #'   listened on. Note that on most Unix-like systems including Linux and Mac OS
 #'   X, port numbers smaller than 1025 require root privileges.
-#' @param app A collection of functions that define your application. See 
+#' @param app A collection of functions that define your application. See
 #'   \code{\link{startServer}}.
 #' @param interruptIntervalMs Deprecated (last used in httpuv 1.3.5).
-#'   
+#'
 #' @seealso \code{\link{startServer}}, \code{\link{service}},
 #'   \code{\link{stopServer}}
 #'
@@ -580,7 +631,7 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 runServer <- function(host, port, app, interruptIntervalMs = NULL) {
   server <- startServer(host, port, app)
   on.exit(stopServer(server))
-  
+
   # TODO: in the future, add deprecation message to interruptIntervalMs.
   service(0)
 }
@@ -599,17 +650,17 @@ interrupt <- function() {
 }
 
 #' Convert raw vector to Base64-encoded string
-#' 
+#'
 #' Converts a raw vector to its Base64 encoding as a single-element character
 #' vector.
-#' 
+#'
 #' @param x A raw vector.
-#'   
+#'
 #' @examples
 #' set.seed(100)
 #' result <- rawToBase64(as.raw(runif(19, min=0, max=256)))
 #' stopifnot(identical(result, "TkGNDnd7z16LK5/hR2bDqzRbXA=="))
-#' 
+#'
 #' @export
 rawToBase64 <- function(x) {
   base64encode(x)
@@ -629,16 +680,6 @@ rawToBase64 <- function(x) {
 #' @inheritParams startServer
 #' @export
 startDaemonizedServer <- startServer
-
-#' Stop a running daemonized server in Unix environments (deprecated)
-#'
-#' This function will be removed in a future release of httpuv. Instead, use
-#' \code{\link{stopServer}}.
-#'
-#' @inheritParams stopServer
-#'
-#' @export
-stopDaemonizedServer <- stopServer
 
 
 # Needed so that Rcpp registers the 'httpuv_decodeURIComponent' symbol

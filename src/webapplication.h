@@ -6,6 +6,7 @@
 #include <Rcpp.h>
 #include "websockets.h"
 #include "thread.h"
+#include "staticpath.h"
 
 class HttpRequest;
 class HttpResponse;
@@ -27,6 +28,10 @@ public:
                            boost::shared_ptr<std::vector<char> > data,
                            boost::function<void(void)> error_callback) = 0;
   virtual void onWSClose(boost::shared_ptr<WebSocketConnection>) = 0;
+
+  virtual boost::shared_ptr<HttpResponse> staticFileResponse(
+    boost::shared_ptr<HttpRequest> pRequest) = 0;
+  virtual StaticPathManager& getStaticPathManager() = 0;
 };
 
 
@@ -39,17 +44,17 @@ private:
   Rcpp::Function _onWSMessage;
   Rcpp::Function _onWSClose;
 
+  StaticPathManager _staticPathManager;
+
 public:
   RWebApplication(Rcpp::Function onHeaders,
                   Rcpp::Function onBodyData,
                   Rcpp::Function onRequest,
                   Rcpp::Function onWSOpen,
                   Rcpp::Function onWSMessage,
-                  Rcpp::Function onWSClose) :
-    _onHeaders(onHeaders), _onBodyData(onBodyData), _onRequest(onRequest),
-    _onWSOpen(onWSOpen), _onWSMessage(onWSMessage), _onWSClose(onWSClose) {
-    ASSERT_MAIN_THREAD()
-  }
+                  Rcpp::Function onWSClose,
+                  Rcpp::List     staticPaths,
+                  Rcpp::List     staticPathOptions);
 
   virtual ~RWebApplication() {
     ASSERT_MAIN_THREAD()
@@ -69,6 +74,10 @@ public:
                            boost::shared_ptr<std::vector<char> > data,
                            boost::function<void(void)> error_callback);
   virtual void onWSClose(boost::shared_ptr<WebSocketConnection> conn);
+
+  virtual boost::shared_ptr<HttpResponse> staticFileResponse(
+    boost::shared_ptr<HttpRequest> pRequest);
+  virtual StaticPathManager& getStaticPathManager();
 };
 
 

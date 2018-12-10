@@ -17,6 +17,7 @@
 #include "thread.h"
 #include "httpuv.h"
 #include "auto_deleter.h"
+#include "socket.h"
 #include <Rinternals.h>
 
 
@@ -232,6 +233,10 @@ void closeWS(SEXP conn,
 }
 
 
+// ============================================================================
+// Create/stop servers
+// ============================================================================
+
 // [[Rcpp::export]]
 Rcpp::RObject makeTcpServer(const std::string& host, int port,
                             Rcpp::Function onHeaders,
@@ -239,7 +244,9 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
                             Rcpp::Function onRequest,
                             Rcpp::Function onWSOpen,
                             Rcpp::Function onWSMessage,
-                            Rcpp::Function onWSClose) {
+                            Rcpp::Function onWSClose,
+                            Rcpp::List     staticPaths,
+                            Rcpp::List     staticPathOptions) {
 
   using namespace Rcpp;
   register_main_thread();
@@ -248,7 +255,8 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
   // this should be deleted when it goes out of scope.
   boost::shared_ptr<RWebApplication> pHandler(
     new RWebApplication(onHeaders, onBodyData, onRequest,
-                        onWSOpen, onWSMessage, onWSClose),
+                        onWSOpen, onWSMessage, onWSClose,
+                        staticPaths, staticPathOptions),
     auto_deleter_main<RWebApplication>
   );
 
@@ -292,7 +300,9 @@ Rcpp::RObject makePipeServer(const std::string& name,
                              Rcpp::Function onRequest,
                              Rcpp::Function onWSOpen,
                              Rcpp::Function onWSMessage,
-                             Rcpp::Function onWSClose) {
+                             Rcpp::Function onWSClose,
+                             Rcpp::List     staticPaths,
+                             Rcpp::List     staticPathOptions) {
 
   using namespace Rcpp;
   register_main_thread();
@@ -301,7 +311,8 @@ Rcpp::RObject makePipeServer(const std::string& name,
   // this should be deleted when it goes out of scope.
   boost::shared_ptr<RWebApplication> pHandler(
     new RWebApplication(onHeaders, onBodyData, onRequest,
-                        onWSOpen, onWSMessage, onWSClose),
+                        onWSOpen, onWSMessage, onWSClose,
+                        staticPaths, staticPathOptions),
     auto_deleter_main<RWebApplication>
   );
 
@@ -338,7 +349,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
 }
 
 
-void stopServer(uv_stream_t* pServer) {
+void stopServer_(uv_stream_t* pServer) {
   ASSERT_MAIN_THREAD()
 
   // Remove it from the list of running servers.
@@ -358,53 +369,65 @@ void stopServer(uv_stream_t* pServer) {
   );
 }
 
-//' Stop a server
-//' 
-//' Given a handle that was returned from a previous invocation of 
-//' \code{\link{startServer}} or \code{\link{startPipeServer}}, this closes all
-//' open connections for that server and  unbinds the port.
-//' 
-//' @param handle A handle that was previously returned from
-//'   \code{\link{startServer}} or \code{\link{startPipeServer}}.
-//'
-//' @seealso \code{\link{stopAllServers}} to stop all servers.
-//'
-//' @export
 // [[Rcpp::export]]
-void stopServer(std::string handle) {
+void stopServer_(std::string handle) {
   ASSERT_MAIN_THREAD()
   uv_stream_t* pServer = internalize_str<uv_stream_t>(handle);
-  stopServer(pServer);
-}
-
-//' Stop all applications
-//'
-//' This will stop all applications which were created by
-//' \code{\link{startServer}} or \code{\link{startPipeServer}}.
-//'
-//' @seealso \code{\link{stopServer}} to stop a specific server.
-//'
-//' @export
-// [[Rcpp::export]]
-void stopAllServers() {
-  ASSERT_MAIN_THREAD()
-
-  if (!io_thread_running.get())
-    return;
-
-  // Each call to stopServer also removes it from the pServers list.
-  while (pServers.size() > 0) {
-    stopServer(pServers[0]);
-  }
-
-  uv_async_send(&async_stop_io_loop);
-
-  trace("io_thread stopped");
-  uv_thread_join(&io_thread_id);
+  stopServer_(pServer);
 }
 
 void stop_loop_timer_cb(uv_timer_t* handle) {
   uv_stop(handle->loop);
+}
+
+
+// ============================================================================
+// Static file serving
+// ============================================================================
+
+boost::shared_ptr<WebApplication> get_pWebApplication(uv_stream_t* pServer) {
+  // Copy the Socket shared_ptr
+  boost::shared_ptr<Socket> pSocket(*(boost::shared_ptr<Socket>*)pServer->data);
+  return pSocket->pWebApplication;
+}
+
+boost::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
+  uv_stream_t* pServer = internalize_str<uv_stream_t>(handle);
+  return get_pWebApplication(pServer);
+}
+
+// [[Rcpp::export]]
+Rcpp::List getStaticPaths_(std::string handle) {
+  ASSERT_MAIN_THREAD()
+  return get_pWebApplication(handle)->getStaticPathManager().pathsAsRObject();
+}
+
+// [[Rcpp::export]]
+Rcpp::List setStaticPaths_(std::string handle, Rcpp::List sp) {
+  ASSERT_MAIN_THREAD()
+  get_pWebApplication(handle)->getStaticPathManager().set(sp);
+  return getStaticPaths_(handle);
+}
+
+// [[Rcpp::export]]
+Rcpp::List removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths) {
+  ASSERT_MAIN_THREAD()
+  get_pWebApplication(handle)->getStaticPathManager().remove(paths);
+  return getStaticPaths_(handle);
+}
+
+// [[Rcpp::export]]
+Rcpp::List getStaticPathOptions_(std::string handle) {
+  ASSERT_MAIN_THREAD()
+  return get_pWebApplication(handle)->getStaticPathManager().getOptions().asRObject();
+}
+
+
+// [[Rcpp::export]]
+Rcpp::List setStaticPathOptions_(std::string handle, Rcpp::List opts) {
+  ASSERT_MAIN_THREAD()
+  get_pWebApplication(handle)->getStaticPathManager().setOptions(opts);
+  return getStaticPathOptions_(handle);
 }
 
 

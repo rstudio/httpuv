@@ -64,9 +64,6 @@ private:
   // true after the headers are complete.
   bool _is_upgrade;
 
-  bool _hasHeader(const std::string& name) const;
-  bool _hasHeader(const std::string& name, const std::string& value, bool ci = false) const;
-
   void _parse_http_data(char* buf, const ssize_t n);
   // Parse data that has been stored in the buffer.
   void _parse_http_data_from_buffer();
@@ -131,6 +128,9 @@ public:
   std::string method() const;
   std::string url() const;
   const RequestHeaders& headers() const;
+
+  bool hasHeader(const std::string& name) const;
+  bool hasHeader(const std::string& name, const std::string& value, bool ci = false) const;
 
   // Is the request an Upgrade (i.e. WebSocket connection)?
   bool isUpgrade() const;

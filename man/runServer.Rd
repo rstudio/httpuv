@@ -7,26 +7,26 @@
 runServer(host, port, app, interruptIntervalMs = NULL)
 }
 \arguments{
-\item{host}{A string that is a valid IPv4 address that is owned by this 
+\item{host}{A string that is a valid IPv4 address that is owned by this
 server, or \code{"0.0.0.0"} to listen on all IP addresses.}
 
 \item{port}{A number or integer that indicates the server port that should be
 listened on. Note that on most Unix-like systems including Linux and Mac OS
 X, port numbers smaller than 1025 require root privileges.}
 
-\item{app}{A collection of functions that define your application. See 
+\item{app}{A collection of functions that define your application. See
 \code{\link{startServer}}.}
 
 \item{interruptIntervalMs}{Deprecated (last used in httpuv 1.3.5).}
 }
 \description{
-This is a convenience function that provides a simple way to call 
-\code{\link{startServer}}, \code{\link{service}}, and 
-\code{\link{stopServer}} in the correct sequence. It does not return unless 
+This is a convenience function that provides a simple way to call
+\code{\link{startServer}}, \code{\link{service}}, and
+\code{\link{stopServer}} in the correct sequence. It does not return unless
 interrupted or an error occurs.
 }
 \details{
-If you have multiple hosts and/or ports to listen on, call the individual 
+If you have multiple hosts and/or ports to listen on, call the individual
 functions instead of \code{runServer}.
 }
 \examples{

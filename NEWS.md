@@ -1,5 +1,9 @@
-httpuv 1.4.5.9000
+httpuv 1.4.5.9001
 ============
+
+* Added support for serving static files from the background I/O thread. Files can now be served from the filesystem without involving the main R thread, which means that these operations won't block or be blocked by code that runs in the main R thread. ([#177](https://github.com/rstudio/httpuv/pull/177))
+
+* Running httpuv applications are now represented by R6 objects of class `WebServer` and `PipeServer`. These objects have methods to query and update the application. ([#177](https://github.com/rstudio/httpuv/pull/177))
 
 * Fixed [#168](https://github.com/rstudio/httpuv/issues/168): A SIGPIPE signal on the httpuv background thread could cause the process to quit. This can happen in some instances when the server is under heavy load. ([#169](https://github.com/rstudio/httpuv/pull/169))
 
