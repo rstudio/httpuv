@@ -10,8 +10,8 @@
 #include <vector>
 #include <Rcpp.h>
 #include <boost/optional.hpp>
+#include <boost/date_time.hpp>
 #include "thread.h"
-#include "time.h"
 
 // A callback for deleting objects on the main thread using later(). This is
 // needed when the object is an Rcpp object or contains one, because deleting
@@ -260,8 +260,8 @@ inline time_t parse_http_date_string(const std::string& date) {
   }
   date_str = date_str.substr(0, date_str.size() - 4);
 
-  // Format is now "21 Oct 2015 07:28:00"
-  // Next, replace month with number.
+  // Format is now "21 Oct 2015 07:28:00". Next, replace month with number, so
+  // that there are no locale issues parsing date.
   std::string month_names[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
   std::string month_name = date_str.substr(3, 3);
@@ -280,14 +280,23 @@ inline time_t parse_http_date_string(const std::string& date) {
   date_str.replace(3, 3, toString(month_num));
 
   // Format is now something like "21 10 2015 07:28:00"
-  // Parse
-  struct tm time;
-  if (strptime(date_str.c_str(), "%d %m %Y %H:%M:%S", &time) == NULL) {
+  // Convert to a boost::posix_time::ptime object
+  const static std::locale time_format = std::locale(
+    std::locale::classic(),
+    // Apparently it's not necessary to delete the time_input_facet.
+    new boost::posix_time::time_input_facet("%d %m %Y %H:%M:%S")
+  );
+
+  boost::posix_time::ptime pt, ptbase;
+  std::istringstream is(date_str);
+  is.imbue(time_format);
+  is >> pt;
+  if (pt == ptbase) {
     // Error parsing time
     return 0;
   }
 
-  return my_timegm(&time);
+  return to_time_t(pt);
 }
 
 #endif

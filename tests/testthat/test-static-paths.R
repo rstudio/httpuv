@@ -609,11 +609,18 @@ test_that("Last-Modified and If-Modified-Since headers", {
   expect_identical(h[setdiff(names(h), "date")], h1[setdiff(names(h1), "date")])
 
 
-  # Malformed If-Modified-Since value should be ignored, resulting in a 200
-  # response.
+  # Malformed If-Modified-Since value should be ignored.
+  # First, a date far in the future should result in 304.
   r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
     handle_setheaders(new_handle(),
-      "If-Modified-Since" = "Mon, 03 Dec 2018 18:61:48 GMT"
+      "If-Modified-Since" = "Mon, 01 Jan 2100 12:00:00 GMT"
+    )
+  )
+  expect_identical(r1$status_code, 304L)
+  # Next, almost the same date, but slightly malformed, should result in 200.
+  r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
+    handle_setheaders(new_handle(),
+      "If-Modified-Since" = "Mon, 01 Jan 2100 12:100:00 GMT"
     )
   )
   expect_identical(r1$status_code, 200L)
