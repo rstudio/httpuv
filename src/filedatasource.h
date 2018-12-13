@@ -30,6 +30,7 @@ public:
   uint64_t size() const;
   uv_buf_t getData(size_t bytesDesired);
   void freeData(uv_buf_t buffer);
+  // Get the mtime of the file. If there's an error, return 0.
   time_t getMtime();
   void close();
   std::string lastErrorMessage() const;

@@ -78,7 +78,10 @@ void FileDataSource::freeData(uv_buf_t buffer) {
 
 time_t FileDataSource::getMtime() {
   struct stat res;
-  fstat(_fd, &res);
+  int retval = fstat(_fd, &res);
+  if (retval == -1) {
+    return 0;
+  }
   return res.st_mtime;
 }
 

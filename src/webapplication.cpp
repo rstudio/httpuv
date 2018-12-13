@@ -554,7 +554,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     time_t file_mtime = pDataSource->getMtime();
     time_t if_mod_since = parse_http_date_string(pRequest->getHeader("If-Modified-Since"));
 
-    if (if_mod_since != 0 && file_mtime <= if_mod_since) {
+    if (file_mtime != 0 && if_mod_since != 0 && file_mtime <= if_mod_since) {
       client_cache_is_valid = true;
       delete pDataSource;
       pDataSource = NULL;
