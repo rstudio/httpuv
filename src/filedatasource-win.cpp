@@ -49,6 +49,7 @@ FileDataSourceResult FileDataSource::initialize(const std::string& path, bool ow
 
   if (!GetFileSizeEx(_hFile, &_length)) {
     CloseHandle(_hFile);
+    _hFile = INVALID_HANDLE_VALUE;
     _lastErrorMessage = "Error retrieving file size for " + path + ": " + toString(GetLastError()) + "\n";
     return FDS_ERROR;
   }
@@ -83,6 +84,23 @@ uv_buf_t FileDataSource::getData(size_t bytesDesired) {
 
 void FileDataSource::freeData(uv_buf_t buffer) {
   free(buffer.base);
+}
+
+time_t FileTimeToTimeT(const FILETIME& ft) {
+  ULARGE_INTEGER ull;
+  ull.LowPart  = ft.dwLowDateTime;
+  ull.HighPart = ft.dwHighDateTime;
+  return ull.QuadPart / 10000000ULL - 11644473600ULL;
+}
+
+time_t FileDataSource::getMtime() {
+  FILETIME ftWrite;
+
+  if (!GetFileTime(_hFile, NULL, NULL, &ftWrite)) {
+    return 0;
+  }
+
+  return FileTimeToTimeT(ftWrite);
 }
 
 void FileDataSource::close() {
