@@ -26,6 +26,10 @@ class FileDataSource : public DataSource {
 public:
   FileDataSource() {}
 
+  ~FileDataSource() {
+    close();
+  }
+
   FileDataSourceResult initialize(const std::string& path, bool owned);
   uint64_t size() const;
   uv_buf_t getData(size_t bytesDesired);

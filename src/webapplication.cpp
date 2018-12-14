@@ -1,4 +1,6 @@
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include "httpuv.h"
 #include "filedatasource.h"
 #include "webapplication.h"
@@ -94,6 +96,24 @@ Rcpp::List errorResponse() {
   );
 }
 
+// An analog to errorResponse, but this returns an shared_ptr<HttpResponse>
+// instead of an Rcpp::List, doesn't involve any R objects, and can be run on
+// the background thread.
+boost::shared_ptr<HttpResponse> error_response(boost::shared_ptr<HttpRequest> pRequest, int code) {
+  std::string description = getStatusDescription(code);
+  std::string content = toString(code) + " " + description + "\n";
+
+  std::vector<uint8_t> responseData(content.begin(), content.end());
+
+  // Freed in on_response_written
+  boost::shared_ptr<DataSource> pDataSource = boost::make_shared<InMemoryDataSource>(responseData);
+
+  return boost::shared_ptr<HttpResponse>(
+    new HttpResponse(pRequest, code, description, pDataSource),
+    auto_deleter_background<HttpResponse>
+  );
+}
+
 // Given a URL path like "/foo?abc=123", removes the '?' and everything after.
 std::pair<std::string, std::string> splitQueryString(const std::string& url) {
   size_t qsIndex = url.find('?');
@@ -182,29 +202,30 @@ boost::shared_ptr<HttpResponse> listToResponse(
   List responseHeaders = response["headers"];
 
   // Self-frees when response is written
-  DataSource* pDataSource = NULL;
+  boost::shared_ptr<DataSource> pDataSource(nullptr);
 
   // The response can either contain:
   // - bodyFile: String value that names the file that should be streamed
   // - body: Character vector (which is charToRaw-ed) or raw vector, or NULL
   if (std::find(names.begin(), names.end(), "bodyFile") != names.end()) {
-    FileDataSource* pFDS = new FileDataSource();
+    boost::shared_ptr<FileDataSource> pFDS = boost::make_shared<FileDataSource>();
     FileDataSourceResult ret = pFDS->initialize(
       Rcpp::as<std::string>(response["bodyFile"]),
       Rcpp::as<bool>(response["bodyFileOwned"])
     );
     if (ret != FDS_OK) {
       REprintf(pFDS->lastErrorMessage().c_str());
+      return error_response(pRequest, 500);
     }
     pDataSource = pFDS;
   }
   else if (Rf_isString(response["body"])) {
     RawVector responseBytes = Function("charToRaw")(response["body"]);
-    pDataSource = new InMemoryDataSource(responseBytes);
+    pDataSource = boost::make_shared<InMemoryDataSource>(responseBytes);
   }
   else {
     RawVector responseBytes = response["body"];
-    pDataSource = new InMemoryDataSource(responseBytes);
+    pDataSource = boost::make_shared<InMemoryDataSource>(responseBytes);
   }
 
   boost::shared_ptr<HttpResponse> pResp(
@@ -416,22 +437,6 @@ void RWebApplication::onWSClose(boost::shared_ptr<WebSocketConnection> pConn) {
 // Unlike most of the methods for an RWebApplication, these ones are called on
 // the background thread.
 
-boost::shared_ptr<HttpResponse> error_response(boost::shared_ptr<HttpRequest> pRequest, int code) {
-  std::string description = getStatusDescription(code);
-  std::string content = toString(code) + " " + description + "\n";
-
-  std::vector<uint8_t> responseData(content.begin(), content.end());
-
-  // Freed in on_response_written
-  DataSource* pDataSource = new InMemoryDataSource(responseData);
-
-  return boost::shared_ptr<HttpResponse>(
-    new HttpResponse(pRequest, code, description, pDataSource),
-    auto_deleter_background<HttpResponse>
-  );
-}
-
-
 boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   boost::shared_ptr<HttpRequest> pRequest
 ) {
@@ -506,14 +511,10 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     }
   }
 
-  // Self-frees when response is written
-  FileDataSource* pDataSource = new FileDataSource();
+  boost::shared_ptr<FileDataSource> pDataSource = boost::make_shared<FileDataSource>();
   FileDataSourceResult ret = pDataSource->initialize(local_path, false);
 
   if (ret != FDS_OK) {
-    // Couldn't read the file
-    delete pDataSource;
-
     if (ret == FDS_NOT_EXIST || ret == FDS_ISDIR) {
       if (sp.options.fallthrough.get()) {
         return nullptr;
@@ -524,8 +525,6 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
       return error_response(pRequest, 500);
     }
   }
-
-  int file_size = pDataSource->size();
 
   // Use local_path instead of subpath, because if the subpath is "/foo/" and
   // *(sp.options.indexhtml) is true, then the local_path will be
@@ -540,13 +539,6 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     }
   }
 
-  if (method == "HEAD") {
-    // For HEAD requests, we created the FileDataSource to get the size and
-    // validate that the file exists, but don't actually send the file's data.
-    delete pDataSource;
-    pDataSource = NULL;
-  }
-
   // Check if the client has an up-to-date copy of the file in cache. To do
   // this, compare the If-Modified-Since header to the file's mtime.
   bool client_cache_is_valid = false;
@@ -556,23 +548,35 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
 
     if (file_mtime != 0 && if_mod_since != 0 && file_mtime <= if_mod_since) {
       client_cache_is_valid = true;
-      delete pDataSource;
-      pDataSource = NULL;
     }
   }
 
-  boost::shared_ptr<HttpResponse> pResponse;
-  if (client_cache_is_valid) {
-    pResponse = boost::shared_ptr<HttpResponse>(
-      new HttpResponse(pRequest, 304, getStatusDescription(304), NULL),
-      auto_deleter_background<HttpResponse>
-    );
-  } else {
-    pResponse = boost::shared_ptr<HttpResponse>(
-      new HttpResponse(pRequest, 200, getStatusDescription(200), pDataSource),
-      auto_deleter_background<HttpResponse>
-    );
+  // ==================================
+  // Create the HTTP response
+  // ==================================
+
+  // Default status code at this point is 200.
+  int status_code = 200;
+
+  // This is the pointer that will be passed to the new HttpResponse. We'll
+  // start by setting it to point to the same thing as pDataSource, but it can
+  // be unset based on various conditions, which means that no body data will
+  // be sent.
+  boost::shared_ptr<FileDataSource> pDataSource2 = pDataSource;
+
+  if (method == "HEAD") {
+    pDataSource2.reset();
   }
+
+  if (client_cache_is_valid) {
+    pDataSource2.reset();
+    status_code = 304;
+  }
+
+  boost::shared_ptr<HttpResponse> pResponse = boost::shared_ptr<HttpResponse>(
+    new HttpResponse(pRequest, status_code, getStatusDescription(status_code), pDataSource2),
+    auto_deleter_background<HttpResponse>
+  );
 
   ResponseHeaders& respHeaders = pResponse->headers();
 
@@ -581,7 +585,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   if (extraRespHeaders.size() != 0) {
     ResponseHeaders::const_iterator it;
     for (it = extraRespHeaders.begin(); it != extraRespHeaders.end(); it++) {
-      if (client_cache_is_valid) {
+      if (status_code == 304) {
         // For a 304 response, only a few headers should be added. See
         // https://tools.ietf.org/html/rfc7232#section-4.1
         // (Date is automatically added in the HttpResponse.)
@@ -598,12 +602,12 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     }
   }
 
-  if (!client_cache_is_valid) {
+  if (status_code != 304) {
     // Set the Content-Length here so that both GET and HEAD requests will get
     // it. If we didn't set it here, the response for the GET would
     // automatically set the Content-Length (by using the FileDataSource), but
     // the response for the HEAD would not.
-    respHeaders.push_back(std::make_pair("Content-Length", toString(file_size)));
+    respHeaders.push_back(std::make_pair("Content-Length", toString(pDataSource->size())));
     respHeaders.push_back(std::make_pair("Content-Type", content_type));
     respHeaders.push_back(std::make_pair("Last-Modified", http_date_string(pDataSource->getMtime())));
   }

@@ -4,6 +4,7 @@
 #include "thread.h"
 #include <string>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 #include "libuv/include/uv.h"
 
 /* Prevent naming conflicts for Free() and Calloc() */
@@ -56,7 +57,10 @@ public:
     std::copy(rawVector.begin(), rawVector.end(), _buffer.begin());
   }
 
-  virtual ~InMemoryDataSource() {}
+  virtual ~InMemoryDataSource() {
+    close();
+  }
+
   uint64_t size() const;
   uv_buf_t getData(size_t bytesDesired);
   void freeData(uv_buf_t buffer);
@@ -72,10 +76,10 @@ class ExtendedWrite {
   int _activeWrites;
   bool _errored;
   uv_stream_t* _pHandle;
-  DataSource* _pDataSource;
+  boost::shared_ptr<DataSource> _pDataSource;
 
 public:
-  ExtendedWrite(uv_stream_t* pHandle, DataSource* pDataSource)
+  ExtendedWrite(uv_stream_t* pHandle, boost::shared_ptr<DataSource> pDataSource)
       : _activeWrites(0), _errored(false), _pHandle(pHandle),
         _pDataSource(pDataSource) {}
   virtual ~ExtendedWrite() {}
