@@ -137,10 +137,11 @@ s <- startServer("0.0.0.0", 5000,
       )
     },
     staticPaths = list(
-      "/assets" = "content/assets/"
+      "/assets" = "content/assets/",
       "/lib" = staticPath(
         "content/lib",
         indexhtml = FALSE
+      )
     ),
     staticPathOptions = staticPathOptions(
       indexhtml = TRUE

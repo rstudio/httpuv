@@ -508,10 +508,11 @@ WebSocket <- R6Class(
 #'       )
 #'     },
 #'     staticPaths = list(
-#'       "/assets" = "content/assets/"
+#'       "/assets" = "content/assets/",
 #'       "/lib" = staticPath(
 #'         "content/lib",
 #'         indexhtml = FALSE
+#'       )
 #'     ),
 #'     staticPathOptions = staticPathOptions(
 #'       indexhtml = TRUE
@@ -576,7 +577,7 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
   # incoming traffic (relative to the time it takes to process it) we give the
   # owning event loop opportunities to do housekeeping in between httpuv related
   # callbacks.
-  
+
   if (is.na(timeoutMs)) {
     # NA means to run non-blocking
     run_now(0, all = FALSE)
