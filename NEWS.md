@@ -1,3 +1,8 @@
+httpuv 1.4.5.1
+==============
+
+* Moved the `C_VISIBILITY` from `PKG_CPPFLAGS` to `PKG_CFLAGS`, and added `CXX_VISIBILITY` to `PKG_CXXFLAGS`, as requested by the CRAN maintainers.
+
 httpuv 1.4.5
 ============
 
