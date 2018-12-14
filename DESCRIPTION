@@ -1,7 +1,7 @@
 Package: httpuv
 Type: Package
 Title: HTTP and WebSocket Server Library
-Version: 1.4.5.9001
+Version: 1.4.5.9002
 Author: Joe Cheng, Hector Corrada Bravo [ctb], Jeroen Ooms [ctb],
     Winston Chang [ctb]
 Copyright: RStudio, Inc.; Joyent, Inc.; Nginx Inc.; Igor Sysoev; Niels Provos;
@@ -16,8 +16,7 @@ Description: Provides low-level socket and protocol support for handling
     http-parser license information.)
 License: GPL (>= 2) | file LICENSE
 Depends:
-    R (>= 2.15.1),
-    methods
+    R (>= 2.15.1)
 Imports:
     Rcpp (>= 0.11.0),
     utils,
