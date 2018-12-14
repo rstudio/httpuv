@@ -48,7 +48,7 @@ class HttpResponseExtendedWrite : public ExtendedWrite {
 public:
   HttpResponseExtendedWrite(boost::shared_ptr<HttpResponse> pParent,
                             uv_stream_t* pHandle,
-                            DataSource* pDataSource) :
+                            boost::shared_ptr<DataSource> pDataSource) :
       ExtendedWrite(pHandle, pDataSource), _pParent(pParent) {}
 
   void onWriteComplete(int status) {
@@ -91,8 +91,7 @@ void HttpResponse::writeResponse() {
     _responseHeader.insert(_responseHeader.end(), buffer.base, buffer.base + buffer.len);
     if (buffer.len == _pBody->size()) {
       // We used up the body, kill it
-      delete _pBody;
-      _pBody = NULL;
+      _pBody.reset();
     }
   }
 
@@ -142,5 +141,5 @@ HttpResponse::~HttpResponse() {
   if (_closeAfterWritten) {
     _pRequest->close();
   }
-  delete _pBody;
+  _pBody.reset();
 }

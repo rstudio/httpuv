@@ -53,7 +53,7 @@ test_that("Basic static file serving", {
   expect_identical(r$content, r2$content)
   expect_identical(h$`content-length`, h2$`content-length`)
   expect_identical(h$`content-type`, h2$`content-type`)
-  
+
   r3 <- fetch(local_url("/1/index.html", s$getPort()))
   h3 <- parse_headers_list(r3$headers)
   expect_identical(r$content, r3$content)
@@ -210,7 +210,7 @@ test_that("Options and option inheritance", {
   expect_false("test-code-path" %in% names(h))
   expect_identical(h$`content-type`, "text/html")
   expect_identical(r$content, index_file_content)
-  
+
   r <- fetch(local_url("/unset/index.html", s$getPort()))
   h <- parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
@@ -326,7 +326,7 @@ test_that("Dynamically changing paths", {
   r <- fetch(local_url("/static", s$getPort()))
   expect_equal(r$status_code, 200)
   expect_identical(r$content, index_file_content)
-  
+
   # Replace with different static path and options
   s$setStaticPath(
     "/static" = staticPath(
@@ -344,7 +344,7 @@ test_that("Dynamically changing paths", {
 
   # Remove static path
   s$removeStaticPath("/static")
-  
+
   expect_equal(length(s$getStaticPaths()), 0)
 
   r <- fetch(local_url("/static", s$getPort()))
@@ -352,7 +352,7 @@ test_that("Dynamically changing paths", {
   h <- parse_headers_list(r$headers)
   expect_identical(h$`test-code-path`, "R")
   expect_identical(rawToChar(r$content), "500 Internal Server Error\n")
-  
+
   # Add static path
   s$setStaticPath(
     "/static_new" = test_path("apps/content")
@@ -471,30 +471,30 @@ test_that("Paths with ..", {
   expect_identical(res[1], "HTTP/1.1 404 Not Found")
   expect_true(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
 
-  res <- http_request_con("GET /static", "127.0.0.1", s$getPort())  
+  res <- http_request_con("GET /static", "127.0.0.1", s$getPort())
   expect_identical(res[1], "HTTP/1.1 200 OK")
 
   # The presence of a ".." path segment results in a 400.
-  res <- http_request_con("GET /static/..", "127.0.0.1", s$getPort())  
+  res <- http_request_con("GET /static/..", "127.0.0.1", s$getPort())
   expect_identical(res[1], "HTTP/1.1 400 Bad Request")
 
-  res <- http_request_con("GET /static/../", "127.0.0.1", s$getPort())  
+  res <- http_request_con("GET /static/../", "127.0.0.1", s$getPort())
   expect_identical(res[1], "HTTP/1.1 400 Bad Request")
-  
-  res <- http_request_con("GET /static/../static", "127.0.0.1", s$getPort())  
+
+  res <- http_request_con("GET /static/../static", "127.0.0.1", s$getPort())
   expect_identical(res[1], "HTTP/1.1 400 Bad Request")
-  
+
   # ".." is valid as part of a path segment (but we'll get 404's since the files
   # don't actually exist).
-  res <- http_request_con("GET /static/..foo", "127.0.0.1", s$getPort())  
+  res <- http_request_con("GET /static/..foo", "127.0.0.1", s$getPort())
   expect_identical(res[1], "HTTP/1.1 404 Not Found")
   expect_false(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
 
-  res <- http_request_con("GET /static/foo..", "127.0.0.1", s$getPort())  
+  res <- http_request_con("GET /static/foo..", "127.0.0.1", s$getPort())
   expect_identical(res[1], "HTTP/1.1 404 Not Found")
   expect_false(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
 
-  res <- http_request_con("GET /static/foo../", "127.0.0.1", s$getPort())  
+  res <- http_request_con("GET /static/foo../", "127.0.0.1", s$getPort())
   expect_identical(res[1], "HTTP/1.1 404 Not Found")
   expect_false(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
 })
@@ -520,7 +520,7 @@ test_that("HEAD, POST, PUT requests", {
   # The GET results, for comparison to HEAD.
   r_get <- fetch(local_url("/static", s$getPort()))
   h_get <- parse_headers_list(r_get$headers)
-  
+
   # HEAD is OK.
   # Note the weird interface for a HEAD request:
   # https://github.com/jeroen/curl/issues/24
@@ -529,8 +529,8 @@ test_that("HEAD, POST, PUT requests", {
   expect_true(length(r$content) == 0)  # No message body for HEAD
   h <- parse_headers_list(r$headers)
   # Headers should match GET request, except for date.
-  expect_identical(h[setdiff(names(h), "date")], h_get[setdiff(names(h_get), "date")]) 
-    
+  expect_identical(h[setdiff(names(h), "date")], h_get[setdiff(names(h_get), "date")])
+
   # POST and PUT are not OK
   r <- fetch(local_url("/static", s$getPort()),
     handle_setopt(new_handle(), customrequest = "POST"))
@@ -541,3 +541,87 @@ test_that("HEAD, POST, PUT requests", {
   expect_equal(r$status_code, 400)
 })
 
+
+
+test_that("Last-Modified and If-Modified-Since headers", {
+  s <- startServer("127.0.0.1", random_open_port(),
+    list(
+      staticPaths = list(
+        "/" = staticPath(
+          test_path("apps/content"),
+          headers = list(
+            "ETag" = "abc",
+            "Cache-Control" = "max-age=12345",
+            "Other" = "xyz"
+          )
+        )
+      )
+    )
+  )
+  on.exit(s$stop())
+
+  # mtime of the target file, rounded down to nearest second.
+  file_mtime <- as.POSIXct(trunc(file.info(test_path("apps/content/mtcars.csv"))$mtime))
+
+  # First time retrieving: no Last-Modified header.
+  r <- fetch(local_url("/mtcars.csv", s$getPort()))
+  h <- parse_headers_list(r$headers)
+  http_mtime <- r$modified
+  expect_equal(file_mtime, http_mtime)
+
+
+  # Use the Last-Modified value in the If-Modified-Since header.
+  r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
+    handle_setheaders(new_handle(),
+      "If-Modified-Since" = h$`last-modified`
+    )
+  )
+  expect_identical(r1$status_code, 304L)
+  expect_true(length(r1$content) == 0)
+  h1 <- parse_headers_list(r1$headers)
+  # A 304 response should contain only the following headers (and must contain
+  # them if the corresponding 200 response would have them):
+  # Cache-Control, Content-Location, Date, ETag, Expires, Vary
+  # https://httpstatuses.com/304
+  expect_identical(h[c("cache-control", "etag")], h1[c("cache-control", "etag")])
+  # The Date header differs from the previous response because the request was
+  # made at a different time. We just need to check that it's present.
+  expect_true("date" %in% names(h1))
+
+
+  # The mtime plus 1 second should result in a 304.
+  r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
+    handle_setheaders(new_handle(),
+      "If-Modified-Since" = http_date_string(file_mtime + 1)
+    )
+  )
+  expect_identical(r1$status_code, 304L)
+
+
+  # Last-Modified header minus 1 second should result in a regular 200 response.
+  r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
+    handle_setheaders(new_handle(),
+      "If-Modified-Since" = http_date_string(file_mtime - 1)
+    )
+  )
+  expect_identical(r1$status_code, 200L)
+  h1 <- parse_headers_list(r1$headers)
+  expect_identical(h[setdiff(names(h), "date")], h1[setdiff(names(h1), "date")])
+
+
+  # Malformed If-Modified-Since value should be ignored.
+  # First, a date far in the future should result in 304.
+  r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
+    handle_setheaders(new_handle(),
+      "If-Modified-Since" = "Mon, 01 Jan 2100 12:00:00 GMT"
+    )
+  )
+  expect_identical(r1$status_code, 304L)
+  # Next, almost the same date, but slightly malformed, should result in 200.
+  r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
+    handle_setheaders(new_handle(),
+      "If-Modified-Since" = "Mon, 01 Jan 2100 12:100:00 GMT"
+    )
+  )
+  expect_identical(r1$status_code, 200L)
+})

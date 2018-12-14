@@ -50,6 +50,16 @@ bool HttpRequest::hasHeader(const std::string& name, const std::string& value, b
   }
 }
 
+// Return the value of a specified header. If the specified header isn't
+// found, return "".
+std::string HttpRequest::getHeader(const std::string& name) const {
+  RequestHeaders::const_iterator item = _headers.find(name);
+  if (item == _headers.end())
+    return "";
+
+  return item->second;
+}
+
 uv_stream_t* HttpRequest::handle() {
   return &_handle.stream;
 }
@@ -382,7 +392,8 @@ void HttpRequest::_on_headers_complete_complete(boost::shared_ptr<HttpResponse> 
     // then give it what it wants
     if (hasHeader("Expect", "100-continue")) {
       pResponse = boost::shared_ptr<HttpResponse>(
-        new HttpResponse(shared_from_this(), 100, "Continue", (DataSource*)NULL),
+        new HttpResponse(shared_from_this(), 100, "Continue",
+                         boost::shared_ptr<DataSource>(nullptr)),
         auto_deleter_background<HttpResponse>
       );
       pResponse->writeResponse();
@@ -765,7 +776,7 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
 
     if (p_wsc->accept(_headers, pData, pDataLen)) {
       // Freed in on_response_written
-      InMemoryDataSource* pDS = new InMemoryDataSource();
+      boost::shared_ptr<InMemoryDataSource>pDS = boost::make_shared<InMemoryDataSource>();
       boost::shared_ptr<HttpResponse> pResp(
         new HttpResponse(shared_from_this(), 101, "Switching Protocols", pDS),
         auto_deleter_background<HttpResponse>

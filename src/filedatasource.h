@@ -26,10 +26,16 @@ class FileDataSource : public DataSource {
 public:
   FileDataSource() {}
 
+  ~FileDataSource() {
+    close();
+  }
+
   FileDataSourceResult initialize(const std::string& path, bool owned);
   uint64_t size() const;
   uv_buf_t getData(size_t bytesDesired);
   void freeData(uv_buf_t buffer);
+  // Get the mtime of the file. If there's an error, return 0.
+  time_t getMtime();
   void close();
   std::string lastErrorMessage() const;
 };

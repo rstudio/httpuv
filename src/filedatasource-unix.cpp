@@ -3,6 +3,8 @@
 #include "filedatasource.h"
 #include "utils.h"
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -72,6 +74,15 @@ uv_buf_t FileDataSource::getData(size_t bytesDesired) {
 
 void FileDataSource::freeData(uv_buf_t buffer) {
   free(buffer.base);
+}
+
+time_t FileDataSource::getMtime() {
+  struct stat res;
+  int retval = fstat(_fd, &res);
+  if (retval == -1) {
+    return 0;
+  }
+  return res.st_mtime;
 }
 
 void FileDataSource::close() {

@@ -10,6 +10,7 @@
 #include <vector>
 #include <Rcpp.h>
 #include <boost/optional.hpp>
+#include <boost/date_time.hpp>
 #include "thread.h"
 
 // A callback for deleting objects on the main thread using later(). This is
@@ -211,7 +212,7 @@ inline std::string http_date_string(const time_t& t) {
     case 4:  day_name = "Thu"; break;
     case 5:  day_name = "Fri"; break;
     case 6:  day_name = "Sat"; break;
-    default: day_name = "Err"; // Throw?
+    default: return "";
   }
 
   std::string month_name;
@@ -228,7 +229,7 @@ inline std::string http_date_string(const time_t& t) {
     case 9:  month_name = "Oct"; break;
     case 10: month_name = "Nov"; break;
     case 11: month_name = "Dec"; break;
-    default: month_name = "Err"; // Throw?
+    default: return "";
   }
 
   const int maxlen = 30;
@@ -244,6 +245,67 @@ inline std::string http_date_string(const time_t& t) {
   );
 
   return std::string(res);
+}
+
+
+// Given a date string of format "Wed, 21 Oct 2015 07:28:00 GMT", return a
+// time_t representing that time. If the date is malformed, then return 0.
+inline time_t parse_http_date_string(const std::string& date) {
+  // This is because the static std::locale may not be thread-safe. If in the
+  // future we need to call this from multiple threads, we can remove this and
+  // make the std::locale non-static.
+  ASSERT_BACKGROUND_THREAD()
+
+  if (date.length() != 29) {
+    return 0;
+  }
+
+  // Strip off leading "Wed, ". We'll just ignore it.
+  std::string date_str = date.substr(5);
+
+  // Make sure it ends with " GMT", then strip it off.
+  if (date_str.substr(date_str.size() - 4, 4) != " GMT") {
+    return 0;
+  }
+  date_str = date_str.substr(0, date_str.size() - 4);
+
+  // Format is now "21 Oct 2015 07:28:00". Next, replace month with number, so
+  // that there are no locale issues parsing date.
+  std::string month_names[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+  std::string month_name = date_str.substr(3, 3);
+  int month_num = 0;
+  for (int i=0; i<12; i++) {
+    if (month_name == month_names[i]) {
+      month_num = i + 1;
+      break;
+    }
+  }
+
+  if (month_num == 0) {
+    return 0;
+  }
+
+  date_str.replace(3, 3, toString(month_num));
+
+  // Format is now something like "21 10 2015 07:28:00"
+  // Convert to a boost::posix_time::ptime object
+  const static std::locale time_format = std::locale(
+    std::locale::classic(),
+    // Apparently it's not necessary to delete the time_input_facet.
+    new boost::posix_time::time_input_facet("%d %m %Y %H:%M:%S")
+  );
+
+  boost::posix_time::ptime pt, ptbase;
+  std::istringstream is(date_str);
+  is.imbue(time_format);
+  is >> pt;
+  if (pt == ptbase) {
+    // Error parsing time
+    return 0;
+  }
+
+  return to_time_t(pt);
 }
 
 #endif
