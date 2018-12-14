@@ -251,6 +251,15 @@ inline std::string http_date_string(const time_t& t) {
 // Given a date string of format "Wed, 21 Oct 2015 07:28:00 GMT", return a
 // time_t representing that time. If the date is malformed, then return 0.
 inline time_t parse_http_date_string(const std::string& date) {
+  // This is because the static std::locale may not be thread-safe. If in the
+  // future we need to call this from multiple threads, we can remove this and
+  // make the std::locale non-static.
+  ASSERT_BACKGROUND_THREAD()
+
+  if (date.length() != 29) {
+    return 0;
+  }
+
   // Strip off leading "Wed, ". We'll just ignore it.
   std::string date_str = date.substr(5);
 
