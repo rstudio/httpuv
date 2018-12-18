@@ -11,6 +11,11 @@ httpuv 1.4.5.9002
 
 * `service()` now executes a single `later` callback, rather than all eligible callbacks. This gives callers more opportunities to perform their own housekeeping when multiple expensive callbacks queue up. ([#176](https://github.com/rstudio/httpuv/pull/176))
 
+httpuv 1.4.5.1
+==============
+
+* Moved the `C_VISIBILITY` from `PKG_CPPFLAGS` to `PKG_CFLAGS`, and added `CXX_VISIBILITY` to `PKG_CXXFLAGS`, as requested by the CRAN maintainers.
+
 httpuv 1.4.5
 ============
 

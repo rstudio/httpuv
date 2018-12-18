@@ -20,7 +20,9 @@ ifeq ($(UNAME), OpenBSD)
 PKG_LIBS += -lkvm
 endif
 
-PKG_CPPFLAGS = -Ilibuv/include $(C_VISIBILITY) -pthread
+PKG_CFLAGS = $(C_VISIBILITY)
+PKG_CXXFLAGS = $(CXX_VISIBILITY)
+PKG_CPPFLAGS = -Ilibuv/include -pthread
 
 # To avoid spurious warnings from `R CMD check --as-cran`, about compiler
 # warning flags like -Werror.
