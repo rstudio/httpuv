@@ -66,7 +66,7 @@ To update libuv to a new version, do the following:
 
 Prior to libuv 1.21.0, it included a Makefile.mingw, for use on MinGW platforms like the one that R uses in Windows. As of libuv 1.21.0, the Makefile.mingw was removed, and the recommended build method on MinGW is to use the configure script. However, the configure script will not run from  `R CMD INSTALL`, because it will try to execute the configure script using cmd.exe, and it will not even be able to find basic things like /bin/sh.
 
-Because it's not possible to run the configure script from `R CMD INSTALL`, httpuv includes a custom Makefile for libuv, at src/Makefile-libuv.mingw.
+Because it's not possible to run the configure script from `R CMD INSTALL`, httpuv includes a custom Makefile for libuv. The original version of this resides at tools/Makefile-libuv.mingw, and when the `tools/update_libuv.R` script is run, it copies it to src/libuv/Makefile-libuv.mingw.
 
 
 #### MinGW and unnamed structs
