@@ -21,7 +21,7 @@ LIBUV_CFLAGS = -Iinclude -Isrc -Isrc/win -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x
 $(SHLIB): libuv/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
 
 libuv/libuv.a:
-	$(MAKE) --directory=libuv -f Makefile.mingw \
+	$(MAKE) --directory=libuv -f ../Makefile-libuv.mingw \
 		CC="$(CC)" CFLAGS="$(CFLAGS) $(LIBUV_CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" \
 		AR="$(AR)" RANLIB="$(RANLIB)" HAVE_DTRACE=0
 

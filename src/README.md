@@ -28,7 +28,7 @@ To update libuv to a new version, do the following:
     git cherry-pick f7b4ff8
     ```
 
-* Run libuv's `autogen.sh`, and commit the files.
+* On Linux or Mac, run libuv's `autogen.sh`, and commit the files.
 
     ```
     cd src/libuv
@@ -61,6 +61,13 @@ To update libuv to a new version, do the following:
 
 
 ### Details
+
+#### Makefile-libuv.mingw
+
+Prior to libuv 1.21.0, it included a Makefile.mingw, for use on MinGW platforms like the one that R uses in Windows. As of libuv 1.21.0, the Makefile.mingw was removed, and the recommended build method on MinGW is to use the configure script. However, the configure script will not run from  `R CMD INSTALL`, because it will try to execute the configure script using cmd.exe, and it will not even be able to find basic things like /bin/sh.
+
+Because it's not possible to run the configure script from `R CMD INSTALL`, httpuv includes a custom Makefile for libuv, at src/Makefile-libuv.mingw.
+
 
 #### MinGW and unnamed structs
 
