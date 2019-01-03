@@ -610,17 +610,21 @@ test_that("Last-Modified and If-Modified-Since headers", {
 
 
   # Malformed If-Modified-Since value should be ignored.
-  # First, a date far in the future should result in 304.
+  #
+  # First, a date far in the future should result in 304. Note that the 2038
+  # date is used here because on 32-bit Windows, dates that are beyond
+  # 2038-01-19 will overflow and wrap around, and this request will get a 200
+  # instead of 304. Other platforms seem not to have this limitation.
   r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
     handle_setheaders(new_handle(),
-      "If-Modified-Since" = "Mon, 01 Jan 2100 12:00:00 GMT"
+      "If-Modified-Since" = "Mon, 01 Jan 2038 12:00:00 GMT"
     )
   )
   expect_identical(r1$status_code, 304L)
   # Next, almost the same date, but slightly malformed, should result in 200.
   r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
     handle_setheaders(new_handle(),
-      "If-Modified-Since" = "Mon, 01 Jan 2100 12:100:00 GMT"
+      "If-Modified-Since" = "Mon, 01 Jan 2038 12:100:00 GMT"
     )
   )
   expect_identical(r1$status_code, 200L)
