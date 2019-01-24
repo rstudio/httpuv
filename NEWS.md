@@ -9,6 +9,8 @@ httpuv 1.4.5.9002
 
 * Fixed [#168](https://github.com/rstudio/httpuv/issues/168): A SIGPIPE signal on the httpuv background thread could cause the process to quit. This can happen in some instances when the server is under heavy load. ([#169](https://github.com/rstudio/httpuv/pull/169))
 
+* Fixed [#122](https://github.com/rstudio/httpuv/issues/122): `decodeURI()` and `decodeURIComponent()` previously returned strings encoded with the system's native encoding; they now return UTF-8 encoded strings. ([#185](https://github.com/rstudio/httpuv/pull/185))
+
 * `service()` now executes a single `later` callback, rather than all eligible callbacks. This gives callers more opportunities to perform their own housekeeping when multiple expensive callbacks queue up. ([#176](https://github.com/rstudio/httpuv/pull/176))
 
 httpuv 1.4.5.1
