@@ -72,7 +72,8 @@ base64encode <- function(x) {
 #' 
 #' @param value Character vector to be encoded or decoded.
 #' @return Encoded or decoded character vector of the same length as the
-#'   input value.
+#'   input value. \code{decodeURI} and \code{decodeURIComponent} will return
+#'   strings that are UTF-8 encoded.
 #'
 #' @export
 encodeURI <- function(value) {
@@ -85,16 +86,12 @@ encodeURIComponent <- function(value) {
     .Call('_httpuv_encodeURIComponent', PACKAGE = 'httpuv', value)
 }
 
-#' @rdname encodeURI
-#' @export
-decodeURI <- function(value) {
-    .Call('_httpuv_decodeURI', PACKAGE = 'httpuv', value)
+decodeURI_ <- function(value) {
+    .Call('_httpuv_decodeURI_', PACKAGE = 'httpuv', value)
 }
 
-#' @rdname encodeURI
-#' @export
-decodeURIComponent <- function(value) {
-    .Call('_httpuv_decodeURIComponent', PACKAGE = 'httpuv', value)
+decodeURIComponent_ <- function(value) {
+    .Call('_httpuv_decodeURIComponent_', PACKAGE = 'httpuv', value)
 }
 
 #' Check whether an address is IPv4 or IPv6

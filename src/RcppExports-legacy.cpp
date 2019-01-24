@@ -24,13 +24,13 @@
 
 using namespace Rcpp;
 
-std::vector<std::string> decodeURIComponent(std::vector<std::string> value);
+std::vector<std::string> decodeURIComponent_(std::vector<std::string> value);
 RcppExport SEXP httpuv_decodeURIComponent(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::vector<std::string> >::type value(valueSEXP);
-    rcpp_result_gen = Rcpp::wrap(decodeURIComponent(value));
+    rcpp_result_gen = Rcpp::wrap(decodeURIComponent_(value));
     return rcpp_result_gen;
 END_RCPP
 }
