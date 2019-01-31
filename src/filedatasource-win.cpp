@@ -25,7 +25,7 @@ FileDataSourceResult FileDataSource::initialize(const std::string& path, bool ow
                       NULL);
 
   if (_hFile == INVALID_HANDLE_VALUE) {
-    if (GetLastError() == ERROR_FILE_NOT_FOUND) {
+    if (GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_PATH_NOT_FOUND) {
       _lastErrorMessage = "File does not exist: " + path + "\n";
       return FDS_NOT_EXIST;
 

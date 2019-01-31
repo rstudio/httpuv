@@ -63,6 +63,14 @@ test_that("Basic static file serving", {
   # Missing file (404)
   r <- fetch(local_url("/foo", s$getPort()))
   h <- parse_headers_list(r$headers)
+  expect_equal(r$status_code, 404)
+  expect_identical(rawToChar(r$content), "404 Not Found\n")
+  expect_equal(h$`content-length`, "14")
+
+  # Missing directory in path (404)
+  r <- fetch(local_url("/foo/bar", s$getPort()))
+  h <- parse_headers_list(r$headers)
+  expect_equal(r$status_code, 404)
   expect_identical(rawToChar(r$content), "404 Not Found\n")
   expect_equal(h$`content-length`, "14")
 
