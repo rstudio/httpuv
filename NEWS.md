@@ -13,6 +13,8 @@ httpuv 1.4.5.9002
 
 * `service()` now executes a single `later` callback, rather than all eligible callbacks. This gives callers more opportunities to perform their own housekeeping when multiple expensive callbacks queue up. ([#176](https://github.com/rstudio/httpuv/pull/176))
 
+* Fixed [#173](https://github.com/rstudio/httpuv/pull/173): The source code is now compiled with `-DSTRICT_R_HEADERS`, which eliminates the need to undefine the `Realloc` and `Free` macros.
+
 httpuv 1.4.5.1
 ==============
 
