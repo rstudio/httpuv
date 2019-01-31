@@ -1,12 +1,18 @@
 context("utils")
 
 test_that("encodeURI and encodeURIComponent", {
-  skip("Temporarily disabled") # Because of https://github.com/rstudio/httpuv/issues/122
+  # "abc \ue5 \u4e2d" is identical to "abc å 中" when the system's encoding is
+  # UTF-8. However, the former is always encoded as UTF-8, while the latter will
+  # be encoded using the system's native encoding.
+  utf8_str <- "abc \ue5 \u4e2d"
+  expect_true(Encoding(utf8_str) == "UTF-8")
 
-  expect_identical(encodeURI("abc å 中"), "abc%20%C3%A5%20%E4%B8%AD")
-  expect_identical(encodeURIComponent("abc å 中"), "abc%20%C3%A5%20%E4%B8%AD")
-  expect_identical(decodeURI("abc%20%C3%A5%20%E4%B8%AD"), "abc å 中")
-  expect_identical(decodeURIComponent("abc%20%C3%A5%20%E4%B8%AD"), "abc å 中")
+  expect_identical(encodeURI(utf8_str), "abc%20%C3%A5%20%E4%B8%AD")
+  expect_identical(encodeURIComponent(utf8_str), "abc%20%C3%A5%20%E4%B8%AD")
+  expect_identical(decodeURI("abc%20%C3%A5%20%E4%B8%AD"), utf8_str)
+  expect_identical(decodeURIComponent("abc%20%C3%A5%20%E4%B8%AD"), utf8_str)
+  expect_true(Encoding(decodeURI("abc%20%C3%A5%20%E4%B8%AD")) == "UTF-8")
+  expect_true(Encoding(decodeURIComponent("abc%20%C3%A5%20%E4%B8%AD")) == "UTF-8")
 
   # Behavior with reserved characters differs between encodeURI and
   # encodeURIComponent.
@@ -16,8 +22,10 @@ test_that("encodeURI and encodeURIComponent", {
   expect_identical(decodeURIComponent("%2C%2F%3F%3A%40"), ",/?:@")
 
   # Decoding characters that aren't encoded should have no effect.
-  expect_identical(decodeURI("abc å 中"), "abc å 中")
-  expect_identical(decodeURIComponent("abc å 中"), "abc å 中")
+  expect_identical(decodeURI(utf8_str), utf8_str)
+  expect_identical(decodeURIComponent(utf8_str), utf8_str)
+  expect_true(Encoding(decodeURI(utf8_str)) == "UTF-8")
+  expect_true(Encoding(decodeURIComponent(utf8_str)) == "UTF-8")
   expect_identical(decodeURI(",/?:@"), ",/?:@")
   expect_identical(decodeURIComponent(",/?:@"), ",/?:@")
 })

@@ -527,7 +527,8 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
 //' 
 //' @param value Character vector to be encoded or decoded.
 //' @return Encoded or decoded character vector of the same length as the
-//'   input value.
+//'   input value. \code{decodeURI} and \code{decodeURIComponent} will return
+//'   strings that are UTF-8 encoded.
 //'
 //' @export
 // [[Rcpp::export]]
@@ -615,10 +616,8 @@ std::string doDecodeURI(std::string value, bool component) {
   return os.str();
 }
 
-//' @rdname encodeURI
-//' @export
 // [[Rcpp::export]]
-std::vector<std::string> decodeURI(std::vector<std::string> value) {
+std::vector<std::string> decodeURI_(std::vector<std::string> value) {
   for (std::vector<std::string>::iterator it = value.begin();
     it != value.end();
     it++) {
@@ -629,10 +628,8 @@ std::vector<std::string> decodeURI(std::vector<std::string> value) {
   return value;
 }
 
-//' @rdname encodeURI
-//' @export
 // [[Rcpp::export]]
-std::vector<std::string> decodeURIComponent(std::vector<std::string> value) {
+std::vector<std::string> decodeURIComponent_(std::vector<std::string> value) {
   for (std::vector<std::string>::iterator it = value.begin();
     it != value.end();
     it++) {

@@ -170,25 +170,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// decodeURI
-std::vector<std::string> decodeURI(std::vector<std::string> value);
-RcppExport SEXP _httpuv_decodeURI(SEXP valueSEXP) {
+// decodeURI_
+std::vector<std::string> decodeURI_(std::vector<std::string> value);
+RcppExport SEXP _httpuv_decodeURI_(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::vector<std::string> >::type value(valueSEXP);
-    rcpp_result_gen = Rcpp::wrap(decodeURI(value));
+    rcpp_result_gen = Rcpp::wrap(decodeURI_(value));
     return rcpp_result_gen;
 END_RCPP
 }
-// decodeURIComponent
-std::vector<std::string> decodeURIComponent(std::vector<std::string> value);
-RcppExport SEXP _httpuv_decodeURIComponent(SEXP valueSEXP) {
+// decodeURIComponent_
+std::vector<std::string> decodeURIComponent_(std::vector<std::string> value);
+RcppExport SEXP _httpuv_decodeURIComponent_(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::vector<std::string> >::type value(valueSEXP);
-    rcpp_result_gen = Rcpp::wrap(decodeURIComponent(value));
+    rcpp_result_gen = Rcpp::wrap(decodeURIComponent_(value));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -251,8 +251,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_base64encode", (DL_FUNC) &_httpuv_base64encode, 1},
     {"_httpuv_encodeURI", (DL_FUNC) &_httpuv_encodeURI, 1},
     {"_httpuv_encodeURIComponent", (DL_FUNC) &_httpuv_encodeURIComponent, 1},
-    {"_httpuv_decodeURI", (DL_FUNC) &_httpuv_decodeURI, 1},
-    {"_httpuv_decodeURIComponent", (DL_FUNC) &_httpuv_decodeURIComponent, 1},
+    {"_httpuv_decodeURI_", (DL_FUNC) &_httpuv_decodeURI_, 1},
+    {"_httpuv_decodeURIComponent_", (DL_FUNC) &_httpuv_decodeURIComponent_, 1},
     {"_httpuv_ipFamily", (DL_FUNC) &_httpuv_ipFamily, 1},
     {"_httpuv_invokeCppCallback", (DL_FUNC) &_httpuv_invokeCppCallback, 2},
     {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
