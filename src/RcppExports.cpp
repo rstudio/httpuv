@@ -149,45 +149,45 @@ BEGIN_RCPP
 END_RCPP
 }
 // encodeURI
-std::vector<std::string> encodeURI(std::vector<std::string> value);
+Rcpp::CharacterVector encodeURI(Rcpp::CharacterVector value);
 RcppExport SEXP _httpuv_encodeURI(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type value(valueSEXP);
     rcpp_result_gen = Rcpp::wrap(encodeURI(value));
     return rcpp_result_gen;
 END_RCPP
 }
 // encodeURIComponent
-std::vector<std::string> encodeURIComponent(std::vector<std::string> value);
+Rcpp::CharacterVector encodeURIComponent(Rcpp::CharacterVector value);
 RcppExport SEXP _httpuv_encodeURIComponent(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type value(valueSEXP);
     rcpp_result_gen = Rcpp::wrap(encodeURIComponent(value));
     return rcpp_result_gen;
 END_RCPP
 }
 // decodeURI
-Rcpp::CharacterVector decodeURI(std::vector<std::string> value);
+Rcpp::CharacterVector decodeURI(Rcpp::CharacterVector value);
 RcppExport SEXP _httpuv_decodeURI(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type value(valueSEXP);
     rcpp_result_gen = Rcpp::wrap(decodeURI(value));
     return rcpp_result_gen;
 END_RCPP
 }
 // decodeURIComponent
-Rcpp::CharacterVector decodeURIComponent(std::vector<std::string> value);
+Rcpp::CharacterVector decodeURIComponent(Rcpp::CharacterVector value);
 RcppExport SEXP _httpuv_decodeURIComponent(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type value(valueSEXP);
     rcpp_result_gen = Rcpp::wrap(decodeURIComponent(value));
     return rcpp_result_gen;
 END_RCPP

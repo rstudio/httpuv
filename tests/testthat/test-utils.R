@@ -50,6 +50,12 @@ test_that("encodeURI and encodeURIComponent", {
     decodeURIComponent(c(reserved_str_encoded, utf8_str_encoded)),
     c(reserved_str, utf8_str)
   )
+
+  # NA handling
+  expect_identical(encodeURI(NA_character_), NA_character_)
+  expect_identical(encodeURIComponent(NA_character_), NA_character_)
+  expect_identical(decodeURI(NA_character_), NA_character_)
+  expect_identical(decodeURIComponent(NA_character_), NA_character_)
 })
 
 
