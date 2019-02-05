@@ -490,7 +490,7 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
   for (std::string::const_iterator it = value.begin();
     it != value.end();
     it++) {
-    
+
     if (!needsEscape(*it, encodeReserved)) {
       os << *it;
     } else {
@@ -501,7 +501,7 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
 }
 
 //' URI encoding/decoding
-//' 
+//'
 //' Encodes/decodes strings using URI encoding/decoding in the same way that web
 //' browsers do. The precise behaviors of these functions can be found at
 //' developer.mozilla.org:
@@ -509,22 +509,22 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
 //' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent}{encodeURIComponent},
 //' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI}{decodeURI},
 //' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent}{decodeURIComponent}
-//' 
+//'
 //' Intended as a faster replacement for \code{\link[utils]{URLencode}} and
 //' \code{\link[utils]{URLdecode}}.
-//' 
+//'
 //' encodeURI differs from encodeURIComponent in that the former will not encode
 //' reserved characters: \code{;,/?:@@&=+$}
-//' 
+//'
 //' decodeURI differs from decodeURIComponent in that it will refuse to decode
 //' encoded sequences that decode to a reserved character. (If in doubt, use
 //' decodeURIComponent.)
-//' 
+//'
 //' The only way these functions differ from web browsers is in the encoding of
 //' non-ASCII characters. All non-ASCII characters will be escaped byte-by-byte.
 //' If conformant non-ASCII behavior is important, ensure that your input vector
 //' is UTF-8 encoded before calling encodeURI or encodeURIComponent.
-//' 
+//'
 //' @param value Character vector to be encoded or decoded.
 //' @return Encoded or decoded character vector of the same length as the
 //'   input value. \code{decodeURI} and \code{decodeURIComponent} will return
@@ -539,7 +539,7 @@ std::vector<std::string> encodeURI(std::vector<std::string> value) {
 
     *it = doEncodeURI(*it, false);
   }
-  
+
   return value;
 }
 
@@ -553,7 +553,7 @@ std::vector<std::string> encodeURIComponent(std::vector<std::string> value) {
 
     *it = doEncodeURI(*it, true);
   }
-  
+
   return value;
 }
 
@@ -584,14 +584,14 @@ std::string doDecodeURI(std::string value, bool component) {
   for (std::string::const_iterator it = value.begin();
     it != value.end();
     it++) {
-    
+
     // If there aren't enough characters left for this to be a
     // valid escape code, just use the character and move on
     if (it > value.end() - 3) {
       os << *it;
       continue;
     }
-    
+
     if (*it == '%') {
       char hi = *(++it);
       char lo = *(++it);
@@ -612,32 +612,43 @@ std::string doDecodeURI(std::string value, bool component) {
       os << *it;
     }
   }
-  
+
   return os.str();
 }
 
+
+//' @rdname encodeURI
+//' @export
 // [[Rcpp::export]]
-std::vector<std::string> decodeURI_(std::vector<std::string> value) {
+Rcpp::CharacterVector decodeURI(std::vector<std::string> value) {
+  Rcpp::CharacterVector out(value.size());
+  int i = 0;
   for (std::vector<std::string>::iterator it = value.begin();
     it != value.end();
-    it++) {
-
-    *it = doDecodeURI(*it, false);
+    it++, i++)
+  {
+    const char* s = doDecodeURI(*it, false).c_str();
+    out[i] = Rf_mkCharCE(s, CE_UTF8);
   }
-  
-  return value;
+
+  return out;
 }
 
+//' @rdname encodeURI
+//' @export
 // [[Rcpp::export]]
-std::vector<std::string> decodeURIComponent_(std::vector<std::string> value) {
+Rcpp::CharacterVector decodeURIComponent(std::vector<std::string> value) {
+  Rcpp::CharacterVector out(value.size());
+  int i = 0;
   for (std::vector<std::string>::iterator it = value.begin();
     it != value.end();
-    it++) {
-
-    *it = doDecodeURI(*it, true);
+    it++, i++)
+  {
+    const char* s = doDecodeURI(*it, true).c_str();
+    out[i] = Rf_mkCharCE(s, CE_UTF8);
   }
-  
-  return value;
+
+  return out;
 }
 
 //' Check whether an address is IPv4 or IPv6

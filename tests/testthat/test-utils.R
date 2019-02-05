@@ -4,30 +4,52 @@ test_that("encodeURI and encodeURIComponent", {
   # "abc \ue5 \u4e2d" is identical to "abc å 中" when the system's encoding is
   # UTF-8. However, the former is always encoded as UTF-8, while the latter will
   # be encoded using the system's native encoding.
-  utf8_str <- "abc \ue5 \u4e2d"
+  utf8_str             <- "abc \ue5 \u4e2d"
+  utf8_str_encoded     <- "abc%20%C3%A5%20%E4%B8%AD"
+  reserved_str         <- ",/?:@"
+  reserved_str_encoded <- "%2C%2F%3F%3A%40"
+
   expect_true(Encoding(utf8_str) == "UTF-8")
 
-  expect_identical(encodeURI(utf8_str), "abc%20%C3%A5%20%E4%B8%AD")
-  expect_identical(encodeURIComponent(utf8_str), "abc%20%C3%A5%20%E4%B8%AD")
-  expect_identical(decodeURI("abc%20%C3%A5%20%E4%B8%AD"), utf8_str)
-  expect_identical(decodeURIComponent("abc%20%C3%A5%20%E4%B8%AD"), utf8_str)
-  expect_true(Encoding(decodeURI("abc%20%C3%A5%20%E4%B8%AD")) == "UTF-8")
-  expect_true(Encoding(decodeURIComponent("abc%20%C3%A5%20%E4%B8%AD")) == "UTF-8")
+  expect_identical(encodeURI(utf8_str),                  utf8_str_encoded)
+  expect_identical(encodeURIComponent(utf8_str),         utf8_str_encoded)
+  expect_identical(decodeURI(utf8_str_encoded),          utf8_str)
+  expect_identical(decodeURIComponent(utf8_str_encoded), utf8_str)
+  expect_true(Encoding(decodeURI(utf8_str_encoded)) == "UTF-8")
+  expect_true(Encoding(decodeURIComponent(utf8_str_encoded)) == "UTF-8")
 
   # Behavior with reserved characters differs between encodeURI and
   # encodeURIComponent.
-  expect_identical(encodeURI(",/?:@"), ",/?:@")
-  expect_identical(encodeURIComponent(",/?:@"), "%2C%2F%3F%3A%40")
-  expect_identical(decodeURI("%2C%2F%3F%3A%40"), "%2C%2F%3F%3A%40")
-  expect_identical(decodeURIComponent("%2C%2F%3F%3A%40"), ",/?:@")
+  expect_identical(encodeURI(reserved_str),                  reserved_str)
+  expect_identical(encodeURIComponent(reserved_str),         reserved_str_encoded)
+  expect_identical(decodeURI(reserved_str_encoded),          reserved_str_encoded)
+  expect_identical(decodeURIComponent(reserved_str_encoded), reserved_str)
 
   # Decoding characters that aren't encoded should have no effect.
-  expect_identical(decodeURI(utf8_str), utf8_str)
+  expect_identical(decodeURI(utf8_str),          utf8_str)
   expect_identical(decodeURIComponent(utf8_str), utf8_str)
   expect_true(Encoding(decodeURI(utf8_str)) == "UTF-8")
   expect_true(Encoding(decodeURIComponent(utf8_str)) == "UTF-8")
-  expect_identical(decodeURI(",/?:@"), ",/?:@")
-  expect_identical(decodeURIComponent(",/?:@"), ",/?:@")
+  expect_identical(decodeURI(reserved_str),          reserved_str)
+  expect_identical(decodeURIComponent(reserved_str), reserved_str)
+
+  # Vector input
+  expect_identical(
+    encodeURI(c(reserved_str, utf8_str)),
+    c(reserved_str, utf8_str_encoded)
+  )
+  expect_identical(
+    encodeURIComponent(c(reserved_str, utf8_str)),
+    c(reserved_str_encoded, utf8_str_encoded)
+  )
+  expect_identical(
+    decodeURI(c(reserved_str_encoded, utf8_str_encoded)),
+    c(reserved_str_encoded, utf8_str)
+  )
+  expect_identical(
+    decodeURIComponent(c(reserved_str_encoded, utf8_str_encoded)),
+    c(reserved_str, utf8_str)
+  )
 })
 
 

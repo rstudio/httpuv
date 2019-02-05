@@ -35,7 +35,6 @@ Remotes:
     r-lib/later
 Collate:
     'RcppExports.R'
-    'decode_uri.R'
     'httpuv.R'
     'server.R'
     'static_paths.R'
