@@ -520,10 +520,8 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
 //' encoded sequences that decode to a reserved character. (If in doubt, use
 //' decodeURIComponent.)
 //'
-//' The only way these functions differ from web browsers is in the encoding of
-//' non-ASCII characters. All non-ASCII characters will be escaped byte-by-byte.
-//' If conformant non-ASCII behavior is important, ensure that your input vector
-//' is UTF-8 encoded before calling encodeURI or encodeURIComponent.
+//' For \code{encodeURI} and \code{encodeURIComponent}, input strings will be
+//' converted to UTF-8 before URL-encoding.
 //'
 //' @param value Character vector to be encoded or decoded.
 //' @return Encoded or decoded character vector of the same length as the
@@ -537,7 +535,8 @@ Rcpp::CharacterVector encodeURI(Rcpp::CharacterVector value) {
 
   for (int i = 0; i < value.size(); i++) {
     if (value[i] != NA_STRING) {
-      const char* s = doEncodeURI(Rcpp::as<std::string>(value[i]), false).c_str();
+      const char* s = Rf_translateCharUTF8(value[i]);
+      s = doEncodeURI(s, false).c_str();
       out[i] = Rf_mkCharCE(s, CE_UTF8);
     }
   }
@@ -552,7 +551,8 @@ Rcpp::CharacterVector encodeURIComponent(Rcpp::CharacterVector value) {
 
   for (int i = 0; i < value.size(); i++) {
     if (value[i] != NA_STRING) {
-      const char* s = doEncodeURI(Rcpp::as<std::string>(value[i]), true).c_str();
+      const char* s = Rf_translateCharUTF8(value[i]);
+      s = doEncodeURI(s, true).c_str();
       out[i] = Rf_mkCharCE(s, CE_UTF8);
     }
   }

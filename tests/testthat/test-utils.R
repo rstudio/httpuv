@@ -56,6 +56,19 @@ test_that("encodeURI and encodeURIComponent", {
   expect_identical(encodeURIComponent(NA_character_), NA_character_)
   expect_identical(decodeURI(NA_character_), NA_character_)
   expect_identical(decodeURIComponent(NA_character_), NA_character_)
+
+  # Strings that are not UTF-8 encoded should be automatically converted to
+  # UTF-8 before URL-encoding.
+  #
+  # "å", in UTF-8. The previous string, with Chinese characters, can't be
+  # converted to latin1.
+  utf8_str <- "\ue5"
+  latin1_str <- iconv(utf8_str, "UTF-8", "latin1")
+
+  expect_identical(encodeURI(utf8_str), "%C3%A5")
+  expect_identical(encodeURI(latin1_str), "%C3%A5")
+  expect_identical(encodeURIComponent(utf8_str), "%C3%A5")
+  expect_identical(encodeURIComponent(latin1_str), "%C3%A5")
 })
 
 

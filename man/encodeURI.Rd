@@ -43,8 +43,6 @@ decodeURI differs from decodeURIComponent in that it will refuse to decode
 encoded sequences that decode to a reserved character. (If in doubt, use
 decodeURIComponent.)
 
-The only way these functions differ from web browsers is in the encoding of
-non-ASCII characters. All non-ASCII characters will be escaped byte-by-byte.
-If conformant non-ASCII behavior is important, ensure that your input vector
-is UTF-8 encoded before calling encodeURI or encodeURIComponent.
+For \code{encodeURI} and \code{encodeURIComponent}, input strings will be
+converted to UTF-8 before URL-encoding.
 }
