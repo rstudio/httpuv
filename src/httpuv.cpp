@@ -533,12 +533,10 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
 //' @export
 // [[Rcpp::export]]
 Rcpp::CharacterVector encodeURI(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size());
+  Rcpp::CharacterVector out(value.size(), NA_STRING);
 
   for (int i = 0; i < value.size(); i++) {
-    if (value[i] == NA_STRING) {
-      out[i] = NA_STRING;
-    } else {
+    if (value[i] != NA_STRING) {
       const char* s = doEncodeURI(Rcpp::as<std::string>(value[i]), false).c_str();
       out[i] = Rf_mkCharCE(s, CE_UTF8);
     }
@@ -550,12 +548,10 @@ Rcpp::CharacterVector encodeURI(Rcpp::CharacterVector value) {
 //' @export
 // [[Rcpp::export]]
 Rcpp::CharacterVector encodeURIComponent(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size());
+  Rcpp::CharacterVector out(value.size(), NA_STRING);
 
   for (int i = 0; i < value.size(); i++) {
-    if (value[i] == NA_STRING) {
-      out[i] = NA_STRING;
-    } else {
+    if (value[i] != NA_STRING) {
       const char* s = doEncodeURI(Rcpp::as<std::string>(value[i]), true).c_str();
       out[i] = Rf_mkCharCE(s, CE_UTF8);
     }
@@ -627,12 +623,10 @@ std::string doDecodeURI(std::string value, bool component) {
 //' @export
 // [[Rcpp::export]]
 Rcpp::CharacterVector decodeURI(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size());
+  Rcpp::CharacterVector out(value.size(), NA_STRING);
 
   for (int i = 0; i < value.size(); i++) {
-    if (value[i] == NA_STRING) {
-      out[i] = NA_STRING;
-    } else {
+    if (value[i] != NA_STRING) {
       const char* s = doDecodeURI(Rcpp::as<std::string>(value[i]), false).c_str();
       out[i] = Rf_mkCharCE(s, CE_UTF8);
     }
@@ -645,12 +639,10 @@ Rcpp::CharacterVector decodeURI(Rcpp::CharacterVector value) {
 //' @export
 // [[Rcpp::export]]
 Rcpp::CharacterVector decodeURIComponent(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size());
+  Rcpp::CharacterVector out(value.size(), NA_STRING);
 
   for (int i = 0; i < value.size(); i++) {
-    if (value[i] == NA_STRING) {
-      out[i] = NA_STRING;
-    } else {
+    if (value[i] != NA_STRING) {
       const char* s = doDecodeURI(Rcpp::as<std::string>(value[i]), true).c_str();
       out[i] = Rf_mkCharCE(s, CE_UTF8);
     }
