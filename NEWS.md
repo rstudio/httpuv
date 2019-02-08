@@ -1,4 +1,4 @@
-httpuv 1.4.5.9002
+httpuv 1.4.5.9003
 ============
 
 * Added support for serving static files from the background I/O thread. Files can now be served from the filesystem without involving the main R thread, which means that these operations won't block or be blocked by code that runs in the main R thread. ([#177](https://github.com/rstudio/httpuv/pull/177))
