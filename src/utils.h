@@ -314,17 +314,16 @@ inline bool constant_time_compare(const std::string& a, const std::string& b) {
   if (a.length() != b.length())
     return false;
 
-  const char* ac = a.c_str();
-  const char* bc = b.c_str();
+  volatile const char* ac = a.c_str();
+  volatile const char* bc = b.c_str();
+  volatile char result = 0;
+  int len = a.length();
 
-  bool identical = true;
-  for (int i=0; i<a.length(); i++) {
-    if (ac[i] != bc[i]) {
-      identical = false;
-    }
+  for (int i=0; i<len; i++) {
+    result |= ac[i] ^ bc[i];
   }
 
-  return identical;
+  return (result == 0);
 }
 
 #endif
