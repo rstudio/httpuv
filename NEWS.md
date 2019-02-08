@@ -1,4 +1,4 @@
-httpuv 1.4.5.9002
+httpuv 1.4.5.9003
 ============
 
 * Added support for serving static files from the background I/O thread. Files can now be served from the filesystem without involving the main R thread, which means that these operations won't block or be blocked by code that runs in the main R thread. ([#177](https://github.com/rstudio/httpuv/pull/177))
@@ -9,7 +9,11 @@ httpuv 1.4.5.9002
 
 * Fixed [#168](https://github.com/rstudio/httpuv/issues/168): A SIGPIPE signal on the httpuv background thread could cause the process to quit. This can happen in some instances when the server is under heavy load. ([#169](https://github.com/rstudio/httpuv/pull/169))
 
-* Fixed [#122](https://github.com/rstudio/httpuv/issues/122): `decodeURI()` and `decodeURIComponent()` previously returned strings encoded with the system's native encoding; they now return UTF-8 encoded strings. ([#185](https://github.com/rstudio/httpuv/pull/185))
+* Fixed [#122](https://github.com/rstudio/httpuv/issues/122): `decodeURI()` and `decodeURIComponent()` previously returned strings encoded with the system's native encoding; they now return UTF-8 encoded strings. ([#185](https://github.com/rstudio/httpuv/pull/185), [#192](https://github.com/rstudio/httpuv/pull/192))
+
+* `encodeURI()` and `encodeURIComponent()`, now convert their inputs to UTF-8 before URL-encoding. ([#192](https://github.com/rstudio/httpuv/pull/192))
+
+* `encodeURI()`, `encodeURIComponent()`, `decodeURI()`, and `decodeURIComponent()` now handle `NA`s correctly. ([#192](https://github.com/rstudio/httpuv/pull/192))
 
 * `service()` now executes a single `later` callback, rather than all eligible callbacks. This gives callers more opportunities to perform their own housekeeping when multiple expensive callbacks queue up. ([#176](https://github.com/rstudio/httpuv/pull/176))
 

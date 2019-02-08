@@ -149,46 +149,46 @@ BEGIN_RCPP
 END_RCPP
 }
 // encodeURI
-std::vector<std::string> encodeURI(std::vector<std::string> value);
+Rcpp::CharacterVector encodeURI(Rcpp::CharacterVector value);
 RcppExport SEXP _httpuv_encodeURI(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type value(valueSEXP);
     rcpp_result_gen = Rcpp::wrap(encodeURI(value));
     return rcpp_result_gen;
 END_RCPP
 }
 // encodeURIComponent
-std::vector<std::string> encodeURIComponent(std::vector<std::string> value);
+Rcpp::CharacterVector encodeURIComponent(Rcpp::CharacterVector value);
 RcppExport SEXP _httpuv_encodeURIComponent(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type value(valueSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type value(valueSEXP);
     rcpp_result_gen = Rcpp::wrap(encodeURIComponent(value));
     return rcpp_result_gen;
 END_RCPP
 }
-// decodeURI_
-std::vector<std::string> decodeURI_(std::vector<std::string> value);
-RcppExport SEXP _httpuv_decodeURI_(SEXP valueSEXP) {
+// decodeURI
+Rcpp::CharacterVector decodeURI(Rcpp::CharacterVector value);
+RcppExport SEXP _httpuv_decodeURI(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type value(valueSEXP);
-    rcpp_result_gen = Rcpp::wrap(decodeURI_(value));
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type value(valueSEXP);
+    rcpp_result_gen = Rcpp::wrap(decodeURI(value));
     return rcpp_result_gen;
 END_RCPP
 }
-// decodeURIComponent_
-std::vector<std::string> decodeURIComponent_(std::vector<std::string> value);
-RcppExport SEXP _httpuv_decodeURIComponent_(SEXP valueSEXP) {
+// decodeURIComponent
+Rcpp::CharacterVector decodeURIComponent(Rcpp::CharacterVector value);
+RcppExport SEXP _httpuv_decodeURIComponent(SEXP valueSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type value(valueSEXP);
-    rcpp_result_gen = Rcpp::wrap(decodeURIComponent_(value));
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type value(valueSEXP);
+    rcpp_result_gen = Rcpp::wrap(decodeURIComponent(value));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -251,13 +251,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_base64encode", (DL_FUNC) &_httpuv_base64encode, 1},
     {"_httpuv_encodeURI", (DL_FUNC) &_httpuv_encodeURI, 1},
     {"_httpuv_encodeURIComponent", (DL_FUNC) &_httpuv_encodeURIComponent, 1},
-    {"_httpuv_decodeURI_", (DL_FUNC) &_httpuv_decodeURI_, 1},
-    {"_httpuv_decodeURIComponent_", (DL_FUNC) &_httpuv_decodeURIComponent_, 1},
+    {"_httpuv_decodeURI", (DL_FUNC) &_httpuv_decodeURI, 1},
+    {"_httpuv_decodeURIComponent", (DL_FUNC) &_httpuv_decodeURIComponent, 1},
     {"_httpuv_ipFamily", (DL_FUNC) &_httpuv_ipFamily, 1},
     {"_httpuv_invokeCppCallback", (DL_FUNC) &_httpuv_invokeCppCallback, 2},
     {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
     {"_httpuv_wsconn_address", (DL_FUNC) &_httpuv_wsconn_address, 1},
-    {"httpuv_decodeURIComponent", (DL_FUNC) &httpuv_decodeURIComponent, 1},
+    {"httpuv_decodeURIComponent",     (DL_FUNC) &httpuv_decodeURIComponent,      1},
     {NULL, NULL, 0}
 };
 
