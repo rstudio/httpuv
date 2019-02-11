@@ -128,7 +128,7 @@ bool StaticPathOptions::validateRequestHeaders(const RequestHeaders& headers) co
   }
 
   RequestHeaders::const_iterator it = headers.find(pattern[1]);
-  if (it != headers.end() && it->second == pattern[2]) {
+  if (it != headers.end() && constant_time_compare(it->second, pattern[2])) {
     return true;
   }
 

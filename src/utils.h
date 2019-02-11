@@ -308,4 +308,22 @@ inline time_t parse_http_date_string(const std::string& date) {
   return to_time_t(pt);
 }
 
+// Compares two strings in constant time. Returns true if they are the same;
+// false otherwise.
+inline bool constant_time_compare(const std::string& a, const std::string& b) {
+  if (a.length() != b.length())
+    return false;
+
+  volatile const char* ac = a.c_str();
+  volatile const char* bc = b.c_str();
+  volatile char result = 0;
+  int len = a.length();
+
+  for (int i=0; i<len; i++) {
+    result |= ac[i] ^ bc[i];
+  }
+
+  return (result == 0);
+}
+
 #endif
