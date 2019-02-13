@@ -5,7 +5,7 @@
 \title{Create options for static paths}
 \usage{
 staticPathOptions(indexhtml = TRUE, fallthrough = FALSE,
-  html_charset = "utf-8", headers = list(),
+  html_charset = "utf-8", exclude = character(0), headers = list(),
   validation = character(0))
 }
 \arguments{
@@ -25,7 +25,11 @@ the default value, \code{"utf-8"}, the header is \code{Content-Type:
 text/html; charset=utf-8}. If \code{""} is used, then no \code{charset}
 will be added in the Content-Type header.}
 
-\item{headers}{Additional headers and values that will be included in the response.}
+\item{exclude}{A character vector of subpaths to exclude from static file
+serving. The excluded subpaths can be directories or files.}
+
+\item{headers}{Additional headers and values that will be included in the
+response.}
 
 \item{validation}{An optional validation pattern. Presently, the only type of
 validation supported is an exact string match of a header. For example, if

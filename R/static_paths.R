@@ -16,6 +16,7 @@ staticPath <- function(
   indexhtml    = NULL,
   fallthrough  = NULL,
   html_charset = NULL,
+  exclude      = NULL,
   headers      = NULL,
   validation   = NULL
 ) {
@@ -32,6 +33,7 @@ staticPath <- function(
         indexhtml    = indexhtml,
         fallthrough  = fallthrough,
         html_charset = html_charset,
+        exclude      = exclude,
         headers      = headers,
         validation   = validation
       ))
@@ -87,7 +89,10 @@ format.staticPath <- function(x, ...) {
 #'   the default value, \code{"utf-8"}, the header is \code{Content-Type:
 #'   text/html; charset=utf-8}. If \code{""} is used, then no \code{charset}
 #'   will be added in the Content-Type header.
-#' @param headers Additional headers and values that will be included in the response.
+#' @param exclude A character vector of subpaths to exclude from static file
+#'   serving. The excluded subpaths can be directories or files.
+#' @param headers Additional headers and values that will be included in the
+#'   response.
 #' @param validation An optional validation pattern. Presently, the only type of
 #'   validation supported is an exact string match of a header. For example, if
 #'   \code{validation} is \code{'"abc" = "xyz"'}, then HTTP requests must have a
@@ -101,6 +106,7 @@ staticPathOptions <- function(
   indexhtml    = TRUE,
   fallthrough  = FALSE,
   html_charset = "utf-8",
+  exclude      = character(0),
   headers      = list(),
   validation   = character(0)
 ) {
@@ -109,6 +115,7 @@ staticPathOptions <- function(
       indexhtml    = indexhtml,
       fallthrough  = fallthrough,
       html_charset = html_charset,
+      exclude      = exclude,
       headers      = headers,
       validation   = validation
     ),
@@ -160,6 +167,7 @@ format_opts <- function(x, format_empty = "<inherit>") {
     "  Use index.html:    ", format_option(x$indexhtml),    "\n",
     "  Fallthrough to R:  ", format_option(x$fallthrough),  "\n",
     "  HTML charset:      ", format_option(x$html_charset), "\n",
+    "  Exclude subpaths:  ", format_option(x$exclude),      "\n",
     "  Extra headers:     ", format_option(x$headers),      "\n",
     "  Validation params: ", format_option(x$validation),   "\n"
   )
@@ -221,6 +229,24 @@ normalizeStaticPathOptions <- function(opts) {
   if (!is.null(opts$html_charset)) {
     if (length(opts$html_charset) == 0) {
       opts$html_charset <- ""
+    }
+  }
+
+  if (!is.null(opts$exclude)) {
+    if (!is.character(opts$exclude)) {
+      stop("`exclude` option must be a character vector.")
+    }
+    if (any(opts$exclude == "/")) {
+      stop('`exclude` path cannot be "/".')
+    }
+    # Strip off trailing slash, if present
+    opts$exclude <- gsub("^(.*?)/?$", "\\1", opts$exclude)
+
+    if (any(grepl("^/", opts$exclude)) || any(grepl("/$", opts$exclude))) {
+      stop('`exclude` paths may not start with a leading slash or end with multiple trailing slashes (like "//").')
+    }
+    if (any(opts$exclude == "")) {
+      stop("All `exclude` paths must be non-empty strings.")
     }
   }
 
