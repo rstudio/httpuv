@@ -2,11 +2,13 @@
 % Please edit documentation in R/static_paths.R
 \name{staticPath}
 \alias{staticPath}
+\alias{excludeStaticPath}
 \title{Create a staticPath object}
 \usage{
 staticPath(path, indexhtml = NULL, fallthrough = NULL,
-  html_charset = NULL, exclude = NULL, headers = NULL,
-  validation = NULL)
+  html_charset = NULL, headers = NULL, validation = NULL)
+
+excludeStaticPath()
 }
 \arguments{
 \item{path}{The local path.}
@@ -27,9 +29,6 @@ the default value, \code{"utf-8"}, the header is \code{Content-Type:
 text/html; charset=utf-8}. If \code{""} is used, then no \code{charset}
 will be added in the Content-Type header.}
 
-\item{exclude}{A character vector of subpaths to exclude from static file
-serving. The excluded subpaths can be directories or files.}
-
 \item{headers}{Additional headers and values that will be included in the
 response.}
 
@@ -42,10 +41,18 @@ will give a 403 Forbidden response. If the \code{character(0)} (the
 default), then no validation check will be performed.}
 }
 \description{
-This function creates a \code{staticPath} object. Note that if any of the
-arguments (other than \code{path}) are \code{NULL}, then that means that
-for this particular static path, it should inherit the behavior from the
-staticPathOptions set for the application as a whole.
+The \code{staticPath} function creates a \code{staticPath} object. Note that
+if any of the arguments (other than \code{path}) are \code{NULL}, then that
+means that for this particular static path, it should inherit the behavior
+from the staticPathOptions set for the application as a whole.
+}
+\details{
+The \code{excludeStaticPath} function tells the application to ignore a
+particular path for static serving. This is useful when you want to include a
+path for static serving (like \code{"/"}) but then exclude a subdirectory of
+it (like \code{"/dynamic"}) so that the subdirectory will always be passed to
+the R code for handling requests. \code{excludeStaticPath} can be used not
+only for directories; it can also exclude specific files.
 }
 \seealso{
 \code{\link{staticPathOptions}}.

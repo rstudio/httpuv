@@ -13,9 +13,9 @@ StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
   indexhtml(boost::none),
   fallthrough(boost::none),
   html_charset(boost::none),
-  exclude(boost::none),
   headers(boost::none),
-  validation(boost::none)
+  validation(boost::none),
+  exclude(boost::none)
 {
   ASSERT_MAIN_THREAD()
 
@@ -38,9 +38,9 @@ StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
   temp = options["indexhtml"];    indexhtml    = optional_as<bool>(temp);
   temp = options["fallthrough"];  fallthrough  = optional_as<bool>(temp);
   temp = options["html_charset"]; html_charset = optional_as<std::string>(temp);
-  temp = options["exclude"];      exclude      = optional_as<std::vector<std::string>>(temp);
   temp = options["headers"];      headers      = optional_as<ResponseHeaders>(temp);
   temp = options["validation"];   validation   = optional_as<std::vector<std::string>>(temp);
+  temp = options["exclude"];      exclude      = optional_as<bool>(temp);
 }
 
 
@@ -65,12 +65,6 @@ void StaticPathOptions::setOptions(const Rcpp::List& options) {
       html_charset = optional_as<std::string>(temp);
     }
   }
-  if (options.containsElementNamed("exclude")) {
-    temp = options["exclude"];
-    if (!temp.isNULL()) {
-      exclude = optional_as<std::vector<std::string>>(temp);
-    }
-  }
   if (options.containsElementNamed("headers")) {
     temp = options["headers"];
     if (!temp.isNULL()) {
@@ -83,6 +77,12 @@ void StaticPathOptions::setOptions(const Rcpp::List& options) {
       validation = optional_as<std::vector<std::string>>(temp);
     }
   }
+  if (options.containsElementNamed("exclude")) {
+    temp = options["exclude"];
+    if (!temp.isNULL()) {
+      exclude = optional_as<bool>(temp);
+    }
+  }
 }
 
 Rcpp::List StaticPathOptions::asRObject() const {
@@ -93,9 +93,9 @@ Rcpp::List StaticPathOptions::asRObject() const {
     _["indexhtml"]    = optional_wrap(indexhtml),
     _["fallthrough"]  = optional_wrap(fallthrough),
     _["html_charset"] = optional_wrap(html_charset),
-    _["exclude"]      = optional_wrap(exclude),
     _["headers"]      = optional_wrap(headers),
-    _["validation"]   = optional_wrap(validation)
+    _["validation"]   = optional_wrap(validation),
+    _["exclude"]      = optional_wrap(exclude)
   );
 
   obj.attr("class") = "staticPathOptions";
@@ -112,9 +112,9 @@ StaticPathOptions StaticPathOptions::merge(
   if (new_sp.indexhtml    == boost::none) new_sp.indexhtml    = b.indexhtml;
   if (new_sp.fallthrough  == boost::none) new_sp.fallthrough  = b.fallthrough;
   if (new_sp.html_charset == boost::none) new_sp.html_charset = b.html_charset;
-  if (new_sp.exclude      == boost::none) new_sp.exclude      = b.exclude;
   if (new_sp.headers      == boost::none) new_sp.headers      = b.headers;
   if (new_sp.validation   == boost::none) new_sp.validation   = b.validation;
+  if (new_sp.exclude      == boost::none) new_sp.exclude      = b.exclude;
   return new_sp;
 }
 
@@ -157,7 +157,13 @@ StaticPath::StaticPath(const Rcpp::List& sp) {
   Rcpp::List options_list = sp["options"];
   options = StaticPathOptions(options_list);
 
-  if (path.at(path.length() - 1) == '/') {
+  if (path.length() == 0) {
+    if (!options.exclude.get()) {
+      throw std::runtime_error("Static path must not be empty.");
+      // Note that empty paths are OK for excluded paths, but we don't have to
+      // mention it in the exception.
+    }
+  } else if (path.at(path.length() - 1) == '/') {
     throw std::runtime_error("Static path must not have trailing slash.");
   }
 }
@@ -289,25 +295,6 @@ void StaticPathManager::remove(const Rcpp::CharacterVector& paths) {
 }
 
 
-// Check if one path starts with another one. For example, "foo/bar/baz"
-// starts with "foo/bar", but it does not start with "foo/ba".
-bool path_starts_with(const std::string& path, const std::string& target) {
-  // Check that the beginning of `path` is identical to target.
-  if (path.substr(0, target.length()) == target) {
-
-    if (path.length() == target.length()) {
-      // Strings are completely identical
-      return true;
-    }
-    if (path.at(target.length()) =='/') {
-      // Next character in path is /
-      return true;
-    }
-  }
-
-  return false;
-}
-
 // Given a URL path, this returns a pair where the first element is a matching
 // StaticPath object, and the second element is the portion of the url_path that
 // comes after the match for the static path.
@@ -362,14 +349,6 @@ boost::optional<std::pair<StaticPath, std::string>> StaticPathManager::matchStat
     boost::optional<StaticPath> sp = this->get(pre_slash);
 
     if (sp) {
-      // Check that the subpath isn't excluded for this static path.
-      std::vector<std::string>::const_iterator it;
-      for (it = sp->options.exclude->begin(); it != sp->options.exclude->end(); it++) {
-        if (path_starts_with(post_slash, *it)) {
-          return boost::none;
-        }
-      }
-
       return std::pair<StaticPath, std::string>(*sp, post_slash);
     }
 

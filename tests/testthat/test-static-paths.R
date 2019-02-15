@@ -242,25 +242,19 @@ test_that("Excluding subpaths", {
         ))
       },
       staticPaths = list(
-        "/" = staticPath(test_path("apps/content"), exclude = "exclude2"),
-        "/inherit" = staticPath(test_path("apps/content")),
-        "/fallthrough" = staticPath(test_path("apps/content"), exclude = "exclude2/", fallthrough = TRUE),
-        "/partial" = staticPath(test_path("apps/content"), exclude = "exclud"),
-        "/multipart" = staticPath(test_path("apps/content"), exclude = "exclude2/subdir"),
-        "/multiple" = staticPath(test_path("apps/content"), exclude = c("exclude1", "exclude2/")),
-        "/none" = staticPath(test_path("apps/content"), exclude = character(0)),
-        "/file" = staticPath(test_path("apps/content"), exclude = "mtcars.csv")
-      ),
-      staticPathOptions = staticPathOptions(
-        exclude = "exclude1"
+        "/" = staticPath(test_path("apps/content")),
+        "/exclude" = excludeStaticPath(),
+        "/subdi" = excludeStaticPath(),
+
+        "/a" = staticPath(test_path("apps/content")),
+        "/a/exclude" = excludeStaticPath(),
+        "/a/mtcars.csv" = excludeStaticPath()
       )
     )
   )
   on.exit(s$stop())
 
-  exclude1_index_file_content <- raw_file_content(test_path("apps/content/exclude1/index.html"))
-  exclude2_index_file_content <- raw_file_content(test_path("apps/content/exclude2/index.html"))
-  exclude2_subdir_index_file_content <- raw_file_content(test_path("apps/content/exclude2/subdir/index.html"))
+  exclude_subdir_index_file_content <- raw_file_content(test_path("apps/content/exclude/subdir/index.html"))
 
   # Basic test
   r <- fetch(local_url("/", s$getPort()))
@@ -269,122 +263,51 @@ test_that("Excluding subpaths", {
   r <- fetch(local_url("/subdir", s$getPort()))
   expect_equal(r$status_code, 200)
   expect_identical(r$content, subdir_index_file_content)
-  r <- fetch(local_url("/exclude1", s$getPort()))
+  r <- fetch(local_url("/exclude", s$getPort()))
+  expect_equal(r$status_code, 403)
+  r <- fetch(local_url("/exclude/index.html", s$getPort()))
+  expect_equal(r$status_code, 403)
+  r <- fetch(local_url("/exclude/subdir", s$getPort()))
+  expect_equal(r$status_code, 403)
+  r <- fetch(local_url("/exclude/subdir/index.html", s$getPort()))
+  expect_equal(r$status_code, 403)
+
+  # Include directories underneath excluded dir.
+  s$setStaticPath("exclude/include" = test_path("apps/content"))
+  r <- fetch(local_url("/exclude/include", s$getPort()))
   expect_equal(r$status_code, 200)
-  expect_identical(r$content, exclude1_index_file_content)
-  r <- fetch(local_url("/exclude2", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/exclude2/", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/exclude2//", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/exclude2/index.html", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/exclude2/subdir", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/exclude2/subdir/index.html", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/exclude2/somefile", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/exclude2/somedir/somefile", s$getPort()))
-  expect_equal(r$status_code, 403)
+  expect_identical(r$content, index_file_content)
+
+  s$setStaticPath("exclude/subdir" = test_path("apps/content/exclude/subdir"))
+  r <- fetch(local_url("/exclude/subdir", s$getPort()))
+  expect_equal(r$status_code, 200)
+  expect_identical(r$content, exclude_subdir_index_file_content)
+
   # A file that is not specifically excluded will use the C++ 404 path.
   r <- fetch(local_url("/nonexistent.txt", s$getPort()))
   expect_equal(r$status_code, 404)
 
-  # Inherit default exclude value staticPathOptions
-  r <- fetch(local_url("/inherit", s$getPort()))
-  expect_equal(r$status_code, 200)
-  expect_identical(r$content, index_file_content)
-  r <- fetch(local_url("/inherit/exclude2", s$getPort()))
-  expect_equal(r$status_code, 200)
-  expect_identical(r$content, exclude2_index_file_content)
-  r <- fetch(local_url("/inherit/exclude1", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/inherit/exclude1/nonexistent.txt", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/inherit/nonexistent.txt", s$getPort()))
-  expect_equal(r$status_code, 404)
-
   # Fallthrough. Behavior should be unchanged except for non-existent files that
   # are NOT in the excluded path.
-  r <- fetch(local_url("/fallthrough", s$getPort()))
-  expect_equal(r$status_code, 200)
-  expect_identical(r$content, index_file_content)
-  r <- fetch(local_url("/fallthrough/exclude2", s$getPort()))
+  s$setStaticPathOption(fallthrough = TRUE)
+  # Now, a file that is not specifically excluded will use the R 403 path
+  r <- fetch(local_url("/nonexistent.txt", s$getPort()))
   expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/fallthrough/exclude2/nonexistent.txt", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/fallthrough/nonexistent.txt", s$getPort()))
-  expect_equal(r$status_code, 403)
+  s$setStaticPathOption(fallthrough = FALSE)
 
-  # Partial name matching ("exclud") doesn't work.
-  r <- fetch(local_url("/partial", s$getPort()))
+  # Partial name matching ("subdi" was excluded) doesn't work.
+  r <- fetch(local_url("/subdir", s$getPort()))
   expect_equal(r$status_code, 200)
-  expect_identical(r$content, index_file_content)
-  r <- fetch(local_url("/partial/exclude1", s$getPort()))
-  expect_equal(r$status_code, 200)
-  expect_identical(r$content, exclude1_index_file_content)
-  r <- fetch(local_url("/partial/exclude2", s$getPort()))
-  expect_equal(r$status_code, 200)
-  expect_identical(r$content, exclude2_index_file_content)
-  r <- fetch(local_url("/partial/exclud", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/partial/excluddd", s$getPort()))
-  expect_equal(r$status_code, 404)
-
-  # Multi-part name matching
-  r <- fetch(local_url("/multipart", s$getPort()))
-  expect_equal(r$status_code, 200)
-  r <- fetch(local_url("/multipart/exclude2/", s$getPort()))
-  expect_equal(r$status_code, 200)
-  expect_identical(r$content, exclude2_index_file_content)
-  r <- fetch(local_url("/multipart/exclude2/subdir", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/multipart/exclude2/subdir/", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/multipart/exclude2/nonexistent.txt", s$getPort()))
-  expect_equal(r$status_code, 404)
-  r <- fetch(local_url("/multipart/exclude2/subdir/index.html", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/multipart/exclude2/subdir/nonexistent.txt", s$getPort()))
-  expect_equal(r$status_code, 403)
-
-  # Multiple excluded paths
-  r <- fetch(local_url("/multiple", s$getPort()))
-  expect_equal(r$status_code, 200)
-  r <- fetch(local_url("/multiple/exclude1/", s$getPort()))
-  expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/multiple/exclude2/", s$getPort()))
-  expect_equal(r$status_code, 403)
-
-  # No excluded paths (override the default)
-  r <- fetch(local_url("/none/exclude1/", s$getPort()))
-  expect_equal(r$status_code, 200)
+  expect_identical(r$content, subdir_index_file_content)
 
   # Specific files
-  r <- fetch(local_url("/file/", s$getPort()))
+  r <- fetch(local_url("/a/", s$getPort()))
   expect_equal(r$status_code, 200)
-  r <- fetch(local_url("/file/mtcars.csv", s$getPort()))
+  r <- fetch(local_url("/a/mtcars.csv", s$getPort()))
   expect_equal(r$status_code, 403)
   # A file that is not specifically excluded will use the C++ 404 path.
   r <- fetch(local_url("/file/nonexistent.txt", s$getPort()))
   expect_equal(r$status_code, 404)
-
-
-  # Argument checking
-  # Trailing slash is stripped off
-  expect_identical(staticPath(".", exclude = "exclude1"), staticPath(".", exclude = "exclude1/"))
-
-  # Error when there are multiple leading/trailing slashes, empty strings, or
-  # just slash.
-  expect_error(staticPath(".", exclude = "/exclude1"))
-  expect_error(staticPath(".", exclude = "exclude1//"))
-  expect_error(staticPath(".", exclude = "/exclude1//"))
-  expect_error(staticPath(".", exclude = "//exclude1"))
-  expect_error(staticPath(".", exclude = "//exclude1"))
-  expect_error(staticPath(".", exclude = c("", "/exclude1")))
-  expect_error(staticPath(".", exclude = "/"))
 })
 
 test_that("Header validation", {

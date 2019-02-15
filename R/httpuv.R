@@ -512,7 +512,9 @@ WebSocket <- R6Class(
 #'       "/lib" = staticPath(
 #'         "content/lib",
 #'         indexhtml = FALSE
-#'       )
+#'       ),
+#'       # This subdirectory of /lib should always be handled by the R code path
+#'       "/lib/dynamic" = excludeStaticPath()
 #'     ),
 #'     staticPathOptions = staticPathOptions(
 #'       indexhtml = TRUE

@@ -5,8 +5,8 @@
 \title{Create options for static paths}
 \usage{
 staticPathOptions(indexhtml = TRUE, fallthrough = FALSE,
-  html_charset = "utf-8", exclude = character(0), headers = list(),
-  validation = character(0))
+  html_charset = "utf-8", headers = list(),
+  validation = character(0), exclude = FALSE)
 }
 \arguments{
 \item{indexhtml}{If an index.html file is present, should it be served up
@@ -25,9 +25,6 @@ the default value, \code{"utf-8"}, the header is \code{Content-Type:
 text/html; charset=utf-8}. If \code{""} is used, then no \code{charset}
 will be added in the Content-Type header.}
 
-\item{exclude}{A character vector of subpaths to exclude from static file
-serving. The excluded subpaths can be directories or files.}
-
 \item{headers}{Additional headers and values that will be included in the
 response.}
 
@@ -38,6 +35,9 @@ header named \code{abc} (case-insensitive) with the value \code{xyz}
 (case-sensitive). If a request does not have a matching header, than httpuv
 will give a 403 Forbidden response. If the \code{character(0)} (the
 default), then no validation check will be performed.}
+
+\item{exclude}{Should this path be excluded from static serving? (This is
+only to be used internally, for \code{\link{excludeStaticPath}}.)}
 }
 \description{
 Create options for static paths

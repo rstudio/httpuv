@@ -1,9 +1,16 @@
 #' Create a staticPath object
 #'
-#' This function creates a \code{staticPath} object. Note that if any of the
-#' arguments (other than \code{path}) are \code{NULL}, then that means that
-#' for this particular static path, it should inherit the behavior from the
-#' staticPathOptions set for the application as a whole.
+#' The \code{staticPath} function creates a \code{staticPath} object. Note that
+#' if any of the arguments (other than \code{path}) are \code{NULL}, then that
+#' means that for this particular static path, it should inherit the behavior
+#' from the staticPathOptions set for the application as a whole.
+#'
+#' The \code{excludeStaticPath} function tells the application to ignore a
+#' particular path for static serving. This is useful when you want to include a
+#' path for static serving (like \code{"/"}) but then exclude a subdirectory of
+#' it (like \code{"/dynamic"}) so that the subdirectory will always be passed to
+#' the R code for handling requests. \code{excludeStaticPath} can be used not
+#' only for directories; it can also exclude specific files.
 #'
 #' @param path The local path.
 #' @inheritParams staticPathOptions
@@ -16,7 +23,6 @@ staticPath <- function(
   indexhtml    = NULL,
   fallthrough  = NULL,
   html_charset = NULL,
-  exclude      = NULL,
   headers      = NULL,
   validation   = NULL
 ) {
@@ -33,10 +39,29 @@ staticPath <- function(
         indexhtml    = indexhtml,
         fallthrough  = fallthrough,
         html_charset = html_charset,
-        exclude      = exclude,
         headers      = headers,
-        validation   = validation
+        validation   = validation,
+        exclude      = FALSE
       ))
+    ),
+    class = "staticPath"
+  )
+}
+
+#' @rdname staticPath
+#' @export
+excludeStaticPath <- function() {
+  structure(
+    list(
+      path = "",
+      options = staticPathOptions(
+        indexhtml    = NULL,
+        fallthrough  = NULL,
+        html_charset = NULL,
+        headers      = NULL,
+        validation   = NULL,
+        exclude      = TRUE
+      )
     ),
     class = "staticPath"
   )
@@ -89,8 +114,6 @@ format.staticPath <- function(x, ...) {
 #'   the default value, \code{"utf-8"}, the header is \code{Content-Type:
 #'   text/html; charset=utf-8}. If \code{""} is used, then no \code{charset}
 #'   will be added in the Content-Type header.
-#' @param exclude A character vector of subpaths to exclude from static file
-#'   serving. The excluded subpaths can be directories or files.
 #' @param headers Additional headers and values that will be included in the
 #'   response.
 #' @param validation An optional validation pattern. Presently, the only type of
@@ -100,24 +123,26 @@ format.staticPath <- function(x, ...) {
 #'   (case-sensitive). If a request does not have a matching header, than httpuv
 #'   will give a 403 Forbidden response. If the \code{character(0)} (the
 #'   default), then no validation check will be performed.
+#' @param exclude Should this path be excluded from static serving? (This is
+#'   only to be used internally, for \code{\link{excludeStaticPath}}.)
 #'
 #' @export
 staticPathOptions <- function(
   indexhtml    = TRUE,
   fallthrough  = FALSE,
   html_charset = "utf-8",
-  exclude      = character(0),
   headers      = list(),
-  validation   = character(0)
+  validation   = character(0),
+  exclude      = FALSE
 ) {
   res <- structure(
     list(
       indexhtml    = indexhtml,
       fallthrough  = fallthrough,
       html_charset = html_charset,
-      exclude      = exclude,
       headers      = headers,
-      validation   = validation
+      validation   = validation,
+      exclude      = exclude
     ),
     class = "staticPathOptions"
   )
@@ -167,9 +192,9 @@ format_opts <- function(x, format_empty = "<inherit>") {
     "  Use index.html:    ", format_option(x$indexhtml),    "\n",
     "  Fallthrough to R:  ", format_option(x$fallthrough),  "\n",
     "  HTML charset:      ", format_option(x$html_charset), "\n",
-    "  Exclude subpaths:  ", format_option(x$exclude),      "\n",
     "  Extra headers:     ", format_option(x$headers),      "\n",
-    "  Validation params: ", format_option(x$validation),   "\n"
+    "  Validation params: ", format_option(x$validation),   "\n",
+    "  Exclude path:      ", format_option(x$exclude),      "\n"
   )
 }
 
@@ -218,7 +243,8 @@ normalizeStaticPaths <- function(paths) {
 # Takes a staticPathOptions object and modifies it so that the resulting
 # object is easier to work with on the C++ side. The resulting object is not
 # meant to be modified on the R side. This function is idempotent; if the
-# object has already been normalized, it will not be modified.
+# object has already been normalized, it will not be modified. For each entry,
+# a NULL means to inherit.
 normalizeStaticPathOptions <- function(opts) {
   if (isTRUE(attr(opts, "normalized", exact = TRUE))) {
     return(opts)
@@ -233,20 +259,8 @@ normalizeStaticPathOptions <- function(opts) {
   }
 
   if (!is.null(opts$exclude)) {
-    if (!is.character(opts$exclude)) {
-      stop("`exclude` option must be a character vector.")
-    }
-    if (any(opts$exclude == "/")) {
-      stop('`exclude` path cannot be "/".')
-    }
-    # Strip off trailing slash, if present
-    opts$exclude <- gsub("^(.*?)/?$", "\\1", opts$exclude)
-
-    if (any(grepl("^/", opts$exclude)) || any(grepl("/$", opts$exclude))) {
-      stop('`exclude` paths may not start with a leading slash or end with multiple trailing slashes (like "//").')
-    }
-    if (any(opts$exclude == "")) {
-      stop("All `exclude` paths must be non-empty strings.")
+    if (!is.logical(opts$exclude) || length(opts$exclude) != 1) {
+      stop("`exclude` option must be TRUE or FALSE.")
     }
   }
 
