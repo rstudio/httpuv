@@ -535,9 +535,8 @@ Rcpp::CharacterVector encodeURI(Rcpp::CharacterVector value) {
 
   for (int i = 0; i < value.size(); i++) {
     if (value[i] != NA_STRING) {
-      const char* s = Rf_translateCharUTF8(value[i]);
-      s = doEncodeURI(s, false).c_str();
-      out[i] = Rf_mkCharCE(s, CE_UTF8);
+      std::string encoded = doEncodeURI(Rf_translateCharUTF8(value[i]), false);
+      out[i] = Rf_mkCharCE(encoded.c_str(), CE_UTF8);
     }
   }
   return out;
@@ -551,9 +550,8 @@ Rcpp::CharacterVector encodeURIComponent(Rcpp::CharacterVector value) {
 
   for (int i = 0; i < value.size(); i++) {
     if (value[i] != NA_STRING) {
-      const char* s = Rf_translateCharUTF8(value[i]);
-      s = doEncodeURI(s, true).c_str();
-      out[i] = Rf_mkCharCE(s, CE_UTF8);
+      std::string encoded = doEncodeURI(Rf_translateCharUTF8(value[i]), true);
+      out[i] = Rf_mkCharCE(encoded.c_str(), CE_UTF8);
     }
   }
   return out;
