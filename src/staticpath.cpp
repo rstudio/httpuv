@@ -14,7 +14,8 @@ StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
   fallthrough(boost::none),
   html_charset(boost::none),
   headers(boost::none),
-  validation(boost::none)
+  validation(boost::none),
+  exclude(boost::none)
 {
   ASSERT_MAIN_THREAD()
 
@@ -39,6 +40,7 @@ StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
   temp = options["html_charset"]; html_charset = optional_as<std::string>(temp);
   temp = options["headers"];      headers      = optional_as<ResponseHeaders>(temp);
   temp = options["validation"];   validation   = optional_as<std::vector<std::string>>(temp);
+  temp = options["exclude"];      exclude      = optional_as<bool>(temp);
 }
 
 
@@ -75,6 +77,12 @@ void StaticPathOptions::setOptions(const Rcpp::List& options) {
       validation = optional_as<std::vector<std::string>>(temp);
     }
   }
+  if (options.containsElementNamed("exclude")) {
+    temp = options["exclude"];
+    if (!temp.isNULL()) {
+      exclude = optional_as<bool>(temp);
+    }
+  }
 }
 
 Rcpp::List StaticPathOptions::asRObject() const {
@@ -86,7 +94,8 @@ Rcpp::List StaticPathOptions::asRObject() const {
     _["fallthrough"]  = optional_wrap(fallthrough),
     _["html_charset"] = optional_wrap(html_charset),
     _["headers"]      = optional_wrap(headers),
-    _["validation"]   = optional_wrap(validation)
+    _["validation"]   = optional_wrap(validation),
+    _["exclude"]      = optional_wrap(exclude)
   );
 
   obj.attr("class") = "staticPathOptions";
@@ -105,6 +114,7 @@ StaticPathOptions StaticPathOptions::merge(
   if (new_sp.html_charset == boost::none) new_sp.html_charset = b.html_charset;
   if (new_sp.headers      == boost::none) new_sp.headers      = b.headers;
   if (new_sp.validation   == boost::none) new_sp.validation   = b.validation;
+  if (new_sp.exclude      == boost::none) new_sp.exclude      = b.exclude;
   return new_sp;
 }
 
@@ -147,7 +157,13 @@ StaticPath::StaticPath(const Rcpp::List& sp) {
   Rcpp::List options_list = sp["options"];
   options = StaticPathOptions(options_list);
 
-  if (path.at(path.length() - 1) == '/') {
+  if (path.length() == 0) {
+    if (!options.exclude.get()) {
+      throw std::runtime_error("Static path must not be empty.");
+      // Note that empty paths are OK for excluded paths, but we don't have to
+      // mention it in the exception.
+    }
+  } else if (path.at(path.length() - 1) == '/') {
     throw std::runtime_error("Static path must not have trailing slash.");
   }
 }
@@ -278,6 +294,7 @@ void StaticPathManager::remove(const Rcpp::CharacterVector& paths) {
   remove(paths_vec);
 }
 
+
 // Given a URL path, this returns a pair where the first element is a matching
 // StaticPath object, and the second element is the portion of the url_path that
 // comes after the match for the static path.
@@ -330,6 +347,7 @@ boost::optional<std::pair<StaticPath, std::string>> StaticPathManager::matchStat
   while (true) {
     // Check if the part before the split-on '/' is a staticPath.
     boost::optional<StaticPath> sp = this->get(pre_slash);
+
     if (sp) {
       return std::pair<StaticPath, std::string>(*sp, post_slash);
     }
@@ -381,4 +399,3 @@ Rcpp::List StaticPathManager::pathsAsRObject() const {
 
   return obj;
 }
-

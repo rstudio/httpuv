@@ -1,6 +1,7 @@
 context("static")
 
 index_file_content <- raw_file_content(test_path("apps/content/index.html"))
+data_file_content <- raw_file_content(test_path("apps/content/data.txt"))
 subdir_index_file_content <- raw_file_content(test_path("apps/content/subdir/index.html"))
 index_file_1_content <- raw_file_content(test_path("apps/content_1/index.html"))
 
@@ -227,6 +228,87 @@ test_that("Options and option inheritance", {
   expect_identical(r$content, index_file_content)
 })
 
+
+test_that("Excluding subpaths", {
+  s <- startServer("127.0.0.1", random_open_port(),
+    list(
+      call = function(req) {
+        # Return a 403 for the R code path; the C++ code path will return 404
+        # for missing files.
+        return(list(
+          status = 403,
+          headers = list("Test-Code-Path" = "R"),
+          body = paste0("403 forbidden: ", req$PATH_INFO)
+        ))
+      },
+      staticPaths = list(
+        "/" = staticPath(test_path("apps/content")),
+        "/exclude" = excludeStaticPath(),
+        "/subdi" = excludeStaticPath(),
+
+        "/a" = staticPath(test_path("apps/content")),
+        "/a/exclude" = excludeStaticPath(),
+        "/a/mtcars.csv" = excludeStaticPath()
+      )
+    )
+  )
+  on.exit(s$stop())
+
+  exclude_subdir_index_file_content <- raw_file_content(test_path("apps/content/exclude/subdir/index.html"))
+
+  # Basic test
+  r <- fetch(local_url("/", s$getPort()))
+  expect_equal(r$status_code, 200)
+  expect_identical(r$content, index_file_content)
+  r <- fetch(local_url("/subdir", s$getPort()))
+  expect_equal(r$status_code, 200)
+  expect_identical(r$content, subdir_index_file_content)
+  r <- fetch(local_url("/exclude", s$getPort()))
+  expect_equal(r$status_code, 403)
+  r <- fetch(local_url("/exclude/index.html", s$getPort()))
+  expect_equal(r$status_code, 403)
+  r <- fetch(local_url("/exclude/subdir", s$getPort()))
+  expect_equal(r$status_code, 403)
+  r <- fetch(local_url("/exclude/subdir/index.html", s$getPort()))
+  expect_equal(r$status_code, 403)
+
+  # Include directories underneath excluded dir.
+  s$setStaticPath("exclude/include" = test_path("apps/content"))
+  r <- fetch(local_url("/exclude/include", s$getPort()))
+  expect_equal(r$status_code, 200)
+  expect_identical(r$content, index_file_content)
+
+  s$setStaticPath("exclude/subdir" = test_path("apps/content/exclude/subdir"))
+  r <- fetch(local_url("/exclude/subdir", s$getPort()))
+  expect_equal(r$status_code, 200)
+  expect_identical(r$content, exclude_subdir_index_file_content)
+
+  # A file that is not specifically excluded will use the C++ 404 path.
+  r <- fetch(local_url("/nonexistent.txt", s$getPort()))
+  expect_equal(r$status_code, 404)
+
+  # Fallthrough. Behavior should be unchanged except for non-existent files that
+  # are NOT in the excluded path.
+  s$setStaticPathOption(fallthrough = TRUE)
+  # Now, a file that is not specifically excluded will use the R 403 path
+  r <- fetch(local_url("/nonexistent.txt", s$getPort()))
+  expect_equal(r$status_code, 403)
+  s$setStaticPathOption(fallthrough = FALSE)
+
+  # Partial name matching ("subdi" was excluded) doesn't work.
+  r <- fetch(local_url("/subdir", s$getPort()))
+  expect_equal(r$status_code, 200)
+  expect_identical(r$content, subdir_index_file_content)
+
+  # Specific files
+  r <- fetch(local_url("/a/", s$getPort()))
+  expect_equal(r$status_code, 200)
+  r <- fetch(local_url("/a/mtcars.csv", s$getPort()))
+  expect_equal(r$status_code, 403)
+  # A file that is not specifically excluded will use the C++ 404 path.
+  r <- fetch(local_url("/file/nonexistent.txt", s$getPort()))
+  expect_equal(r$status_code, 404)
+})
 
 test_that("Header validation", {
   s <- startServer("127.0.0.1", random_open_port(),

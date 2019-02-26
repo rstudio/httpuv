@@ -468,6 +468,11 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   // Note that the subpath may include leading dirs, as in "foo/bar/abc.txt".
   const std::string& subpath = sp_pair->second;
 
+  // This is an excluded path
+  if (sp.options.exclude.get()) {
+    return nullptr;
+  }
+
   // Validate headers (if validation pattern was provided).
   if (!sp.options.validateRequestHeaders(pRequest->headers())) {
     return error_response(pRequest, 403);
