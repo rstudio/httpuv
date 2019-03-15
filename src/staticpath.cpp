@@ -379,11 +379,11 @@ boost::optional<std::pair<StaticPath, std::string>> StaticPathManager::matchStat
 
 const StaticPathOptions& StaticPathManager::getOptions() const {
   return options;
-};
+}
 
 void StaticPathManager::setOptions(const Rcpp::List& opts) {
   options.setOptions(opts);
-};
+}
 
 // Returns a list of R objects that reflect the StaticPaths, without merging
 // the overall options.
