@@ -232,7 +232,7 @@ inline std::string http_date_string(const time_t& t) {
     default: return "";
   }
 
-  const int maxlen = 30;
+  const int maxlen = 50;
   char res[maxlen];
   snprintf(res, maxlen, "%s, %02d %s %04d %02d:%02d:%02d GMT",
     day_name.c_str(),

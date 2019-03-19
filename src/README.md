@@ -24,6 +24,8 @@ To update libuv to a new version, do the following:
     ```
     # Fix for unnamed structs on MinGW
     git cherry-pick 327a0a9
+    # Fix for empty translation unit warning on Windows with -pedantic
+    git cherry-pick 7088089
     # Fix for Solaris
     git cherry-pick f7b4ff8
     ```
@@ -72,6 +74,12 @@ Because it's not possible to run the configure script from `R CMD INSTALL`, http
 #### MinGW and unnamed structs
 
 The libuv sources contain unnamed structs, which result in warnings on MinGW's GCC. This in turn causes WARNINGS in R CMD check on Windows. They were converted to named structs.
+
+#### Empty translation unit
+
+When libuv/src/win/snprintf.c is compiled, the entire content of the file is `#ifdef`-ed out, so the result is empty. When compiled with the `-pedantic` flag, as is done on CRAN's win-builder service (and probably the CRAN build machine), this results in a significant warning.
+
+The workaround just adds a dummy `typedef` statement to suppress the warning.
 
 #### Solaris support
 
