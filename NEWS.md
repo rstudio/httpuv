@@ -19,6 +19,9 @@ httpuv 1.5.0
 
 * Fixed [#173](https://github.com/rstudio/httpuv/pull/173): The source code is now compiled with `-DSTRICT_R_HEADERS`, which eliminates the need to undefine the `Realloc` and `Free` macros.
 
+* Updated to libuv 1.23.1. ([#174](https://github.com/rstudio/httpuv/pull/174))
+
+
 httpuv 1.4.5.1
 ==============
 
