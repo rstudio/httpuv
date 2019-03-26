@@ -299,7 +299,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
   updateUpgradeStatus();
 
   // Attempt static serving here. If the request is for a static path, this
-  // will be a response object; if not, it will be nullptr.
+  // will be a response object; if not, it will be an empty shared_ptr.
   boost::shared_ptr<HttpResponse> pResponse =
     _pWebApplication->staticFileResponse(shared_from_this());
 
@@ -393,7 +393,7 @@ void HttpRequest::_on_headers_complete_complete(boost::shared_ptr<HttpResponse> 
     if (hasHeader("Expect", "100-continue")) {
       pResponse = boost::shared_ptr<HttpResponse>(
         new HttpResponse(shared_from_this(), 100, "Continue",
-                         boost::shared_ptr<DataSource>(nullptr)),
+                         boost::shared_ptr<DataSource>()),
         auto_deleter_background<HttpResponse>
       );
       pResponse->writeResponse();
