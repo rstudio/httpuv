@@ -275,7 +275,7 @@ void StaticPathManager::set(const Rcpp::List& pmap) {
 
 void StaticPathManager::remove(const std::string& path) {
   guard guard(mutex);
-  std::map<std::string, StaticPath>::const_iterator it = path_map.find(path);
+  std::map<std::string, StaticPath>::iterator it = path_map.find(path);
   if (it != path_map.end()) {
     path_map.erase(it);
   }
