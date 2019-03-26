@@ -14,7 +14,7 @@ public:
   boost::optional<bool> fallthrough;
   boost::optional<std::string> html_charset;
   boost::optional<ResponseHeaders> headers;
-  boost::optional<std::vector<std::string>> validation;
+  boost::optional<std::vector<std::string> > validation;
   boost::optional<bool> exclude;
   StaticPathOptions() :
     indexhtml(boost::none),
@@ -69,7 +69,7 @@ public:
   void remove(const std::vector<std::string>& paths);
   void remove(const Rcpp::CharacterVector& paths);
 
-  boost::optional<std::pair<StaticPath, std::string>> matchStaticPath(
+  boost::optional<std::pair<StaticPath, std::string> > matchStaticPath(
     const std::string& url_path) const;
 
 

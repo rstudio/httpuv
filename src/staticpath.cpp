@@ -39,7 +39,7 @@ StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
   temp = options["fallthrough"];  fallthrough  = optional_as<bool>(temp);
   temp = options["html_charset"]; html_charset = optional_as<std::string>(temp);
   temp = options["headers"];      headers      = optional_as<ResponseHeaders>(temp);
-  temp = options["validation"];   validation   = optional_as<std::vector<std::string>>(temp);
+  temp = options["validation"];   validation   = optional_as<std::vector<std::string> >(temp);
   temp = options["exclude"];      exclude      = optional_as<bool>(temp);
 }
 
@@ -74,7 +74,7 @@ void StaticPathOptions::setOptions(const Rcpp::List& options) {
   if (options.containsElementNamed("validation")) {
     temp = options["validation"];
     if (!temp.isNULL()) {
-      validation = optional_as<std::vector<std::string>>(temp);
+      validation = optional_as<std::vector<std::string> >(temp);
     }
   }
   if (options.containsElementNamed("exclude")) {
@@ -290,7 +290,7 @@ void StaticPathManager::remove(const std::vector<std::string>& paths) {
 
 void StaticPathManager::remove(const Rcpp::CharacterVector& paths) {
   ASSERT_MAIN_THREAD()
-  std::vector<std::string> paths_vec = Rcpp::as<std::vector<std::string>>(paths);
+  std::vector<std::string> paths_vec = Rcpp::as<std::vector<std::string> >(paths);
   remove(paths_vec);
 }
 
@@ -315,7 +315,7 @@ void StaticPathManager::remove(const Rcpp::CharacterVector& paths) {
 //
 // If no matching static path is found, then it returns boost::none.
 //
-boost::optional<std::pair<StaticPath, std::string>> StaticPathManager::matchStaticPath(
+boost::optional<std::pair<StaticPath, std::string> > StaticPathManager::matchStaticPath(
   const std::string& url_path) const
 {
 
