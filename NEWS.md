@@ -3,6 +3,8 @@ httpuv 1.5.0.9000
 
 * Fixed issues for compilers that didn't support C++11, notably on RHEL and Centos 6. ([#210](https://github.com/rstudio/httpuv/pull/210))
 
+* Fixed [#208](https://github.com/rstudio/httpuv/issues/208): In some cases, a race condition could cause the R process to exit when starting a new server. ([#211](https://github.com/rstudio/httpuv/pull/211))
+
 httpuv 1.5.0
 ============
 
