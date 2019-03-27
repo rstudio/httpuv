@@ -21,7 +21,7 @@ class FileDataSource : public DataSource {
   int _fd;
   off_t _length;
 #endif
-  std::string _lastErrorMessage = "";
+  std::string _lastErrorMessage;
 
 public:
   FileDataSource() {}

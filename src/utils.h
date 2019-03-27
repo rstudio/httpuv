@@ -149,7 +149,7 @@ Rcpp::RObject optional_wrap(boost::optional<T> value) {
 // (constants.h doesn't include Rcpp.h so we can't define these functions
 // there.)
 namespace Rcpp {
-  template <> inline std::vector<std::pair<std::string, std::string>> as(SEXP x) {
+  template <> inline std::vector<std::pair<std::string, std::string> > as(SEXP x) {
     ASSERT_MAIN_THREAD()
     Rcpp::CharacterVector headers(x);
     Rcpp::CharacterVector names = headers.names();
@@ -158,7 +158,7 @@ namespace Rcpp {
       throw Rcpp::exception("All values must be named.");
     }
 
-    std::vector<std::pair<std::string, std::string>> result;
+    std::vector<std::pair<std::string, std::string> > result;
 
     for (int i=0; i<headers.size(); i++) {
       std::string name = Rcpp::as<std::string>(names[i]);
@@ -174,7 +174,7 @@ namespace Rcpp {
     return result;
   }
 
-  template <> inline SEXP wrap(const std::vector<std::pair<std::string, std::string>> &x) {
+  template <> inline SEXP wrap(const std::vector<std::pair<std::string, std::string> > &x) {
     ASSERT_MAIN_THREAD()
 
     std::vector<std::string> values(x.size());

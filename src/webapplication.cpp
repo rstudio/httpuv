@@ -190,8 +190,7 @@ boost::shared_ptr<HttpResponse> listToResponse(
   using namespace Rcpp;
 
   if (response.isNULL() || response.size() == 0) {
-    boost::shared_ptr<HttpResponse> null_ptr;
-    return null_ptr;
+    return boost::shared_ptr<HttpResponse>();
   }
 
   CharacterVector names = response.names();
@@ -202,7 +201,7 @@ boost::shared_ptr<HttpResponse> listToResponse(
   List responseHeaders = response["headers"];
 
   // Self-frees when response is written
-  boost::shared_ptr<DataSource> pDataSource(nullptr);
+  boost::shared_ptr<DataSource> pDataSource;
 
   // The response can either contain:
   // - bodyFile: String value that names the file that should be streamed
@@ -446,7 +445,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   // Just fall through, even if the path is one that is in the
   // StaticPathManager.
   if (pRequest->hasHeader("Connection", "Upgrade", true)) {
-    return nullptr;
+    return boost::shared_ptr<HttpResponse>();
   }
 
   // Strip off query string
@@ -459,7 +458,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   if (!sp_pair) {
     // This was not a static path. Fall through to the R code to handle this
     // path.
-    return nullptr;
+    return boost::shared_ptr<HttpResponse>();
   }
 
   // If we get here, we've matched a static path.
@@ -470,7 +469,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
 
   // This is an excluded path
   if (sp.options.exclude.get()) {
-    return nullptr;
+    return boost::shared_ptr<HttpResponse>();
   }
 
   // Validate headers (if validation pattern was provided).
@@ -498,7 +497,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
       (url_path.length() >= 3 && url_path.substr(url_path.length()-3, 3) == "/..")
   ) {
     if (sp.options.fallthrough.get()) {
-      return nullptr;
+      return boost::shared_ptr<HttpResponse>();
     } else {
       return error_response(pRequest, 400);
     }
@@ -522,7 +521,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   if (ret != FDS_OK) {
     if (ret == FDS_NOT_EXIST || ret == FDS_ISDIR) {
       if (sp.options.fallthrough.get()) {
-        return nullptr;
+        return boost::shared_ptr<HttpResponse>();
       } else {
         return error_response(pRequest, 404);
       }
