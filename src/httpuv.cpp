@@ -7,6 +7,8 @@
 #include <errno.h>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include "libuv/include/uv.h"
 #include "base64/base64.hpp"
 #include "uvutil.h"
@@ -262,7 +264,9 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   ensure_io_thread();
 
-  Barrier blocker(2);
+  // Use a shared_ptr because the lifetime of this object might be longer than
+  // this function, since it is passed to the background thread.
+  boost::shared_ptr<Barrier> blocker = boost::make_shared<Barrier>(2);
 
   uv_stream_t* pServer;
 
@@ -270,18 +274,18 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
   // createTcpServerSync(
   //   io_loop.get(), host.c_str(), port,
   //   boost::static_pointer_cast<WebApplication>(pHandler),
-  //   background_queue, &pServer, &blocker
+  //   background_queue, &pServer, blocker
   // );
   background_queue->push(
     boost::bind(createTcpServerSync,
       io_loop.get(), host.c_str(), port,
       boost::static_pointer_cast<WebApplication>(pHandler),
-      background_queue, &pServer, &blocker
+      background_queue, &pServer, blocker
     )
   );
 
   // Wait for server to be created before continuing
-  blocker.wait();
+  blocker->wait();
 
   if (!pServer) {
     return R_NilValue;
@@ -318,7 +322,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   ensure_io_thread();
 
-  Barrier blocker(2);
+  boost::shared_ptr<Barrier> blocker = boost::make_shared<Barrier>(2);
 
   uv_stream_t* pServer;
 
@@ -326,18 +330,18 @@ Rcpp::RObject makePipeServer(const std::string& name,
   // createPipeServerSync(
   //   io_loop.get(), name.c_str(), mask,
   //   boost::static_pointer_cast<WebApplication>(pHandler),
-  //   background_queue, &pServer, &blocker
+  //   background_queue, &pServer, blocker
   // );
   background_queue->push(
     boost::bind(createPipeServerSync,
       io_loop.get(), name.c_str(), mask,
       boost::static_pointer_cast<WebApplication>(pHandler),
-      background_queue, &pServer, &blocker
+      background_queue, &pServer, blocker
     )
   );
 
   // Wait for server to be created before continuing
-  blocker.wait();
+  blocker->wait();
 
   if (!pServer) {
     return R_NilValue;

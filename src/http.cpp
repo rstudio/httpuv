@@ -95,7 +95,7 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
 void createPipeServerSync(uv_loop_t* loop, const std::string& name,
   int mask, boost::shared_ptr<WebApplication> pWebApplication,
   CallbackQueue* background_queue,
-  uv_stream_t** pServer, Barrier* blocker)
+  uv_stream_t** pServer, boost::shared_ptr<Barrier> blocker)
 {
   ASSERT_BACKGROUND_THREAD()
 
@@ -174,7 +174,7 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
 void createTcpServerSync(uv_loop_t* pLoop, const std::string& host,
   int port, boost::shared_ptr<WebApplication> pWebApplication,
   CallbackQueue* background_queue,
-  uv_stream_t** pServer, Barrier* blocker)
+  uv_stream_t** pServer, boost::shared_ptr<Barrier> blocker)
 {
   ASSERT_BACKGROUND_THREAD()
 
