@@ -5,6 +5,9 @@ httpuv 1.5.1
 
 * Fixed [#208](https://github.com/rstudio/httpuv/issues/208): In some cases, a race condition could cause the R process to exit when starting a new server. ([#211](https://github.com/rstudio/httpuv/pull/211))
 
+* Updated to libuv 1.27.0. This fixed fixed [#213](https://github.com/rstudio/httpuv/issues/213): Valgrind reported an error about a pointer pointing to uninitialized memory. ([#214](https://github.com/rstudio/httpuv/pull/214))
+
+
 httpuv 1.5.0
 ============
 
