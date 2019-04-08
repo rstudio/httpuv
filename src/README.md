@@ -25,9 +25,9 @@ To update libuv to a new version, do the following:
     # Fix for unnamed structs on MinGW
     git cherry-pick 327a0a9
     # Fix for empty translation unit warning on Windows with -pedantic
-    git cherry-pick 7088089
+    git cherry-pick d5a24b7
     # Fix for Solaris
-    git cherry-pick f7b4ff8
+    git cherry-pick fea361c
     ```
 
 * On Linux or Mac, run libuv's `autogen.sh`, and commit the files.

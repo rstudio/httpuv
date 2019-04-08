@@ -96,14 +96,17 @@
     return;                                                                 \
   }
 
+#define MILLIONu (1000U * 1000U)
+#define BILLIONu (1000U * 1000U * 1000U)
+
 #define FILETIME_TO_UINT(filetime)                                          \
-   (*((uint64_t*) &(filetime)) - 116444736000000000ULL)
+   (*((uint64_t*) &(filetime)) - (uint64_t) 116444736 * BILLIONu)
 
 #define FILETIME_TO_TIME_T(filetime)                                        \
-   (FILETIME_TO_UINT(filetime) / 10000000ULL)
+   (FILETIME_TO_UINT(filetime) / (10u * MILLIONu))
 
 #define FILETIME_TO_TIME_NS(filetime, secs)                                 \
-   ((FILETIME_TO_UINT(filetime) - (secs * 10000000ULL)) * 100)
+   ((FILETIME_TO_UINT(filetime) - (secs * (uint64_t) 10 * MILLIONu)) * 100U)
 
 #define FILETIME_TO_TIMESPEC(ts, filetime)                                  \
    do {                                                                     \
@@ -113,8 +116,8 @@
 
 #define TIME_T_TO_FILETIME(time, filetime_ptr)                              \
   do {                                                                      \
-    uint64_t bigtime = ((uint64_t) ((time) * 10000000ULL)) +                \
-                                  116444736000000000ULL;                    \
+    uint64_t bigtime = ((uint64_t) ((time) * (uint64_t) 10 * MILLIONu)) +   \
+                       (uint64_t) 116444736 * BILLIONu;                     \
     (filetime_ptr)->dwLowDateTime = bigtime & 0xFFFFFFFF;                   \
     (filetime_ptr)->dwHighDateTime = bigtime >> 32;                         \
   } while(0)
@@ -505,6 +508,33 @@ void fs__open(uv_fs_t* req) {
   }
 
   if (flags & UV_FS_O_DIRECT) {
+    /*
+     * FILE_APPEND_DATA and FILE_FLAG_NO_BUFFERING are mutually exclusive.
+     * Windows returns 87, ERROR_INVALID_PARAMETER if these are combined.
+     *
+     * FILE_APPEND_DATA is included in FILE_GENERIC_WRITE:
+     *
+     * FILE_GENERIC_WRITE = STANDARD_RIGHTS_WRITE |
+     *                      FILE_WRITE_DATA |
+     *                      FILE_WRITE_ATTRIBUTES |
+     *                      FILE_WRITE_EA |
+     *                      FILE_APPEND_DATA |
+     *                      SYNCHRONIZE
+     *
+     * Note: Appends are also permitted by FILE_WRITE_DATA.
+     *
+     * In order for direct writes and direct appends to succeed, we therefore
+     * exclude FILE_APPEND_DATA if FILE_WRITE_DATA is specified, and otherwise
+     * fail if the user's sole permission is a direct append, since this
+     * particular combination is invalid.
+     */
+    if (access & FILE_APPEND_DATA) {
+      if (access & FILE_WRITE_DATA) {
+        access &= ~FILE_APPEND_DATA;
+      } else {
+        goto einval;
+      }
+    }
     attributes |= FILE_FLAG_NO_BUFFERING;
   }
 
@@ -786,9 +816,8 @@ void fs__unlink(uv_fs_t* req) {
     /* Remove read-only attribute */
     FILE_BASIC_INFORMATION basic = { 0 };
 
-    basic.FileAttributes = info.dwFileAttributes
-                           & ~(FILE_ATTRIBUTE_READONLY)
-                           | FILE_ATTRIBUTE_ARCHIVE;
+    basic.FileAttributes = (info.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY) |
+                           FILE_ATTRIBUTE_ARCHIVE;
 
     status = pNtSetInformationFile(handle,
                                    &iosb,
@@ -1199,7 +1228,7 @@ INLINE static int fs__stat_handle(HANDLE handle, uv_stat_t* statbuf,
 
   /* st_blocks contains the on-disk allocation size in 512-byte units. */
   statbuf->st_blocks =
-      file_info.StandardInformation.AllocationSize.QuadPart >> 9ULL;
+      (uint64_t) file_info.StandardInformation.AllocationSize.QuadPart >> 9;
 
   statbuf->st_nlink = file_info.StandardInformation.NumberOfLinks;
 
@@ -1517,10 +1546,10 @@ static void fs__fchmod(uv_fs_t* req) {
     SET_REQ_WIN32_ERROR(req, pRtlNtStatusToDosError(nt_status));
     goto fchmod_cleanup;
   }
- 
+
   /* Test if the Archive attribute is cleared */
   if ((file_info.FileAttributes & FILE_ATTRIBUTE_ARCHIVE) == 0) {
-      /* Set Archive flag, otherwise setting or clearing the read-only 
+      /* Set Archive flag, otherwise setting or clearing the read-only
          flag will not work */
       file_info.FileAttributes |= FILE_ATTRIBUTE_ARCHIVE;
       nt_status = pNtSetInformationFile(handle,
@@ -1890,7 +1919,7 @@ static void fs__readlink(uv_fs_t* req) {
 }
 
 
-static size_t fs__realpath_handle(HANDLE handle, char** realpath_ptr) {
+static ssize_t fs__realpath_handle(HANDLE handle, char** realpath_ptr) {
   int r;
   DWORD w_realpath_len;
   WCHAR* w_realpath_ptr = NULL;
