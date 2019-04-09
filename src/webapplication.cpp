@@ -441,10 +441,9 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
 ) {
   ASSERT_BACKGROUND_THREAD()
 
-  // If it has a Connection: Upgrade header, don't try to serve a static file.
-  // Just fall through, even if the path is one that is in the
-  // StaticPathManager.
-  if (pRequest->hasHeader("Connection", "Upgrade", true)) {
+  // If there's any Upgrade header, don't try to serve a static file. Just
+  // fall through, even if the path is one that is in the StaticPathManager.
+  if (pRequest->hasHeader("Upgrade")) {
     return boost::shared_ptr<HttpResponse>();
   }
 
