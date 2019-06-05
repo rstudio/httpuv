@@ -158,7 +158,8 @@ void WSHyBiParser::createFrameHeaderFooter(
 
 void WSHyBiParser::read(const char* data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
-  while (len > 0) {
+  bool recur = false;
+  while (len > 0 || recur) {
     // crude check for underflow
     assert(len < 1000000000000000000);
 
@@ -179,6 +180,9 @@ void WSHyBiParser::read(const char* data, size_t len) {
           size_t payloadOffset = frame.headerLength() - startingSize;
           _bytesLeft = frame.payloadLength();
 
+          // Header was consumed, but no payload
+          if (_bytesLeft == 0) recur = true;
+
           _state = InPayload;
           _header.clear();
 
@@ -193,6 +197,8 @@ void WSHyBiParser::read(const char* data, size_t len) {
         break;
       }
       case InPayload: {
+        recur = false;
+
         size_t bytesToConsume = min((uint64_t)len, _bytesLeft);
         _bytesLeft -= bytesToConsume;
         _pCallbacks->onPayload(data, bytesToConsume);
