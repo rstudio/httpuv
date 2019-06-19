@@ -10,9 +10,9 @@ test_that("a close message with no payload is processed", {
 
   srv <- startServer("127.0.0.1", random_port, list(
     onWSOpen = function(ws) {
-      open_time <- Sys.time()
+      open_time <- as.numeric(Sys.time())
       ws$onClose(function(e) {
-        elapsed <<- Sys.time() - open_time
+        elapsed <<- as.numeric(Sys.time()) - open_time
         stopServer(srv)
       })
     }
@@ -29,11 +29,12 @@ test_that("a close message with no payload is processed", {
     })
   }
 
-  loop_start <- Sys.time()
+  loop_start <- as.numeric(Sys.time())
   while (!later::loop_empty()) {
-    if ((Sys.time() - loop_start) > as.difftime(10, units = "secs")) stop("run loop timed out")
+    loop_elapsed <- as.numeric(Sys.time()) - loop_start
+    if (loop_elapsed > 10) stop("run loop timed out")
     later::run_now()
   }
 
-  testthat::expect_true(elapsed < as.difftime(1, units = "secs"))
+  expect_true(elapsed < 1)
 })
