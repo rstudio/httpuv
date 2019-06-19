@@ -3,6 +3,8 @@ httpuv 1.5.1.9000
 
 * In the static file-serving code path, httpuv previously looked for a `Connection: upgrade` header; if it found this header, it would not try to serve a static file, and it woudl instead forward the HTTP request to the R code path. However, some proxies are configured to always set this header, even when the connection is not actually meant to be upgraded. Now, instead of looking for a `Connection: upgrade` header, httpuv looks for the presence of an `Upgrade` header (with any value), and should be more robust to incorrectly-configured proxies. ([#215](https://github.com/rstudio/httpuv/pull/215))
 
+* Fixed handling of messages without payloads: ([#219](https://github.com/rstudio/httpuv/pull/219))
+
 httpuv 1.5.1
 ============
 
