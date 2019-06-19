@@ -25,7 +25,10 @@ test_that("a close message with no payload is processed", {
   {
     ws_client <- websocket::WebSocket$new(sprintf("ws://127.0.0.1:%s", random_port))
     ws_client$onOpen(function(event) {
-      ws_client$close(NA)
+      # NOTE: Depends on websocketpp internals.
+      # 0 below corresponds to close::status::blank, here:
+      # https://github.com/rstudio/websocket/blob/f435899aef3eaecf97af9f3febd87687ecddc3a7/src/lib/websocketpp/close.hpp#L51-L52
+      ws_client$close(0)
     })
   }
 
