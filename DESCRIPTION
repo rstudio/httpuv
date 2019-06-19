@@ -30,7 +30,8 @@ RoxygenNote: 6.1.1
 Suggests:
     testthat,
     callr,
-    curl
+    curl,
+    websocket
 Collate:
     'RcppExports.R'
     'httpuv.R'
