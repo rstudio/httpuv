@@ -757,10 +757,18 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
   ASSERT_BACKGROUND_THREAD()
   int parsed = http_parser_execute(&_parser, &request_settings(), buffer, n);
 
+  if (_requestBuffer.size() == 0) {
+    fprintf(stderr, "================== HTTP request start =================\n");
+  }
+  fprintf(stderr, "==== HTTP request chunk ====\n%.*s\n",
+          parsed, buffer);
+
+
   if (http_parser_waiting_for_headers_completed(&_parser)) {
     // If we're waiting for the header response, just store the data in the
     // buffer.
     _requestBuffer.insert(_requestBuffer.end(), buffer + parsed, buffer + n);
+
 
   } else if (isUpgrade()) {
     char* pData = buffer + parsed;
@@ -809,10 +817,13 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
     }
   } else if (parsed < n) {
     if (!_ignoreNewData) {
+      fprintf(stderr, "==== Error parsing chunk ====\n==== parsed=%d, n=%d. Full content: ====\n%.*s\n",
+              parsed, n, n, buffer);
       fatal_error(
         "_parse_http_data",
         http_errno_description(HTTP_PARSER_ERRNO(&_parser))
       );
+      fprintf(stderr, "================== End request =================\n");
       uv_read_stop((uv_stream_t*)handle());
       close();
     }
