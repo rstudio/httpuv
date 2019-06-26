@@ -62,8 +62,22 @@ inline void err_printf(const char *fmt, ...) {
 }
 
 
-// For debugging. See Makevars for information on how to enable.
-void trace(const std::string& msg);
+// ============================================================================
+// Logging 
+// ============================================================================
+
+enum LogLevel {
+  OFF,
+  ERROR,
+  WARN,
+  INFO,
+  DEBUG
+};
+
+void debug_log(const std::string& msg, LogLevel level);
+
+// ============================================================================
+
 
 // Indexing into an empty vector causes assertion failures on some platforms
 template <typename T>

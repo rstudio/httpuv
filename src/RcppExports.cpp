@@ -234,6 +234,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// log_level
+std::string log_level(std::string level);
+RcppExport SEXP _httpuv_log_level(SEXP levelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type level(levelSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_level(level));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 RcppExport SEXP httpuv_decodeURIComponent(SEXP);
 
@@ -257,6 +268,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_invokeCppCallback", (DL_FUNC) &_httpuv_invokeCppCallback, 2},
     {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
     {"_httpuv_wsconn_address", (DL_FUNC) &_httpuv_wsconn_address, 1},
+    {"_httpuv_log_level", (DL_FUNC) &_httpuv_log_level, 1},
     {"httpuv_decodeURIComponent", (DL_FUNC) &httpuv_decodeURIComponent, 1},
     {NULL, NULL, 0}
 };

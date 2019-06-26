@@ -26,7 +26,7 @@ enum Protocol {
 // HttpRequest is a bit of a misnomer -- a HttpRequest object represents a
 // single connection, on which multiple actual HTTP requests can be made.
 class HttpRequest : public WebSocketConnectionCallbacks,
-                    public boost::enable_shared_from_this<HttpRequest> 
+                    public boost::enable_shared_from_this<HttpRequest>
 {
 private:
   uv_loop_t* _pLoop;
@@ -111,7 +111,7 @@ public:
 
   virtual ~HttpRequest() {
     ASSERT_BACKGROUND_THREAD()
-    trace("HttpRequest::~HttpRequest");
+    debug_log("HttpRequest::~HttpRequest", DEBUG);
     _pWebSocketConnection.reset();
   }
 
@@ -135,7 +135,7 @@ public:
 
   // Is the request an Upgrade (i.e. WebSocket connection)?
   bool isUpgrade() const;
-  
+
   void sendWSFrame(const char* pHeader, size_t headerSize,
                    const char* pData, size_t dataSize,
                    const char* pFooter, size_t footerSize);
@@ -180,7 +180,6 @@ public:
   // from _on_headers_complete().
   void updateUpgradeStatus();
 
-  void fatal_error(const char* method, const char* message);
   void _on_closed(uv_handle_t* handle);
   void close();
   void schedule_close();
