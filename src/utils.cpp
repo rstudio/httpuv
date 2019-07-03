@@ -12,7 +12,7 @@ void debug_log(const std::string& msg, LogLevel level) {
 
 // Sets the current log level and returns previous value.
 // [[Rcpp::export]]
-std::string log_level(std::string level) {
+std::string log_level(const std::string& level) {
   LogLevel old_level = log_level_;
 
   if (level == "") {

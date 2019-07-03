@@ -235,12 +235,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // log_level
-std::string log_level(std::string level);
+std::string log_level(const std::string& level);
 RcppExport SEXP _httpuv_log_level(SEXP levelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::string >::type level(levelSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type level(levelSEXP);
     rcpp_result_gen = Rcpp::wrap(log_level(level));
     return rcpp_result_gen;
 END_RCPP
