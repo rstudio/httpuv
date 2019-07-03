@@ -177,7 +177,7 @@ public:
   }
   virtual ~WebSocketConnection() {
     ASSERT_BACKGROUND_THREAD()
-    trace("WebSocketConnection::~WebSocketConnection");
+    debug_log("WebSocketConnection::~WebSocketConnection", DEBUG);
     try {
       delete _pParser;
     } catch(...) {}

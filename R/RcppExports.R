@@ -141,3 +141,7 @@ wsconn_address <- function(external_ptr) {
     .Call('_httpuv_wsconn_address', PACKAGE = 'httpuv', external_ptr)
 }
 
+log_level <- function(level) {
+    .Call('_httpuv_log_level', PACKAGE = 'httpuv', level)
+}
+

@@ -93,7 +93,7 @@ void close_handle_cb(uv_handle_t* handle, void* arg) {
 
 void stop_io_loop(uv_async_t *handle) {
   ASSERT_BACKGROUND_THREAD()
-  trace("stop_io_loop");
+  debug_log("stop_io_loop", DEBUG);
   uv_stop(io_loop.get());
 }
 
@@ -135,7 +135,7 @@ void io_thread(void* data) {
   // Run io_loop. When it stops, this fuction continues and the thread exits.
   uv_run(io_loop.get(), UV_RUN_DEFAULT);
 
-  trace("io_loop stopped");
+  debug_log("io_loop stopped", DEBUG);
 
   // Cleanup stuff
   uv_walk(io_loop.get(), close_handle_cb, NULL);
@@ -220,7 +220,7 @@ void closeWS(SEXP conn,
              std::string reason)
 {
   ASSERT_MAIN_THREAD()
-  trace("closeWS\n");
+  debug_log("closeWS", DEBUG);
   Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
              auto_deleter_background<boost::shared_ptr<WebSocketConnection> >,

@@ -17,7 +17,7 @@ void Socket::removeConnection(boost::shared_ptr<HttpRequest> request) {
 
 Socket::~Socket() {
   ASSERT_BACKGROUND_THREAD()
-  trace("Socket::~Socket");
+  debug_log("Socket::~Socket", DEBUG);
 }
 
 // A deleter callback for the shared_ptr<Socket>.
@@ -33,7 +33,7 @@ void delete_ppsocket(uv_handle_t* pHandle) {
 // event occurs, and so this Socket will continue to exist until then.
 void Socket::close() {
   ASSERT_BACKGROUND_THREAD()
-  trace("Socket::close");
+  debug_log("Socket::close", DEBUG);
   for (std::vector<boost::shared_ptr<HttpRequest> >::reverse_iterator it = connections.rbegin();
     it != connections.rend();
     it++) {

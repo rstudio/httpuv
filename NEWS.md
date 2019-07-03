@@ -1,9 +1,11 @@
-httpuv 1.5.1.9000
+httpuv 1.5.1.9001
 ============
 
 * In the static file-serving code path, httpuv previously looked for a `Connection: upgrade` header; if it found this header, it would not try to serve a static file, and it would instead forward the HTTP request to the R code path. However, some proxies are configured to always set this header, even when the connection is not actually meant to be upgraded. Now, instead of looking for a `Connection: upgrade` header, httpuv looks for the presence of an `Upgrade` header (with any value), and should be more robust to incorrectly-configured proxies. ([#215](https://github.com/rstudio/httpuv/pull/215))
 
 * Fixed handling of messages without payloads: ([#219](https://github.com/rstudio/httpuv/pull/219))
+
+* Added a new (unexported) function `logLevel()`, for controlling debugging information that will be printed to the console. Previously, httpuv occasionally printed messages like `ERROR: [uv_write] broken pipe` and `ERROR: [uv_write] bad file descriptor` by default. This happened when the server tried to write to a pipe that was already closed, but the situation was not harmful, and was already being handled correctly. Now these messages are printed only if the log level is set to `INFO` or `DEBUG`. ([#223](https://github.com/rstudio/httpuv/pull/223))
 
 httpuv 1.5.1
 ============
