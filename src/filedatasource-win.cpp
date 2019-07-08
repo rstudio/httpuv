@@ -2,6 +2,7 @@
 
 #include "filedatasource.h"
 #include "utils.h"
+#include "winutils.h"
 #include <Windows.h>
 
 // Windows gets a whole different implementation of FileDataSource
@@ -16,7 +17,8 @@ FileDataSourceResult FileDataSource::initialize(const std::string& path, bool ow
   if (owned)
     flags |= FILE_FLAG_DELETE_ON_CLOSE;
 
-  _hFile = CreateFile(path.c_str(),
+
+  _hFile = CreateFileW(utf8ToWide(path).data(),
                       GENERIC_READ,
                       0, // exclusive access
                       NULL, // security attributes

@@ -31,6 +31,7 @@ staticPath <- function(
   }
 
   path <- normalizePath(path, winslash = "/", mustWork = TRUE)
+  path <- enc2utf8(path)
 
   structure(
     list(
@@ -222,6 +223,8 @@ normalizeStaticPaths <- function(paths) {
 
   # Make sure URL paths have a leading '/' and no trailing '/'.
   names(paths) <- vapply(names(paths), function(path) {
+    path <- enc2utf8(path)
+
     if (path == "") {
       stop("All paths must be non-empty strings.")
     }
