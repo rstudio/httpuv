@@ -27,7 +27,7 @@ void auto_deleter_main(void* obj) {
     later::later(auto_deleter_main<T>, obj, 0);
 
   } else {
-    debug_log("Can't detect correct thread for auto_deleter_main.", ERROR);
+    debug_log("Can't detect correct thread for auto_deleter_main.", LOG_ERROR);
   }
 }
 
@@ -46,7 +46,7 @@ void auto_deleter_background(T* obj) {
     } catch (...) {}
 
   } else {
-    debug_log("Can't detect correct thread for auto_deleter_background.", ERROR);
+    debug_log("Can't detect correct thread for auto_deleter_background.", LOG_ERROR);
   }
 }
 

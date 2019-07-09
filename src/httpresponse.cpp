@@ -58,7 +58,7 @@ public:
 
 void HttpResponse::writeResponse() {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpResponse::writeResponse", DEBUG);
+  debug_log("HttpResponse::writeResponse", LOG_DEBUG);
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
   response << "HTTP/1.1 " << _statusCode << " " << _status << "\r\n";
@@ -104,7 +104,7 @@ void HttpResponse::writeResponse() {
   int r = uv_write(pWriteReq, _pRequest->handle(), &headerBuf, 1,
       &on_response_written);
   if (r) {
-    debug_log(std::string("uv_write() error:") + uv_strerror(r), INFO);
+    debug_log(std::string("uv_write() error:") + uv_strerror(r), LOG_INFO);
     delete (boost::shared_ptr<HttpResponse>*)pWriteReq->data;
     free(pWriteReq);
   } else {
@@ -114,7 +114,7 @@ void HttpResponse::writeResponse() {
 
 void HttpResponse::onResponseWritten(int status) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpResponse::onResponseWritten", DEBUG);
+  debug_log("HttpResponse::onResponseWritten", LOG_DEBUG);
   if (status != 0) {
     err_printf("Error writing response: %d\n", status);
     _closeAfterWritten = true; // Cause the request connection to close.
@@ -137,7 +137,7 @@ void HttpResponse::closeAfterWritten() {
 
 HttpResponse::~HttpResponse() {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpResponse::~HttpResponse", DEBUG);
+  debug_log("HttpResponse::~HttpResponse", LOG_DEBUG);
   if (_closeAfterWritten) {
     _pRequest->close();
   }

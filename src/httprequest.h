@@ -111,7 +111,7 @@ public:
 
   virtual ~HttpRequest() {
     ASSERT_BACKGROUND_THREAD()
-    debug_log("HttpRequest::~HttpRequest", DEBUG);
+    debug_log("HttpRequest::~HttpRequest", LOG_DEBUG);
     _pWebSocketConnection.reset();
   }
 

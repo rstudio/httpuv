@@ -292,10 +292,10 @@ void RWebApplication::onHeaders(boost::shared_ptr<HttpRequest> pRequest,
   try {
     response = _onHeaders(pRequest->env());
   } catch (Rcpp::internal::InterruptedException &e) {
-    debug_log("Interrupt occurred in _onHeaders", INFO);
+    debug_log("Interrupt occurred in _onHeaders", LOG_INFO);
     response = errorResponse();
   } catch (...) {
-    debug_log("Exception occurred in _onHeaders", INFO);
+    debug_log("Exception occurred in _onHeaders", LOG_INFO);
     response = errorResponse();
   }
 
@@ -311,7 +311,7 @@ void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
       boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback)
 {
   ASSERT_MAIN_THREAD()
-  debug_log("RWebApplication::onBodyData", DEBUG);
+  debug_log("RWebApplication::onBodyData", LOG_DEBUG);
 
   // We're in an error state, but the background thread has already scheduled
   // more data to be processed here. Don't process more data.
@@ -323,7 +323,7 @@ void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
   try {
     _onBodyData(pRequest->env(), rawVector);
   } catch (...) {
-    debug_log("Exception occurred in _onBodyData", INFO);
+    debug_log("Exception occurred in _onBodyData", LOG_INFO);
     // Send an error message to the client. It's very possible that getResponse() or more
     // calls to onBodyData() will have been scheduled on the main thread
     // before the errorCallback is called.
@@ -338,7 +338,7 @@ void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
 void RWebApplication::getResponse(boost::shared_ptr<HttpRequest> pRequest,
                                   boost::function<void(boost::shared_ptr<HttpResponse>)> callback) {
   ASSERT_MAIN_THREAD()
-  debug_log("RWebApplication::getResponse", DEBUG);
+  debug_log("RWebApplication::getResponse", LOG_DEBUG);
   using namespace Rcpp;
 
   // Pass callback to R:
@@ -369,10 +369,10 @@ void RWebApplication::getResponse(boost::shared_ptr<HttpRequest> pRequest,
       // it and deal with it.
 
     } catch (Rcpp::internal::InterruptedException &e) {
-      debug_log("Interrupt occurred in _onRequest", INFO);
+      debug_log("Interrupt occurred in _onRequest", LOG_INFO);
       invokeCppCallback(errorResponse(), callback_xptr);
     } catch (...) {
-      debug_log("Exception occurred in _onRequest", INFO);
+      debug_log("Exception occurred in _onRequest", LOG_INFO);
       invokeCppCallback(errorResponse(), callback_xptr);
     }
   }

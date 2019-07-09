@@ -1,7 +1,7 @@
 #include "utils.h"
 
 // Set the default log level
-LogLevel log_level_ = ERROR;
+LogLevel log_level_ = LOG_ERROR;
 
 void debug_log(const std::string& msg, LogLevel level) {
   if (log_level_ >= level) {
@@ -18,24 +18,24 @@ std::string log_level(const std::string& level) {
   if (level == "") {
     // Do nothing
   } else if (level == "OFF") {
-    log_level_ = OFF;
+    log_level_ = LOG_OFF;
   } else if (level == "ERROR") {
-    log_level_ = ERROR;
+    log_level_ = LOG_ERROR;
   } else if (level == "WARN") {
-    log_level_ = WARN;
+    log_level_ = LOG_WARN;
   } else if (level == "INFO") {
-    log_level_ = INFO;
+    log_level_ = LOG_INFO;
   } else if (level == "DEBUG") {
-    log_level_ = DEBUG;
+    log_level_ = LOG_DEBUG;
   } else {
     Rcpp::stop("Unknown value for `level`");
   }
 
   switch(old_level) {
-    case OFF:   return "OFF";
-    case ERROR: return "ERROR";
-    case WARN:  return "WARN";
-    case INFO:  return "INFO";
-    case DEBUG: return "DEBUG";
+    case LOG_OFF:   return "OFF";
+    case LOG_ERROR: return "ERROR";
+    case LOG_WARN:  return "WARN";
+    case LOG_INFO:  return "INFO";
+    case LOG_DEBUG: return "DEBUG";
   }
 }

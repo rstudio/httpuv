@@ -67,11 +67,11 @@ inline void err_printf(const char *fmt, ...) {
 // ============================================================================
 
 enum LogLevel {
-  OFF,
-  ERROR,
-  WARN,
-  INFO,
-  DEBUG
+  LOG_OFF,
+  LOG_ERROR,
+  LOG_WARN,
+  LOG_INFO,
+  LOG_DEBUG
 };
 
 void debug_log(const std::string& msg, LogLevel level);

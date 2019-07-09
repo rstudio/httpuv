@@ -182,7 +182,7 @@ const RequestHeaders& HttpRequest::headers() const {
 
 void HttpRequest::responseScheduled() {
   ASSERT_MAIN_THREAD()
-  debug_log("HttpRequest::responseScheduled", DEBUG);
+  debug_log("HttpRequest::responseScheduled", LOG_DEBUG);
   _response_scheduled = true;
 }
 
@@ -193,7 +193,7 @@ bool HttpRequest::isResponseScheduled() {
 
 void HttpRequest::requestCompleted() {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::requestCompleted", DEBUG);
+  debug_log("HttpRequest::requestCompleted", LOG_DEBUG);
   _handling_request = false;
 }
 
@@ -204,33 +204,33 @@ void HttpRequest::requestCompleted() {
 
 int HttpRequest::_on_message_begin(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_message_begin", DEBUG);
+  debug_log("HttpRequest::_on_message_begin", LOG_DEBUG);
   _newRequest();
   return 0;
 }
 
 int HttpRequest::_on_url(http_parser* pParser, const char* pAt, size_t length) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_url", DEBUG);
+  debug_log("HttpRequest::_on_url", LOG_DEBUG);
   _url = std::string(pAt, length);
   return 0;
 }
 
 int HttpRequest::_on_status(http_parser* pParser, const char* pAt, size_t length) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_status", DEBUG);
+  debug_log("HttpRequest::_on_status", LOG_DEBUG);
   return 0;
 }
 int HttpRequest::_on_header_field(http_parser* pParser, const char* pAt, size_t length) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_header_field", DEBUG);
+  debug_log("HttpRequest::_on_header_field", LOG_DEBUG);
   std::copy(pAt, pAt + length, std::back_inserter(_lastHeaderField));
   return 0;
 }
 
 int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t length) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_header_value", DEBUG);
+  debug_log("HttpRequest::_on_header_value", LOG_DEBUG);
 
   std::string value(pAt, length);
 
@@ -295,7 +295,7 @@ bool HttpRequest::isUpgrade() const {
 // http_parser_execute() again.
 int HttpRequest::_on_headers_complete(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_headers_complete", DEBUG);
+  debug_log("HttpRequest::_on_headers_complete", LOG_DEBUG);
   updateUpgradeStatus();
 
   // Attempt static serving here. If the request is for a static path, this
@@ -339,7 +339,7 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
 // something there.
 void HttpRequest::_schedule_on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
   ASSERT_MAIN_THREAD()
-  debug_log("HttpRequest::_schedule_on_headers_complete_complete", DEBUG);
+  debug_log("HttpRequest::_schedule_on_headers_complete_complete", LOG_DEBUG);
 
   if (pResponse)
     responseScheduled();
@@ -355,7 +355,7 @@ void HttpRequest::_schedule_on_headers_complete_complete(boost::shared_ptr<HttpR
 // http-parser and then re-executes the parser. Runs on the background thread.
 void HttpRequest::_on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_headers_complete_complete", DEBUG);
+  debug_log("HttpRequest::_on_headers_complete_complete", LOG_DEBUG);
 
   int result = 0;
 
@@ -414,7 +414,7 @@ void HttpRequest::_on_headers_complete_complete(boost::shared_ptr<HttpResponse> 
 
 int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_body", DEBUG);
+  debug_log("HttpRequest::_on_body", LOG_DEBUG);
 
   // Copy pAt because the source data is deleted right after calling this
   // function.
@@ -441,7 +441,7 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
 
 void HttpRequest::_schedule_on_body_error(boost::shared_ptr<HttpResponse> pResponse) {
   ASSERT_MAIN_THREAD()
-  debug_log("HttpRequest::_schedule_on_body_error", DEBUG);
+  debug_log("HttpRequest::_schedule_on_body_error", LOG_DEBUG);
 
   responseScheduled();
 
@@ -454,7 +454,7 @@ void HttpRequest::_schedule_on_body_error(boost::shared_ptr<HttpResponse> pRespo
 
 void HttpRequest::_on_body_error(boost::shared_ptr<HttpResponse> pResponse) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_body_error", DEBUG);
+  debug_log("HttpRequest::_on_body_error", LOG_DEBUG);
 
   http_parser_pause(&_parser, 1);
 
@@ -472,7 +472,7 @@ void HttpRequest::_on_body_error(boost::shared_ptr<HttpResponse> pResponse) {
 
 int HttpRequest::_on_message_complete(http_parser* pParser) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_message_complete", DEBUG);
+  debug_log("HttpRequest::_on_message_complete", LOG_DEBUG);
 
   if (isUpgrade())
     return 0;
@@ -511,7 +511,7 @@ void HttpRequest::_schedule_on_message_complete_complete(boost::shared_ptr<HttpR
 
 void HttpRequest::_on_message_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_message_complete_complete", DEBUG);
+  debug_log("HttpRequest::_on_message_complete_complete", LOG_DEBUG);
 
   // This can happen if an error occured in WebApplication::onBodyData.
   if (pResponse == NULL) {
@@ -542,7 +542,7 @@ void HttpRequest::_on_message_complete_complete(boost::shared_ptr<HttpResponse> 
 // Called from WebSocketConnection::onFrameComplete
 void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::onWSMessage", DEBUG);
+  debug_log("HttpRequest::onWSMessage", LOG_DEBUG);
 
   // Copy data because the source data is deleted right after calling this
   // function.
@@ -575,7 +575,7 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
 }
 
 void HttpRequest::onWSClose(int code) {
-  debug_log("HttpRequest::onWSClose", DEBUG);
+  debug_log("HttpRequest::onWSClose", LOG_DEBUG);
   // TODO: Call close() here?
 }
 
@@ -592,7 +592,7 @@ typedef struct {
 
 void on_ws_message_sent(uv_write_t* handle, int status) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("on_ws_message_sent", DEBUG);
+  debug_log("on_ws_message_sent", LOG_DEBUG);
   // TODO: Handle error if status != 0
   ws_send_t* pSend = (ws_send_t*)handle;
   delete pSend->pHeader;
@@ -605,7 +605,7 @@ void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
                               const char* pData, size_t dataSize,
                               const char* pFooter, size_t footerSize) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::sendWSFrame", DEBUG);
+  debug_log("HttpRequest::sendWSFrame", LOG_DEBUG);
   ws_send_t* pSend = (ws_send_t*)malloc(sizeof(ws_send_t));
   memset(pSend, 0, sizeof(ws_send_t));
   pSend->pHeader = new std::vector<char>(pHeader, pHeader + headerSize);
@@ -623,7 +623,7 @@ void HttpRequest::sendWSFrame(const char* pHeader, size_t headerSize,
 }
 
 void HttpRequest::closeWSSocket() {
-  debug_log("HttpRequest::closeWSSocket", DEBUG);
+  debug_log("HttpRequest::closeWSSocket", LOG_DEBUG);
   close();
 }
 
@@ -634,7 +634,7 @@ void HttpRequest::closeWSSocket() {
 
 void HttpRequest::_on_closed(uv_handle_t* handle) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::_on_closed", DEBUG);
+  debug_log("HttpRequest::_on_closed", LOG_DEBUG);
 
   boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
   // It's possible for _pWebSocketConnection to have had its refcount drop to
@@ -657,11 +657,11 @@ void HttpRequest::_on_closed(uv_handle_t* handle) {
 
 void HttpRequest::close() {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("HttpRequest::close", DEBUG);
+  debug_log("HttpRequest::close", LOG_DEBUG);
   // std::cerr << "Closing handle " << &_handle << std::endl;
 
   if (_is_closing) {
-    debug_log("close() called twice on HttpRequest object", INFO);
+    debug_log("close() called twice on HttpRequest object", LOG_INFO);
     // We can get here in unusual cases when close() is called once directly,
     // and another time via a scheduled callback. When this happens, don't do
     // the closing machinery twice.
@@ -692,7 +692,7 @@ void HttpRequest::close() {
 // tell the background thread to close the request. The main thread should not
 // close() directly.
 void HttpRequest::schedule_close() {
-  debug_log("HttpRequest::schedule_close", DEBUG);
+  debug_log("HttpRequest::schedule_close", LOG_DEBUG);
   // Schedule on background thread:
   //  pRequest->close()
   _background_queue->push(
@@ -707,7 +707,7 @@ void HttpRequest::schedule_close() {
 
 void HttpRequest::_call_r_on_ws_open() {
   ASSERT_MAIN_THREAD()
-  debug_log("HttpRequest::_call_r_on_ws_open", DEBUG);
+  debug_log("HttpRequest::_call_r_on_ws_open", LOG_DEBUG);
 
   boost::function<void (void)> error_callback(
     boost::bind(&HttpRequest::schedule_close, shared_from_this())
@@ -807,7 +807,7 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
       debug_log(
         std::string("HttpRequest::_parse_http_data error: ") +
           http_errno_description(HTTP_PARSER_ERRNO(&_parser)),
-        INFO
+        LOG_INFO
       );
       uv_read_stop((uv_stream_t*)handle());
       close();
@@ -849,7 +849,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* 
       debug_log(
         std::string("HttpRequest::on_request_read error: ") +
           uv_strerror(nread),
-        INFO
+        LOG_INFO
       );
     }
     close();
@@ -868,7 +868,7 @@ void HttpRequest::handleRequest() {
     debug_log(
       std::string("HttpRequest::handlRequest error: [uv_read_start] ") +
         uv_strerror(r),
-      INFO
+      LOG_INFO
     );
     return;
   }

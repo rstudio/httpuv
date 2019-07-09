@@ -276,7 +276,7 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
 
 void WebSocketConnection::closeWS(uint16_t code, std::string reason) {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("WebSocketConnection::closeWS", DEBUG);
+  debug_log("WebSocketConnection::closeWS", LOG_DEBUG);
 
   switch (_connState) {
   // If we have already sent a close message, do nothing.
@@ -347,7 +347,7 @@ void WebSocketConnection::onPayload(const char* data, size_t len) {
 }
 void WebSocketConnection::onFrameComplete() {
   ASSERT_BACKGROUND_THREAD()
-  debug_log("WebSocketConnection::onFrameComplete", DEBUG);
+  debug_log("WebSocketConnection::onFrameComplete", LOG_DEBUG);
   if (_connState == WS_CLOSED) return;
 
   if (!_header.fin) {
