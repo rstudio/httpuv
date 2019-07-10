@@ -719,3 +719,42 @@ test_that("Last-Modified and If-Modified-Since headers", {
   )
   expect_identical(r1$status_code, 200L)
 })
+
+
+test_that("Paths with non-ASCII characters", {
+  # "apps/fü", in UTF-8 encoding.
+  nonascii_path <- test_path("apps/f\U00FC")
+  dir.create(nonascii_path)
+  on.exit(unlink(nonascii_path, recursive = TRUE))
+
+  index_file_path <- file.path(nonascii_path, "index.html")
+  writeLines("Hello world!", index_file_path)
+  file_content <- raw_file_content(index_file_path)
+
+  s <- startServer("0.0.0.0", random_open_port(),
+    list(
+      call = function(req) {
+        list(
+          status = 200L,
+          headers = list('Content-Type' = 'text/html'),
+          body = "R code path"
+        )
+      },
+      staticPaths = list(
+        "/f\U00FC" = nonascii_path,
+        "/foo" = nonascii_path
+      )
+    )
+  )
+  on.exit(s$stop(), add = TRUE)
+
+  # URL-encoded non-ASCII URL path, which maps to non-ASCII local path.
+  r <- fetch(local_url("/f%C3%BC", s$getPort()))
+  expect_identical(r$status_code, 200L)
+  expect_identical(r$content, file_content)
+
+  # ASCII URL path, which maps to non-ASCII local path.
+  r <- fetch(local_url("/foo", s$getPort()))
+  expect_identical(r$status_code, 200L)
+  expect_identical(r$content, file_content)
+})
