@@ -26,7 +26,7 @@ std::string wideToUtf8(const std::wstring& value)
                                  result.size(),
                                  nullptr, nullptr);
 
-   return std::string(&(result[0]));
+   return std::string(result.begin(), result.end());
 }
 
 
@@ -50,7 +50,7 @@ std::wstring utf8ToWide(const std::string& value,
                                  &(result[0]),
                                  result.size());
 
-   return std::wstring(&(result[0]));
+   return std::wstring(result.begin(), result.end());
 }
 
 #endif // ifdef _WIN32
