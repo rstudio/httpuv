@@ -5,6 +5,8 @@ httpuv 1.5.1.9001
 
 * Fixed handling of messages without payloads: ([#219](https://github.com/rstudio/httpuv/pull/219))
 
+* Fixed [#224](https://github.com/rstudio/httpuv/issues/224): Static file serving on Windows did not work correctly if it was from a path that contained non-ASCII characters. ([#227](https://github.com/rstudio/httpuv/pull/227))
+
 * Added a new (unexported) function `logLevel()`, for controlling debugging information that will be printed to the console. Previously, httpuv occasionally printed messages like `ERROR: [uv_write] broken pipe` and `ERROR: [uv_write] bad file descriptor` by default. This happened when the server tried to write to a pipe that was already closed, but the situation was not harmful, and was already being handled correctly. Now these messages are printed only if the log level is set to `INFO` or `DEBUG`. ([#223](https://github.com/rstudio/httpuv/pull/223))
 
 httpuv 1.5.1
