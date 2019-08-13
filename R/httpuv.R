@@ -276,7 +276,7 @@ AppWrapper <- R6Class(
     onWSClose = function(handle) {
       ws <- private$wsconns[[wsconn_address(handle)]]
       ws$handle <- NULL
-      private$wsconns[[wsconn_address(handle)]] <- NULL
+      rm(list = wsconn_address(handle), envir = private$wsconns)
 
       for (handler in ws$closeCallbacks) {
         handler()
