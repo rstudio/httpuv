@@ -582,7 +582,7 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 
   if (is.na(timeoutMs)) {
     # NA means to run non-blocking
-    run_now(0, all = FALSE)
+    run_now(0, all = T)
 
   } else if (timeoutMs == 0 || timeoutMs == Inf) {
     .globals$paused <- FALSE
@@ -590,13 +590,13 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
     # responsiveness when the user sends an interrupt (like Esc in RStudio.)
     check_time <- if (interactive()) 0.1 else Inf
     while (!.globals$paused) {
-      run_now(check_time, all = FALSE)
+      run_now(check_time, all = T)
     }
 
   } else {
     # No need to check for .globals$paused because if run_now() executes
     # anything, it will return immediately.
-    run_now(timeoutMs / 1000, all = FALSE)
+    run_now(timeoutMs / 1000, all = T)
   }
 
   # Some code expects service() to return TRUE (#123)
