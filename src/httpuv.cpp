@@ -248,7 +248,9 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
                             Rcpp::Function onWSMessage,
                             Rcpp::Function onWSClose,
                             Rcpp::List     staticPaths,
-                            Rcpp::List     staticPathOptions) {
+                            Rcpp::List     staticPathOptions,
+                            bool           quiet
+) {
 
   using namespace Rcpp;
   register_main_thread();
@@ -280,7 +282,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
     boost::bind(createTcpServerSync,
       io_loop.get(), host.c_str(), port,
       boost::static_pointer_cast<WebApplication>(pHandler),
-      background_queue, &pServer, blocker
+      quiet, background_queue, &pServer, blocker
     )
   );
 
@@ -306,7 +308,9 @@ Rcpp::RObject makePipeServer(const std::string& name,
                              Rcpp::Function onWSMessage,
                              Rcpp::Function onWSClose,
                              Rcpp::List     staticPaths,
-                             Rcpp::List     staticPathOptions) {
+                             Rcpp::List     staticPathOptions,
+                             bool           quiet
+) {
 
   using namespace Rcpp;
   register_main_thread();
@@ -336,7 +340,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
     boost::bind(createPipeServerSync,
       io_loop.get(), name.c_str(), mask,
       boost::static_pointer_cast<WebApplication>(pHandler),
-      background_queue, &pServer, blocker
+      quiet, background_queue, &pServer, blocker
     )
   );
 

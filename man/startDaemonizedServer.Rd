@@ -4,7 +4,7 @@
 \alias{startDaemonizedServer}
 \title{Create an HTTP/WebSocket daemonized server (deprecated)}
 \usage{
-startDaemonizedServer(host, port, app)
+startDaemonizedServer(host, port, app, quiet = FALSE)
 }
 \arguments{
 \item{host}{A string that is a valid IPv4 address that is owned by this
@@ -16,6 +16,8 @@ X, port numbers smaller than 1025 require root privileges.}
 
 \item{app}{A collection of functions that define your application. See
 Details.}
+
+\item{quiet}{If \code{TRUE}, suppress error messages from starting app.}
 }
 \description{
 This function will be removed in a future release of httpuv. It is simply a

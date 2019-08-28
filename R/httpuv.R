@@ -401,10 +401,10 @@ WebSocket <- R6Class(
 #'   X, port numbers smaller than 1025 require root privileges.
 #' @param app A collection of functions that define your application. See
 #'   Details.
+#' @param quiet If \code{TRUE}, suppress error messages from starting app.
 #' @return A handle for this server that can be passed to
 #'   \code{\link{stopServer}} to shut the server down.
 #'
-
 #' @details \code{startServer} binds the specified port and listens for
 #'   connections on an thread running in the background. This background thread
 #'   handles the I/O, and when it receives a HTTP request, it will schedule a
@@ -525,8 +525,8 @@ WebSocket <- R6Class(
 #' s$stop()
 #' }
 #' @export
-startServer <- function(host, port, app) {
-  WebServer$new(host, port, app)
+startServer <- function(host, port, app, quiet = FALSE) {
+  WebServer$new(host, port, app, quiet)
 }
 
 #' @param name A string that indicates the path for the domain socket (on
@@ -539,8 +539,8 @@ startServer <- function(host, port, app) {
 #'   umask is left unchanged. (This parameter has no effect on Windows.)
 #' @rdname startServer
 #' @export
-startPipeServer <- function(name, mask, app) {
-  PipeServer$new(name, mask, app)
+startPipeServer <- function(name, mask, app, quiet = FALSE) {
+  PipeServer$new(name, mask, app, quiet)
 }
 
 #' Process requests
