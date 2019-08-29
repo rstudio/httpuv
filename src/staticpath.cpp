@@ -323,6 +323,10 @@ boost::optional<std::pair<StaticPath, std::string> > StaticPathManager::matchSta
     return boost::none;
   }
 
+  if (url_path.find('\\') != std::string::npos) {
+    return boost::none;
+  }
+
   std::string path = url_path;
 
   std::string pre_slash;
