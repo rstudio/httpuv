@@ -11,6 +11,8 @@ httpuv 1.5.1.9001
 
 * Disallowed backslash in static path, to prevent path traversal attacks. ([#235](https://github.com/rstudio/httpuv/pull/235))
 
+* Static file serving on Windows could fail if multiple requests accessed the same file simultaneously. ([#239](https://github.com/rstudio/httpuv/pull/239))
+
 httpuv 1.5.1
 ============
 
