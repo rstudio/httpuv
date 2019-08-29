@@ -20,7 +20,7 @@ FileDataSourceResult FileDataSource::initialize(const std::string& path, bool ow
 
   _hFile = CreateFileW(utf8ToWide(path).data(),
                       GENERIC_READ,
-                      0, // exclusive access
+                      FILE_SHARE_READ, // allow other processes to read
                       NULL, // security attributes
                       OPEN_EXISTING,
                       flags,
