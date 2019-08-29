@@ -68,6 +68,21 @@ test_that("Basic static file serving", {
   expect_identical(rawToChar(r$content), "404 Not Found\n")
   expect_equal(h$`content-length`, "14")
 
+  # Bad request (400)
+  # jcheng 2019-09-28: I tried to do this same test with /1/../index.html but
+  # it seems like the actual request being made would always end up being
+  # /1/index.html instead, which would succeed.
+  r <- fetch(local_url("/1/..%2Findex.html", s$getPort()))
+  h <- parse_headers_list(r$headers)
+  expect_equal(r$status_code, 400)
+  expect_identical(rawToChar(r$content), "400 Bad Request\n")
+
+  # Missing file (404)
+  r <- fetch(local_url("/1/..\\index.html", s$getPort()))
+  h <- parse_headers_list(r$headers)
+  expect_equal(r$status_code, 404)
+  expect_identical(rawToChar(r$content), "404 Not Found\n")
+
   # Missing directory in path (404)
   r <- fetch(local_url("/foo/bar", s$getPort()))
   h <- parse_headers_list(r$headers)

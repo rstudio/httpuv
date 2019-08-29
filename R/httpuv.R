@@ -230,7 +230,17 @@ AppWrapper <- R6Class(
       # The cpp_callback is an external pointer to a C++ function that writes
       # the response.
 
-      resp <- rookCall(private$app$call, req, req$.bodyData, seek(req$.bodyData))
+      resp <- if (is.null(private$app$call)) {
+        list(
+          status = 404L,
+          headers = list(
+            "Content-Type" = "text/plain"
+          ),
+          body = "404 Not Found\n"
+        )
+      } else {
+        rookCall(private$app$call, req, req$.bodyData, seek(req$.bodyData))
+      }
       # Note: rookCall() should never throw error because all the work is
       # wrapped in tryCatch().
 
