@@ -68,21 +68,6 @@ test_that("Basic static file serving", {
   expect_identical(rawToChar(r$content), "404 Not Found\n")
   expect_equal(h$`content-length`, "14")
 
-  # Bad request (400)
-  # jcheng 2019-09-28: I tried to do this same test with /1/../index.html but
-  # it seems like the actual request being made would always end up being
-  # /1/index.html instead, which would succeed.
-  r <- fetch(local_url("/1/..%2Findex.html", s$getPort()))
-  h <- parse_headers_list(r$headers)
-  expect_equal(r$status_code, 400)
-  expect_identical(rawToChar(r$content), "400 Bad Request\n")
-
-  # Missing file (404)
-  r <- fetch(local_url("/1/..\\index.html", s$getPort()))
-  h <- parse_headers_list(r$headers)
-  expect_equal(r$status_code, 404)
-  expect_identical(rawToChar(r$content), "404 Not Found\n")
-
   # Missing directory in path (404)
   r <- fetch(local_url("/foo/bar", s$getPort()))
   h <- parse_headers_list(r$headers)
@@ -602,8 +587,51 @@ test_that("Paths with ..", {
   res <- http_request_con("GET /static/foo../", "127.0.0.1", s$getPort())
   expect_identical(res[1], "HTTP/1.1 404 Not Found")
   expect_false(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
+
+
 })
 
+test_that("Paths with backslash", {
+  s <- startServer("127.0.0.1", random_open_port(),
+    list(
+      call = function(req) {
+        list(
+          status = 400,
+          headers = list("Test-Code-Path" = "R"),
+          body = "400 Bad Request\n"
+        )
+      },
+      staticPaths = list(
+        "/static" = test_path("apps/content")
+      )
+    )
+  )
+  on.exit(s$stop())
+
+  # Need to use http_request_con() instead of fetch() to send custom requests
+  # with "..".
+  # When a backslash is in path, should fall through to R code path.
+
+  # Raw backslash
+  res <- http_request_con("GET /static\\index.html", "127.0.0.1", s$getPort())
+  expect_identical(res[1], "HTTP/1.1 400 Bad Request")
+  expect_true(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
+
+  # Escaped backslash
+  res <- http_request_con("GET /static%5cindex.html", "127.0.0.1", s$getPort())
+  expect_identical(res[1], "HTTP/1.1 400 Bad Request")
+  expect_true(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
+
+  # Raw backslash with ..
+  res <- http_request_con("GET /static/..\\index.html", "127.0.0.1", s$getPort())
+  expect_identical(res[1], "HTTP/1.1 400 Bad Request")
+  expect_true(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
+
+  # Escaped backslash with ..
+  res <- http_request_con("GET /static/..%5cindex.html", "127.0.0.1", s$getPort())
+  expect_identical(res[1], "HTTP/1.1 400 Bad Request")
+  expect_true(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
+})
 
 test_that("HEAD, POST, PUT requests", {
   s <- startServer("127.0.0.1", random_open_port(),
