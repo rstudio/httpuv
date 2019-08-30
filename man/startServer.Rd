@@ -5,9 +5,9 @@
 \alias{startPipeServer}
 \title{Create an HTTP/WebSocket server}
 \usage{
-startServer(host, port, app)
+startServer(host, port, app, quiet = FALSE)
 
-startPipeServer(name, mask, app)
+startPipeServer(name, mask, app, quiet = FALSE)
 }
 \arguments{
 \item{host}{A string that is a valid IPv4 address that is owned by this
@@ -19,6 +19,8 @@ X, port numbers smaller than 1025 require root privileges.}
 
 \item{app}{A collection of functions that define your application. See
 Details.}
+
+\item{quiet}{If \code{TRUE}, suppress error messages from starting app.}
 
 \item{name}{A string that indicates the path for the domain socket (on
 Unix-like systems) or the name of the named pipe (on Windows).}

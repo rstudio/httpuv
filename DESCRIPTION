@@ -35,6 +35,7 @@ Suggests:
 Collate:
     'RcppExports.R'
     'httpuv.R'
+    'random_port.R'
     'server.R'
     'static_paths.R'
     'utils.R'

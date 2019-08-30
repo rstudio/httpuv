@@ -411,10 +411,10 @@ WebSocket <- R6Class(
 #'   X, port numbers smaller than 1025 require root privileges.
 #' @param app A collection of functions that define your application. See
 #'   Details.
+#' @param quiet If \code{TRUE}, suppress error messages from starting app.
 #' @return A handle for this server that can be passed to
 #'   \code{\link{stopServer}} to shut the server down.
 #'
-
 #' @details \code{startServer} binds the specified port and listens for
 #'   connections on an thread running in the background. This background thread
 #'   handles the I/O, and when it receives a HTTP request, it will schedule a
@@ -535,8 +535,8 @@ WebSocket <- R6Class(
 #' s$stop()
 #' }
 #' @export
-startServer <- function(host, port, app) {
-  WebServer$new(host, port, app)
+startServer <- function(host, port, app, quiet = FALSE) {
+  WebServer$new(host, port, app, quiet)
 }
 
 #' @param name A string that indicates the path for the domain socket (on
@@ -549,8 +549,8 @@ startServer <- function(host, port, app) {
 #'   umask is left unchanged. (This parameter has no effect on Windows.)
 #' @rdname startServer
 #' @export
-startPipeServer <- function(name, mask, app) {
-  PipeServer$new(name, mask, app)
+startPipeServer <- function(name, mask, app, quiet = FALSE) {
+  PipeServer$new(name, mask, app, quiet)
 }
 
 #' Process requests
@@ -623,8 +623,10 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 #' If you have multiple hosts and/or ports to listen on, call the individual
 #' functions instead of \code{runServer}.
 #'
-#' @param host A string that is a valid IPv4 address that is owned by this
-#'   server, or \code{"0.0.0.0"} to listen on all IP addresses.
+#' @param host A string that is a valid IPv4 or IPv6 address that is owned by
+#'   this server, which the application will listen on. \code{"0.0.0.0"}
+#'   represents all IPv4 addresses and \code{"::/0"} represents all IPv6
+#'   addresses.
 #' @param port A number or integer that indicates the server port that should be
 #'   listened on. Note that on most Unix-like systems including Linux and Mac OS
 #'   X, port numbers smaller than 1025 require root privileges.

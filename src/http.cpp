@@ -45,10 +45,14 @@ void on_request(uv_stream_t* handle, int status) {
 
 }
 
-uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
-  int mask, boost::shared_ptr<WebApplication> pWebApplication,
-  CallbackQueue* background_queue)
-{
+uv_stream_t* createPipeServer(
+  uv_loop_t* pLoop,
+  const std::string& name,
+  int mask,
+  boost::shared_ptr<WebApplication> pWebApplication,
+  bool quiet,
+  CallbackQueue* background_queue
+) {
   ASSERT_BACKGROUND_THREAD()
 
   // We own pWebApplication. It will be destroyed by the socket but if in
@@ -74,14 +78,16 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
     umask(oldMask);
 
   if (r) {
-    err_printf("createPipeServer: %s\n", uv_strerror(r));
+    if (!quiet)
+      err_printf("createPipeServer: %s\n", uv_strerror(r));
     // It's important that close() is explicitly called, so that the uv_pipe_t is cleaned up
     pSocket->close();
     return NULL;
   }
   r = uv_listen((uv_stream_t*)&pSocket->handle.stream, 128, &on_request);
   if (r) {
-    err_printf("createPipeServer: %s\n", uv_strerror(r));
+    if (!quiet)
+      err_printf("createPipeServer: %s\n", uv_strerror(r));
     // It's important that close() is explicitly called, so that the uv_pipe_t is cleaned up
     pSocket->close();
     return NULL;
@@ -92,23 +98,32 @@ uv_stream_t* createPipeServer(uv_loop_t* pLoop, const std::string& name,
 
 // A wrapper for createPipeServer. The main thread schedules this to run on
 // the background thread, then waits for this to finish, using a barrier.
-void createPipeServerSync(uv_loop_t* loop, const std::string& name,
-  int mask, boost::shared_ptr<WebApplication> pWebApplication,
+void createPipeServerSync(
+  uv_loop_t* loop,
+  const std::string& name,
+  int mask,
+  boost::shared_ptr<WebApplication> pWebApplication,
+  bool quiet,
   CallbackQueue* background_queue,
-  uv_stream_t** pServer, boost::shared_ptr<Barrier> blocker)
-{
+  uv_stream_t** pServer,
+  boost::shared_ptr<Barrier> blocker
+) {
   ASSERT_BACKGROUND_THREAD()
 
-  *pServer = createPipeServer(loop, name, mask, pWebApplication, background_queue);
+  *pServer = createPipeServer(loop, name, mask, pWebApplication, quiet, background_queue);
 
   // Tell the main thread that the server is ready
   blocker->wait();
 }
 
-uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
-  int port, boost::shared_ptr<WebApplication> pWebApplication,
-  CallbackQueue* background_queue)
-{
+uv_stream_t* createTcpServer(
+  uv_loop_t* pLoop,
+  const std::string& host,
+  int port,
+  boost::shared_ptr<WebApplication> pWebApplication,
+  bool quiet,
+  CallbackQueue* background_queue
+) {
   ASSERT_BACKGROUND_THREAD()
 
   // We own pWebApplication. It will be destroyed by the socket but if in
@@ -140,11 +155,13 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
     pAddress = reinterpret_cast<sockaddr*>(&addr4);
   } else {
     r = 1;
-    err_printf("%s is not a valid IPv4 or IPv6 address.\n", host.c_str());
+    if (!quiet)
+      err_printf("%s is not a valid IPv4 or IPv6 address.\n", host.c_str());
   }
 
   if (r) {
-    err_printf("createTcpServer: %s\n", uv_strerror(r));
+    if (!quiet)
+      err_printf("createTcpServer: %s\n", uv_strerror(r));
     // It's important that close() is explicitly called, so that the uv_tcp_t is cleaned up
     pSocket->close();
     return NULL;
@@ -153,14 +170,16 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
   r = uv_tcp_bind(&pSocket->handle.tcp, pAddress, 0);
 
   if (r) {
-    err_printf("createTcpServer: %s\n", uv_strerror(r));
+    if (!quiet)
+      err_printf("createTcpServer: %s\n", uv_strerror(r));
     // It's important that close() is explicitly called, so that the uv_tcp_t is cleaned up
     pSocket->close();
     return NULL;
   }
   r = uv_listen((uv_stream_t*)&pSocket->handle.stream, 128, &on_request);
   if (r) {
-    err_printf("createTcpServer: %s\n", uv_strerror(r));
+    if (!quiet)
+      err_printf("createTcpServer: %s\n", uv_strerror(r));
     // It's important that close() is explicitly called, so that the uv_tcp_t is cleaned up
     pSocket->close();
     return NULL;
@@ -171,14 +190,19 @@ uv_stream_t* createTcpServer(uv_loop_t* pLoop, const std::string& host,
 
 // A wrapper for createTcpServer. The main thread schedules this to run on the
 // background thread, then waits for this to finish, using a barrier.
-void createTcpServerSync(uv_loop_t* pLoop, const std::string& host,
-  int port, boost::shared_ptr<WebApplication> pWebApplication,
+void createTcpServerSync(
+  uv_loop_t* pLoop,
+  const std::string& host,
+  int port,
+  boost::shared_ptr<WebApplication> pWebApplication,
+  bool quiet,
   CallbackQueue* background_queue,
-  uv_stream_t** pServer, boost::shared_ptr<Barrier> blocker)
-{
+  uv_stream_t** pServer,
+  boost::shared_ptr<Barrier> blocker
+) {
   ASSERT_BACKGROUND_THREAD()
 
-  *pServer = createTcpServer(pLoop, host, port, pWebApplication, background_queue);
+  *pServer = createTcpServer(pLoop, host, port, pWebApplication, quiet, background_queue);
 
   // Tell the main thread that the server is ready
   blocker->wait();

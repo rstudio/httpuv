@@ -1,7 +1,7 @@
 context("basic")
 
 test_that("Basic functionality", {
-  s1 <- startServer("127.0.0.1", random_open_port(),
+  s1 <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         list(
@@ -13,8 +13,8 @@ test_that("Basic functionality", {
     )
   )
   expect_equal(length(listServers()), 1)
-  
-  s2 <- startServer("127.0.0.1", random_open_port(),
+
+  s2 <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         list(
@@ -26,10 +26,10 @@ test_that("Basic functionality", {
     )
   )
   expect_equal(length(listServers()), 2)
-  
+
   r1 <- fetch(local_url("/", s1$getPort()))
   r2 <- fetch(local_url("/", s2$getPort()))
-  
+
   expect_equal(r1$status_code, 200)
   expect_equal(r2$status_code, 200)
 

@@ -2,29 +2,6 @@ library(curl)
 library(promises)
 
 
-random_open_port <- function(min = 3000, max = 9000, n = 20) {
-  # Unsafe port list from shiny::runApp()
-  valid_ports <- setdiff(min:max, c(3659, 4045, 6000, 6665:6669, 6697))
-
-  # Try up to n ports
-  for (port in sample(valid_ports, n)) {
-    s <- NULL
-
-    # Check if port is open
-    tryCatch(
-      s <- httpuv::startServer("127.0.0.1", port, list()),
-      error = function(e) { }
-    )
-    if (!is.null(s)) {
-      s$stop()
-      return(port)
-    }
-  }
-
-  stop("Cannot find an available port")
-}
-
-
 curl_fetch_async <- function(url, pool = NULL, data = NULL, handle = new_handle()) {
   p <- promises::promise(function(resolve, reject) {
     curl_fetch_multi(url, done = resolve, fail = reject, pool = pool, data = data, handle = handle)

@@ -6,7 +6,7 @@ subdir_index_file_content <- raw_file_content(test_path("apps/content/subdir/ind
 index_file_1_content <- raw_file_content(test_path("apps/content_1/index.html"))
 
 test_that("Basic static file serving", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       staticPaths = list(
         # Testing out various leading and trailing slashes
@@ -87,7 +87,7 @@ test_that("Basic static file serving", {
 
 
 test_that("Missing file fallthrough", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         return(list(
@@ -117,7 +117,7 @@ test_that("Missing file fallthrough", {
 
 
 test_that("Longer paths override shorter ones", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       staticPaths = list(
         # Testing out various leading and trailing slashes
@@ -159,7 +159,7 @@ test_that("Longer paths override shorter ones", {
 
 
 test_that("Options and option inheritance", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         return(list(
@@ -230,7 +230,7 @@ test_that("Options and option inheritance", {
 
 
 test_that("Excluding subpaths", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         # Return a 403 for the R code path; the C++ code path will return 404
@@ -311,7 +311,7 @@ test_that("Excluding subpaths", {
 })
 
 test_that("Header validation", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         if (!identical(req$HTTP_TEST_VALIDATION, "aaa")) {
@@ -397,7 +397,7 @@ test_that("Header validation", {
 
 
 test_that("Dynamically changing paths", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         list(
@@ -454,7 +454,7 @@ test_that("Dynamically changing paths", {
 
 
 test_that("Dynamically changing options", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         list(
@@ -516,7 +516,7 @@ test_that("Escaped characters in paths", {
   on.exit(unlink(static_dir, recursive = TRUE))
 
 
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         list(
@@ -539,7 +539,7 @@ test_that("Escaped characters in paths", {
 
 
 test_that("Paths with ..", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         list(
@@ -634,7 +634,7 @@ test_that("Paths with backslash", {
 })
 
 test_that("HEAD, POST, PUT requests", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         list(
@@ -677,7 +677,7 @@ test_that("HEAD, POST, PUT requests", {
 
 
 test_that("Last-Modified and If-Modified-Since headers", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       staticPaths = list(
         "/" = staticPath(
@@ -774,7 +774,7 @@ test_that("Paths with non-ASCII characters", {
   writeLines("Hello world!", index_file_path)
   file_content <- raw_file_content(index_file_path)
 
-  s <- startServer("0.0.0.0", random_open_port(),
+  s <- startServer("0.0.0.0", randomPort(),
     list(
       call = function(req) {
         list(
