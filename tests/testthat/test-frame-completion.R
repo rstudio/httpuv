@@ -6,7 +6,7 @@ context("frame completion")
 test_that("a close message with no payload is processed", {
   elapsed <- NULL
 
-  random_port <- random_open_port()
+  random_port <- randomPort()
 
   srv <- startServer("127.0.0.1", random_port, list(
     onWSOpen = function(ws) {

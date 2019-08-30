@@ -63,7 +63,7 @@ start_ab <- function(port, path, n = 400, concurrent = 100) {
 
 test_that("Basic traffic test", {
   skip_if_not_possible()
-  port <- random_open_port()
+  port <- randomPort()
   p <- start_app(port)
   Sys.sleep(1)
 
@@ -80,7 +80,7 @@ test_that("Basic traffic test", {
 
 test_that("Two concurrent", {
   skip_if_not_possible()
-  port <- random_open_port()
+  port <- randomPort()
   p <- start_app(port)
   Sys.sleep(1)
   expect_true(p$is_alive())
@@ -107,7 +107,7 @@ test_that("Two concurrent", {
 
 test_that("/header /sync endpoints", {
   skip_if_not_possible()
-  port <- random_open_port()
+  port <- randomPort()
   p <- start_app(port)
 
   Sys.sleep(1)
@@ -134,7 +134,7 @@ test_that("/header /sync endpoints", {
 
 test_that("/header /async endpoints", {
   skip_if_not_possible()
-  port <- random_open_port()
+  port <- randomPort()
   p <- start_app(port)
 
   Sys.sleep(1)
@@ -162,7 +162,7 @@ test_that("/header /async endpoints", {
 
 test_that("/header /async-error endpoints", {
   skip_if_not_possible()
-  port <- random_open_port()
+  port <- randomPort()
   p <- start_app(port)
 
   Sys.sleep(1)
@@ -190,7 +190,7 @@ test_that("/header /async-error endpoints", {
 
 test_that("/async /async-error endpoints", {
   skip_if_not_possible()
-  port <- random_open_port()
+  port <- randomPort()
   p <- start_app(port)
 
   Sys.sleep(1)
@@ -219,7 +219,7 @@ test_that("/async /async-error endpoints", {
 
 test_that("/body-error /async-error endpoints", {
   skip_if_not_possible()
-  port <- random_open_port()
+  port <- randomPort()
   p <- start_app(port)
 
   Sys.sleep(1)
@@ -247,7 +247,7 @@ test_that("/body-error /async-error endpoints", {
 
 test_that("static paths", {
   skip_if_not_possible()
-  port <- random_open_port()
+  port <- randomPort()
   p <- start_app(port)
 
   Sys.sleep(1)
