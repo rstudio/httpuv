@@ -9,6 +9,8 @@ httpuv 1.5.1.9001
 
 * Added a new (unexported) function `logLevel()`, for controlling debugging information that will be printed to the console. Previously, httpuv occasionally printed messages like `ERROR: [uv_write] broken pipe` and `ERROR: [uv_write] bad file descriptor` by default. This happened when the server tried to write to a pipe that was already closed, but the situation was not harmful, and was already being handled correctly. Now these messages are printed only if the log level is set to `INFO` or `DEBUG`. ([#223](https://github.com/rstudio/httpuv/pull/223))
 
+* If an application's `$call()` method is missing, it will now give a 404 response instead of a 500 response. ([#237](https://github.com/rstudio/httpuv/pull/237))
+
 * Disallowed backslash in static path, to prevent path traversal attacks. ([#235](https://github.com/rstudio/httpuv/pull/235))
 
 * Static file serving on Windows could fail if multiple requests accessed the same file simultaneously. ([#239](https://github.com/rstudio/httpuv/pull/239))
