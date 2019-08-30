@@ -7,6 +7,10 @@ httpuv 1.5.1.9001
 
 * Fixed [#224](https://github.com/rstudio/httpuv/issues/224): Static file serving on Windows did not work correctly if it was from a path that contained non-ASCII characters. ([#227](https://github.com/rstudio/httpuv/pull/227))
 
+* Resolved [#194](https://github.com/rstudio/httpuv/issues/194), [#233](https://github.com/rstudio/httpuv/issues/233): Added a `quiet` option to `startServer`, which suppresses startup error messages that are normally printed to console (and can't be intercepted with `capture.output()`). ([#234](https://github.com/rstudio/httpuv/pull/234))
+
+* Added a new function `randomPort()`, which returns a random available port for listening on. ([#234](https://github.com/rstudio/httpuv/pull/234))
+
 * Added a new (unexported) function `logLevel()`, for controlling debugging information that will be printed to the console. Previously, httpuv occasionally printed messages like `ERROR: [uv_write] broken pipe` and `ERROR: [uv_write] bad file descriptor` by default. This happened when the server tried to write to a pipe that was already closed, but the situation was not harmful, and was already being handled correctly. Now these messages are printed only if the log level is set to `INFO` or `DEBUG`. ([#223](https://github.com/rstudio/httpuv/pull/223))
 
 httpuv 1.5.1
