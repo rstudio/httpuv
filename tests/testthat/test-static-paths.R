@@ -592,7 +592,7 @@ test_that("Paths with ..", {
 })
 
 test_that("Paths with backslash", {
-  s <- startServer("127.0.0.1", random_open_port(),
+  s <- startServer("127.0.0.1", randomPort(),
     list(
       call = function(req) {
         list(
