@@ -1,5 +1,6 @@
 Package: httpuv
 Type: Package
+Encoding: UTF-8
 Title: HTTP and WebSocket Server Library
 Version: 1.5.2
 Author: Joe Cheng, Hector Corrada Bravo [ctb], Jeroen Ooms [ctb],
