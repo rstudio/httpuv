@@ -1,11 +1,18 @@
 Package: httpuv
 Type: Package
+Encoding: UTF-8
 Title: HTTP and WebSocket Server Library
-Version: 1.5.1.9002
+Version: 1.5.2
 Author: Joe Cheng, Hector Corrada Bravo [ctb], Jeroen Ooms [ctb],
     Winston Chang [ctb]
 Copyright: RStudio, Inc.; Joyent, Inc.; Nginx Inc.; Igor Sysoev; Niels Provos;
-    Internet Systems Consortium, Inc.; Alexander Chemeris
+    Internet Systems Consortium, Inc.; Alexander Chemeris; Berkeley Software
+    Design; Google Inc.; Sony Mobile Communications AB; Alexander Peslyak;
+    Free Software Foundation, Inc.; X Consortium; Ben Noordhuis;
+    StrongLoop, Inc.; Saúl Ibarra Corretgé; Bert Belder; Fedor Indutny;
+    libuv project; Refael Ackermann; Kenneth MacKay; Emergya; Diego Pettenò;
+    xine project, The Regents of the University of California,
+    Dariusz Dwornikowski
 Maintainer: Joe Cheng <joe@rstudio.com>
 Description: Provides low-level socket and protocol support for handling
     HTTP and WebSocket requests directly from within R. It is primarily
