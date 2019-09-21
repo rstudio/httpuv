@@ -88,6 +88,7 @@ ErrorStream <- R6Class(
   ),
   cloneable = FALSE
 )
+stdErrStream <- ErrorStream$new()
 
 #' @importFrom promises promise then finally is.promise %...>% %...!%
 rookCall <- function(func, req, data = NULL, dataLength = -1) {
@@ -102,7 +103,7 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
 
     req$rook.input <- inputStream
 
-    req$rook.errors <- ErrorStream$new()
+    req$rook.errors <- stdErrStream
 
     req$httpuv.version <- httpuv_version()
 
