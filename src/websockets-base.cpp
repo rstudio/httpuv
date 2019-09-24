@@ -1,3 +1,4 @@
+#include <cstring>
 #include "websockets-base.h"
 
 bool isBigEndian() {
@@ -40,21 +41,21 @@ void WebSocketProto::createFrameHeader(
   }
   else if (payloadSize <= 65535) {// 2^16-1
     pBuf[1] |= 126;
-    *((uint16_t*)&pBuf[2]) = (uint16_t)payloadSize;
+    memcpy(pBuf + 2, &payloadSize, sizeof(uint16_t));
     if (!isBigEndian())
       swapByteOrder(pBuf + 2, pBuf + 4);
     pMaskingKey = pBuf + 4;
   }
   else {
     pBuf[1] |= 127;
-    *((uint64_t*)&pBuf[2]) = (uint64_t)payloadSize;
+    memcpy(pBuf + 2, &payloadSize, sizeof(uint64_t));
     if (!isBigEndian())
       swapByteOrder(pBuf + 2, pBuf + 10);
     pMaskingKey = pBuf + 10;
   }
 
   if (mask) {
-    *((int32_t*)pMaskingKey) = maskingKey;
+    memcpy(pMaskingKey, &maskingKey, sizeof(int32_t));
   }
 
   *pLen = (pMaskingKey - pBuf) + (mask ? 4 : 0);
