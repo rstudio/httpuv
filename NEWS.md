@@ -1,3 +1,8 @@
+httpuv 1.5.2.9000
+============
+
+* Fixed [#204](https://github.com/rstudio/httpuv/issues/204): On UBSAN builds of R, there were warnings about unaligned memory access. ([#246](https://github.com/rstudio/httpuv/pull/246))
+
 httpuv 1.5.2
 ============
 
