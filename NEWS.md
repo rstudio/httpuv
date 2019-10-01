@@ -1,3 +1,8 @@
+httpuv 1.5.2.9000
+=================
+
+* Avoid creating a new Rook error stream object for each request. This should improve performance. ([#245](https://github.com/rstudio/httpuv/pull/245))
+
 httpuv 1.5.2
 ============
 
