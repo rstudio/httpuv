@@ -20,7 +20,7 @@ Description: Provides low-level socket and protocol support for handling
     particularly easy to create complete web applications using httpuv alone.
     httpuv is built on top of the libuv and http-parser C libraries, both of
     which were developed by Joyent, Inc. (See LICENSE file for libuv and
-    http-parser license information.)
+    http-parser license information.) - CLA test
 License: GPL (>= 2) | file LICENSE
 Depends:
     R (>= 2.15.1)
