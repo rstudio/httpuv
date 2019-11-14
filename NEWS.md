@@ -2,7 +2,8 @@ httpuv 1.5.2.9000
 =================
 
 * Avoid creating a new Rook error stream object for each request. This should improve performance. ([#245](https://github.com/rstudio/httpuv/pull/245))
-* Not returning HTTP 400 any more for static files when request header "Content-Length"" is 0. This Content-Length header is inserted by some proxies even for messages without payloads.  ([#248](https://github.com/rstudio/httpuv/pull/248))
+
+* Resolved [#247](https://github.com/rstudio/httpuv/issues/247): httpuv no longer returns a HTTP 400 code for static files when the "Content-Length" header is 0. This Content-Length header is inserted by some proxies even for messages without payloads. ([#248](https://github.com/rstudio/httpuv/pull/248))
 
 httpuv 1.5.2
 ============
