@@ -5,11 +5,12 @@ CXX_STD=CXX11
 
 UNAME := $(shell uname)
 
+PKG_LIBS = ./libuv/.libs/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o -pthread
+
 ifeq ($(UNAME), Darwin)
-FRAMEWORK = -framework CoreServices
+PKG_LIBS += -framework CoreServices
 endif
 
-PKG_LIBS = ./libuv/.libs/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o $(FRAMEWORK) -pthread
 ifeq ($(UNAME), SunOS)
 PKG_LIBS += -lkstat -lsendfile -lsocket -lxnet
 endif
