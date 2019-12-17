@@ -56,6 +56,12 @@ int platform_init(int argc, char **argv) {
   _setmode(1, _O_BINARY);
   _setmode(2, _O_BINARY);
 
+#ifdef _MSC_VER
+  _set_fmode(_O_BINARY);
+#else
+  _fmode = _O_BINARY;
+#endif
+
   /* Disable stdio output buffering. */
   setvbuf(stdout, NULL, _IONBF, 0);
   setvbuf(stderr, NULL, _IONBF, 0);
@@ -348,10 +354,4 @@ void rewind_cursor() {
     /* If clear_line fails (stdout is not a console), print a newline. */
     fprintf(stderr, "\n");
   }
-}
-
-
-/* Pause the calling thread for a number of milliseconds. */
-void uv_sleep(int msec) {
-  Sleep(msec);
 }

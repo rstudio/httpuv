@@ -44,6 +44,10 @@
 # pragma clang diagnostic ignored "-Wc99-extensions"
 #endif
 
+#ifdef __GNUC__
+# pragma GCC diagnostic ignored "-Wvariadic-macros"
+#endif
+
 #define TEST_PORT 9123
 #define TEST_PORT_2 9124
 
@@ -126,9 +130,6 @@ typedef enum {
 #define HELPER_IMPL(name)                                                     \
   int run_helper_##name(void);                                                \
   int run_helper_##name(void)
-
-/* Pause the calling thread for a number of milliseconds. */
-void uv_sleep(int msec);
 
 /* Format big numbers nicely. WARNING: leaks memory. */
 const char* fmt(double d);
