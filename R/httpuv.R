@@ -352,6 +352,31 @@ AppWrapper <- R6Class(
 #'     }
 #'   }
 #'
+#' @examples
+#'
+#' \dontrun{
+#' # A WebSocket echo server that listens on port 8080
+#' startServer("0.0.0.0", 8080,
+#'   list(
+#'     onHeaders = function(req) {
+#'       # Print connection headers
+#'       cat(capture.output(str(as.list(req))), sep = "\n")
+#'     },
+#'     onWSOpen = function(ws) {
+#'       cat("Connection opened.\n")
+#'
+#'       ws$onMessage(function(binary, message) {
+#'         cat("Server received message:", message, "\n")
+#'         ws$send(message)
+#'       })
+#'       ws$onClose(function() {
+#'         cat("Connection closed.\n")
+#'       })
+#'
+#'     }
+#'   )
+#' )
+#' }
 #' @export
 WebSocket <- R6Class(
   'WebSocket',
