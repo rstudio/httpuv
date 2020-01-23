@@ -67,7 +67,7 @@ stopAllServers()
 
 A httpuv server application can serve up files on disk. This happens entirely within the I/O thread, so doing so will not block or be blocked by activity in the main R thread.
 
-To serve a path, use `staticPaths` in the app. This will serve the `www/` subdirectory of the current directory as the root of the web path:
+To serve a path, use `staticPaths` in the app. This will serve the `www/` subdirectory of the current directory (from when `startServer` is called) as the root of the web path:
 
 ```R
 s <- startServer("0.0.0.0", path = 5000,
