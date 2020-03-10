@@ -5,8 +5,14 @@
 \alias{excludeStaticPath}
 \title{Create a staticPath object}
 \usage{
-staticPath(path, indexhtml = NULL, fallthrough = NULL,
-  html_charset = NULL, headers = NULL, validation = NULL)
+staticPath(
+  path,
+  indexhtml = NULL,
+  fallthrough = NULL,
+  html_charset = NULL,
+  headers = NULL,
+  validation = NULL
+)
 
 excludeStaticPath()
 }

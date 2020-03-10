@@ -4,9 +4,14 @@
 \alias{staticPathOptions}
 \title{Create options for static paths}
 \usage{
-staticPathOptions(indexhtml = TRUE, fallthrough = FALSE,
-  html_charset = "utf-8", headers = list(),
-  validation = character(0), exclude = FALSE)
+staticPathOptions(
+  indexhtml = TRUE,
+  fallthrough = FALSE,
+  html_charset = "utf-8",
+  headers = list(),
+  validation = character(0),
+  exclude = FALSE
+)
 }
 \arguments{
 \item{indexhtml}{If an index.html file is present, should it be served up
