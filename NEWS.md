@@ -1,6 +1,8 @@
 httpuv 1.5.2.9000
 =================
 
+* Fixed [#204](https://github.com/rstudio/httpuv/issues/204): On UBSAN builds of R, there were warnings about unaligned memory access. ([#246](https://github.com/rstudio/httpuv/pull/246))
+
 * Avoid creating a new Rook error stream object for each request. This should improve performance. ([#245](https://github.com/rstudio/httpuv/pull/245))
 
 * Resolved [#247](https://github.com/rstudio/httpuv/issues/247): httpuv no longer returns a HTTP 400 code for static files when the "Content-Length" header is 0. This Content-Length header is inserted by some proxies even for messages without payloads. ([#248](https://github.com/rstudio/httpuv/pull/248))
