@@ -150,6 +150,10 @@ void requestToEnv(std::shared_ptr<HttpRequest> pRequest, Rcpp::Environment* pEnv
   env["rook.version"] = CharacterVector("1.1-0");
   env["rook.url_scheme"] = CharacterVector("http");
 
+  NumericVector timestamp = NumericVector::create(pRequest->timestamp());
+  timestamp.attr("class") = CharacterVector({"POSIXct", "POSIXt"});
+  env["httpuv.timestamp"] = timestamp;
+
   Address addr = pRequest->serverAddress();
   env["SERVER_NAME"] = CharacterVector(addr.host);
   std::ostringstream portstr;
