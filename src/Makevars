@@ -20,6 +20,9 @@ endif
 ifeq ($(UNAME), OpenBSD)
 PKG_LIBS += -lkvm
 endif
+ifeq ($(UNAME), OS400)
+PKG_LIBS = ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o -pthread -luv
+endif
 
 PKG_CFLAGS = $(C_VISIBILITY) -DSTRICT_R_HEADERS
 PKG_CXXFLAGS = $(CXX_VISIBILITY) -DSTRICT_R_HEADERS
@@ -42,8 +45,11 @@ CONFIGURE_FLAGS="--quiet"
 #   CRAN to flag the package as using abort and printf.
 # PKG_CPPFLAGS += -D_GLIBCXX_ASSERTIONS
 
-
+ifeq ($(UNAME), OS400)
+$(SHLIB): http-parser/http_parser.o sha1/sha1.o base64/base64.o
+else
 $(SHLIB): libuv/.libs/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base64.o
+endif
 
 # We needed to rename lt~obsolete.m4 because the name causes problems with R
 # CMD check. Here we rename it back.
