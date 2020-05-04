@@ -4109,7 +4109,7 @@
 #endif
 
 /* from winternl.h */
-#if !defined(__UNICODE_STRING_DEFINED) && defined(__MINGW32_)
+#if !defined(__UNICODE_STRING_DEFINED) && defined(__MINGW32__)
 #define __UNICODE_STRING_DEFINED
 #endif
 typedef struct _UNICODE_STRING {
@@ -4152,7 +4152,7 @@ typedef const UNICODE_STRING *PCUNICODE_STRING;
       struct {
         UCHAR  DataBuffer[1];
       } GenericReparseBuffer;
-    } u;
+    };
   } REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
 #endif
 
@@ -4160,7 +4160,7 @@ typedef struct _IO_STATUS_BLOCK {
   union {
     NTSTATUS Status;
     PVOID Pointer;
-  } u;
+  };
   ULONG_PTR Information;
 } IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
 
@@ -4436,6 +4436,10 @@ typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
 # define SystemProcessorPerformanceInformation 8
 #endif
 
+#ifndef ProcessConsoleHostProcess
+# define ProcessConsoleHostProcess 49
+#endif
+
 #ifndef FILE_DEVICE_FILE_SYSTEM
 # define FILE_DEVICE_FILE_SYSTEM 0x00000009
 #endif
@@ -4578,6 +4582,13 @@ typedef NTSTATUS (NTAPI *sNtQueryDirectoryFile)
                   BOOLEAN RestartScan
                 );
 
+typedef NTSTATUS (NTAPI *sNtQueryInformationProcess)
+                 (HANDLE ProcessHandle,
+                  UINT ProcessInformationClass,
+                  PVOID ProcessInformation,
+                  ULONG Length,
+                  PULONG ReturnLength);
+
 /*
  * Kernel32 headers
  */
@@ -4718,6 +4729,7 @@ extern sNtSetInformationFile pNtSetInformationFile;
 extern sNtQueryVolumeInformationFile pNtQueryVolumeInformationFile;
 extern sNtQueryDirectoryFile pNtQueryDirectoryFile;
 extern sNtQuerySystemInformation pNtQuerySystemInformation;
+extern sNtQueryInformationProcess pNtQueryInformationProcess;
 
 /* Kernel32 function pointers */
 extern sGetQueuedCompletionStatusEx pGetQueuedCompletionStatusEx;

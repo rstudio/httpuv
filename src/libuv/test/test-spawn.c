@@ -232,6 +232,35 @@ TEST_IMPL(spawn_fails_check_for_waitpid_cleanup) {
 #endif
 
 
+TEST_IMPL(spawn_empty_env) {
+  char* env[1];
+
+  /* The autotools dynamic library build requires the presence of
+   * DYLD_LIBARY_PATH (macOS) or LD_LIBRARY_PATH/LIBPATH (other Unices)
+   * in the environment, but of course that doesn't work with
+   * the empty environment that we're testing here.
+   */
+  if (NULL != getenv("DYLD_LIBRARY_PATH") ||
+      NULL != getenv("LD_LIBRARY_PATH") ||
+      NULL != getenv("LIBPATH")) {
+    RETURN_SKIP("doesn't work with DYLD_LIBRARY_PATH/LD_LIBRARY_PATH/LIBPATH");
+  }
+
+  init_process_options("spawn_helper1", exit_cb);
+  options.env = env;
+  env[0] = NULL;
+
+  ASSERT(0 == uv_spawn(uv_default_loop(), &process, &options));
+  ASSERT(0 == uv_run(uv_default_loop(), UV_RUN_DEFAULT));
+
+  ASSERT(exit_cb_called == 1);
+  ASSERT(close_cb_called == 1);
+
+  MAKE_VALGRIND_HAPPY();
+  return 0;
+}
+
+
 TEST_IMPL(spawn_exit_code) {
   int r;
 
@@ -1392,6 +1421,8 @@ TEST_IMPL(spawn_setuid_fails) {
   int r;
 
   /* if root, become nobody. */
+  /* On IBMi PASE, there is no nobody user. */
+#ifndef __PASE__
   uv_uid_t uid = getuid();
   if (uid == 0) {
     struct passwd* pw;
@@ -1400,14 +1431,28 @@ TEST_IMPL(spawn_setuid_fails) {
     ASSERT(0 == setgid(pw->pw_gid));
     ASSERT(0 == setuid(pw->pw_uid));
   }
+#endif  /* !__PASE__ */
 
   init_process_options("spawn_helper1", fail_cb);
 
   options.flags |= UV_PROCESS_SETUID;
+  /* On IBMi PASE, there is no root user. User may grant 
+   * root-like privileges, including setting uid to 0.
+   */
+#if defined(__PASE__)
+  options.uid = -1;
+#else
   options.uid = 0;
+#endif
+
+  /* These flags should be ignored on Unices. */
+  options.flags |= UV_PROCESS_WINDOWS_HIDE;
+  options.flags |= UV_PROCESS_WINDOWS_HIDE_CONSOLE;
+  options.flags |= UV_PROCESS_WINDOWS_HIDE_GUI;
+  options.flags |= UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
 
   r = uv_spawn(uv_default_loop(), &process, &options);
-#if defined(__CYGWIN__)
+#if defined(__CYGWIN__) || defined(__PASE__)
   ASSERT(r == UV_EINVAL);
 #else
   ASSERT(r == UV_EPERM);
@@ -1427,6 +1472,8 @@ TEST_IMPL(spawn_setgid_fails) {
   int r;
 
   /* if root, become nobody. */
+  /* On IBMi PASE, there is no nobody user. */
+#ifndef __PASE__
   uv_uid_t uid = getuid();
   if (uid == 0) {
     struct passwd* pw;
@@ -1435,18 +1482,22 @@ TEST_IMPL(spawn_setgid_fails) {
     ASSERT(0 == setgid(pw->pw_gid));
     ASSERT(0 == setuid(pw->pw_uid));
   }
+#endif  /* !__PASE__ */
 
   init_process_options("spawn_helper1", fail_cb);
 
   options.flags |= UV_PROCESS_SETGID;
-#if defined(__MVS__)
+  /* On IBMi PASE, there is no root user. User may grant 
+   * root-like privileges, including setting gid to 0.
+   */
+#if defined(__MVS__) || defined(__PASE__)
   options.gid = -1;
 #else
   options.gid = 0;
 #endif
 
   r = uv_spawn(uv_default_loop(), &process, &options);
-#if defined(__CYGWIN__) || defined(__MVS__)
+#if defined(__CYGWIN__) || defined(__MVS__) || defined(__PASE__)
   ASSERT(r == UV_EINVAL);
 #else
   ASSERT(r == UV_EPERM);
