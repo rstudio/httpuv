@@ -765,6 +765,13 @@ test_that("Last-Modified and If-Modified-Since headers", {
 
 
 test_that("Paths with non-ASCII characters", {
+  # Workaround for https://github.com/rstudio/httpuv/issues/264
+  # On Unix platforms that are using a non-UTF-8 locale, don't do these tests.
+  testthat::skip_if(
+    .Platform$OS.type == "unix" && Encoding(enc2native("\U00FC")) != "UTF-8",
+    "Skipping non-ASCII path tests on UTF-8 Unix system"
+  )
+
   # "apps/fü", in UTF-8 encoding.
   nonascii_path <- test_path("apps/f\U00FC")
   dir.create(nonascii_path)
