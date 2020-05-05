@@ -76,6 +76,7 @@ named pipe.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-new"></a>}}
+\if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PipeServer$new(name, mask, app, quiet = FALSE)}\if{html}{\out{</div>}}
@@ -84,6 +85,7 @@ named pipe.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getName"></a>}}
+\if{latex}{\out{\hypertarget{method-getName}{}}}
 \subsection{Method \code{getName()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PipeServer$getName()}\if{html}{\out{</div>}}
@@ -92,6 +94,7 @@ named pipe.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getMask"></a>}}
+\if{latex}{\out{\hypertarget{method-getMask}{}}}
 \subsection{Method \code{getMask()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PipeServer$getMask()}\if{html}{\out{</div>}}

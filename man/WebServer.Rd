@@ -76,6 +76,7 @@ can be running at the same time.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-new"></a>}}
+\if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebServer$new(host, port, app, quiet = FALSE)}\if{html}{\out{</div>}}
@@ -84,6 +85,7 @@ can be running at the same time.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getHost"></a>}}
+\if{latex}{\out{\hypertarget{method-getHost}{}}}
 \subsection{Method \code{getHost()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebServer$getHost()}\if{html}{\out{</div>}}
@@ -92,6 +94,7 @@ can be running at the same time.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getPort"></a>}}
+\if{latex}{\out{\hypertarget{method-getPort}{}}}
 \subsection{Method \code{getPort()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebServer$getPort()}\if{html}{\out{</div>}}

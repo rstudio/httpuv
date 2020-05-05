@@ -55,6 +55,7 @@ be instantiated.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-stop"></a>}}
+\if{latex}{\out{\hypertarget{method-stop}{}}}
 \subsection{Method \code{stop()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Server$stop()}\if{html}{\out{</div>}}
@@ -63,6 +64,7 @@ be instantiated.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-isRunning"></a>}}
+\if{latex}{\out{\hypertarget{method-isRunning}{}}}
 \subsection{Method \code{isRunning()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Server$isRunning()}\if{html}{\out{</div>}}
@@ -71,6 +73,7 @@ be instantiated.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getStaticPaths"></a>}}
+\if{latex}{\out{\hypertarget{method-getStaticPaths}{}}}
 \subsection{Method \code{getStaticPaths()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Server$getStaticPaths()}\if{html}{\out{</div>}}
@@ -79,6 +82,7 @@ be instantiated.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-setStaticPath"></a>}}
+\if{latex}{\out{\hypertarget{method-setStaticPath}{}}}
 \subsection{Method \code{setStaticPath()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Server$setStaticPath(..., .list = NULL)}\if{html}{\out{</div>}}
@@ -87,6 +91,7 @@ be instantiated.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-removeStaticPath"></a>}}
+\if{latex}{\out{\hypertarget{method-removeStaticPath}{}}}
 \subsection{Method \code{removeStaticPath()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Server$removeStaticPath(path)}\if{html}{\out{</div>}}
@@ -95,6 +100,7 @@ be instantiated.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getStaticPathOptions"></a>}}
+\if{latex}{\out{\hypertarget{method-getStaticPathOptions}{}}}
 \subsection{Method \code{getStaticPathOptions()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Server$getStaticPathOptions()}\if{html}{\out{</div>}}
@@ -103,6 +109,7 @@ be instantiated.
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-setStaticPathOption"></a>}}
+\if{latex}{\out{\hypertarget{method-setStaticPathOption}{}}}
 \subsection{Method \code{setStaticPathOption()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Server$setStaticPathOption(..., .list = NULL)}\if{html}{\out{</div>}}

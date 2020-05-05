@@ -33,7 +33,7 @@ Imports:
 LinkingTo: Rcpp, BH, later
 URL: https://github.com/rstudio/httpuv
 SystemRequirements: GNU make
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0
 Suggests:
     testthat,
     callr,
