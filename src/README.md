@@ -10,24 +10,17 @@ The contents of the libuv/ directory are the canonical libuv sources, with chang
 
 To update libuv to a new version, do the following:
 
-* Edit `tools/update_libuv.R` so that `version` is the new version number, then commit.
-* Run that script, do a `git add src/libuv`, then commit.
+* Edit `tools/update_libuv.R` so that `version` is the new version number, then add it to git.
+
+    ```
+    git add tools/update_libuv.R
+    ```
+
+* Run that script, then do a `git add src/libuv`.
 
     ```
     tools/update_libuv.R
     git add src/libuv
-    git commit
-    ```
-
-* Cherry-pick some fixes:
-
-    ```
-    # Fix for unnamed structs on MinGW
-    git cherry-pick 327a0a9
-    # Fix for empty translation unit warning on Windows with -pedantic
-    git cherry-pick d5a24b7
-    # Fix for Solaris
-    git cherry-pick fea361c
     ```
 
 * On Linux or Mac, run libuv's `autogen.sh`, and commit the files.
@@ -56,10 +49,21 @@ To update libuv to a new version, do the following:
     git add -f m4/ltversion.m4
     git add -f missing
 
-    git commit
+    git commit -m "Update to libuv [VERSION]"
     ```
 
-* Update this README to refer to the new cherry-picked commits, then commit.
+* Cherry-pick some fixes:
+
+    ```
+    # Fix for unnamed structs on MinGW
+    git cherry-pick 327a0a9
+    # Fix for empty translation unit warning on Windows with -pedantic
+    git cherry-pick d5a24b7
+    # Fix for Solaris
+    git cherry-pick fea361c
+    ```
+
+* If the cherry-picked commits needed any modifcation, update this README to refer to the new cherry-picked commits, then commit.
 
 
 ### Details

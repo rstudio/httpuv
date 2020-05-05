@@ -21,9 +21,10 @@
 #include "uv.h"
 #include "internal.h"
 
-#if TARGET_OS_IPHONE
+#if TARGET_OS_IPHONE || MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 
 /* iOS (currently) doesn't provide the FSEvents-API (nor CoreServices) */
+/* macOS prior to 10.7 doesn't provide the full FSEvents API so use kqueue */
 
 int uv__fsevents_init(uv_fs_event_t* handle) {
   return 0;
@@ -262,10 +263,12 @@ static void uv__fsevents_event_cb(ConstFSEventStreamRef streamRef,
       if (len < handle->realpath_len)
         continue;
 
+      /* Make sure that realpath actually named a directory,
+       * (unless watching root, which alone keeps a trailing slash on the realpath)
+       * or that we matched the whole string */
       if (handle->realpath_len != len &&
+          handle->realpath_len > 1 &&
           path[handle->realpath_len] != '/')
-        /* Make sure that realpath actually named a directory,
-         * or that we matched the whole string */
         continue;
 
       if (memcmp(path, handle->realpath, handle->realpath_len) != 0)
@@ -744,6 +747,8 @@ static void* uv__cf_loop_runner(void* arg) {
                          state->signal_source,
                          *pkCFRunLoopDefaultMode);
 
+  state->loop = NULL;
+
   return NULL;
 }
 
@@ -796,12 +801,13 @@ int uv__cf_loop_signal(uv_loop_t* loop,
 
   uv_mutex_lock(&loop->cf_mutex);
   QUEUE_INSERT_TAIL(&loop->cf_signals, &item->member);
-  uv_mutex_unlock(&loop->cf_mutex);
 
   state = loop->cf_state;
   assert(state != NULL);
   pCFRunLoopSourceSignal(state->signal_source);
   pCFRunLoopWakeUp(state->loop);
+
+  uv_mutex_unlock(&loop->cf_mutex);
 
   return 0;
 }

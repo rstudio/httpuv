@@ -46,6 +46,12 @@ Data types
         Replacement function for :man:`free(3)`.
         See :c:func:`uv_replace_allocator`.
 
+.. c:type::  void (*uv_random_cb)(uv_random_t* req, int status, void* buf, size_t buflen)
+
+    Callback passed to :c:func:`uv_random`. `status` is non-zero in case of
+    error. The `buf` pointer is the same pointer that was passed to
+    :c:func:`uv_random`.
+
 .. c:type:: uv_file
 
     Cross platform representation of a file handle.
@@ -64,6 +70,28 @@ Data types
     Cross platform representation of a `pid_t`.
 
     .. versionadded:: 1.16.0
+
+.. c:type:: uv_timeval_t
+
+    Data type for storing times.
+
+    ::
+
+        typedef struct {
+            long tv_sec;
+            long tv_usec;
+        } uv_timeval_t;
+
+.. c:type:: uv_timeval64_t
+
+    Alternative data type for storing times.
+
+    ::
+
+        typedef struct {
+            int64_t tv_sec;
+            int32_t tv_usec;
+        } uv_timeval64_t;
 
 .. c:type:: uv_rusage_t
 
@@ -158,6 +186,20 @@ Data types
             char machine[256];
         } uv_utsname_t;
 
+.. c:type:: uv_env_item_t
+
+    Data type for environment variable storage.
+
+    ::
+
+        typedef struct uv_env_item_s {
+            char* name;
+            char* value;
+        } uv_env_item_t;
+
+.. c:type:: uv_random_t
+
+    Random data request type.
 
 API
 ---
@@ -202,6 +244,15 @@ API
 .. c:function:: char** uv_setup_args(int argc, char** argv)
 
     Store the program arguments. Required for getting / setting the process title.
+    Libuv may take ownership of the memory that `argv` points to. This function
+    should be called exactly once, at program start-up.
+
+    Example:
+
+    ::
+
+        argv = uv_setup_args(argc, argv);  /* May return a copy of argv. */
+
 
 .. c:function:: int uv_get_process_title(char* buffer, size_t size)
 
@@ -272,7 +323,7 @@ API
 
 .. c:function:: void uv_loadavg(double avg[3])
 
-    Gets the load average. See: `<http://en.wikipedia.org/wiki/Load_(computing)>`_
+    Gets the load average. See: `<https://en.wikipedia.org/wiki/Load_(computing)>`_
 
     .. note::
         Returns [0,0,0] on Windows (i.e., it's not implemented).
@@ -439,6 +490,19 @@ API
 
     Gets memory information (in bytes).
 
+.. c:function:: uint64_t uv_get_constrained_memory(void)
+
+    Gets the amount of memory available to the process (in bytes) based on
+    limits imposed by the OS. If there is no such constraint, or the constraint
+    is unknown, `0` is returned. Note that it is not unusual for this value to
+    be less than or greater than :c:func:`uv_get_total_memory`.
+
+    .. note::
+        This function currently only returns a non-zero value on Linux, based
+        on cgroups if it is present.
+
+    .. versionadded:: 1.29.0
+
 .. c:function:: uint64_t uv_hrtime(void)
 
     Returns the current high-resolution real time. This is expressed in
@@ -487,6 +551,23 @@ API
         stability guarantees.
 
     .. versionadded:: 1.8.0
+
+.. c:function:: int uv_os_environ(uv_env_item_t** envitems, int* count)
+
+    Retrieves all environment variables. This function will allocate memory
+    which must be freed by calling :c:func:`uv_os_free_environ`.
+
+    .. warning::
+        This function is not thread safe.
+
+    .. versionadded:: 1.31.0
+
+.. c:function:: void uv_os_free_environ(uv_env_item_t* envitems, int count);
+
+    Frees the memory allocated for the environment variables by
+    :c:func:`uv_os_environ`.
+
+    .. versionadded:: 1.31.0
 
 .. c:function:: int uv_os_getenv(const char* name, char* buffer, size_t* size)
 
@@ -568,13 +649,73 @@ API
         On Windows, setting `PRIORITY_HIGHEST` will only work for elevated user,
         for others it will be silently reduced to `PRIORITY_HIGH`.
 
+    .. note::
+        On IBM i PASE, the highest process priority is -10. The constant
+        `UV_PRIORITY_HIGHEST` is -10, `UV_PRIORITY_HIGH` is -7, 
+        `UV_PRIORITY_ABOVE_NORMAL` is -4, `UV_PRIORITY_NORMAL` is 0,
+        `UV_PRIORITY_BELOW_NORMAL` is 15 and `UV_PRIORITY_LOW` is 39.
+
+    .. note::
+        On IBM i PASE, you are not allowed to change your priority unless you
+        have the *JOBCTL special authority (even to lower it).
+
     .. versionadded:: 1.23.0
 
 .. c:function:: int uv_os_uname(uv_utsname_t* buffer)
 
     Retrieves system information in `buffer`. The populated data includes the
     operating system name, release, version, and machine. On non-Windows
-    systems, `uv_os_uname()` is a thin wrapper around :man:`uname(3)`. Returns
+    systems, `uv_os_uname()` is a thin wrapper around :man:`uname(2)`. Returns
     zero on success, and a non-zero error value otherwise.
 
     .. versionadded:: 1.25.0
+
+.. c:function:: int uv_gettimeofday(uv_timeval64_t* tv)
+
+    Cross-platform implementation of :man:`gettimeofday(2)`. The timezone
+    argument to `gettimeofday()` is not supported, as it is considered obsolete.
+
+    .. versionadded:: 1.28.0
+
+.. c:function:: int uv_random(uv_loop_t* loop, uv_random_t* req, void* buf, size_t buflen, unsigned int flags, uv_random_cb cb)
+
+    Fill `buf` with exactly `buflen` cryptographically strong random bytes
+    acquired from the system CSPRNG. `flags` is reserved for future extension
+    and must currently be 0.
+
+    Short reads are not possible. When less than `buflen` random bytes are
+    available, a non-zero error value is returned or passed to the callback.
+
+    The synchronous version may block indefinitely when not enough entropy
+    is available. The asynchronous version may not ever finish when the system
+    is low on entropy.
+
+    Sources of entropy:
+
+    - Windows: `RtlGenRandom <https://docs.microsoft.com/en-us/windows/desktop/api/ntsecapi/nf-ntsecapi-rtlgenrandom>_`.
+    - Linux, Android: :man:`getrandom(2)` if available, or :man:`urandom(4)`
+      after reading from `/dev/random` once, or the `KERN_RANDOM`
+      :man:`sysctl(2)`.
+    - FreeBSD: `getrandom(2) <https://www.freebsd.org/cgi/man.cgi?query=getrandom&sektion=2>_`,
+      or `/dev/urandom` after reading from `/dev/random` once.
+    - NetBSD: `KERN_ARND` `sysctl(3) <https://netbsd.gw.com/cgi-bin/man-cgi?sysctl+3+NetBSD-current>_`
+    - macOS, OpenBSD: `getentropy(2) <https://man.openbsd.org/getentropy.2>_`
+      if available, or `/dev/urandom` after reading from `/dev/random` once.
+    - AIX: `/dev/random`.
+    - IBM i: `/dev/urandom`.
+    - Other UNIX: `/dev/urandom` after reading from `/dev/random` once.
+
+    :returns: 0 on success, or an error code < 0 on failure. The contents of
+        `buf` is undefined after an error.
+
+    .. note::
+        When using the synchronous version, both `loop` and `req` parameters
+        are not used and can be set to `NULL`.
+
+    .. versionadded:: 1.33.0
+
+.. c:function:: void uv_sleep(unsigned int msec)
+
+    Causes the calling thread to sleep for `msec` milliseconds.
+
+    .. versionadded:: 1.34.0

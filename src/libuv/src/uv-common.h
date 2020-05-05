@@ -104,6 +104,7 @@ enum {
   /* Only used by uv_udp_t handles. */
   UV_HANDLE_UDP_PROCESSING              = 0x01000000,
   UV_HANDLE_UDP_CONNECTED               = 0x02000000,
+  UV_HANDLE_UDP_RECVMMSG                = 0x04000000,
 
   /* Only used by uv_pipe_t handles. */
   UV_HANDLE_NON_OVERLAPPED_PIPE         = 0x01000000,
@@ -193,6 +194,8 @@ size_t uv__count_bufs(const uv_buf_t bufs[], unsigned int nbufs);
 int uv__socket_sockopt(uv_handle_t* handle, int optname, int* value);
 
 void uv__fs_scandir_cleanup(uv_fs_t* req);
+void uv__fs_readdir_cleanup(uv_fs_t* req);
+uv_dirent_type_t uv__fs_get_dirent_type(uv__dirent_t* dent);
 
 int uv__next_timeout(const uv_loop_t* loop);
 void uv__run_timers(uv_loop_t* loop);
@@ -320,5 +323,6 @@ char *uv__strndup(const char* s, size_t n);
 void* uv__malloc(size_t size);
 void uv__free(void* ptr);
 void* uv__realloc(void* ptr, size_t size);
+void* uv__reallocf(void* ptr, size_t size);
 
 #endif /* UV_COMMON_H_ */

@@ -3,7 +3,7 @@
 # This script can be run from the command line or sourced from an R session.
 library(rprojroot)
 
-version <- "1.27.0"
+version <- "1.37.0"
 
 # The git tag for the https://github.com/libuv/libuv repo.
 tag <- paste0("v", version)
