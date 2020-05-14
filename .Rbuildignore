@@ -14,3 +14,4 @@
 ^CONTRIBUTING.md$
 ^.*/\.libs/$
 ^.*/\.deps/$
+^revdep$
