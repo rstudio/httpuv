@@ -1,6 +1,8 @@
 httpuv 1.5.3
 ============
 
+* Updated libuv to version 1.37.0. ([#266](https://github.com/rstudio/httpuv/pull/266))
+
 * Fixed [#204](https://github.com/rstudio/httpuv/issues/204): On UBSAN builds of R, there were warnings about unaligned memory access. ([#246](https://github.com/rstudio/httpuv/pull/246))
 
 * Avoid creating a new Rook error stream object for each request. This should improve performance. ([#245](https://github.com/rstudio/httpuv/pull/245))
