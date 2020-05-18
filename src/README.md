@@ -61,6 +61,8 @@ To update libuv to a new version, do the following:
     git cherry-pick d5a24b7
     # Fix for Solaris
     git cherry-pick fea361c
+    # USe C-style comments
+    git cherry-pick bf9dd71
     ```
 
 * If the cherry-picked commits needed any modifcation, update this README to refer to the new cherry-picked commits, then commit.
@@ -98,6 +100,11 @@ It has `-DSUNOS_NO_IFADDRS` added to it. See [here](https://github.com/libuv/lib
 ```
 libuv_la_CFLAGS += -D__EXTENSIONS__ -D_XOPEN_SOURCE=500 -DSUNOS_NO_IFADDRS
 ```
+
+#### C-style comments
+
+In src/libuv/include/uv.h, the original file has some C++-style comments, but this raises a significant warning for `R CMD check` on r-devel-linux-x86_64-debian-gcc (as of 2020-05-15). The fix is to replace with C-style comments.
+
 
 #### Run `autogen.sh`
 
