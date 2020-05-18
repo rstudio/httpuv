@@ -61,8 +61,10 @@ To update libuv to a new version, do the following:
     git cherry-pick d5a24b7
     # Fix for Solaris
     git cherry-pick fea361c
-    # USe C-style comments
+    # Use C-style comments
     git cherry-pick bf9dd71
+    # Workaround for warning on Windows about no return statement
+    git cherry-pick 7648442
     ```
 
 * If the cherry-picked commits needed any modifcation, update this README to refer to the new cherry-picked commits, then commit.
