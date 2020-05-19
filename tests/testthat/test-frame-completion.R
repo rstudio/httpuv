@@ -4,6 +4,8 @@
 context("frame completion")
 
 test_that("a close message with no payload is processed", {
+  # Timing on CRAN build machines can be unreliable.
+  skip_on_cran()
   elapsed <- NULL
   client_on_open_called <- FALSE
 
