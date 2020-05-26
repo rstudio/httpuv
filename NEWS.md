@@ -1,67 +1,69 @@
-httpuv 1.5.2.9000
-=================
+httpuv 1.5.3.1
+==============
 
-* Fixed [#204](https://github.com/rstudio/httpuv/issues/204): On UBSAN builds of R, there were warnings about unaligned memory access. ([#246](https://github.com/rstudio/httpuv/pull/246))
+* Updated libuv to version 1.37.0. (#266)
 
-* Avoid creating a new Rook error stream object for each request. This should improve performance. ([#245](https://github.com/rstudio/httpuv/pull/245))
+* Fixed #204: On UBSAN builds of R, there were warnings about unaligned memory access. (#246)
 
-* Resolved [#247](https://github.com/rstudio/httpuv/issues/247): httpuv no longer returns a HTTP 400 code for static files when the "Content-Length" header is 0. This Content-Length header is inserted by some proxies even for messages without payloads. ([#248](https://github.com/rstudio/httpuv/pull/248))
+* Avoid creating a new Rook error stream object for each request. This should improve performance. (#245)
 
-* Resolved [#253](https://github.com/rstudio/httpuv/issues/253): Setting the FRAMEWORK environment variable would break compilation.  This change removes any dependency on that variable. ([#254](https://github.com/rstudio/httpuv/pull/254))
+* Resolved #247: httpuv no longer returns a HTTP 400 code for static files when the "Content-Length" header is 0. This Content-Length header is inserted by some proxies even for messages without payloads. (#248)
+
+* Resolved #253: Setting the FRAMEWORK environment variable would break compilation.  This change removes any dependency on that variable. (#254)
 
 httpuv 1.5.2
 ============
 
-* In the static file-serving code path, httpuv previously looked for a `Connection: upgrade` header; if it found this header, it would not try to serve a static file, and it would instead forward the HTTP request to the R code path. However, some proxies are configured to always set this header, even when the connection is not actually meant to be upgraded. Now, instead of looking for a `Connection: upgrade` header, httpuv looks for the presence of an `Upgrade` header (with any value), and should be more robust to incorrectly-configured proxies. ([#215](https://github.com/rstudio/httpuv/pull/215))
+* In the static file-serving code path, httpuv previously looked for a `Connection: upgrade` header; if it found this header, it would not try to serve a static file, and it would instead forward the HTTP request to the R code path. However, some proxies are configured to always set this header, even when the connection is not actually meant to be upgraded. Now, instead of looking for a `Connection: upgrade` header, httpuv looks for the presence of an `Upgrade` header (with any value), and should be more robust to incorrectly-configured proxies. (#215)
 
-* Fixed handling of messages without payloads: ([#219](https://github.com/rstudio/httpuv/pull/219))
+* Fixed handling of messages without payloads: (#219)
 
-* Fixed [#224](https://github.com/rstudio/httpuv/issues/224): Static file serving on Windows did not work correctly if it was from a path that contained non-ASCII characters. ([#227](https://github.com/rstudio/httpuv/pull/227))
+* Fixed #224: Static file serving on Windows did not work correctly if it was from a path that contained non-ASCII characters. (#227)
 
-* Resolved [#194](https://github.com/rstudio/httpuv/issues/194), [#233](https://github.com/rstudio/httpuv/issues/233): Added a `quiet` option to `startServer`, which suppresses startup error messages that are normally printed to console (and can't be intercepted with `capture.output()`). ([#234](https://github.com/rstudio/httpuv/pull/234))
+* Resolved #194, #233: Added a `quiet` option to `startServer`, which suppresses startup error messages that are normally printed to console (and can't be intercepted with `capture.output()`). (#234)
 
-* Added a new function `randomPort()`, which returns a random available port for listening on. ([#234](https://github.com/rstudio/httpuv/pull/234))
+* Added a new function `randomPort()`, which returns a random available port for listening on. (#234)
 
-* Added a new (unexported) function `logLevel()`, for controlling debugging information that will be printed to the console. Previously, httpuv occasionally printed messages like `ERROR: [uv_write] broken pipe` and `ERROR: [uv_write] bad file descriptor` by default. This happened when the server tried to write to a pipe that was already closed, but the situation was not harmful, and was already being handled correctly. Now these messages are printed only if the log level is set to `INFO` or `DEBUG`. ([#223](https://github.com/rstudio/httpuv/pull/223))
+* Added a new (unexported) function `logLevel()`, for controlling debugging information that will be printed to the console. Previously, httpuv occasionally printed messages like `ERROR: [uv_write] broken pipe` and `ERROR: [uv_write] bad file descriptor` by default. This happened when the server tried to write to a pipe that was already closed, but the situation was not harmful, and was already being handled correctly. Now these messages are printed only if the log level is set to `INFO` or `DEBUG`. (#223)
 
-* If an application's `$call()` method is missing, it will now give a 404 response instead of a 500 response. ([#237](https://github.com/rstudio/httpuv/pull/237))
+* If an application's `$call()` method is missing, it will now give a 404 response instead of a 500 response. (#237)
 
-* Disallowed backslash in static path, to prevent path traversal attacks. ([#235](https://github.com/rstudio/httpuv/pull/235))
+* Disallowed backslash in static path, to prevent path traversal attacks. (#235)
 
-* Static file serving on Windows could fail if multiple requests accessed the same file simultaneously. ([#239](https://github.com/rstudio/httpuv/pull/239))
+* Static file serving on Windows could fail if multiple requests accessed the same file simultaneously. (#239)
 
 httpuv 1.5.1
 ============
 
-* Fixed issues for compilers that didn't support C++11, notably on RHEL and Centos 6. ([#210](https://github.com/rstudio/httpuv/pull/210))
+* Fixed issues for compilers that didn't support C++11, notably on RHEL and Centos 6. (#210)
 
-* Fixed [#208](https://github.com/rstudio/httpuv/issues/208): In some cases, a race condition could cause the R process to exit when starting a new server. ([#211](https://github.com/rstudio/httpuv/pull/211))
+* Fixed #208: In some cases, a race condition could cause the R process to exit when starting a new server. (#211)
 
-* Updated to libuv 1.27.0. This fixed fixed [#213](https://github.com/rstudio/httpuv/issues/213): Valgrind reported an error about a pointer pointing to uninitialized memory. ([#214](https://github.com/rstudio/httpuv/pull/214))
+* Updated to libuv 1.27.0. This fixed fixed #213: Valgrind reported an error about a pointer pointing to uninitialized memory. (#214)
 
 
 httpuv 1.5.0
 ============
 
-* Added support for serving static files from the background I/O thread. Files can now be served from the filesystem without involving the main R thread, which means that these operations won't block or be blocked by code that runs in the main R thread. ([#177](https://github.com/rstudio/httpuv/pull/177))
+* Added support for serving static files from the background I/O thread. Files can now be served from the filesystem without involving the main R thread, which means that these operations won't block or be blocked by code that runs in the main R thread. (#177)
 
-* Running httpuv applications are now represented by R6 objects of class `WebServer` and `PipeServer`. These objects have methods to query and update the application. ([#177](https://github.com/rstudio/httpuv/pull/177))
+* Running httpuv applications are now represented by R6 objects of class `WebServer` and `PipeServer`. These objects have methods to query and update the application. (#177)
 
-* Converted existing reference classes (`InputStream`, `NullInputStream`, `ErrorStream`, `AppWrapper`, and `WebSocket`) to R6 classes. ([#178](https://github.com/rstudio/httpuv/pull/178))
+* Converted existing reference classes (`InputStream`, `NullInputStream`, `ErrorStream`, `AppWrapper`, and `WebSocket`) to R6 classes. (#178)
 
-* Fixed [#168](https://github.com/rstudio/httpuv/issues/168): A SIGPIPE signal on the httpuv background thread could cause the process to quit. This can happen in some instances when the server is under heavy load. ([#169](https://github.com/rstudio/httpuv/pull/169))
+* Fixed #168: A SIGPIPE signal on the httpuv background thread could cause the process to quit. This can happen in some instances when the server is under heavy load. (#169)
 
-* Fixed [#122](https://github.com/rstudio/httpuv/issues/122): `decodeURI()` and `decodeURIComponent()` previously returned strings encoded with the system's native encoding; they now return UTF-8 encoded strings. ([#185](https://github.com/rstudio/httpuv/pull/185), [#192](https://github.com/rstudio/httpuv/pull/192))
+* Fixed #122: `decodeURI()` and `decodeURIComponent()` previously returned strings encoded with the system's native encoding; they now return UTF-8 encoded strings. (#185, #192)
 
-* `encodeURI()` and `encodeURIComponent()`, now convert their inputs to UTF-8 before URL-encoding. ([#192](https://github.com/rstudio/httpuv/pull/192))
+* `encodeURI()` and `encodeURIComponent()`, now convert their inputs to UTF-8 before URL-encoding. (#192)
 
-* `encodeURI()`, `encodeURIComponent()`, `decodeURI()`, and `decodeURIComponent()` now handle `NA`s correctly. ([#192](https://github.com/rstudio/httpuv/pull/192))
+* `encodeURI()`, `encodeURIComponent()`, `decodeURI()`, and `decodeURIComponent()` now handle `NA`s correctly. (#192)
 
-* `service()` now executes a single `later` callback, rather than all eligible callbacks. This gives callers more opportunities to perform their own housekeeping when multiple expensive callbacks queue up. ([#176](https://github.com/rstudio/httpuv/pull/176))
+* `service()` now executes a single `later` callback, rather than all eligible callbacks. This gives callers more opportunities to perform their own housekeeping when multiple expensive callbacks queue up. (#176)
 
-* Fixed [#173](https://github.com/rstudio/httpuv/pull/173): The source code is now compiled with `-DSTRICT_R_HEADERS`, which eliminates the need to undefine the `Realloc` and `Free` macros.
+* Fixed #173: The source code is now compiled with `-DSTRICT_R_HEADERS`, which eliminates the need to undefine the `Realloc` and `Free` macros.
 
-* Updated to libuv 1.23.1. ([#174](https://github.com/rstudio/httpuv/pull/174))
+* Updated to libuv 1.23.1. (#174)
 
 
 httpuv 1.4.5.1
@@ -72,12 +74,12 @@ httpuv 1.4.5.1
 httpuv 1.4.5
 ============
 
-* Fixed [#161](https://github.com/rstudio/httpuv/issues/161): An HTTP connection could get upgraded to a WebSocket too early, which sometimes resulted in closed connections. ([#162](https://github.com/rstudio/httpuv/pull/162))
+* Fixed #161: An HTTP connection could get upgraded to a WebSocket too early, which sometimes resulted in closed connections. (#162)
 
 httpuv 1.4.4.2
 ==============
 
-* Changed compiler flags to work with gcc 8.10 on Windows, so that httpuv will build with the new versions of Rtools. ([#160](https://github.com/rstudio/httpuv/pull/160))
+* Changed compiler flags to work with gcc 8.10 on Windows, so that httpuv will build with the new versions of Rtools. (#160)
 
 httpuv 1.4.4.1
 ==============
@@ -87,73 +89,73 @@ httpuv 1.4.4.1
 httpuv 1.4.4
 ============
 
-* Fixed [#144](https://github.com/rstudio/httpuv/issues/144): Before closing a handle, make sure that it is not already closing. ([#145](https://github.com/rstudio/httpuv/pull/145))
+* Fixed #144: Before closing a handle, make sure that it is not already closing. (#145)
 
-* Exported `ipFamily()` function, which tests whether a string represents an IPv4 address, IPv6 address, or neither. ([#142](https://github.com/rstudio/httpuv/pull/142))
+* Exported `ipFamily()` function, which tests whether a string represents an IPv4 address, IPv6 address, or neither. (#142)
 
 * Templated C++ code with the format `A<B<C>>` has been changed to `A<B<C> >`. Allowing consecutive `>>` is a feature of C++11.
 
-* httpuv is now compiled with `_GLIBCXX_ASSERTIONS`, to help catch bugs. ([#137](https://github.com/rstudio/httpuv/pull/137))
+* httpuv is now compiled with `_GLIBCXX_ASSERTIONS`, to help catch bugs. (#137)
 
-* The Rook `req` environment now includes an item `req$HEADERS`, which is a named character vector of request headers. ([#143](https://github.com/rstudio/httpuv/pull/143))
+* The Rook `req` environment now includes an item `req$HEADERS`, which is a named character vector of request headers. (#143)
 
-* Fixed [#101](https://github.com/rstudio/httpuv/issues/101): If server creation fails, report reason why. ([#146](https://github.com/rstudio/httpuv/pull/146), [#149](https://github.com/rstudio/httpuv/pull/149))
+* Fixed #101: If server creation fails, report reason why. (#146, #149)
 
-* Fixed [#147](https://github.com/rstudio/httpuv/issues/147): Santizer complained when starting app with `startPipeServer` after a failed app start. ([#149](https://github.com/rstudio/httpuv/pull/149))
+* Fixed #147: Santizer complained when starting app with `startPipeServer` after a failed app start. (#149)
 
-* Fixed [#150](https://github.com/rstudio/httpuv/issues/150), [#151](https://github.com/rstudio/httpuv/issues/151): On some platforms, httpuv would fail to install from a zip file because R's `unzip()` function did not preserve the executable permission for `src/libuv/configure`. ([#152](https://github.com/rstudio/httpuv/pull/152))
+* Fixed #150, #151: On some platforms, httpuv would fail to install from a zip file because R's `unzip()` function did not preserve the executable permission for `src/libuv/configure`. (#152)
 
-* Worked around an issue where Shiny apps couldn't be viewed when launched from RStudio Server using Firefox. ([#153](https://github.com/rstudio/httpuv/pull/153))
+* Worked around an issue where Shiny apps couldn't be viewed when launched from RStudio Server using Firefox. (#153)
 
 httpuv 1.4.3
 ============
 
-* Fixed [#127](https://github.com/rstudio/httpuv/issues/127): Compilation failed on some platforms because `NULL` was used instead of an `Rcpp::List`. ([#131](https://github.com/rstudio/httpuv/pull/131))
+* Fixed #127: Compilation failed on some platforms because `NULL` was used instead of an `Rcpp::List`. (#131)
 
-* Fixed [#133](https://github.com/rstudio/httpuv/issues/133): Assertion failures when running on Fedora 28. ([#136](https://github.com/rstudio/httpuv/pull/136))
+* Fixed #133: Assertion failures when running on Fedora 28. (#136)
 
-* Fixed [#134](https://github.com/rstudio/httpuv/issues/134): Sanitizer complains when starting app after a failed app start. ([#138](https://github.com/rstudio/httpuv/pull/138))
+* Fixed #134: Sanitizer complains when starting app after a failed app start. (#138)
 
 httpuv 1.4.2
 ============
 
-* Fixed [#126](https://github.com/rstudio/httpuv/issues/126): The Makevars.win file had a line with spaces instead of a tab. This caused problems when installing with the `--clean` flag.
+* Fixed #126: The Makevars.win file had a line with spaces instead of a tab. This caused problems when installing with the `--clean` flag.
 
-* Fixed [#128](https://github.com/rstudio/httpuv/issues/128): It was possible in rare cases for a segfault to occur when httpuv tried to close a connection twice. ([#129](https://github.com/rstudio/httpuv/pull/129))
+* Fixed #128: It was possible in rare cases for a segfault to occur when httpuv tried to close a connection twice. (#129)
 
 httpuv 1.4.1
 ============
 
-* Addressed [#123](https://github.com/rstudio/httpuv/issues/123): `service()` now returns `TRUE`.
+* Addressed #123: `service()` now returns `TRUE`.
 
-* Fixed [#124](https://github.com/rstudio/httpuv/issues/124): On some CRAN build machines, the build was failing because of issues with the timestamps of input and output files for autotools in libuv/.
+* Fixed #124: On some CRAN build machines, the build was failing because of issues with the timestamps of input and output files for autotools in libuv/.
 
 httpuv 1.4.0
 ============
 
-* Changed license from GPL 3 to GPL >= 2. ([#109](https://github.com/rstudio/httpuv/pull/109))
+* Changed license from GPL 3 to GPL >= 2. (#109)
 
-* Added IPv6 support. ([#115](https://github.com/rstudio/httpuv/pull/115))
+* Added IPv6 support. (#115)
 
-* httpuv now does I/O on a background thread, which should allow for much better performance under load. ([#106](https://github.com/rstudio/httpuv/pull/106))
+* httpuv now does I/O on a background thread, which should allow for much better performance under load. (#106)
 
-* httpuv can now handle request callbacks asynchronously. ([#80](https://github.com/rstudio/httpuv/pull/80), ([#97](https://github.com/rstudio/httpuv/pull/97)))
+* httpuv can now handle request callbacks asynchronously. (#80, (#97))
 
-* Fixed [#72](https://github.com/rstudio/httpuv/issues/72): httpuv previously did not close connections that had the `Connection: close` header, or were HTTP 1.0 (without `Connection: keep-alive`). ([#99](https://github.com/rstudio/httpuv/pull/99))
+* Fixed #72: httpuv previously did not close connections that had the `Connection: close` header, or were HTTP 1.0 (without `Connection: keep-alive`). (#99)
 
-* Fixed [#71](https://github.com/rstudio/httpuv/issues/71): In some cases, compiling httpuv would use system copies of library headers, but use local copies of libraries for linking. ([#121](https://github.com/rstudio/httpuv/pull/121))
+* Fixed #71: In some cases, compiling httpuv would use system copies of library headers, but use local copies of libraries for linking. (#121)
 
-* Let Rcpp handle symbol registration. ([#85](https://github.com/rstudio/httpuv/pull/85))
+* Let Rcpp handle symbol registration. (#85)
 
-* Hide internal symbols from shared library on supported platforms. This reduces the risk of conflicts with other packages bundling libuv. ([#85](https://github.com/rstudio/httpuv/pull/85))
+* Hide internal symbols from shared library on supported platforms. This reduces the risk of conflicts with other packages bundling libuv. (#85)
 
-* Fixed [#86](https://github.com/rstudio/httpuv/issues/86): `encodeURI()` gave incorrect output for non-ASCII characters. ([#87](https://github.com/rstudio/httpuv/pull/87))
+* Fixed #86: `encodeURI()` gave incorrect output for non-ASCII characters. (#87)
 
-* Fixed [#49](https://github.com/rstudio/httpuv/issues/49): Some information was shared across separate requests.
+* Fixed #49: Some information was shared across separate requests.
 
-* Upgraded to libuv 1.15.0. ([#91](https://github.com/rstudio/httpuv/pull/91))
+* Upgraded to libuv 1.15.0. (#91)
 
-* Upgraded to http-parser 2.7.1. ([#93](https://github.com/rstudio/httpuv/pull/93))
+* Upgraded to http-parser 2.7.1. (#93)
 
 httpuv 1.3.5
 ============

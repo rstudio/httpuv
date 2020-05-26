@@ -2412,6 +2412,8 @@ static DWORD WINAPI uv__tty_console_resize_watcher_thread(void* param) {
     uv__tty_console_signal_resize();
     ResetEvent(uv__tty_console_resized);
   }
+  /* Needed to suppress a warning with some compilers */
+  return 0;
 }
 
 static void uv__tty_console_signal_resize(void) {

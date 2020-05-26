@@ -61,10 +61,21 @@ To update libuv to a new version, do the following:
     git cherry-pick d5a24b7
     # Fix for Solaris
     git cherry-pick fea361c
+    # Use C-style comments
+    git cherry-pick bf9dd71
+    # Workaround for warning on Windows about no return statement
+    git cherry-pick 7648442
+    # Workaround for pragma NOTE
+    git cherry-pick 577fe91
     ```
 
-* If the cherry-picked commits needed any modifcation, update this README to refer to the new cherry-picked commits, then commit.
+* If the cherry-picked commits needed any modification, update this README to refer to the new cherry-picked commits, then commit.
 
+* Check for any C files that have a "#pragma" with "diagnostic ignored". If any are found, replace `#pragma` with `# pragma` and add it to the set of commits to cherry-pick.
+
+    ```
+    find src/ -name "*.c" -exec grep -ri "#pragma.*diagnostic ignored" {} \;
+    ```
 
 ### Details
 
@@ -98,6 +109,11 @@ It has `-DSUNOS_NO_IFADDRS` added to it. See [here](https://github.com/libuv/lib
 ```
 libuv_la_CFLAGS += -D__EXTENSIONS__ -D_XOPEN_SOURCE=500 -DSUNOS_NO_IFADDRS
 ```
+
+#### C-style comments
+
+In src/libuv/include/uv.h, the original file has some C++-style comments, but this raises a significant warning for `R CMD check` on r-devel-linux-x86_64-debian-gcc (as of 2020-05-15). The fix is to replace with C-style comments.
+
 
 #### Run `autogen.sh`
 
