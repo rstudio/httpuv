@@ -1,5 +1,5 @@
-httpuv 1.5.3
-============
+httpuv 1.5.3.1
+==============
 
 * Updated libuv to version 1.37.0. (#266)
 
