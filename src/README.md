@@ -65,10 +65,17 @@ To update libuv to a new version, do the following:
     git cherry-pick bf9dd71
     # Workaround for warning on Windows about no return statement
     git cherry-pick 7648442
+    # Workaround for pragma NOTE
+    git cherry-pick 577fe91
     ```
 
-* If the cherry-picked commits needed any modifcation, update this README to refer to the new cherry-picked commits, then commit.
+* If the cherry-picked commits needed any modification, update this README to refer to the new cherry-picked commits, then commit.
 
+* Check for any C files that have a "#pragma" with "diagnostic ignored". If any are found, replace `#pragma` with `# pragma` and add it to the set of commits to cherry-pick.
+
+    ```
+    find src/ -name "*.c" -exec grep -ri "#pragma.*diagnostic ignored" {} \;
+    ```
 
 ### Details
 
