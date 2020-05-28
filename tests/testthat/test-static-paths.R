@@ -768,7 +768,7 @@ test_that("Paths with non-ASCII characters", {
   # Workaround for https://github.com/rstudio/httpuv/issues/264
   # On Unix platforms that are using a non-UTF-8 locale, don't do these tests.
   testthat::skip_if(
-    .Platform$OS.type == "unix" && isTRUE(l10n_info()[["UTF-8"]]),
+    .Platform$OS.type == "unix" && !l10n_info()[["UTF-8"]],
     "Skipping non-ASCII path tests on UTF-8 Unix system"
   )
 
