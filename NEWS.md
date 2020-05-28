@@ -1,7 +1,9 @@
 httpuv 1.5.3.9000
 ==============
 
-* Fix build for Solaris. (#271)
+* Fixed build for Solaris. (#271)
+
+* Fixed a test that had incorrect logic. (#272)
 
 httpuv 1.5.3.1
 ==============
