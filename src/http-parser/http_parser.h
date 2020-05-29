@@ -26,14 +26,13 @@ extern "C" {
 
 /* Also update SONAME in the Makefile whenever you change these. */
 #define HTTP_PARSER_VERSION_MAJOR 2
-#define HTTP_PARSER_VERSION_MINOR 7
-#define HTTP_PARSER_VERSION_PATCH 1
+#define HTTP_PARSER_VERSION_MINOR 9
+#define HTTP_PARSER_VERSION_PATCH 4
 
-#include <sys/types.h>
+#include <stddef.h>
 #if defined(_WIN32) && !defined(__MINGW32__) && \
   (!defined(_MSC_VER) || _MSC_VER<1600) && !defined(__WINE__)
 #include <BaseTsd.h>
-#include <stddef.h>
 typedef __int8 int8_t;
 typedef unsigned __int8 uint8_t;
 typedef __int16 int16_t;
@@ -90,6 +89,76 @@ typedef int (*http_data_cb) (http_parser*, const char *at, size_t length);
 typedef int (*http_cb) (http_parser*);
 
 
+/* Status Codes */
+#define HTTP_STATUS_MAP(XX)                                                 \
+  XX(100, CONTINUE,                        Continue)                        \
+  XX(101, SWITCHING_PROTOCOLS,             Switching Protocols)             \
+  XX(102, PROCESSING,                      Processing)                      \
+  XX(200, OK,                              OK)                              \
+  XX(201, CREATED,                         Created)                         \
+  XX(202, ACCEPTED,                        Accepted)                        \
+  XX(203, NON_AUTHORITATIVE_INFORMATION,   Non-Authoritative Information)   \
+  XX(204, NO_CONTENT,                      No Content)                      \
+  XX(205, RESET_CONTENT,                   Reset Content)                   \
+  XX(206, PARTIAL_CONTENT,                 Partial Content)                 \
+  XX(207, MULTI_STATUS,                    Multi-Status)                    \
+  XX(208, ALREADY_REPORTED,                Already Reported)                \
+  XX(226, IM_USED,                         IM Used)                         \
+  XX(300, MULTIPLE_CHOICES,                Multiple Choices)                \
+  XX(301, MOVED_PERMANENTLY,               Moved Permanently)               \
+  XX(302, FOUND,                           Found)                           \
+  XX(303, SEE_OTHER,                       See Other)                       \
+  XX(304, NOT_MODIFIED,                    Not Modified)                    \
+  XX(305, USE_PROXY,                       Use Proxy)                       \
+  XX(307, TEMPORARY_REDIRECT,              Temporary Redirect)              \
+  XX(308, PERMANENT_REDIRECT,              Permanent Redirect)              \
+  XX(400, BAD_REQUEST,                     Bad Request)                     \
+  XX(401, UNAUTHORIZED,                    Unauthorized)                    \
+  XX(402, PAYMENT_REQUIRED,                Payment Required)                \
+  XX(403, FORBIDDEN,                       Forbidden)                       \
+  XX(404, NOT_FOUND,                       Not Found)                       \
+  XX(405, METHOD_NOT_ALLOWED,              Method Not Allowed)              \
+  XX(406, NOT_ACCEPTABLE,                  Not Acceptable)                  \
+  XX(407, PROXY_AUTHENTICATION_REQUIRED,   Proxy Authentication Required)   \
+  XX(408, REQUEST_TIMEOUT,                 Request Timeout)                 \
+  XX(409, CONFLICT,                        Conflict)                        \
+  XX(410, GONE,                            Gone)                            \
+  XX(411, LENGTH_REQUIRED,                 Length Required)                 \
+  XX(412, PRECONDITION_FAILED,             Precondition Failed)             \
+  XX(413, PAYLOAD_TOO_LARGE,               Payload Too Large)               \
+  XX(414, URI_TOO_LONG,                    URI Too Long)                    \
+  XX(415, UNSUPPORTED_MEDIA_TYPE,          Unsupported Media Type)          \
+  XX(416, RANGE_NOT_SATISFIABLE,           Range Not Satisfiable)           \
+  XX(417, EXPECTATION_FAILED,              Expectation Failed)              \
+  XX(421, MISDIRECTED_REQUEST,             Misdirected Request)             \
+  XX(422, UNPROCESSABLE_ENTITY,            Unprocessable Entity)            \
+  XX(423, LOCKED,                          Locked)                          \
+  XX(424, FAILED_DEPENDENCY,               Failed Dependency)               \
+  XX(426, UPGRADE_REQUIRED,                Upgrade Required)                \
+  XX(428, PRECONDITION_REQUIRED,           Precondition Required)           \
+  XX(429, TOO_MANY_REQUESTS,               Too Many Requests)               \
+  XX(431, REQUEST_HEADER_FIELDS_TOO_LARGE, Request Header Fields Too Large) \
+  XX(451, UNAVAILABLE_FOR_LEGAL_REASONS,   Unavailable For Legal Reasons)   \
+  XX(500, INTERNAL_SERVER_ERROR,           Internal Server Error)           \
+  XX(501, NOT_IMPLEMENTED,                 Not Implemented)                 \
+  XX(502, BAD_GATEWAY,                     Bad Gateway)                     \
+  XX(503, SERVICE_UNAVAILABLE,             Service Unavailable)             \
+  XX(504, GATEWAY_TIMEOUT,                 Gateway Timeout)                 \
+  XX(505, HTTP_VERSION_NOT_SUPPORTED,      HTTP Version Not Supported)      \
+  XX(506, VARIANT_ALSO_NEGOTIATES,         Variant Also Negotiates)         \
+  XX(507, INSUFFICIENT_STORAGE,            Insufficient Storage)            \
+  XX(508, LOOP_DETECTED,                   Loop Detected)                   \
+  XX(510, NOT_EXTENDED,                    Not Extended)                    \
+  XX(511, NETWORK_AUTHENTICATION_REQUIRED, Network Authentication Required) \
+
+enum http_status
+  {
+#define XX(num, name, string) HTTP_STATUS_##name = num,
+  HTTP_STATUS_MAP(XX)
+#undef XX
+  };
+
+
 /* Request Methods */
 #define HTTP_METHOD_MAP(XX)         \
   XX(0,  DELETE,      DELETE)       \
@@ -132,6 +201,8 @@ typedef int (*http_cb) (http_parser*);
   /* RFC-2068, section 19.6.1.2 */  \
   XX(31, LINK,        LINK)         \
   XX(32, UNLINK,      UNLINK)       \
+  /* icecast */                     \
+  XX(33, SOURCE,      SOURCE)       \
 
 enum http_method
   {
@@ -154,6 +225,7 @@ enum flags
   , F_UPGRADE               = 1 << 5
   , F_SKIPBODY              = 1 << 6
   , F_CONTENTLENGTH         = 1 << 7
+  , F_TRANSFER_ENCODING     = 1 << 8  /* Never set in http_parser.flags */
   };
 
 
@@ -178,7 +250,6 @@ enum flags
   XX(CB_chunk_complete, "the on_chunk_complete callback failed")     \
                                                                      \
   /* Parsing-related errors */                                       \
-  XX(REENTRANT_CALL, "re-entrant call to http_parser_execute")       \
   XX(INVALID_EOF_STATE, "stream ended at an unexpected time")        \
   XX(HEADER_OVERFLOW,                                                \
      "too many header bytes seen; overflow detected")                \
@@ -205,7 +276,9 @@ enum flags
   XX(INVALID_INTERNAL_STATE, "encountered unexpected internal state")\
   XX(STRICT, "strict mode assertion failed")                         \
   XX(PAUSED, "parser is paused")                                     \
-  XX(UNKNOWN, "an unknown error occurred")
+  XX(UNKNOWN, "an unknown error occurred")                           \
+  XX(INVALID_TRANSFER_ENCODING,                                      \
+     "request has invalid transfer-encoding")                        \
 
 
 /* Define HPE_* values for each errno value above */
@@ -223,10 +296,11 @@ enum http_errno {
 struct http_parser {
   /** PRIVATE **/
   unsigned int type : 2;         /* enum http_parser_type */
-  unsigned int flags : 8;        /* F_* values from 'flags' enum; semi-public */
+  unsigned int flags : 8;       /* F_* values from 'flags' enum; semi-public */
   unsigned int state : 7;        /* enum state from http_parser.c */
   unsigned int header_state : 7; /* enum header_state from http_parser.c */
-  unsigned int index : 7;        /* index into current matcher */
+  unsigned int index : 5;        /* index into current matcher */
+  unsigned int extra_flags : 2;
   unsigned int lenient_http_headers : 1;
 
   uint32_t nread;          /* # bytes read in various scenarios */
@@ -248,18 +322,6 @@ struct http_parser {
 
   /** PUBLIC **/
   void *data; /* A pointer to get hook to the "connection" or "socket" object */
-
-
-  /** ADDED FOR ASYNC on_headers_complete **/
-  /* The status code set by the application code after processing the
-   * headers. Initial value is -1. After headers have been processed, it should
-   * be 0, 1, or 2. This is the value that would be returned by
-   * on_headers_complete() if it is synchronous.*/
-  int headers_status;
-  /* Default 0; http_parser_exec() sets this to 1, and uses it to check for
-   * re-entrant calls.
-   */
-  int is_running;
 };
 
 
@@ -277,11 +339,6 @@ struct http_parser_settings {
    */
   http_cb      on_chunk_header;
   http_cb      on_chunk_complete;
-
-  /* If 0, on_headers_complete is expected to be synchronous and return a
-   * meaningful result. If 1, it is expected to be async, and return 0
-   * immediately. */
-  int          is_async_on_headers_complete;
 };
 
 
@@ -342,17 +399,6 @@ size_t http_parser_execute(http_parser *parser,
                            const char *data,
                            size_t len);
 
-/* Return 1 if the parser is in the s_wait_for_on_headers_completed state,
- * 0 otherwise. */
-int http_parser_waiting_for_headers_completed(http_parser *parser);
-
-/* This function is used when on_headers_complete() is an async function.
- * Tells the parser that the on_headers stuff is finished. Need to pass it a
- * status value, 0, 1, 2, or 3. This value is the same as what would be
- * returned by the on_headers_complete() function when it is a synchronous
- * function.
- */
-void http_parser_headers_completed(http_parser *parser, int status);
 
 /* If http_should_keep_alive() in the on_headers_complete or
  * on_message_complete callback returns 0, then this should be
@@ -364,6 +410,9 @@ int http_should_keep_alive(const http_parser *parser);
 
 /* Returns a string version of the HTTP method. */
 const char *http_method_str(enum http_method m);
+
+/* Returns a string version of the HTTP status code. */
+const char *http_status_str(enum http_status s);
 
 /* Return a string name of the given error */
 const char *http_errno_name(enum http_errno err);
@@ -384,6 +433,9 @@ void http_parser_pause(http_parser *parser, int paused);
 
 /* Checks if this is the final chunk of the body. */
 int http_body_is_final(const http_parser *parser);
+
+/* Change the maximum header size provided at compile time. */
+void http_parser_set_max_header_size(uint32_t size);
 
 #ifdef __cplusplus
 }
