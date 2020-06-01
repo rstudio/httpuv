@@ -6,6 +6,7 @@
 /\.so$
 /\.dll$
 ^src/README.md$
+^src/http-parser/.travis.yml$
 ^src/libuv/.github$
 ^src/libuv/m4/lt~obsolete.m4$
 ^CONTRIBUTING.md$
