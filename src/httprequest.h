@@ -82,6 +82,18 @@ private:
   // to schedule callbacks to run on the background thread.
   CallbackQueue* _background_queue;
 
+  // Used to keep track of state when parsing headers. This is needed because
+  // sometimes the header fields and values can be split across multiple TCP
+  // messages, resulting in multiple calls to _on_header_field or
+  // _on_header_value.
+  enum LastHeaderState
+  {
+    START,
+    FIELD,
+    VALUE
+  };
+  LastHeaderState _last_header_state;
+
 public:
   HttpRequest(uv_loop_t* pLoop,
               boost::shared_ptr<WebApplication> pWebApplication,
@@ -107,6 +119,8 @@ public:
     http_parser_init(&_parser, HTTP_REQUEST);
     // This is used by the macro-defined callbacks like _on_message_begin
     _parser.data = this;
+
+    _last_header_state = START;
   }
 
   virtual ~HttpRequest() {

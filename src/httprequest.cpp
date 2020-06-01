@@ -138,6 +138,7 @@ void HttpRequest::_newRequest() {
   _handling_request = true;
   _headers.clear();
   _response_scheduled = false;
+  _last_header_state = START;
 
   // Schedule on main thread:
   //   this->_initializeEnv();
@@ -224,6 +225,12 @@ int HttpRequest::_on_status(http_parser* pParser, const char* pAt, size_t length
 int HttpRequest::_on_header_field(http_parser* pParser, const char* pAt, size_t length) {
   ASSERT_BACKGROUND_THREAD()
   debug_log("HttpRequest::_on_header_field", LOG_DEBUG);
+
+  if (_last_header_state != FIELD) {
+    _last_header_state = FIELD;
+    _lastHeaderField.clear();
+  }
+
   std::copy(pAt, pAt + length, std::back_inserter(_lastHeaderField));
   return 0;
 }
@@ -234,24 +241,40 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
 
   std::string value(pAt, length);
 
-  if (_headers.find(_lastHeaderField) != _headers.end()) {
-    // If the field already exists...
+  if (_last_header_state != VALUE) {
+    _last_header_state = VALUE;
 
-    if (_headers[_lastHeaderField].size() > 0) {
-      // ...and is already non-empty...
+    if (_headers.find(_lastHeaderField) != _headers.end()) {
+      // If the field already exists. This can happen if there are multiple
+      // headers with the same name, as in:
+      //   foo: 1
+      //   foo: 2
 
-      if (value.size() > 0) {
-        // ...and this value is also non-empty, then combine using comma...
-        value = _headers[_lastHeaderField] + "," + value;
-      } else {
-        // ...but if this value is empty, then use previous value (no-op).
-        value = _headers[_lastHeaderField];
+      if (_headers[_lastHeaderField].size() > 0) {
+        // ...and is already non-empty...
+
+        if (value.size() > 0) {
+          // ...and this value is also non-empty, then combine using comma...
+          value = _headers[_lastHeaderField] + "," + value;
+        } else {
+          // ...but if this value is empty, then use previous value (no-op).
+          value = _headers[_lastHeaderField];
+        }
       }
     }
+
+    _headers[_lastHeaderField] = value;
+
+  } else {
+    // This is a subsequent call to this function when the http parser receives
+    // another chunk of data for the same field. This can happen when there are
+    // very large headers, as in:
+    //   foo: 1234............5678
+    // where the "...." is so long that it gets split across TCP messages.
+
+    _headers[_lastHeaderField].append(value);
   }
 
-  _headers[_lastHeaderField] = value;
-  _lastHeaderField.clear();
   return 0;
 }
 
