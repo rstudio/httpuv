@@ -138,8 +138,7 @@ void HttpRequest::_newRequest() {
   _handling_request = true;
   _headers.clear();
   _response_scheduled = false;
-
-  _last_header_state = "start";
+  _last_header_state = START;
 
   // Schedule on main thread:
   //   this->_initializeEnv();
@@ -227,8 +226,8 @@ int HttpRequest::_on_header_field(http_parser* pParser, const char* pAt, size_t 
   ASSERT_BACKGROUND_THREAD()
   debug_log("HttpRequest::_on_header_field", LOG_DEBUG);
 
-  if (_last_header_state != "field") {
-    _last_header_state = "field";
+  if (_last_header_state != FIELD) {
+    _last_header_state = FIELD;
     _lastHeaderField.clear();
   }
 
@@ -242,8 +241,8 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
 
   std::string value(pAt, length);
 
-  if (_last_header_state != "value") {
-    _last_header_state = "value";
+  if (_last_header_state != VALUE) {
+    _last_header_state = VALUE;
 
     if (_headers.find(_lastHeaderField) != _headers.end()) {
       // If the field already exists. This can happen if there are multiple

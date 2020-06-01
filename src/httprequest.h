@@ -82,7 +82,17 @@ private:
   // to schedule callbacks to run on the background thread.
   CallbackQueue* _background_queue;
 
-  std::string _last_header_state;
+  // Used to keep track of state when parsing headers. This is needed because
+  // sometimes the header fields and values can be split across multiple TCP
+  // messages, resulting in multiple calls to _on_header_field or
+  // _on_header_value.
+  enum LastHeaderState
+  {
+    START,
+    FIELD,
+    VALUE
+  };
+  LastHeaderState _last_header_state;
 
 public:
   HttpRequest(uv_loop_t* pLoop,
@@ -110,7 +120,7 @@ public:
     // This is used by the macro-defined callbacks like _on_message_begin
     _parser.data = this;
 
-    _last_header_state = "start";
+    _last_header_state = START;
   }
 
   virtual ~HttpRequest() {
