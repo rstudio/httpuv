@@ -1,6 +1,9 @@
 httpuv 1.5.3.9000
 ==============
 
+* Fixed #275: Large HTTP request headers could get truncated if they spanned
+  more than one TCP message. (#277)
+
 * Fixed build for Solaris. (#271)
 
 * Fixed a test that had incorrect logic. (#272)
