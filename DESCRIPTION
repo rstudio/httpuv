@@ -6,11 +6,11 @@ Version: 1.5.3.9001
 Authors@R: c(
     person("Joe", "Cheng", role = c("aut"), email = "joe@rstudio.com"),
     person("Winston", "Chang", role = c("aut", "cre"), email = "winston@rstudio.com"),
-    person(family = "RStudio", role = "cph"),
+    person(family = "RStudio, PBC", role = "cph"),
     person("Hector", "Corrada Bravo", role = "ctb"),
     person("Jeroen", "Ooms", role = "ctb")
     )
-Copyright: RStudio, Inc.; Joyent, Inc.; Nginx Inc.; Igor Sysoev; Niels Provos;
+Copyright: RStudio, PBC; Joyent, Inc.; Nginx Inc.; Igor Sysoev; Niels Provos;
     Internet Systems Consortium, Inc.; Alexander Chemeris; Berkeley Software
     Design; Google Inc.; Sony Mobile Communications AB; Alexander Peslyak;
     Free Software Foundation, Inc.; X Consortium; Ben Noordhuis;
