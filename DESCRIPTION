@@ -18,7 +18,6 @@ Copyright: RStudio, Inc.; Joyent, Inc.; Nginx Inc.; Igor Sysoev; Niels Provos;
     libuv project; Refael Ackermann; Kenneth MacKay; Emergya; Diego Pettenò;
     xine project, The Regents of the University of California,
     Dariusz Dwornikowski
-Maintainer: Joe Cheng <joe@rstudio.com>
 Description: Provides low-level socket and protocol support for handling
     HTTP and WebSocket requests directly from within R. It is primarily
     intended as a building block for other packages, rather than making it
