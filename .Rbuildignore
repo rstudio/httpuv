@@ -14,3 +14,4 @@
 ^.*/\.deps/$
 ^revdep$
 ^\.github$
+^cran-comments\.md$
