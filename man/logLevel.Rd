@@ -14,8 +14,8 @@ logging level.}
 }
 \value{
 If \code{level=NULL}, then this returns the current logging level. If
-  \code{level} is any other value, then this returns the previous logging
-  level, from before it is set to the new value.
+\code{level} is any other value, then this returns the previous logging
+level, from before it is set to the new value.
 }
 \description{
 The logging level for httpuv can be set to report differing levels of

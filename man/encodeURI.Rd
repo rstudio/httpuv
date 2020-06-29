@@ -20,8 +20,8 @@ decodeURIComponent(value)
 }
 \value{
 Encoded or decoded character vector of the same length as the
-  input value. \code{decodeURI} and \code{decodeURIComponent} will return
-  strings that are UTF-8 encoded.
+input value. \code{decodeURI} and \code{decodeURIComponent} will return
+strings that are UTF-8 encoded.
 }
 \description{
 Encodes/decodes strings using URI encoding/decoding in the same way that web

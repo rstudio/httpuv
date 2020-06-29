@@ -21,38 +21,38 @@ passing an \code{onWSOpen} function to \code{\link{startServer}}.
 \section{Fields}{
 
 
-  \describe{
-    \item{\code{request}}{
-      The Rook request environment that opened the connection. This can be
-      used to inspect HTTP headers, for example.
-    }
-  }
+\describe{
+\item{\code{request}}{
+The Rook request environment that opened the connection. This can be
+used to inspect HTTP headers, for example.
+}
+}
 }
 
 \section{Methods}{
 
 
-  \describe{
-    \item{\code{onMessage(func)}}{
-      Registers a callback function that will be invoked whenever a message
-      is received on this connection. The callback function will be invoked
-      with two arguments. The first argument is \code{TRUE} if the message
-      is binary and \code{FALSE} if it is text. The second argument is either
-      a raw vector (if the message is binary) or a character vector.
-    }
-    \item{\code{onClose(func)}}{
-      Registers a callback function that will be invoked when the connection
-      is closed.
-    }
-    \item{\code{send(message)}}{
-      Begins sending the given message over the websocket. The message must
-      be either a raw vector, or a single-element character vector that is
-      encoded in UTF-8.
-    }
-    \item{\code{close()}}{
-      Closes the websocket connection.
-    }
-  }
+\describe{
+\item{\code{onMessage(func)}}{
+Registers a callback function that will be invoked whenever a message
+is received on this connection. The callback function will be invoked
+with two arguments. The first argument is \code{TRUE} if the message
+is binary and \code{FALSE} if it is text. The second argument is either
+a raw vector (if the message is binary) or a character vector.
+}
+\item{\code{onClose(func)}}{
+Registers a callback function that will be invoked when the connection
+is closed.
+}
+\item{\code{send(message)}}{
+Begins sending the given message over the websocket. The message must
+be either a raw vector, or a single-element character vector that is
+encoded in UTF-8.
+}
+\item{\code{close()}}{
+Closes the websocket connection.
+}
+}
 }
 
 \examples{

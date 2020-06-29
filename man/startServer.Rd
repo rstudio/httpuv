@@ -34,7 +34,7 @@ umask is left unchanged. (This parameter has no effect on Windows.)}
 }
 \value{
 A handle for this server that can be passed to
-  \code{\link{stopServer}} to shut the server down.
+\code{\link{stopServer}} to shut the server down.
 
 A \code{\link{WebServer}} or \code{\link{PipeServer}} object.
 }
@@ -43,68 +43,68 @@ Creates an HTTP/WebSocket server on the specified host and port.
 }
 \details{
 \code{startServer} binds the specified port and listens for
-  connections on an thread running in the background. This background thread
-  handles the I/O, and when it receives a HTTP request, it will schedule a
-  call to the user-defined R functions in \code{app} to handle the request.
-  This scheduling is done with \code{\link[later]{later}()}. When the R call
-  stack is empty -- in other words, when an interactive R session is sitting
-  idle at the command prompt -- R will automatically run the scheduled calls.
-  However, if the call stack is not empty -- if R is evaluating other R code
-  -- then the callbacks will not execute until either the call stack is
-  empty, or the \code{\link[later]{run_now}()} function is called. This
-  function tells R to execute any callbacks that have been scheduled by
-  \code{\link[later]{later}()}. The \code{\link{service}()} function is
-  essentially a wrapper for \code{\link[later]{run_now}()}.
+connections on an thread running in the background. This background thread
+handles the I/O, and when it receives a HTTP request, it will schedule a
+call to the user-defined R functions in \code{app} to handle the request.
+This scheduling is done with \code{\link[later]{later}()}. When the R call
+stack is empty -- in other words, when an interactive R session is sitting
+idle at the command prompt -- R will automatically run the scheduled calls.
+However, if the call stack is not empty -- if R is evaluating other R code
+-- then the callbacks will not execute until either the call stack is
+empty, or the \code{\link[later]{run_now}()} function is called. This
+function tells R to execute any callbacks that have been scheduled by
+\code{\link[later]{later}()}. The \code{\link{service}()} function is
+essentially a wrapper for \code{\link[later]{run_now}()}.
 
-  In older versions of httpuv (1.3.5 and below), it did not use a background
-  thread for I/O, and when this function was called, it did not accept
-  connections immediately. It was necessary to call \code{\link{service}}
-  repeatedly in order to actually accept and handle connections.
+In older versions of httpuv (1.3.5 and below), it did not use a background
+thread for I/O, and when this function was called, it did not accept
+connections immediately. It was necessary to call \code{\link{service}}
+repeatedly in order to actually accept and handle connections.
 
-  If the port cannot be bound (most likely due to permissions or because it
-  is already bound), an error is raised.
+If the port cannot be bound (most likely due to permissions or because it
+is already bound), an error is raised.
 
-  The application can also specify paths on the filesystem which will be
-  served from the background thread, without invoking \code{$call()} or
-  \code{$onHeaders()}. Files served this way will be only use a C++ code,
-  which is faster than going through R, and will not be blocked when R code
-  is executing. This can greatly improve performance when serving static
-  assets.
+The application can also specify paths on the filesystem which will be
+served from the background thread, without invoking \code{$call()} or
+\code{$onHeaders()}. Files served this way will be only use a C++ code,
+which is faster than going through R, and will not be blocked when R code
+is executing. This can greatly improve performance when serving static
+assets.
 
-  The \code{app} parameter is where your application logic will be provided
-  to the server. This can be a list, environment, or reference class that
-  contains the following methods and fields:
+The \code{app} parameter is where your application logic will be provided
+to the server. This can be a list, environment, or reference class that
+contains the following methods and fields:
 
-  \describe{
-    \item{\code{call(req)}}{Process the given HTTP request, and return an
-    HTTP response. This method should be implemented in accordance with the
-    \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
-    specification.} Note that httpuv augments \code{req} with an additional item,
-    \code{req$HEADERS}, which is a named character vector of request headers.
-    \item{\code{onHeaders(req)}}{Optional. Similar to \code{call}, but occurs
-    when headers are received. Return \code{NULL} to continue normal
-    processing of the request, or a Rook response to send that response,
-    stop processing the request, and ask the client to close the connection.
-    (This can be used to implement upload size limits, for example.)}
-    \item{\code{onWSOpen(ws)}}{Called back when a WebSocket connection is established.
-    The given object can be used to be notified when a message is received from
-    the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}
-    \item{\code{staticPaths}}{
-      A named list of paths that will be served without invoking
-      \code{call()} or \code{onHeaders}. The name of each one is the URL
-      path, and the value is either a string referring to a local path, or an
-      object created by the \code{\link{staticPath}} function.
-    }
-    \item{\code{staticPathOptions}}{
-      A set of default options to use when serving static paths. If
-      not set or \code{NULL}, then it will use the result from calling
-      \code{\link{staticPathOptions}()} with no arguments.
-    }
-  }
+\describe{
+\item{\code{call(req)}}{Process the given HTTP request, and return an
+HTTP response. This method should be implemented in accordance with the
+\href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
+specification.} Note that httpuv augments \code{req} with an additional item,
+\code{req$HEADERS}, which is a named character vector of request headers.
+\item{\code{onHeaders(req)}}{Optional. Similar to \code{call}, but occurs
+when headers are received. Return \code{NULL} to continue normal
+processing of the request, or a Rook response to send that response,
+stop processing the request, and ask the client to close the connection.
+(This can be used to implement upload size limits, for example.)}
+\item{\code{onWSOpen(ws)}}{Called back when a WebSocket connection is established.
+The given object can be used to be notified when a message is received from
+the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}
+\item{\code{staticPaths}}{
+A named list of paths that will be served without invoking
+\code{call()} or \code{onHeaders}. The name of each one is the URL
+path, and the value is either a string referring to a local path, or an
+object created by the \code{\link{staticPath}} function.
+}
+\item{\code{staticPathOptions}}{
+A set of default options to use when serving static paths. If
+not set or \code{NULL}, then it will use the result from calling
+\code{\link{staticPathOptions}()} with no arguments.
+}
+}
 
-  The \code{startPipeServer} variant can be used instead of
-  \code{startServer} to listen on a Unix domain socket or named pipe rather
-  than a TCP socket (this is not common).
+The \code{startPipeServer} variant can be used instead of
+\code{startServer} to listen on a Unix domain socket or named pipe rather
+than a TCP socket (this is not common).
 }
 \examples{
 \dontrun{
@@ -158,5 +158,5 @@ s$stop()
 }
 \seealso{
 \code{\link{stopServer}}, \code{\link{runServer}},
-  \code{\link{listServers}}, \code{\link{stopAllServers}}.
+\code{\link{listServers}}, \code{\link{stopAllServers}}.
 }

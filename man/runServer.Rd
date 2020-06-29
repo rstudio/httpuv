@@ -51,5 +51,5 @@ runServer("0.0.0.0", 5000,
 }
 \seealso{
 \code{\link{startServer}}, \code{\link{service}},
-  \code{\link{stopServer}}
+\code{\link{stopServer}}
 }
