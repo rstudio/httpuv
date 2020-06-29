@@ -55,8 +55,8 @@ base64encode <- function(x) {
 #' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI}{decodeURI},
 #' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent}{decodeURIComponent}
 #'
-#' Intended as a faster replacement for \code{\link[utils]{URLencode}} and
-#' \code{\link[utils]{URLdecode}}.
+#' Intended as a faster replacement for [utils::URLencode()] and
+#' [utils::URLdecode()].
 #'
 #' encodeURI differs from encodeURIComponent in that the former will not encode
 #' reserved characters: \code{;,/?:@@&=+$}
