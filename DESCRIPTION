@@ -37,7 +37,7 @@ Imports:
 LinkingTo: Rcpp, BH, later
 URL: https://github.com/rstudio/httpuv
 SystemRequirements: GNU make
-RoxygenNote: 7.1.0.9000
+RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 Suggests:
     testthat,
