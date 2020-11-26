@@ -3,6 +3,8 @@ httpuv 1.5.4.9000
 
 * Fix SHA1 calculation, and thus WebSocket server handshakes, on big-endian systems. (#284)
 
+* Previously, responses required `headers` to be a named list. Now it can also be `NULL`, an empty unnamed list, or it can be unset. (#289)
+
 httpuv 1.5.4
 ============
 

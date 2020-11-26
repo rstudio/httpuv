@@ -121,6 +121,14 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
     if (is.null(resp) || length(resp) == 0)
       return(NULL)
 
+    # If headers is an empty unnamed list, convert to named list so that
+    # the C++ code won't error.
+    if (is.null(resp$headers) ||
+        (length(resp$headers) == 0 && is.null(names(resp$headers))))
+    {
+      resp$headers <- named_list()
+    }
+
     # Coerce all headers to character
     resp$headers <- lapply(resp$headers, paste)
 
