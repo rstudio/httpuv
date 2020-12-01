@@ -73,7 +73,11 @@ void HttpResponse::writeResponse() {
     }
   }
 
-  if (_pBody && !hasContentLengthHeader) {
+  // Some valid responses (such as HTTP 204 and 304) must not set this header,
+  // since they can't have a body.
+  //
+  // See: https://tools.ietf.org/html/rfc7230#section-3.3.2
+  if (_pBody != nullptr && !hasContentLengthHeader) {
     response << "Content-Length: " << _pBody->size() << "\r\n";
   }
 
