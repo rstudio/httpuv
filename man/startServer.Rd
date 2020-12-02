@@ -77,10 +77,12 @@ contains the following methods and fields:
 
 \describe{
 \item{\code{call(req)}}{Process the given HTTP request, and return an
-HTTP response. This method should be implemented in accordance with the
+HTTP response (see Response Values). This method should be implemented in
+accordance with the
 \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
-specification.} Note that httpuv augments \code{req} with an additional item,
-\code{req$HEADERS}, which is a named character vector of request headers.
+specification. Note that httpuv augments \code{req} with an additional
+item, \code{req$HEADERS}, which is a named character vector of request
+headers.}
 \item{\code{onHeaders(req)}}{Optional. Similar to \code{call}, but occurs
 when headers are received. Return \code{NULL} to continue normal
 processing of the request, or a Rook response to send that response,
@@ -106,6 +108,28 @@ The \code{startPipeServer} variant can be used instead of
 \code{startServer} to listen on a Unix domain socket or named pipe rather
 than a TCP socket (this is not common).
 }
+\section{Response Values}{
+
+
+The \code{call} function is expected to return a list containing the
+following, which are converted to an HTTP response and sent to the client:
+
+\describe{
+\item{\code{status}}{A numeric HTTP status code, e.g. \code{200} or
+\code{404L}.}
+
+\item{\code{headers}}{A named list of HTTP headers and their values, as
+strings. This can also be missing, an empty list, or \code{NULL}, in which
+case no headers (other than the \code{Date} and \code{Content-Length}
+headers, as required) will be added.}
+
+\item{\code{body}}{A string (or \code{raw} vector) to be sent as the body
+of the HTTP response. This can also be omitted or set to \code{NULL} to
+avoid sending any body, which is useful for HTTP \code{1xx}, \code{204},
+and \code{304} responses, as well as responses to \code{HEAD} requests.}
+}
+}
+
 \examples{
 \dontrun{
 # A very basic application

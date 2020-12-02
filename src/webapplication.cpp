@@ -203,6 +203,14 @@ boost::shared_ptr<HttpResponse> listToResponse(
   // Self-frees when response is written
   boost::shared_ptr<DataSource> pDataSource;
 
+  // HTTP 1xx, 204 and 304 responses (as well as responses to HEAD requests)
+  // cannot have a body, so permit the body element to be missing or NULL, in
+  // which case pDataSource will be nullptr.
+  //
+  // See https://tools.ietf.org/html/rfc7231#section-6.3.5 and
+  //     https://tools.ietf.org/html/rfc7232#section-4.1
+  bool hasBody = response.containsElementNamed("body") && !Rf_isNull(response["body"]);
+
   // The response can either contain:
   // - bodyFile: String value that names the file that should be streamed
   // - body: Character vector (which is charToRaw-ed) or raw vector, or NULL
@@ -218,11 +226,11 @@ boost::shared_ptr<HttpResponse> listToResponse(
     }
     pDataSource = pFDS;
   }
-  else if (Rf_isString(response["body"])) {
+  else if (hasBody && Rf_isString(response["body"])) {
     RawVector responseBytes = Function("charToRaw")(response["body"]);
     pDataSource = boost::make_shared<InMemoryDataSource>(responseBytes);
   }
-  else {
+  else if (hasBody) {
     RawVector responseBytes = response["body"];
     pDataSource = boost::make_shared<InMemoryDataSource>(responseBytes);
   }
