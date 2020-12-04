@@ -7,6 +7,8 @@ httpuv 1.5.4.9000
 
 * Allow responses to omit `body` (or set it as `NULL`) to avoid sending a body or setting the `Content-Length` header. This is intended for use with HTTP 204/304 responses. (#288)
 
+* Resolved #259: Static files now support common range requests. (#290)
+
 httpuv 1.5.4
 ============
 

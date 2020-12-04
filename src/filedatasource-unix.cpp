@@ -35,7 +35,8 @@ FileDataSourceResult FileDataSource::initialize(const std::string& path, bool ow
       return FDS_ISDIR;
     }
 
-    _length = info.st_size;
+    _payloadSize = info.st_size;
+    _fsize = info.st_size;
 
     if (owned && unlink(path.c_str())) {
       // Print this (on either main or background thread), since we're not
@@ -49,7 +50,24 @@ FileDataSourceResult FileDataSource::initialize(const std::string& path, bool ow
 }
 
 uint64_t FileDataSource::size() const {
-  return _length;
+  return _payloadSize;
+}
+
+uint64_t FileDataSource::fileSize() const {
+  return _fsize;
+}
+
+bool FileDataSource::setRange(uint64_t start, uint64_t end) {
+  ASSERT_BACKGROUND_THREAD()
+  if (end > _fsize || end < start) {
+    return false;
+  }
+  if (lseek(_fd, start, SEEK_SET) < 0) {
+    err_printf("Error in lseek: %d\n", errno);
+    return false;
+  }
+  _payloadSize = end - start + 1;
+  return true;
 }
 
 uv_buf_t FileDataSource::getData(size_t bytesDesired) {

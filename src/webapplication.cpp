@@ -563,6 +563,70 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     }
   }
 
+  // Check the HTTP Range header, if it has been specified.
+  //
+  // We only support a limited form of the HTTP Range header (something like
+  // 'bytes=(\\d+)-(\\d+)?'), so some client requests can't be fulfilled and we
+  // need to fall back on a 200 OK instead.
+  bool hasRange = false;
+  uint64_t start = 0;
+  uint64_t end = pDataSource->fileSize() - 1;
+  if (pRequest->hasHeader("Range")) {
+    std::string rangeHeader = pRequest->getHeader("Range");
+    size_t cursor = rangeHeader.find("bytes=");
+    size_t sep = rangeHeader.find("-", cursor + 6);
+    if (cursor != std::string::npos && sep != std::string::npos && sep != cursor + 6) {
+      // At this point we can be sure we have something like 'bytes=([^-]+)-.*'
+      // and we can try parsing the range itself.
+      char *ptr = ((char *) rangeHeader.c_str()) + cursor + 6; // Skip over 'bytes='.
+      char *endptr = ptr;
+      // strtoull() will return 0 when it can't find a number or ULLONG_MAX on
+      // overflow. Since we can't have a file larger than ULLONG_MAX anyway,
+      // this is OK because we'll just return HTTP 416 below.
+      start = strtoull(ptr, &endptr, 10);
+      if (start == 0 && (endptr == ptr || *endptr != '-')) {
+        // Either there was no number at all or there was garbage *after* the
+        // number but before the '-' separator. This is invalid range syntax
+        // from the client.
+        return error_response(pRequest, 400);
+      }
+      if (start >= pDataSource->fileSize()) {
+        boost::shared_ptr<HttpResponse> pResponse = error_response(pRequest, 416);
+        pResponse->headers().push_back(
+          std::make_pair("Content-Range", "bytes */" + toString(pDataSource->fileSize()))
+        );
+        return pResponse;
+      }
+      ptr = endptr + 1; // Skip the '-'.
+      if (*ptr != '\0') {
+        end = strtoull(ptr, &endptr, 10);
+        if (*endptr != '\0' && *endptr != ',') {
+          // We hit a non-digit, non-multirange character at some point.
+          return error_response(pRequest, 400);
+        }
+        if (end < start) {
+          return error_response(pRequest, 400);
+        }
+        ptr = endptr;
+      }
+      // A comma indicates we're parsing a multipart range, which we don't
+      // support. So we need to fallback on 200 behaviour instead when we detect
+      // one.
+      if (*ptr != ',') {
+        if (end > pDataSource->fileSize() - 1) {
+          // The client might not know the size, so the range end is supposed to
+          // be redefined to be the last byte in this case instead of issuing an
+          // error. This also catches overflow in strtoull() above, which would
+          // be OK.
+          //
+          // See: https://tools.ietf.org/html/rfc7233#section-2.1
+          end = pDataSource->fileSize() - 1;
+        }
+        hasRange = pDataSource->setRange(start, end);
+      }
+    }
+  }
+
   // ==================================
   // Create the HTTP response
   // ==================================
@@ -583,6 +647,10 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   if (client_cache_is_valid) {
     pDataSource2.reset();
     status_code = 304;
+  }
+
+  if (hasRange) {
+    status_code = 206;
   }
 
   boost::shared_ptr<HttpResponse> pResponse = boost::shared_ptr<HttpResponse>(
@@ -622,6 +690,14 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     respHeaders.push_back(std::make_pair("Content-Length", toString(pDataSource->size())));
     respHeaders.push_back(std::make_pair("Content-Type", content_type));
     respHeaders.push_back(std::make_pair("Last-Modified", http_date_string(pDataSource->getMtime())));
+    respHeaders.push_back(std::make_pair("Accept-Ranges", "bytes"));
+  }
+
+  if (status_code == 206) {
+    respHeaders.push_back(std::make_pair(
+      "Content-Range",
+      "bytes " + toString(start) + "-" + toString(end) + "/" + toString(pDataSource2->fileSize())
+    ));
   }
 
   return pResponse;
