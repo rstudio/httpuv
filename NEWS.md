@@ -10,8 +10,7 @@ httpuv 1.5.4.9000
 httpuv 1.5.4
 ============
 
-* Fixed #275: Large HTTP request headers could get truncated if they spanned
-  more than one TCP message. (#277)
+* Fixed #275: Large HTTP request headers could get truncated if they spanned more than one TCP message. (#277)
 
 * Fixed build for Solaris. (#271)
 
