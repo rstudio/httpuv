@@ -1,4 +1,4 @@
-httpuv 1.5.4.9000
+httpuv 1.5.5
 =================
 
 * Fix SHA1 calculation, and thus WebSocket server handshakes, on big-endian systems. (#284)
