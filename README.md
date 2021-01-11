@@ -158,7 +158,7 @@ PKG_CPPFLAGS += -DDEBUG_THREAD -UNDEBUG
 PKG_CPPFLAGS += -DDEBUG_TRACE
 ```
 
-To install it directly from Github with these options, you can use `with_makevars`, like this:
+To install it directly from GitHub with these options, you can use `with_makevars`, like this:
 
 ```R
 withr::with_makevars(
