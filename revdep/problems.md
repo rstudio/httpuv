@@ -3,11 +3,12 @@
 <details>
 
 * Version: 0.1.3
+* GitHub: NA
 * Source code: https://github.com/cran/autota
 * Date/Publication: 2020-03-22 07:10:09 UTC
-* Number of recursive dependencies: 42
+* Number of recursive dependencies: 51
 
-Run `revdep_details(,"autota")` for more info
+Run `revdep_details(, "autota")` for more info
 
 </details>
 
@@ -24,12 +25,12 @@ Run `revdep_details(,"autota")` for more info
 <details>
 
 * Version: 1.0.6
+* GitHub: https://github.com/us-bea/bea.R
 * Source code: https://github.com/cran/bea.R
-* URL: https://github.com/us-bea/bea.R
 * Date/Publication: 2018-02-23 19:30:19 UTC
-* Number of recursive dependencies: 74
+* Number of recursive dependencies: 79
 
-Run `revdep_details(,"bea.R")` for more info
+Run `revdep_details(, "bea.R")` for more info
 
 </details>
 
@@ -49,13 +50,12 @@ Run `revdep_details(,"bea.R")` for more info
 <details>
 
 * Version: 4.3
+* GitHub: https://github.com/jeroen/curl
 * Source code: https://github.com/cran/curl
-* URL: https://jeroen.cran.dev/curl (docs) https://github.com/jeroen/curl#readme (devel) https://curl.haxx.se/libcurl/ (upstream)
-* BugReports: https://github.com/jeroen/curl/issues
 * Date/Publication: 2019-12-02 14:00:03 UTC
-* Number of recursive dependencies: 47
+* Number of recursive dependencies: 56
 
-Run `revdep_details(,"curl")` for more info
+Run `revdep_details(, "curl")` for more info
 
 </details>
 
@@ -71,72 +71,76 @@ Run `revdep_details(,"curl")` for more info
     See ‘Writing portable packages’ in the ‘Writing R Extensions’ manual.
     ```
 
-# elementR
+# epitweetr
 
 <details>
 
-* Version: 1.3.6
-* Source code: https://github.com/cran/elementR
-* URL: https://github.com/charlottesirot/elementR
-* BugReports: https://github.com/charlottesirot/elementR/issues
-* Date/Publication: 2018-05-03 14:08:24 UTC
-* Number of recursive dependencies: 120
+* Version: 0.1.24
+* GitHub: https://github.com/EU-ECDC/epitweetr
+* Source code: https://github.com/cran/epitweetr
+* Date/Publication: 2020-10-23 13:00:05 UTC
+* Number of recursive dependencies: 131
 
-Run `revdep_details(,"elementR")` for more info
+Run `revdep_details(, "epitweetr")` for more info
 
 </details>
 
 ## In both
 
-*   checking examples ... ERROR
+*   checking package dependencies ... NOTE
     ```
-    Running examples in ‘elementR-Ex.R’ failed
-    The error most likely occurred in:
-    
-    > ### Name: elementR_project
-    > ### Title: Object elementR_project
-    > ### Aliases: elementR_project
-    > 
-    > ### ** Examples
-    > 
-    > ## create a new elementR_repStandard object based on the "filePath" 
-    > ## from a folder containing sample replicate
-    > 
-    > filePath <- system.file("Example_Session", package="elementR")
-    > 
-    > exampleProject <- elementR_project$new(filePath)
-    Error in structure(.External(.C_dotTclObjv, objv), class = "tclObj") : 
-      [tcl] invalid command name "toplevel".
-    Calls: <Anonymous> ... tktoplevel -> tkwidget -> tcl -> .Tcl.objv -> structure
-    Execution halted
+    Package suggested but not available for checking: ‘taskscheduleR’
+    ```
+
+*   checking dependencies in R code ... NOTE
+    ```
+    Namespaces in Imports field not imported from:
+      ‘httpuv’ ‘plyr’ ‘rgdal’ ‘rgeos’ ‘tidyverse’ ‘tokenizers’
+      All declared Imports should be used.
     ```
 
 # igvR
 
 <details>
 
-* Version: 1.8.2
+* Version: 1.10.0
+* GitHub: NA
 * Source code: https://github.com/cran/igvR
-* URL: https://paul-shannon.github.io/igvR/
-* Date/Publication: 2020-05-12
-* Number of recursive dependencies: 99
+* Date/Publication: 2020-10-27
+* Number of recursive dependencies: 103
 
-Run `revdep_details(,"igvR")` for more info
+Run `revdep_details(, "igvR")` for more info
 
 </details>
 
 ## In both
 
-*   checking Rd \usage sections ... WARNING
+*   checking whether package ‘igvR’ can be installed ... WARNING
     ```
-    Undocumented arguments in documentation object 'BedpeInteractionsTrack-class'
-      ‘table’ ‘displayMode’
-    
-    Functions with \usage entries need to have the appropriate \alias
-    entries, and all their arguments documented.
-    The \usage entries must correspond to syntactically valid R code.
-    See chapter ‘Writing R documentation files’ in the ‘Writing R
-    Extensions’ manual.
+    Found the following significant warnings:
+      Warning: package ‘GenomicRanges’ was built under R version 4.0.3
+      Warning: package ‘BiocGenerics’ was built under R version 4.0.3
+      Warning: package ‘S4Vectors’ was built under R version 4.0.3
+      Warning: package ‘IRanges’ was built under R version 4.0.3
+      Warning: package ‘GenomeInfoDb’ was built under R version 4.0.3
+      Warning: package ‘GenomicAlignments’ was built under R version 4.0.3
+      Warning: package ‘SummarizedExperiment’ was built under R version 4.0.3
+      Warning: package ‘MatrixGenerics’ was built under R version 4.0.3
+      Warning: package ‘Biobase’ was built under R version 4.0.3
+      Warning: package ‘Biostrings’ was built under R version 4.0.3
+      Warning: package ‘XVector’ was built under R version 4.0.3
+      Warning: package ‘Rsamtools’ was built under R version 4.0.3
+      Warning: package ‘BrowserViz’ was built under R version 4.0.3
+    See ‘/Users/barret/Documents/git/rstudio/httpuv/httpuv/revdep/checks.noindex/igvR/new/igvR.Rcheck/00install.out’ for details.
+    ```
+
+*   checking whether the namespace can be unloaded cleanly ... WARNING
+    ```
+    ---- unloading
+    Error in .mergeMethodsTable(generic, mtable, tt, attach) : 
+      trying to get slot "defined" from an object of a basic class ("environment") with no slots
+    Calls: unloadNamespace ... <Anonymous> -> .updateMethodsInTable -> .mergeMethodsTable
+    Execution halted
     ```
 
 *   checking package vignettes in ‘inst/doc’ ... WARNING
@@ -157,12 +161,12 @@ Run `revdep_details(,"igvR")` for more info
 <details>
 
 * Version: 2.1.3
+* GitHub: NA
 * Source code: https://github.com/cran/MetaIntegrator
-* URL: http://biorxiv.org/content/early/2016/08/25/071514
 * Date/Publication: 2020-02-26 13:00:11 UTC
-* Number of recursive dependencies: 171
+* Number of recursive dependencies: 178
 
-Run `revdep_details(,"MetaIntegrator")` for more info
+Run `revdep_details(, "MetaIntegrator")` for more info
 
 </details>
 
@@ -180,14 +184,13 @@ Run `revdep_details(,"MetaIntegrator")` for more info
 
 <details>
 
-* Version: 1.8.0
+* Version: 1.13.1
+* GitHub: https://github.com/mlflow/mlflow
 * Source code: https://github.com/cran/mlflow
-* URL: https://github.com/mlflow/mlflow
-* BugReports: https://github.com/mlflow/mlflow/issues
-* Date/Publication: 2020-04-22 05:00:02 UTC
-* Number of recursive dependencies: 79
+* Date/Publication: 2021-01-06 07:20:02 UTC
+* Number of recursive dependencies: 87
 
-Run `revdep_details(,"mlflow")` for more info
+Run `revdep_details(, "mlflow")` for more info
 
 </details>
 
@@ -203,14 +206,13 @@ Run `revdep_details(,"mlflow")` for more info
 
 <details>
 
-* Version: 2.1.7
+* Version: 2.2.1
+* GitHub: https://github.com/opencpu/opencpu
 * Source code: https://github.com/cran/opencpu
-* URL: https://www.opencpu.org (website) https://github.com/opencpu/opencpu#readme (devel)
-* BugReports: https://github.com/opencpu/opencpu/issues
-* Date/Publication: 2020-05-06 06:30:14 UTC
-* Number of recursive dependencies: 59
+* Date/Publication: 2020-10-10 06:40:10 UTC
+* Number of recursive dependencies: 60
 
-Run `revdep_details(,"opencpu")` for more info
+Run `revdep_details(, "opencpu")` for more info
 
 </details>
 
@@ -225,34 +227,21 @@ Run `revdep_details(,"opencpu")` for more info
 
 <details>
 
-* Version: 1.8.0
+* Version: 1.10.0
+* GitHub: https://github.com/ctlab/phantasus
 * Source code: https://github.com/cran/phantasus
-* URL: https://genome.ifmo.ru/phantasus, https://artyomovlab.wustl.edu/phantasus
-* BugReports: https://github.com/ctlab/phantasus/issues
-* Date/Publication: 2020-04-27
-* Number of recursive dependencies: 141
+* Date/Publication: 2020-10-27
+* Number of recursive dependencies: 148
 
-Run `revdep_details(,"phantasus")` for more info
+Run `revdep_details(, "phantasus")` for more info
 
 </details>
 
 ## In both
 
-*   checking Rd \usage sections ... WARNING
-    ```
-    Documented arguments not in \usage in documentation object 'write.gct':
-      ‘...’
-    
-    Functions with \usage entries need to have the appropriate \alias
-    entries, and all their arguments documented.
-    The \usage entries must correspond to syntactically valid R code.
-    See chapter ‘Writing R documentation files’ in the ‘Writing R
-    Extensions’ manual.
-    ```
-
 *   checking installed package size ... NOTE
     ```
-      installed size is 21.6Mb
+      installed size is 21.7Mb
       sub-directories of 1Mb or more:
         doc        3.0Mb
         testdata   4.3Mb
@@ -269,11 +258,14 @@ Run `revdep_details(,"phantasus")` for more info
 
 *   checking R code for possible problems ... NOTE
     ```
+    generatePreloadedSession: no visible binding for global variable 'es'
+    generatePreloadedSession: no visible binding for global variable
+      'heatmapJson'
     loadSession: no visible binding for global variable 'es'
     reproduceInR: no visible global function definition for 'object.size'
     safeDownload: no visible binding for global variable 'tempDestFile'
     Undefined global functions or variables:
-      es object.size tempDestFile
+      es heatmapJson object.size tempDestFile
     Consider adding
       importFrom("utils", "object.size")
     to your NAMESPACE file.
@@ -288,16 +280,26 @@ Run `revdep_details(,"phantasus")` for more info
 
 <details>
 
-* Version: 2.10.0
+* Version: 2.12.0
+* GitHub: NA
 * Source code: https://github.com/cran/RCyjs
-* Date/Publication: 2020-04-27
-* Number of recursive dependencies: 81
+* Date/Publication: 2020-10-27
+* Number of recursive dependencies: 31
 
-Run `revdep_details(,"RCyjs")` for more info
+Run `revdep_details(, "RCyjs")` for more info
 
 </details>
 
 ## In both
+
+*   checking whether package ‘RCyjs’ can be installed ... WARNING
+    ```
+    Found the following significant warnings:
+      Warning: package ‘BrowserViz’ was built under R version 4.0.3
+      Warning: package ‘graph’ was built under R version 4.0.3
+      Warning: package ‘BiocGenerics’ was built under R version 4.0.3
+    See ‘/Users/barret/Documents/git/rstudio/httpuv/httpuv/revdep/checks.noindex/RCyjs/new/RCyjs.Rcheck/00install.out’ for details.
+    ```
 
 *   checking Rd \usage sections ... WARNING
     ```
@@ -330,13 +332,12 @@ Run `revdep_details(,"RCyjs")` for more info
 <details>
 
 * Version: 0.3.7
+* GitHub: https://github.com/ropensci/rfigshare
 * Source code: https://github.com/cran/rfigshare
-* URL: https://github.com/ropensci/rfigshare
-* BugReports: https://github.com/ropensci/rfigshare/issues
 * Date/Publication: 2015-06-15 07:59:06
-* Number of recursive dependencies: 64
+* Number of recursive dependencies: 67
 
-Run `revdep_details(,"rfigshare")` for more info
+Run `revdep_details(, "rfigshare")` for more info
 
 </details>
 
@@ -360,13 +361,12 @@ Run `revdep_details(,"rfigshare")` for more info
 <details>
 
 * Version: 0.4.0
+* GitHub: https://github.com/thomasp85/routr
 * Source code: https://github.com/cran/routr
-* URL: https://routr.data-imaginist.com, https://github.com/thomasp85/routr#routr
-* BugReports: https://github.com/thomasp85/routr/issues
 * Date/Publication: 2019-10-03 07:20:02 UTC
-* Number of recursive dependencies: 53
+* Number of recursive dependencies: 63
 
-Run `revdep_details(,"routr")` for more info
+Run `revdep_details(, "routr")` for more info
 
 </details>
 
@@ -384,13 +384,12 @@ Run `revdep_details(,"routr")` for more info
 <details>
 
 * Version: 0.7.0
+* GitHub: https://github.com/ropensci/rtweet
 * Source code: https://github.com/cran/rtweet
-* URL: https://CRAN.R-project.org/package=rtweet
-* BugReports: https://github.com/ropensci/rtweet/issues
 * Date/Publication: 2020-01-08 23:00:10 UTC
-* Number of recursive dependencies: 78
+* Number of recursive dependencies: 82
 
-Run `revdep_details(,"rtweet")` for more info
+Run `revdep_details(, "rtweet")` for more info
 
 </details>
 
@@ -411,14 +410,13 @@ Run `revdep_details(,"rtweet")` for more info
 
 <details>
 
-* Version: 1.4.0.2
+* Version: 1.5.0
+* GitHub: https://github.com/rstudio/shiny
 * Source code: https://github.com/cran/shiny
-* URL: http://shiny.rstudio.com
-* BugReports: https://github.com/rstudio/shiny/issues
-* Date/Publication: 2020-03-13 10:00:02 UTC
-* Number of recursive dependencies: 68
+* Date/Publication: 2020-06-23 13:30:03 UTC
+* Number of recursive dependencies: 101
 
-Run `revdep_details(,"shiny")` for more info
+Run `revdep_details(, "shiny")` for more info
 
 </details>
 
@@ -426,10 +424,10 @@ Run `revdep_details(,"shiny")` for more info
 
 *   checking installed package size ... NOTE
     ```
-      installed size is 11.2Mb
+      installed size is 11.7Mb
       sub-directories of 1Mb or more:
         R     2.0Mb
-        www   8.2Mb
+        www   8.5Mb
     ```
 
 # shinyloadtest
@@ -437,13 +435,12 @@ Run `revdep_details(,"shiny")` for more info
 <details>
 
 * Version: 1.0.1
+* GitHub: https://github.com/rstudio/shinyloadtest
 * Source code: https://github.com/cran/shinyloadtest
-* URL: https://rstudio.github.io/shinyloadtest/, https://github.com/rstudio/shinyloadtest
-* BugReports: https://github.com/rstudio/shinyloadtest/issues
 * Date/Publication: 2020-01-09 10:20:02 UTC
-* Number of recursive dependencies: 92
+* Number of recursive dependencies: 98
 
-Run `revdep_details(,"shinyloadtest")` for more info
+Run `revdep_details(, "shinyloadtest")` for more info
 
 </details>
 
@@ -460,63 +457,46 @@ Run `revdep_details(,"shinyloadtest")` for more info
 
 <details>
 
-* Version: 1.6.0
+* Version: 1.8.0
+* GitHub: NA
 * Source code: https://github.com/cran/Ularcirc
-* Date/Publication: 2020-04-27
-* Number of recursive dependencies: 144
+* Date/Publication: 2020-10-27
+* Number of recursive dependencies: 151
 
-Run `revdep_details(,"Ularcirc")` for more info
-
-</details>
-
-## In both
-
-*   checking package dependencies ... ERROR
-    ```
-    Package required but not available: ‘mirbase.db’
-    
-    Packages suggested but not available for checking:
-      'BSgenome.Hsapiens.UCSC.hg38', 'org.Hs.eg.db',
-      'TxDb.Hsapiens.UCSC.hg38.knownGene'
-    
-    See section ‘The DESCRIPTION file’ in the ‘Writing R Extensions’
-    manual.
-    ```
-
-# vkR
-
-<details>
-
-* Version: 0.1
-* Source code: https://github.com/cran/vkR
-* URL: https://github.com/Dementiy/vkR
-* BugReports: https://github.com/Dementiy/vkR/issues
-* Date/Publication: 2016-12-02 10:46:29
-* Number of recursive dependencies: 48
-
-Run `revdep_details(,"vkR")` for more info
+Run `revdep_details(, "Ularcirc")` for more info
 
 </details>
 
 ## In both
+
+*   checking installed package size ... NOTE
+    ```
+      installed size is  5.8Mb
+      sub-directories of 1Mb or more:
+        doc       1.1Mb
+        extdata   4.3Mb
+    ```
 
 *   checking dependencies in R code ... NOTE
     ```
-    Missing or unexported object: ‘jsonlite::rbind.pages’
+    Namespaces in Imports field not imported from:
+      ‘DT’ ‘GenomeInfoDb’ ‘GenomeInfoDbData’ ‘Organism.dplyr’ ‘Sushi’
+      ‘ggplot2’ ‘ggrepel’ ‘gsubfn’ ‘mirbase.db’ ‘moments’ ‘shinyFiles’
+      ‘shinydashboard’ ‘shinyjs’ ‘yaml’
+      All declared Imports should be used.
     ```
 
 # webglobe
 
 <details>
 
-* Version: 1.0.2
+* Version: 1.0.3
+* GitHub: https://github.com/r-barnes/webglobe
 * Source code: https://github.com/cran/webglobe
-* URL: https://github.com/r-barnes/webglobe/
-* BugReports: https://github.com/r-barnes/webglobe/
-* Date/Publication: 2017-06-02 17:55:43 UTC
-* Number of recursive dependencies: 67
+* Date/Publication: 2020-09-15 22:20:03 UTC
+* Number of recursive dependencies: 68
 
-Run `revdep_details(,"webglobe")` for more info
+Run `revdep_details(, "webglobe")` for more info
 
 </details>
 
@@ -534,65 +514,20 @@ Run `revdep_details(,"webglobe")` for more info
 
 <details>
 
-* Version: 1.1.0
+* Version: 1.3.1
+* GitHub: NA
 * Source code: https://github.com/cran/websocket
-* Date/Publication: 2019-08-08 21:20:02 UTC
-* Number of recursive dependencies: 41
+* Date/Publication: 2020-07-13 19:40:03 UTC
+* Number of recursive dependencies: 52
 
-Run `revdep_details(,"websocket")` for more info
+Run `revdep_details(, "websocket")` for more info
 
 </details>
 
 ## In both
-
-*   checking dependencies in R code ... NOTE
-    ```
-    Namespaces in Imports field not imported from:
-      ‘R6’ ‘later’
-      All declared Imports should be used.
-    ```
 
 *   checking for GNU extensions in Makefiles ... NOTE
     ```
     GNU make is a SystemRequirements.
-    ```
-
-# webutils
-
-<details>
-
-* Version: 1.1
-* Source code: https://github.com/cran/webutils
-* URL: https://github.com/jeroen/webutils
-* BugReports: https://github.com/jeroen/webutils/issues
-* Date/Publication: 2020-04-28 21:00:02 UTC
-* Number of recursive dependencies: 31
-
-Run `revdep_details(,"webutils")` for more info
-
-</details>
-
-## In both
-
-*   checking tests ...
-    ```
-     ERROR
-    Running the tests in ‘tests/testthat.R’ failed.
-    Last 13 lines of output:
-      createTcpServer: address already in use
-      ── 1. Error: Echo a big file (@test-echo.R#55)  ────────────────────────────────
-      Failed to create server
-      Backtrace:
-       1. curl::curl_echo(h)
-       2. httpuv::startServer("0.0.0.0", port, list(call = echo_handler))
-       3. WebServer$new(host, port, app, quiet)
-       4. .subset2(public_bind_env, "initialize")(...)
-      
-      ══ testthat results  ═══════════════════════════════════════════════════════════
-      [ OK: 26 | SKIPPED: 0 | WARNINGS: 0 | FAILED: 1 ]
-      1. Error: Echo a big file (@test-echo.R#55) 
-      
-      Error: testthat unit tests failed
-      Execution halted
     ```
 
