@@ -49,18 +49,39 @@ FileDataSourceResult FileDataSource::initialize(const std::string& path, bool ow
   }
 
 
-  if (!GetFileSizeEx(_hFile, &_length)) {
+  if (!GetFileSizeEx(_hFile, &_fsize)) {
     CloseHandle(_hFile);
     _hFile = INVALID_HANDLE_VALUE;
     _lastErrorMessage = "Error retrieving file size for " + path + ": " + toString(GetLastError()) + "\n";
     return FDS_ERROR;
   }
+  _payloadSize = _fsize.QuadPart;
 
   return FDS_OK;
 }
 
 uint64_t FileDataSource::size() const {
-  return _length.QuadPart;
+  return _payloadSize;
+}
+
+uint64_t FileDataSource::fileSize() const {
+  return _fsize.QuadPart;
+}
+
+bool FileDataSource::setRange(uint64_t start, uint64_t end) {
+  ASSERT_BACKGROUND_THREAD()
+  if (end > _fsize.QuadPart || end < start) {
+    return false;
+  }
+  LARGE_INTEGER position = {0};
+  position.QuadPart = start;
+  // When using FILE_BEGIN, position is interpreted as an unsigned value.
+  if (!SetFilePointerEx(_hFile, position, NULL, FILE_BEGIN)) {
+    err_printf("Error in SetFilePointerEx: %d\n", GetLastError());
+    return false;
+  }
+  _payloadSize = _fsize.QuadPart - start + 1;
+  return true;
 }
 
 uv_buf_t FileDataSource::getData(size_t bytesDesired) {

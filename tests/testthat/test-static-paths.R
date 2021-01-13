@@ -808,3 +808,140 @@ test_that("Paths with non-ASCII characters", {
   expect_identical(r$status_code, 200L)
   expect_identical(r$content, file_content)
 })
+
+
+test_that("Range headers", {
+  s <- startServer("127.0.0.1", randomPort(),
+    list(
+      staticPaths = list(
+        "/" = staticPath(test_path("apps/content"))
+      )
+    )
+  )
+  on.exit(s$stop())
+
+  file_size <- file.info(test_path("apps/content/mtcars.csv"))$size
+  file_content <- raw_file_content(test_path("apps/content/mtcars.csv"))
+
+  # Malformed Range headers.
+  h <- new_handle()
+  handle_setheaders(h, "Range" = "bytes=500-100")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 400L)
+
+  handle_setheaders(h, "Range" = "bytes=notanumber-500")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 400L)
+
+  handle_setheaders(h, "Range" = "bytes=0-notanumber")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 400L)
+
+  handle_setheaders(h, "Range" = "bytes=500-100, 1000-")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 400L)
+
+  # Range we can't handle (with overflow).
+  handle_setheaders(h, "Range" = "bytes=2147483648-2147483649")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 416L)
+
+  # Range starts beyond file length.
+  handle_setheaders(h, "Range" = "bytes=10000-20000")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 416L)
+  expect_identical(
+    parse_headers_list(r$headers)$`content-range`,
+    sprintf("bytes */%d", file_size)
+  )
+
+  # Range starts *exactly* one byte beyond file size.
+  handle_setheaders(h, "Range" = sprintf("bytes=%d-20000", file_size))
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 416L)
+
+  # Multipart ranges, which we just ignore.
+  handle_setheaders(h, "Range" = "bytes=0-500, 1000-")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 200L)
+
+  # Suffix length ranges, which we also ignore.
+  handle_setheaders(h, "Range" = "bytes=-500")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 200L)
+
+  # Garbage Range header, which we also ignore.
+  handle_setheaders(h, "Range" = "bytes=500")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 200L)
+
+  handle_setheaders(h, "Range" = "invalid")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 200L)
+
+  # Start of a file.
+  handle_setheaders(h, "Range" = "bytes=0-499")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 206L)
+  expect_identical(
+    parse_headers_list(r$headers)$`content-range`,
+    sprintf("bytes 0-499/%d", file_size)
+  )
+  expect_equal(length(r$content), 500)
+  expect_identical(r$content, file_content[1:500])
+
+  # Exactly 1 byte.
+  handle_setheaders(h, "Range" = "bytes=0-0")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 206L)
+  expect_identical(
+    parse_headers_list(r$headers)$`content-range`,
+    sprintf("bytes 0-0/%d", file_size)
+  )
+  expect_equal(length(r$content), 1)
+  expect_identical(r$content, file_content[1])
+
+  # Exactly all bytes.
+  handle_setheaders(h, "Range" = sprintf("bytes=0-%d", file_size - 1))
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 206L)
+  expect_identical(
+    parse_headers_list(r$headers)$`content-range`,
+    sprintf("bytes 0-%d/%d", file_size - 1, file_size)
+  )
+  expect_equal(length(r$content), file_size)
+  expect_identical(r$content, file_content)
+
+  # End of a file.
+  handle_setheaders(h, "Range" = "bytes=1000-")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 206L)
+  expect_identical(
+    parse_headers_list(r$headers)$`content-range`,
+    sprintf("bytes 1000-%d/%d", file_size - 1, file_size)
+  )
+  expect_equal(length(r$content), (file_size - 1000))
+  expect_identical(r$content, file_content[1001:file_size])
+
+  # End of a smaller file than expected.
+  handle_setheaders(h, "Range" = "bytes=1000-2000")
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 206L)
+  expect_identical(
+    parse_headers_list(r$headers)$`content-range`,
+    sprintf("bytes 1000-%d/%d", file_size - 1, file_size)
+  )
+  expect_equal(length(r$content), (file_size - 1000))
+  expect_identical(r$content, file_content[1001:file_size])
+
+  # The last 1 byte.
+  handle_setheaders(h, "Range" = sprintf("bytes=%d-2000", file_size - 1))
+  r <- fetch(local_url("/mtcars.csv", s$getPort()), h)
+  expect_identical(r$status_code, 206L)
+  expect_identical(
+    parse_headers_list(r$headers)$`content-range`,
+    sprintf("bytes %d-%d/%d", file_size - 1, file_size - 1, file_size)
+  )
+  expect_equal(length(r$content), 1)
+  expect_identical(r$content, file_content[file_size])
+})
