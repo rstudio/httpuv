@@ -11,7 +11,7 @@
 #include <Rcpp.h>
 #include "optional.h"
 #include "thread.h"
-#include "time.h"
+#include "timegm.h"
 
 // A callback for deleting objects on the main thread using later(). This is
 // needed when the object is an Rcpp object or contains one, because deleting
