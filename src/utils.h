@@ -10,7 +10,6 @@
 #include <vector>
 #include <Rcpp.h>
 #include "optional.hpp"
-#include <boost/date_time.hpp>
 #include "thread.h"
 
 // A callback for deleting objects on the main thread using later(). This is
@@ -134,7 +133,7 @@ std::map<std::string, T1> toMap(T2 x) {
   return strmap;
 }
 
-// A wrapper for Rcpp::as. If the R value is NULL, this returns boost::none;
+// A wrapper for Rcpp::as. If the R value is NULL, this returns nullopt;
 // otherwise it returns the usual value that Rcpp::as returns, wrapped in
 // std::experimental::optional<T2>.
 template <typename T1, typename T2>
@@ -145,7 +144,7 @@ std::experimental::optional<T1> optional_as(T2 value) {
   return std::experimental::optional<T1>( Rcpp::as<T1>(value) );
 }
 
-// A wrapper for Rcpp::wrap. If the C++ value is boost::none, this returns the
+// A wrapper for Rcpp::wrap. If the C++ value is missing, this returns the
 // R value NULL; otherwise it returns the usual value that Rcpp::wrap returns, after
 // unwrapping from the std::experimental::optional<T>.
 template <typename T>
@@ -303,23 +302,16 @@ inline time_t parse_http_date_string(const std::string& date) {
   date_str.replace(3, 3, toString(month_num));
 
   // Format is now something like "21 10 2015 07:28:00"
-  // Convert to a boost::posix_time::ptime object
-  const static std::locale time_format = std::locale(
-    std::locale::classic(),
-    // Apparently it's not necessary to delete the time_input_facet.
-    new boost::posix_time::time_input_facet("%d %m %Y %H:%M:%S")
+  struct tm g = {0};
+  int res = sscanf(date_str.c_str(), "%d %d %d %d:%d:%d",
+    &g.tm_mday, &g.tm_mon, &g.tm_year, &g.tm_hour, &g.tm_min, &g.tm_sec
   );
-
-  boost::posix_time::ptime pt, ptbase;
-  std::istringstream is(date_str);
-  is.imbue(time_format);
-  is >> pt;
-  if (pt == ptbase) {
-    // Error parsing time
+  if (res == EOF) {
     return 0;
   }
-
-  return to_time_t(pt);
+  g.tm_mon--;
+  g.tm_year -= 1900;
+  return timegm(&g);
 }
 
 // Compares two strings in constant time. Returns true if they are the same;

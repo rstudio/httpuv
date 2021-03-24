@@ -8,7 +8,8 @@ Authors@R: c(
     person("Winston", "Chang", role = c("aut", "cre"), email = "winston@rstudio.com"),
     person(family = "RStudio, PBC", role = "cph"),
     person("Hector", "Corrada Bravo", role = "ctb"),
-    person("Jeroen", "Ooms", role = "ctb")
+    person("Jeroen", "Ooms", role = "ctb"),
+    person("Andrzej", "Krzemienski", role = "cph", comment = "optional.hpp")
     )
 Copyright: RStudio, PBC; Joyent, Inc.; Nginx Inc.; Igor Sysoev; Niels Provos;
     Internet Systems Consortium, Inc.; Alexander Chemeris; Berkeley Software
