@@ -12,6 +12,10 @@
 #include "optional.h"
 #include "thread.h"
 
+#ifdef _WIN32
+#define timegm _mkgmtime
+#endif
+
 // A callback for deleting objects on the main thread using later(). This is
 // needed when the object is an Rcpp object or contains one, because deleting
 // such objects invoke R's memory management functions.
