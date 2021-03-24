@@ -4,14 +4,6 @@ CXX_STD=CXX11
 PKG_LIBS = ./libuv/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o \
 	-lpthread -lws2_32 -lkernel32 -lpsapi -liphlpapi -lshell32 -luserenv
 
-## From https://github.com/ropensci/redland-bindings/pull/44/files#diff-8ce830d74583e158caa8f0ec89ddf5d3cce85abb500e2c16b4e1703aeabb589eR8
-##
-## Workaround for missing _mkgmtime on Win32, See also
-## https://sourceforge.net/p/mingw-w64/bugs/473/
-ifeq "${R_ARCH}" "/i386"
-PKG_LIBS += -lmsvcr100
-endif
-
 PKG_CFLAGS = $(C_VISIBILITY) -DSTRICT_R_HEADERS
 PKG_CXXFLAGS = $(CXX_VISIBILITY) -DSTRICT_R_HEADERS
 PKG_CPPFLAGS += -Ilibuv/include -D_WIN32_WINNT=0x0600 -DSTRICT_R_HEADERS
