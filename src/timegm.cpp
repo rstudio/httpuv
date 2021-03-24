@@ -1,6 +1,7 @@
 #ifdef _WIN32
 #include "timegm.h"
 
+#include <errno.h>
 #include <timezoneapi.h>
 
 time_t timegm(struct tm *tm) {
