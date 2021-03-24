@@ -2,20 +2,19 @@
 #include "thread.h"
 #include "utils.h"
 #include "constants.h"
-#include <boost/optional.hpp>
-#include <boost/algorithm/string.hpp>
+#include "optional.hpp"
 
 // ============================================================================
 // StaticPathOptions
 // ============================================================================
 
 StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
-  indexhtml(boost::none),
-  fallthrough(boost::none),
-  html_charset(boost::none),
-  headers(boost::none),
-  validation(boost::none),
-  exclude(boost::none)
+  indexhtml(std::experimental::nullopt),
+  fallthrough(std::experimental::nullopt),
+  html_charset(std::experimental::nullopt),
+  headers(std::experimental::nullopt),
+  validation(std::experimental::nullopt),
+  exclude(std::experimental::nullopt)
 {
   ASSERT_MAIN_THREAD()
 
@@ -29,8 +28,8 @@ StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
   Rcpp::RObject temp;
 
   temp = options.attr("normalized");
-  boost::optional<bool> normalized = optional_as<bool>(temp);
-  if (!normalized || !normalized.get()) {
+  std::experimental::optional<bool> normalized = optional_as<bool>(temp);
+  if (!normalized || !*normalized) {
     throw Rcpp::exception("staticPathOptions object must be normalized.");
   }
 
@@ -109,25 +108,25 @@ StaticPathOptions StaticPathOptions::merge(
   const StaticPathOptions& b)
 {
   StaticPathOptions new_sp = a;
-  if (new_sp.indexhtml    == boost::none) new_sp.indexhtml    = b.indexhtml;
-  if (new_sp.fallthrough  == boost::none) new_sp.fallthrough  = b.fallthrough;
-  if (new_sp.html_charset == boost::none) new_sp.html_charset = b.html_charset;
-  if (new_sp.headers      == boost::none) new_sp.headers      = b.headers;
-  if (new_sp.validation   == boost::none) new_sp.validation   = b.validation;
-  if (new_sp.exclude      == boost::none) new_sp.exclude      = b.exclude;
+  if (new_sp.indexhtml    == std::experimental::nullopt) new_sp.indexhtml    = b.indexhtml;
+  if (new_sp.fallthrough  == std::experimental::nullopt) new_sp.fallthrough  = b.fallthrough;
+  if (new_sp.html_charset == std::experimental::nullopt) new_sp.html_charset = b.html_charset;
+  if (new_sp.headers      == std::experimental::nullopt) new_sp.headers      = b.headers;
+  if (new_sp.validation   == std::experimental::nullopt) new_sp.validation   = b.validation;
+  if (new_sp.exclude      == std::experimental::nullopt) new_sp.exclude      = b.exclude;
   return new_sp;
 }
 
 // Check if a set of request headers satisfies the condition specified by
 // `validation`.
 bool StaticPathOptions::validateRequestHeaders(const RequestHeaders& headers) const {
-  if (validation == boost::none) {
+  if (validation == std::experimental::nullopt) {
     throw std::runtime_error("Cannot validate request headers because validation pattern is not set.");
   }
 
   // Should have the format {"==", "aaa", "bbb"}, or {} if there's no
   // validation pattern.
-  const std::vector<std::string>& pattern = validation.get();
+  const std::vector<std::string>& pattern = *validation;
 
   if (pattern.size() == 0) {
     return true;
@@ -158,7 +157,7 @@ StaticPath::StaticPath(const Rcpp::List& sp) {
   options = StaticPathOptions(options_list);
 
   if (path.length() == 0) {
-    if (!options.exclude.get()) {
+    if (!*options.exclude) {
       throw std::runtime_error("Static path must not be empty.");
       // Note that empty paths are OK for excluded paths, but we don't have to
       // mention it in the exception.
@@ -222,11 +221,11 @@ StaticPathManager::StaticPathManager(const Rcpp::List& path_list, const Rcpp::Li
 
 
 // Returns a StaticPath object, which has its options merged with the overall ones.
-boost::optional<StaticPath> StaticPathManager::get(const std::string& path) const {
+std::experimental::optional<StaticPath> StaticPathManager::get(const std::string& path) const {
   guard guard(mutex);
   std::map<std::string, StaticPath>::const_iterator it = path_map.find(path);
   if (it == path_map.end()) {
-    return boost::none;
+    return std::experimental::nullopt;
   }
 
   // Get a copy of the StaticPath object; we'll modify the options in the copy
@@ -236,7 +235,7 @@ boost::optional<StaticPath> StaticPathManager::get(const std::string& path) cons
   return sp;
 }
 
-boost::optional<StaticPath> StaticPathManager::get(const Rcpp::CharacterVector& path) const {
+std::experimental::optional<StaticPath> StaticPathManager::get(const Rcpp::CharacterVector& path) const {
   ASSERT_MAIN_THREAD()
   if (path.size() != 1) {
     throw Rcpp::exception("Can only get a single StaticPath object.");
@@ -313,18 +312,18 @@ void StaticPathManager::remove(const Rcpp::CharacterVector& paths) {
 // there is a static path "/foo"), then the returned pair consists of the
 // matching StaticPath object and an empty string "".
 //
-// If no matching static path is found, then it returns boost::none.
+// If no matching static path is found, then it returns std::experimental::nullopt.
 //
-boost::optional<std::pair<StaticPath, std::string> > StaticPathManager::matchStaticPath(
+std::experimental::optional<std::pair<StaticPath, std::string> > StaticPathManager::matchStaticPath(
   const std::string& url_path) const
 {
 
   if (url_path.empty()) {
-    return boost::none;
+    return std::experimental::nullopt;
   }
 
   if (url_path.find('\\') != std::string::npos) {
-    return boost::none;
+    return std::experimental::nullopt;
   }
 
   std::string path = url_path;
@@ -350,7 +349,7 @@ boost::optional<std::pair<StaticPath, std::string> > StaticPathManager::matchSta
   // split on.
   while (true) {
     // Check if the part before the split-on '/' is a staticPath.
-    boost::optional<StaticPath> sp = this->get(pre_slash);
+    std::experimental::optional<StaticPath> sp = this->get(pre_slash);
 
     if (sp) {
       return std::pair<StaticPath, std::string>(*sp, post_slash);
@@ -358,7 +357,7 @@ boost::optional<std::pair<StaticPath, std::string> > StaticPathManager::matchSta
 
     if (found_idx == 0) {
       // We get here after checking the leading '/'.
-      return boost::none;
+      return std::experimental::nullopt;
     }
 
     // Split the string on '/'
@@ -369,7 +368,7 @@ boost::optional<std::pair<StaticPath, std::string> > StaticPathManager::matchSta
       // of the URL is not a slash. Shouldn't be possible to get here because
       // the http parser will throw an "invalid URL" error when it encounters
       // such a URL, but we'll check just in case.
-      return boost::none;
+      return std::experimental::nullopt;
     }
 
     pre_slash = path.substr(0, found_idx);

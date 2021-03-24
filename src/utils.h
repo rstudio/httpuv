@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 #include <Rcpp.h>
-#include <boost/optional.hpp>
+#include "optional.hpp"
 #include <boost/date_time.hpp>
 #include "thread.h"
 
@@ -63,7 +63,7 @@ inline void err_printf(const char *fmt, ...) {
 
 
 // ============================================================================
-// Logging 
+// Logging
 // ============================================================================
 
 enum LogLevel {
@@ -136,24 +136,24 @@ std::map<std::string, T1> toMap(T2 x) {
 
 // A wrapper for Rcpp::as. If the R value is NULL, this returns boost::none;
 // otherwise it returns the usual value that Rcpp::as returns, wrapped in
-// boost::optional<T2>.
+// std::experimental::optional<T2>.
 template <typename T1, typename T2>
-boost::optional<T1> optional_as(T2 value) {
+std::experimental::optional<T1> optional_as(T2 value) {
   if (value.isNULL()) {
-    return boost::none;
+    return std::experimental::nullopt;
   }
-  return boost::optional<T1>( Rcpp::as<T1>(value) );
+  return std::experimental::optional<T1>( Rcpp::as<T1>(value) );
 }
 
 // A wrapper for Rcpp::wrap. If the C++ value is boost::none, this returns the
 // R value NULL; otherwise it returns the usual value that Rcpp::wrap returns, after
-// unwrapping from the boost::optional<T>.
+// unwrapping from the std::experimental::optional<T>.
 template <typename T>
-Rcpp::RObject optional_wrap(boost::optional<T> value) {
-  if (value == boost::none) {
+Rcpp::RObject optional_wrap(std::experimental::optional<T> value) {
+  if (!value.has_value()) {
     return R_NilValue;
   }
-  return Rcpp::wrap(value.get());
+  return Rcpp::wrap(*value);
 }
 
 

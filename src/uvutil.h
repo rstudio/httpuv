@@ -4,7 +4,7 @@
 #include "thread.h"
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include "libuv/include/uv.h"
 
 #include <Rcpp.h>
@@ -45,7 +45,7 @@ public:
     : _buffer(buffer), _pos(0) {}
 
   explicit InMemoryDataSource(const Rcpp::RawVector& rawVector)
-    : _buffer(rawVector.size()), _pos(0) 
+    : _buffer(rawVector.size()), _pos(0)
   {
     ASSERT_MAIN_THREAD()
     std::copy(rawVector.begin(), rawVector.end(), _buffer.begin());
@@ -70,14 +70,14 @@ class ExtendedWrite {
   int _activeWrites;
   bool _errored;
   uv_stream_t* _pHandle;
-  boost::shared_ptr<DataSource> _pDataSource;
+  std::shared_ptr<DataSource> _pDataSource;
 
 public:
-  ExtendedWrite(uv_stream_t* pHandle, boost::shared_ptr<DataSource> pDataSource)
+  ExtendedWrite(uv_stream_t* pHandle, std::shared_ptr<DataSource> pDataSource)
       : _activeWrites(0), _errored(false), _pHandle(pHandle),
         _pDataSource(pDataSource) {}
   virtual ~ExtendedWrite() {}
-  
+
   virtual void onWriteComplete(int status) = 0;
 
   void begin();

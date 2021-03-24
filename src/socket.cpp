@@ -5,11 +5,11 @@
 
 void on_Socket_close(uv_handle_t* pHandle);
 
-void Socket::addConnection(boost::shared_ptr<HttpRequest> request) {
+void Socket::addConnection(std::shared_ptr<HttpRequest> request) {
   connections.push_back(request);
 }
 
-void Socket::removeConnection(boost::shared_ptr<HttpRequest> request) {
+void Socket::removeConnection(std::shared_ptr<HttpRequest> request) {
   connections.erase(
     std::remove(connections.begin(), connections.end(), request),
     connections.end());
@@ -22,7 +22,7 @@ Socket::~Socket() {
 
 // A deleter callback for the shared_ptr<Socket>.
 void delete_ppsocket(uv_handle_t* pHandle) {
-  boost::shared_ptr<Socket>* ppSocket = (boost::shared_ptr<Socket>*)pHandle->data;
+  std::shared_ptr<Socket>* ppSocket = (std::shared_ptr<Socket>*)pHandle->data;
   delete ppSocket;
 }
 
@@ -34,7 +34,7 @@ void delete_ppsocket(uv_handle_t* pHandle) {
 void Socket::close() {
   ASSERT_BACKGROUND_THREAD()
   debug_log("Socket::close", LOG_DEBUG);
-  for (std::vector<boost::shared_ptr<HttpRequest> >::reverse_iterator it = connections.rbegin();
+  for (std::vector<std::shared_ptr<HttpRequest> >::reverse_iterator it = connections.rbegin();
     it != connections.rend();
     it++) {
 

@@ -9,9 +9,9 @@
 void on_response_written(uv_write_t* handle, int status) {
   ASSERT_BACKGROUND_THREAD()
   // Make a local copy of the shared_ptr before deleting the original one.
-  boost::shared_ptr<HttpResponse> pResponse(*(boost::shared_ptr<HttpResponse>*)handle->data);
+  std::shared_ptr<HttpResponse> pResponse(*(std::shared_ptr<HttpResponse>*)handle->data);
 
-  delete (boost::shared_ptr<HttpResponse>*)handle->data;
+  delete (std::shared_ptr<HttpResponse>*)handle->data;
   free(handle);
 
   pResponse->onResponseWritten(status);
@@ -44,11 +44,11 @@ void HttpResponse::setHeader(const std::string& name, const std::string& value) 
 }
 
 class HttpResponseExtendedWrite : public ExtendedWrite {
-  boost::shared_ptr<HttpResponse> _pParent;
+  std::shared_ptr<HttpResponse> _pParent;
 public:
-  HttpResponseExtendedWrite(boost::shared_ptr<HttpResponse> pParent,
+  HttpResponseExtendedWrite(std::shared_ptr<HttpResponse> pParent,
                             uv_stream_t* pHandle,
-                            boost::shared_ptr<DataSource> pDataSource) :
+                            std::shared_ptr<DataSource> pDataSource) :
       ExtendedWrite(pHandle, pDataSource), _pParent(pParent) {}
 
   void onWriteComplete(int status) {
@@ -103,13 +103,13 @@ void HttpResponse::writeResponse() {
   uv_write_t* pWriteReq = (uv_write_t*)malloc(sizeof(uv_write_t));
   memset(pWriteReq, 0, sizeof(uv_write_t));
   // Pointer to shared_ptr
-  pWriteReq->data = new boost::shared_ptr<HttpResponse>(shared_from_this());
+  pWriteReq->data = new std::shared_ptr<HttpResponse>(shared_from_this());
 
   int r = uv_write(pWriteReq, _pRequest->handle(), &headerBuf, 1,
       &on_response_written);
   if (r) {
     debug_log(std::string("uv_write() error:") + uv_strerror(r), LOG_INFO);
-    delete (boost::shared_ptr<HttpResponse>*)pWriteReq->data;
+    delete (std::shared_ptr<HttpResponse>*)pWriteReq->data;
     free(pWriteReq);
   } else {
     _pRequest->requestCompleted();

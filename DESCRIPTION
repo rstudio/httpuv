@@ -34,7 +34,7 @@ Imports:
     R6,
     promises,
     later (>= 0.8.0)
-LinkingTo: Rcpp, BH, later
+LinkingTo: Rcpp, later
 URL: https://github.com/rstudio/httpuv
 SystemRequirements: GNU make
 RoxygenNote: 7.1.1

@@ -4,25 +4,25 @@
 #include <string>
 #include <map>
 #include <Rcpp.h>
-#include <boost/optional.hpp>
+#include "optional.hpp"
 #include "thread.h"
 #include "constants.h"
 
 class StaticPathOptions {
 public:
-  boost::optional<bool> indexhtml;
-  boost::optional<bool> fallthrough;
-  boost::optional<std::string> html_charset;
-  boost::optional<ResponseHeaders> headers;
-  boost::optional<std::vector<std::string> > validation;
-  boost::optional<bool> exclude;
+  std::experimental::optional<bool> indexhtml;
+  std::experimental::optional<bool> fallthrough;
+  std::experimental::optional<std::string> html_charset;
+  std::experimental::optional<ResponseHeaders> headers;
+  std::experimental::optional<std::vector<std::string> > validation;
+  std::experimental::optional<bool> exclude;
   StaticPathOptions() :
-    indexhtml(boost::none),
-    fallthrough(boost::none),
-    html_charset(boost::none),
-    headers(boost::none),
-    validation(boost::none),
-    exclude(boost::none)
+    indexhtml(std::experimental::nullopt),
+    fallthrough(std::experimental::nullopt),
+    html_charset(std::experimental::nullopt),
+    headers(std::experimental::nullopt),
+    validation(std::experimental::nullopt),
+    exclude(std::experimental::nullopt)
   { };
   StaticPathOptions(const Rcpp::List& options);
 
@@ -58,8 +58,8 @@ public:
   StaticPathManager();
   StaticPathManager(const Rcpp::List& path_list, const Rcpp::List& options_list);
 
-  boost::optional<StaticPath> get(const std::string& path) const;
-  boost::optional<StaticPath> get(const Rcpp::CharacterVector& path) const;
+  std::experimental::optional<StaticPath> get(const std::string& path) const;
+  std::experimental::optional<StaticPath> get(const Rcpp::CharacterVector& path) const;
 
   void set(const std::string& path, const StaticPath& sp);
   void set(const std::map<std::string, StaticPath>& pmap);
@@ -69,7 +69,7 @@ public:
   void remove(const std::vector<std::string>& paths);
   void remove(const Rcpp::CharacterVector& paths);
 
-  boost::optional<std::pair<StaticPath, std::string> > matchStaticPath(
+  std::experimental::optional<std::pair<StaticPath, std::string> > matchStaticPath(
     const std::string& url_path) const;
 
 

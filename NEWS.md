@@ -1,3 +1,8 @@
+httpuv 1.5.5.9000
+=================
+
+* Remove BH dependency.
+
 httpuv 1.5.5
 =================
 
