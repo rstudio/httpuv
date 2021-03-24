@@ -2,7 +2,7 @@
 #include "thread.h"
 #include "utils.h"
 #include "constants.h"
-#include "optional.hpp"
+#include "optional.h"
 
 // ============================================================================
 // StaticPathOptions

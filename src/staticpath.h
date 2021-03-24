@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include <Rcpp.h>
-#include "optional.hpp"
+#include "optional.h"
 #include "thread.h"
 #include "constants.h"
 

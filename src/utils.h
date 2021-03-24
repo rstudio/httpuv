@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 #include <Rcpp.h>
-#include "optional.hpp"
+#include "optional.h"
 #include "thread.h"
 
 // A callback for deleting objects on the main thread using later(). This is

@@ -99,7 +99,7 @@ all copies or substantial portions of the Software.
 
 
 
-optional.hpp:
+optional.h(pp):
 
 Copyright (C) 2011 - 2012 Andrzej Krzemienski.
 
