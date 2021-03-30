@@ -2,10 +2,6 @@
 #define UTILS_H
 
 #include <algorithm>
-#include <iostream>
-#include <sstream>
-#include <locale>
-#include <iomanip>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -265,35 +261,9 @@ inline std::string http_date_string(const time_t& t) {
   return std::string(res);
 }
 
-
 // Given a date string of format "Wed, 21 Oct 2015 07:28:00 GMT", return a
 // time_t representing that time. If the date is malformed, then return 0.
-inline time_t parse_http_date_string(const std::string& date) {
-  // This is because the static std::locale may not be thread-safe. If in the
-  // future we need to call this from multiple threads, we can remove this and
-  // make the std::locale non-static.
-  ASSERT_BACKGROUND_THREAD()
-
-  if (date.length() != 29) {
-    return 0;
-  }
-
-  std::tm t = {0};
-
-  try {
-    std::locale c_locale("C");
-    std::istringstream date_ss(date);
-    date_ss.imbue(c_locale);
-    date_ss >> std::get_time(&t, "%a, %d %b %Y %H:%M:%S GMT");
-    if (date_ss.fail()) {
-      return 0;
-    }
-  } catch(...) {
-    return 0;
-  }
-
-  return timegm(&t);
-}
+time_t parse_http_date_string(const std::string& date);
 
 // Compares two strings in constant time. Returns true if they are the same;
 // false otherwise.
