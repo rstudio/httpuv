@@ -274,45 +274,21 @@ inline time_t parse_http_date_string(const std::string& date) {
     return 0;
   }
 
-  // Strip off leading "Wed, ". We'll just ignore it.
-  std::string date_str = date.substr(5);
+  std::tm t = {0};
 
-  // Make sure it ends with " GMT", then strip it off.
-  if (date_str.substr(date_str.size() - 4, 4) != " GMT") {
-    return 0;
-  }
-  date_str = date_str.substr(0, date_str.size() - 4);
-
-  // Format is now "21 Oct 2015 07:28:00". Next, replace month with number, so
-  // that there are no locale issues parsing date.
-  std::string month_names[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-  std::string month_name = date_str.substr(3, 3);
-  int month_num = 0;
-  for (int i=0; i<12; i++) {
-    if (month_name == month_names[i]) {
-      month_num = i + 1;
-      break;
+  try {
+    std::locale c_locale("C");
+    std::istringstream date_ss(date);
+    date_ss.imbue(c_locale);
+    date_ss >> std::get_time(&t, "%a, %d %b %Y %H:%M:%S GMT");
+    if (date_ss.fail()) {
+      return 0;
     }
-  }
-
-  if (month_num == 0) {
+  } catch(...) {
     return 0;
   }
 
-  date_str.replace(3, 3, toString(month_num));
-
-  // Format is now something like "21 10 2015 07:28:00"
-  struct tm g = {0};
-  int res = sscanf(date_str.c_str(), "%d %d %d %d:%d:%d",
-    &g.tm_mday, &g.tm_mon, &g.tm_year, &g.tm_hour, &g.tm_min, &g.tm_sec
-  );
-  if (res == EOF) {
-    return 0;
-  }
-  g.tm_mon--;
-  g.tm_year -= 1900;
-  return timegm(&g);
+  return timegm(&t);
 }
 
 // Compares two strings in constant time. Returns true if they are the same;
