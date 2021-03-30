@@ -2,6 +2,10 @@
 #define UTILS_H
 
 #include <algorithm>
+#include <iostream>
+#include <sstream>
+#include <locale>
+#include <iomanip>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
