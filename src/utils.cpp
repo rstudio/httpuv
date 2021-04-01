@@ -74,13 +74,12 @@ bool str_read_int(std::istream* input, size_t digits, int* pOut) {
 // @param input The istream to parse from
 // @param bytes The exact number of bytes to read from the input. If this many
 //   bytes are not available, false is returned.
-// @param Array where each element is a char* of length `bytes`; the final
-//   element must be NULL, or else the function will probably segfault.
+// @param values Vector where each element is a string to be matched against.
 // @param pRes If true is returned, then this will be set to the index of the
 //   element in `values` that matched the input. If false is returned, then res
 //   will be untouched.
 // @return true if successful, false if reading failed or no match found
-bool str_read_lookup(std::istream* input, size_t bytes, const char** values, int* pRes) {
+bool str_read_lookup(std::istream* input, size_t bytes, const std::vector<std::string> values, int* pRes) {
   std::vector<char> buf;
   buf.resize(bytes + 1);
 
@@ -90,24 +89,16 @@ bool str_read_lookup(std::istream* input, size_t bytes, const char** values, int
     return false;
   }
 
-  while (true) {
-    const char* option = values[i];
-    if (option == NULL) {
-      // Got to end of list and no match
-      return false;
-    }
-    if (!strncmp(&buf[0], option, bytes)) {
-      break;
-    }
-    i++;
+  auto pos = std::find(values.begin(), values.end(), &buf[0]);
+  if (pos == values.end()) {
+    return false;
   }
-
-  *pRes = i;
+  *pRes = pos - values.begin();
   return true;
 }
 
-const char* MONTHS[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
-const char* DAYS_OF_WEEK[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", NULL};
+const std::vector<std::string> months {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+const std::vector<std::string> days_of_week {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
 // Given a date string of format "Wed, 21 Oct 2015 07:28:00 GMT", return a
 // time_t representing that time. If the date is malformed, then return 0.
@@ -136,12 +127,12 @@ time_t parse_http_date_string(const std::string& date) {
     //   return 0;
     // }
 
-    if (!str_read_lookup(&date_ss, 3, DAYS_OF_WEEK, &t.tm_wday)) return 0;
+    if (!str_read_lookup(&date_ss, 3, days_of_week, &t.tm_wday)) return 0;
     if (date_ss.get() != ',') return 0;
     if (date_ss.get() != ' ') return 0;
     if (!str_read_int(&date_ss, 2, &t.tm_mday)) return 0;
     if (date_ss.get() != ' ') return 0;
-    if (!str_read_lookup(&date_ss, 3, MONTHS, &t.tm_mon)) return 0;
+    if (!str_read_lookup(&date_ss, 3, months, &t.tm_mon)) return 0;
     if (date_ss.get() != ' ') return 0;
     int year = 0;
     if (!str_read_int(&date_ss, 4, &year)) return 0;
