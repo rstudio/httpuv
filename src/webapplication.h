@@ -1,7 +1,7 @@
 #ifndef WEBAPPLICATION_HPP
 #define WEBAPPLICATION_HPP
 
-#include <boost/function.hpp>
+#include <functional>
 #include "libuv/include/uv.h"
 #include <Rcpp.h>
 #include "websockets.h"
@@ -14,23 +14,23 @@ class HttpResponse;
 class WebApplication {
 public:
   virtual ~WebApplication() {}
-  virtual void onHeaders(boost::shared_ptr<HttpRequest> pRequest,
-                         boost::function<void(boost::shared_ptr<HttpResponse>)> callback) = 0;
-  virtual void onBodyData(boost::shared_ptr<HttpRequest> pRequest,
-                          boost::shared_ptr<std::vector<char> > data,
-                          boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback) = 0;
-  virtual void getResponse(boost::shared_ptr<HttpRequest> request,
-                           boost::function<void(boost::shared_ptr<HttpResponse>)> callback) = 0;
-  virtual void onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
-                        boost::function<void(void)> error_callback) = 0;
-  virtual void onWSMessage(boost::shared_ptr<WebSocketConnection>,
+  virtual void onHeaders(std::shared_ptr<HttpRequest> pRequest,
+                         std::function<void(std::shared_ptr<HttpResponse>)> callback) = 0;
+  virtual void onBodyData(std::shared_ptr<HttpRequest> pRequest,
+                          std::shared_ptr<std::vector<char> > data,
+                          std::function<void(std::shared_ptr<HttpResponse>)> errorCallback) = 0;
+  virtual void getResponse(std::shared_ptr<HttpRequest> request,
+                           std::function<void(std::shared_ptr<HttpResponse>)> callback) = 0;
+  virtual void onWSOpen(std::shared_ptr<HttpRequest> pRequest,
+                        std::function<void(void)> error_callback) = 0;
+  virtual void onWSMessage(std::shared_ptr<WebSocketConnection>,
                            bool binary,
-                           boost::shared_ptr<std::vector<char> > data,
-                           boost::function<void(void)> error_callback) = 0;
-  virtual void onWSClose(boost::shared_ptr<WebSocketConnection>) = 0;
+                           std::shared_ptr<std::vector<char> > data,
+                           std::function<void(void)> error_callback) = 0;
+  virtual void onWSClose(std::shared_ptr<WebSocketConnection>) = 0;
 
-  virtual boost::shared_ptr<HttpResponse> staticFileResponse(
-    boost::shared_ptr<HttpRequest> pRequest) = 0;
+  virtual std::shared_ptr<HttpResponse> staticFileResponse(
+    std::shared_ptr<HttpRequest> pRequest) = 0;
   virtual StaticPathManager& getStaticPathManager() = 0;
 };
 
@@ -60,23 +60,23 @@ public:
     ASSERT_MAIN_THREAD()
   }
 
-  virtual void onHeaders(boost::shared_ptr<HttpRequest> pRequest,
-                         boost::function<void(boost::shared_ptr<HttpResponse>)> callback);
-  virtual void onBodyData(boost::shared_ptr<HttpRequest> pRequest,
-                          boost::shared_ptr<std::vector<char> > data,
-                          boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback);
-  virtual void getResponse(boost::shared_ptr<HttpRequest> request,
-                           boost::function<void(boost::shared_ptr<HttpResponse>)> callback);
-  virtual void onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
-                        boost::function<void(void)> error_callback);
-  virtual void onWSMessage(boost::shared_ptr<WebSocketConnection> conn,
+  virtual void onHeaders(std::shared_ptr<HttpRequest> pRequest,
+                         std::function<void(std::shared_ptr<HttpResponse>)> callback);
+  virtual void onBodyData(std::shared_ptr<HttpRequest> pRequest,
+                          std::shared_ptr<std::vector<char> > data,
+                          std::function<void(std::shared_ptr<HttpResponse>)> errorCallback);
+  virtual void getResponse(std::shared_ptr<HttpRequest> request,
+                           std::function<void(std::shared_ptr<HttpResponse>)> callback);
+  virtual void onWSOpen(std::shared_ptr<HttpRequest> pRequest,
+                        std::function<void(void)> error_callback);
+  virtual void onWSMessage(std::shared_ptr<WebSocketConnection> conn,
                            bool binary,
-                           boost::shared_ptr<std::vector<char> > data,
-                           boost::function<void(void)> error_callback);
-  virtual void onWSClose(boost::shared_ptr<WebSocketConnection> conn);
+                           std::shared_ptr<std::vector<char> > data,
+                           std::function<void(void)> error_callback);
+  virtual void onWSClose(std::shared_ptr<WebSocketConnection> conn);
 
-  virtual boost::shared_ptr<HttpResponse> staticFileResponse(
-    boost::shared_ptr<HttpRequest> pRequest);
+  virtual std::shared_ptr<HttpResponse> staticFileResponse(
+    std::shared_ptr<HttpRequest> pRequest);
   virtual StaticPathManager& getStaticPathManager();
 };
 

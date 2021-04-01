@@ -1,7 +1,7 @@
+#include <functional>
 #include "callbackqueue.h"
 #include "tqueue.h"
 #include "thread.h"
-#include <boost/function.hpp>
 #include "libuv/include/uv.h"
 
 
@@ -20,14 +20,14 @@ CallbackQueue::CallbackQueue(uv_loop_t* loop) {
 }
 
 
-void CallbackQueue::push(boost::function<void (void)> cb) {
+void CallbackQueue::push(std::function<void (void)> cb) {
   q.push(cb);
   uv_async_send(&flush_handle);
 }
 
 void CallbackQueue::flush() {
   ASSERT_BACKGROUND_THREAD()
-  boost::function<void (void)> cb;
+  std::function<void (void)> cb;
 
   while (1) {
     // Do queue operations inside this guarded scope, but we'll execute the

@@ -1,30 +1,29 @@
 #ifndef HTTPRESPONSE_HPP
 #define HTTPRESPONSE_HPP
 
+#include <functional>
+#include <memory>
 #include "uvutil.h"
 #include "utils.h"
 #include "constants.h"
-#include <boost/function.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 
 class HttpRequest;
 
-class HttpResponse : public boost::enable_shared_from_this<HttpResponse>  {
+class HttpResponse : public std::enable_shared_from_this<HttpResponse>  {
 
-  boost::shared_ptr<HttpRequest> _pRequest;
+  std::shared_ptr<HttpRequest> _pRequest;
   int _statusCode;
   std::string _status;
   ResponseHeaders _headers;
   std::vector<char> _responseHeader;
-  boost::shared_ptr<DataSource> _pBody;
+  std::shared_ptr<DataSource> _pBody;
   bool _closeAfterWritten;
 
 public:
-  HttpResponse(boost::shared_ptr<HttpRequest> pRequest,
+  HttpResponse(std::shared_ptr<HttpRequest> pRequest,
                int statusCode,
                const std::string& status,
-               boost::shared_ptr<DataSource> pBody)
+               std::shared_ptr<DataSource> pBody)
     : _pRequest(pRequest),
       _statusCode(statusCode),
       _status(status),

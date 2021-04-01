@@ -4,10 +4,8 @@
 #include <map>
 #include <iostream>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/shared_ptr.hpp>
+#include <functional>
+#include <memory>
 #include "libuv/include/uv.h"
 #include "http-parser/http_parser.h"
 #include "socket.h"
@@ -26,19 +24,19 @@ enum Protocol {
 // HttpRequest is a bit of a misnomer -- a HttpRequest object represents a
 // single connection, on which multiple actual HTTP requests can be made.
 class HttpRequest : public WebSocketConnectionCallbacks,
-                    public boost::enable_shared_from_this<HttpRequest>
+                    public std::enable_shared_from_this<HttpRequest>
 {
 private:
   uv_loop_t* _pLoop;
-  boost::shared_ptr<WebApplication> _pWebApplication;
+  std::shared_ptr<WebApplication> _pWebApplication;
   VariantHandle _handle;
-  boost::shared_ptr<Socket> _pSocket;
+  std::shared_ptr<Socket> _pSocket;
   http_parser _parser;
   Protocol _protocol;
   std::string _url;
   RequestHeaders _headers;
   std::string _lastHeaderField;
-  boost::shared_ptr<WebSocketConnection> _pWebSocketConnection;
+  std::shared_ptr<WebSocketConnection> _pWebSocketConnection;
 
   // `_env` is an shared_ptr<Environment> instead of an Environment because it
   // must be created and deleted on the main thread. However, the creation and
@@ -46,7 +44,7 @@ private:
   // the lifetime of the Environment can't be strictly tied to the lifetime of
   // the HttpRequest. It is instantiated with a deleter function that ensures
   // deletion happens on the main thread.
-  boost::shared_ptr<Rcpp::Environment> _env;
+  std::shared_ptr<Rcpp::Environment> _env;
   void _newRequest();
   void _initializeEnv();
 
@@ -96,8 +94,8 @@ private:
 
 public:
   HttpRequest(uv_loop_t* pLoop,
-              boost::shared_ptr<WebApplication> pWebApplication,
-              boost::shared_ptr<Socket> pSocket,
+              std::shared_ptr<WebApplication> pWebApplication,
+              std::shared_ptr<Socket> pSocket,
               CallbackQueue* backgroundQueue)
     : _pLoop(pLoop),
       _pWebApplication(pWebApplication),
@@ -130,7 +128,7 @@ public:
   }
 
   uv_stream_t* handle();
-  boost::shared_ptr<WebSocketConnection> websocket() const {
+  std::shared_ptr<WebSocketConnection> websocket() const {
     return _pWebSocketConnection;
   }
   Address clientAddress();
@@ -169,12 +167,12 @@ public:
   void requestCompleted();
 
   void _call_r_on_ws_open();
-  void _schedule_on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse);
-  void _on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse);
-  void _schedule_on_body_error(boost::shared_ptr<HttpResponse> pResponse);
-  void _on_body_error(boost::shared_ptr<HttpResponse> pResponse);
-  void _schedule_on_message_complete_complete(boost::shared_ptr<HttpResponse> pResponse);
-  void _on_message_complete_complete(boost::shared_ptr<HttpResponse> pResponse);
+  void _schedule_on_headers_complete_complete(std::shared_ptr<HttpResponse> pResponse);
+  void _on_headers_complete_complete(std::shared_ptr<HttpResponse> pResponse);
+  void _schedule_on_body_error(std::shared_ptr<HttpResponse> pResponse);
+  void _on_body_error(std::shared_ptr<HttpResponse> pResponse);
+  void _schedule_on_message_complete_complete(std::shared_ptr<HttpResponse> pResponse);
+  void _on_message_complete_complete(std::shared_ptr<HttpResponse> pResponse);
 
 public:
   // Callbacks
@@ -202,11 +200,11 @@ public:
 
   void _initializeSocket() {
     // Coerce to parent class
-    boost::shared_ptr<WebSocketConnectionCallbacks> this_base(
-      boost::static_pointer_cast<WebSocketConnectionCallbacks>(shared_from_this())
+    std::shared_ptr<WebSocketConnectionCallbacks> this_base(
+      std::static_pointer_cast<WebSocketConnectionCallbacks>(shared_from_this())
     );
 
-    _pWebSocketConnection = boost::shared_ptr<WebSocketConnection>(
+    _pWebSocketConnection = std::shared_ptr<WebSocketConnection>(
       new WebSocketConnection(this_base),
       auto_deleter_background<WebSocketConnection>
     );
@@ -219,17 +217,17 @@ public:
 // Same for Websocketconnection
 // Factory function needed because we can't call shared_from_this() inside the
 // constructor.
-inline boost::shared_ptr<HttpRequest> createHttpRequest(
+inline std::shared_ptr<HttpRequest> createHttpRequest(
   uv_loop_t* pLoop,
-  boost::shared_ptr<WebApplication> pWebApplication,
-  boost::shared_ptr<Socket> pSocket,
+  std::shared_ptr<WebApplication> pWebApplication,
+  std::shared_ptr<Socket> pSocket,
   CallbackQueue* backgroundQueue)
 {
   ASSERT_BACKGROUND_THREAD()
 
   // The shared_ptr has a custom deleter which ensures that the HttpRequest is
   // deleted on the background thread.
-  boost::shared_ptr<HttpRequest> req(
+  std::shared_ptr<HttpRequest> req(
     new HttpRequest(pLoop, pWebApplication, pSocket, backgroundQueue),
     auto_deleter_background<HttpRequest>
   );

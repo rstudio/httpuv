@@ -1,6 +1,5 @@
-#include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+#include <functional>
+#include <memory>
 #include <later_api.h>
 #include "httprequest.h"
 #include "callback.h"
@@ -143,7 +142,7 @@ void HttpRequest::_newRequest() {
   // Schedule on main thread:
   //   this->_initializeEnv();
   invoke_later(
-    boost::bind(&HttpRequest::_initializeEnv, shared_from_this())
+    std::bind(&HttpRequest::_initializeEnv, shared_from_this())
   );
 }
 
@@ -158,7 +157,7 @@ void HttpRequest::_initializeEnv() {
   // the HttpRequest object is deleted. The deletion will happen on the
   // background thread; auto_deleter_main() schedules the deletion of the
   // Rcpp::Environment object on the main thread.
-  _env = boost::shared_ptr<Environment>(
+  _env = std::shared_ptr<Environment>(
     new Environment(new_env(_["parent"] = R_EmptyEnv)),
     auto_deleter_main<Environment>
   );
@@ -323,30 +322,30 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
 
   // Attempt static serving here. If the request is for a static path, this
   // will be a response object; if not, it will be an empty shared_ptr.
-  boost::shared_ptr<HttpResponse> pResponse =
+  std::shared_ptr<HttpResponse> pResponse =
     _pWebApplication->staticFileResponse(shared_from_this());
 
   if (pResponse) {
     // The request was for a static path. Skip over the webapplication code
     // (which calls back into R on the main thread). Just add a call to
     // _on_headers_complete_complete to the queue on the background thread.
-    boost::function<void (void)> cb(
-      boost::bind(&HttpRequest::_on_headers_complete_complete, shared_from_this(), pResponse)
+    std::function<void (void)> cb(
+      std::bind(&HttpRequest::_on_headers_complete_complete, shared_from_this(), pResponse)
     );
     _background_queue->push(cb);
     return 0;
   }
 
 
-  boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
-    boost::bind(&HttpRequest::_schedule_on_headers_complete_complete, shared_from_this(), _1)
+  std::function<void(std::shared_ptr<HttpResponse>)> schedule_bg_callback(
+    std::bind(&HttpRequest::_schedule_on_headers_complete_complete, shared_from_this(), std::placeholders::_1)
   );
 
   // Use later to schedule _pWebApplication->onHeaders(this, schedule_bg_callback)
   // to run on the main thread. That function in turn calls
   // this->_schedule_on_headers_complete_complete.
   invoke_later(
-    boost::bind(
+    std::bind(
       &WebApplication::onHeaders,
       _pWebApplication,
       shared_from_this(),
@@ -360,15 +359,15 @@ int HttpRequest::_on_headers_complete(http_parser* pParser) {
 // This is called at the end of WebApplication::onHeaders(). It puts an item
 // on the write queue and signals to the background thread that there's
 // something there.
-void HttpRequest::_schedule_on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
+void HttpRequest::_schedule_on_headers_complete_complete(std::shared_ptr<HttpResponse> pResponse) {
   ASSERT_MAIN_THREAD()
   debug_log("HttpRequest::_schedule_on_headers_complete_complete", LOG_DEBUG);
 
   if (pResponse)
     responseScheduled();
 
-  boost::function<void (void)> cb(
-    boost::bind(&HttpRequest::_on_headers_complete_complete, shared_from_this(), pResponse)
+  std::function<void (void)> cb(
+    std::bind(&HttpRequest::_on_headers_complete_complete, shared_from_this(), pResponse)
   );
   _background_queue->push(cb);
 }
@@ -376,7 +375,7 @@ void HttpRequest::_schedule_on_headers_complete_complete(boost::shared_ptr<HttpR
 // This is called after the user's R onHeaders() function has finished. It can
 // write a response, if onHeaders() wants that. It also sets a status code for
 // http-parser and then re-executes the parser. Runs on the background thread.
-void HttpRequest::_on_headers_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
+void HttpRequest::_on_headers_complete_complete(std::shared_ptr<HttpResponse> pResponse) {
   ASSERT_BACKGROUND_THREAD()
   debug_log("HttpRequest::_on_headers_complete_complete", LOG_DEBUG);
 
@@ -414,9 +413,9 @@ void HttpRequest::_on_headers_complete_complete(boost::shared_ptr<HttpResponse> 
     // If the request is Expect: Continue, and the app didn't say otherwise,
     // then give it what it wants
     if (hasHeader("Expect", "100-continue")) {
-      pResponse = boost::shared_ptr<HttpResponse>(
+      pResponse = std::shared_ptr<HttpResponse>(
         new HttpResponse(shared_from_this(), 100, "Continue",
-                         boost::shared_ptr<DataSource>()),
+                         std::shared_ptr<DataSource>()),
         auto_deleter_background<HttpResponse>
       );
       pResponse->writeResponse();
@@ -441,16 +440,16 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
 
   // Copy pAt because the source data is deleted right after calling this
   // function.
-  boost::shared_ptr<std::vector<char> > buf = boost::make_shared<std::vector<char> >(pAt, pAt + length);
+  std::shared_ptr<std::vector<char> > buf = std::make_shared<std::vector<char> >(pAt, pAt + length);
 
-  boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
-    boost::bind(&HttpRequest::_schedule_on_body_error, shared_from_this(), _1)
+  std::function<void(std::shared_ptr<HttpResponse>)> schedule_bg_callback(
+    std::bind(&HttpRequest::_schedule_on_body_error, shared_from_this(), std::placeholders::_1)
   );
 
   // Schedule on main thread:
   // _pWebApplication->onBodyData(this, pAt, length, schedule_bg_callback);
   invoke_later(
-    boost::bind(
+    std::bind(
       &WebApplication::onBodyData,
       _pWebApplication,
       shared_from_this(),
@@ -462,20 +461,20 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
   return 0;
 }
 
-void HttpRequest::_schedule_on_body_error(boost::shared_ptr<HttpResponse> pResponse) {
+void HttpRequest::_schedule_on_body_error(std::shared_ptr<HttpResponse> pResponse) {
   ASSERT_MAIN_THREAD()
   debug_log("HttpRequest::_schedule_on_body_error", LOG_DEBUG);
 
   responseScheduled();
 
-  boost::function<void (void)> cb(
-    boost::bind(&HttpRequest::_on_body_error, shared_from_this(), pResponse)
+  std::function<void (void)> cb(
+    std::bind(&HttpRequest::_on_body_error, shared_from_this(), pResponse)
   );
   _background_queue->push(cb);
 
 }
 
-void HttpRequest::_on_body_error(boost::shared_ptr<HttpResponse> pResponse) {
+void HttpRequest::_on_body_error(std::shared_ptr<HttpResponse> pResponse) {
   ASSERT_BACKGROUND_THREAD()
   debug_log("HttpRequest::_on_body_error", LOG_DEBUG);
 
@@ -500,15 +499,15 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
   if (isUpgrade())
     return 0;
 
-  boost::function<void(boost::shared_ptr<HttpResponse>)> schedule_bg_callback(
-    boost::bind(&HttpRequest::_schedule_on_message_complete_complete, shared_from_this(), _1)
+  std::function<void(std::shared_ptr<HttpResponse>)> schedule_bg_callback(
+    std::bind(&HttpRequest::_schedule_on_message_complete_complete, shared_from_this(), std::placeholders::_1)
   );
 
   // Use later to schedule _pWebApplication->getResponse(this, schedule_bg_callback)
   // to run on the main thread. That function in turn calls
   // this->_schedule_on_message_complete_complete.
   invoke_later(
-    boost::bind(
+    std::bind(
       &WebApplication::getResponse,
       _pWebApplication,
       shared_from_this(),
@@ -521,18 +520,18 @@ int HttpRequest::_on_message_complete(http_parser* pParser) {
 
 // This is called by the user's application code during or after the end of
 // WebApplication::getResponse(). It puts an item on the background queue.
-void HttpRequest::_schedule_on_message_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
+void HttpRequest::_schedule_on_message_complete_complete(std::shared_ptr<HttpResponse> pResponse) {
   ASSERT_MAIN_THREAD()
 
   responseScheduled();
 
-  boost::function<void (void)> cb(
-    boost::bind(&HttpRequest::_on_message_complete_complete, shared_from_this(), pResponse)
+  std::function<void (void)> cb(
+    std::bind(&HttpRequest::_on_message_complete_complete, shared_from_this(), pResponse)
   );
   _background_queue->push(cb);
 }
 
-void HttpRequest::_on_message_complete_complete(boost::shared_ptr<HttpResponse> pResponse) {
+void HttpRequest::_on_message_complete_complete(std::shared_ptr<HttpResponse> pResponse) {
   ASSERT_BACKGROUND_THREAD()
   debug_log("HttpRequest::_on_message_complete_complete", LOG_DEBUG);
 
@@ -569,13 +568,13 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
 
   // Copy data because the source data is deleted right after calling this
   // function.
-  boost::shared_ptr<std::vector<char> > buf = boost::make_shared<std::vector<char> >(data, data + len);
+  std::shared_ptr<std::vector<char> > buf = std::make_shared<std::vector<char> >(data, data + len);
 
-  boost::function<void (void)> error_callback(
-    boost::bind(&HttpRequest::schedule_close, shared_from_this())
+  std::function<void (void)> error_callback(
+    std::bind(&HttpRequest::schedule_close, shared_from_this())
   );
 
-  boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+  std::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
   // It's possible for _pWebSocketConnection to have had its refcount drop to
   // zero from another thread or earlier callback in this thread. If that
   // happened, do nothing.
@@ -586,7 +585,7 @@ void HttpRequest::onWSMessage(bool binary, const char* data, size_t len) {
   // Schedule:
   // _pWebApplication->onWSMessage(p_wsc, binary, data, len);
   invoke_later(
-    boost::bind(
+    std::bind(
       &WebApplication::onWSMessage,
       _pWebApplication,
       p_wsc,
@@ -659,7 +658,7 @@ void HttpRequest::_on_closed(uv_handle_t* handle) {
   ASSERT_BACKGROUND_THREAD()
   debug_log("HttpRequest::_on_closed", LOG_DEBUG);
 
-  boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+  std::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
   // It's possible for _pWebSocketConnection to have had its refcount drop to
   // zero from another thread or earlier callback in this thread. If that
   // happened, do nothing.
@@ -692,13 +691,13 @@ void HttpRequest::close() {
   }
   _is_closing = true;
 
-  boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+  std::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
 
   if (p_wsc && _protocol == WebSockets) {
     // Schedule:
     // _pWebApplication->onWSClose(p_wsc)
     invoke_later(
-      boost::bind(
+      std::bind(
         &WebApplication::onWSClose,
         _pWebApplication,
         p_wsc
@@ -719,7 +718,7 @@ void HttpRequest::schedule_close() {
   // Schedule on background thread:
   //  pRequest->close()
   _background_queue->push(
-    boost::bind(&HttpRequest::close, shared_from_this())
+    std::bind(&HttpRequest::close, shared_from_this())
   );
 }
 
@@ -732,13 +731,13 @@ void HttpRequest::_call_r_on_ws_open() {
   ASSERT_MAIN_THREAD()
   debug_log("HttpRequest::_call_r_on_ws_open", LOG_DEBUG);
 
-  boost::function<void (void)> error_callback(
-    boost::bind(&HttpRequest::schedule_close, shared_from_this())
+  std::function<void (void)> error_callback(
+    std::bind(&HttpRequest::schedule_close, shared_from_this())
   );
 
   this->_pWebApplication->onWSOpen(shared_from_this(), error_callback);
 
-  boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+  std::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
   // It's possible for _pWebSocketConnection to have had its refcount drop to
   // zero from another thread or earlier callback in this thread. If that
   // happened, do nothing.
@@ -749,14 +748,14 @@ void HttpRequest::_call_r_on_ws_open() {
   // _requestBuffer is likely empty at this point, but copy its contents and
   // _pass along just in case.
 
-  boost::shared_ptr<std::vector<char> > req_buffer = boost::make_shared<std::vector<char> >(_requestBuffer);
+  std::shared_ptr<std::vector<char> > req_buffer = std::make_shared<std::vector<char> >(_requestBuffer);
   _requestBuffer.clear();
 
 
   // Schedule on background thread:
   // p_wsc->read(safe_vec_addr(*req_buffer), req_buffer->size())
-  boost::function<void (void)> cb(
-    boost::bind(&WebSocketConnection::read,
+  std::function<void (void)> cb(
+    std::bind(&WebSocketConnection::read,
       p_wsc,
       safe_vec_addr(*req_buffer),
       req_buffer->size()
@@ -784,7 +783,7 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
     char* pData = buffer + parsed;
     size_t pDataLen = n - parsed;
 
-    boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+    std::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
     // It's possible for _pWebSocketConnection to have had its refcount drop to
     // zero from another thread or earlier callback in this thread. If that
     // happened, do nothing.
@@ -794,8 +793,8 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
 
     if (p_wsc->accept(_headers, pData, pDataLen)) {
       // Freed in on_response_written
-      boost::shared_ptr<InMemoryDataSource>pDS = boost::make_shared<InMemoryDataSource>();
-      boost::shared_ptr<HttpResponse> pResp(
+      std::shared_ptr<InMemoryDataSource>pDS = std::make_shared<InMemoryDataSource>();
+      std::shared_ptr<HttpResponse> pResp(
         new HttpResponse(shared_from_this(), 101, "Switching Protocols", pDS),
         auto_deleter_background<HttpResponse>
       );
@@ -817,7 +816,7 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
       // Schedule on main thread:
       // this->_call_r_on_ws_open()
       invoke_later(
-        boost::bind(&HttpRequest::_call_r_on_ws_open, shared_from_this())
+        std::bind(&HttpRequest::_call_r_on_ws_open, shared_from_this())
       );
     }
 
@@ -858,7 +857,7 @@ void HttpRequest::_on_request_read(uv_stream_t*, ssize_t nread, const uv_buf_t* 
       this->_parse_http_data(buf->base, nread);
 
     } else if (_protocol == WebSockets) {
-      boost::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
+      std::shared_ptr<WebSocketConnection> p_wsc = _pWebSocketConnection;
       // It's possible for _pWebSocketConnection to have had its refcount drop to
       // zero from another thread or earlier callback in this thread. If that
       // happened, do nothing.
