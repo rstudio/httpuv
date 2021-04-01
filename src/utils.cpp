@@ -65,8 +65,9 @@ bool str_read_int(std::istream* input, size_t digits, int* pOut) {
       return false;
     }
     int v = c - '0';
-    *pOut = (*pOut * 10) + v;
+    tmp = (tmp * 10) + v;
   }
+  *pOut = tmp;
   return true;
 }
 
