@@ -84,7 +84,6 @@ bool str_read_lookup(std::istream* input, size_t bytes, const std::vector<std::s
   buf.resize(bytes + 1);
 
   input->get(&buf[0], bytes + 1, '\0');
-  int i = 0;
   if (input->fail() || input->eof()) {
     return false;
   }
