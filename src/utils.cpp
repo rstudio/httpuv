@@ -79,7 +79,7 @@ bool str_read_int(std::istream* input, size_t digits, int* pOut) {
 //   element in `values` that matched the input. If false is returned, then res
 //   will be untouched.
 // @return true if successful, false if reading failed or no match found
-bool str_read_lookup(std::istream* input, size_t bytes, const std::vector<std::string> values, int* pRes) {
+bool str_read_lookup(std::istream* input, size_t bytes, const std::vector<std::string>& values, int* pRes) {
   std::vector<char> buf;
   buf.resize(bytes + 1);
 
