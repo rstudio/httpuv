@@ -3,8 +3,6 @@
 
 #include <time.h>
 
-#ifdef _WIN32
-time_t timegm(struct tm *tm);
-#endif
+time_t timegm2(struct tm *tm);
 
 #endif

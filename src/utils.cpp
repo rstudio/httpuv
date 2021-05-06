@@ -151,5 +151,5 @@ time_t parse_http_date_string(const std::string& date) {
     return 0;
   }
 
-  return timegm(&t);
+  return timegm2(&t);
 }
