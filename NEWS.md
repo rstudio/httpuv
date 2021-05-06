@@ -1,10 +1,14 @@
-httpuv 1.6.0
+httpuv 1.6.0.9000
 =================
+
+
+httpuv 1.6.0
+============
 
 * Remove BH dependency. httpuv now requires a compiler which supports C++11. (#297)
 
 httpuv 1.5.5
-=================
+============
 
 * Fix SHA1 calculation, and thus WebSocket server handshakes, on big-endian systems. (#284)
 
