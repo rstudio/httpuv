@@ -1,5 +1,5 @@
-httpuv 1.6.0.9000
-=================
+httpuv 1.6.1
+============
 
 * The `timegm()` function is a non-standard GNU extension, so it has been replaced with an internal `timegm2()` function. (#300)
 
