@@ -2,8 +2,8 @@
 #define HTTP_HPP
 
 #include "libuv/include/uv.h"
-#include <boost/shared_ptr.hpp>
-#include <boost/bind.hpp>
+#include <memory>
+#include <functional>
 #include "webapplication.h"
 #include "websockets.h"
 #include "callbackqueue.h"
@@ -30,20 +30,20 @@ struct Address {
 class Socket;
 
 uv_stream_t* createPipeServer(uv_loop_t* loop, const std::string& name, int mask,
-  boost::shared_ptr<WebApplication> pWebApplication);
+  std::shared_ptr<WebApplication> pWebApplication);
 
 uv_stream_t* createTcpServer(uv_loop_t* loop, const std::string& host, int port,
-  boost::shared_ptr<WebApplication> pWebApplication);
+  std::shared_ptr<WebApplication> pWebApplication);
 
 void createPipeServerSync(uv_loop_t* loop, const std::string& name, int mask,
-  boost::shared_ptr<WebApplication> pWebApplication, bool quiet,
+  std::shared_ptr<WebApplication> pWebApplication, bool quiet,
   CallbackQueue* background_queue,
-  uv_stream_t** pServer, boost::shared_ptr<Barrier> blocker);
+  uv_stream_t** pServer, std::shared_ptr<Barrier> blocker);
 
 void createTcpServerSync(uv_loop_t* loop, const std::string& host, int port,
-  boost::shared_ptr<WebApplication> pWebApplication, bool quiet,
+  std::shared_ptr<WebApplication> pWebApplication, bool quiet,
   CallbackQueue* background_queue,
-  uv_stream_t** pServer, boost::shared_ptr<Barrier> blocker);
+  uv_stream_t** pServer, std::shared_ptr<Barrier> blocker);
 
 void freeServer(uv_stream_t* pServer);
 bool runNonBlocking(uv_loop_t* loop);
@@ -70,17 +70,17 @@ bool runNonBlocking(uv_loop_t* loop);
 //
 // The reason we need the explicit Xptr type is because we want to set the last
 // argument (finalizeOnExit) to true.
-inline Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
+inline Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
                   Rcpp::PreserveStorage,
-                  auto_deleter_background<boost::shared_ptr<WebSocketConnection> >,
-                  true> externalize_shared_ptr(boost::shared_ptr<WebSocketConnection> obj)
+                  auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
+                  true> externalize_shared_ptr(std::shared_ptr<WebSocketConnection> obj)
 {
   ASSERT_MAIN_THREAD()
-  boost::shared_ptr<WebSocketConnection>* obj_copy = new boost::shared_ptr<WebSocketConnection>(obj);
+  std::shared_ptr<WebSocketConnection>* obj_copy = new std::shared_ptr<WebSocketConnection>(obj);
 
-  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
+  Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             auto_deleter_background<boost::shared_ptr<WebSocketConnection> >,
+             auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
              true> obj_xptr(obj_copy, true);
 
   return obj_xptr;
@@ -88,14 +88,14 @@ inline Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
 
 // Given an XPtr to a shared_ptr, return a copy of the shared_ptr. This
 // increases the shared_ptr's ref count by one.
-inline boost::shared_ptr<WebSocketConnection> internalize_shared_ptr(
-  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
+inline std::shared_ptr<WebSocketConnection> internalize_shared_ptr(
+  Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             auto_deleter_background<boost::shared_ptr<WebSocketConnection> >,
+             auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
              true> obj_xptr)
 {
   ASSERT_MAIN_THREAD()
-  boost::shared_ptr<WebSocketConnection>* obj_copy = obj_xptr.get();
+  std::shared_ptr<WebSocketConnection>* obj_copy = obj_xptr.get();
   // Return a copy of the shared pointer.
   return *obj_copy;
 }

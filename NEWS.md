@@ -1,14 +1,31 @@
-httpuv 1.5.4.9001
-=================
+httpuv 1.6.1.9000
+============
 
-* Fixed #282: startPipeServer failed with "invalid argument" error after
-  update to libuv 1.37.0. (#283)
+* Fixed #282: `startPipeServer()` failed with "invalid argument" error after update to libuv 1.37.0. (#283)
+
+httpuv 1.6.1
+============
+
+* The `timegm()` function is a non-standard GNU extension, so it has been replaced with an internal `timegm2()` function. (#300)
+
+httpuv 1.6.0
+============
+
+* Remove BH dependency. httpuv now requires a compiler which supports C++11. (#297)
+
+httpuv 1.5.5
+============
+
+* Fix SHA1 calculation, and thus WebSocket server handshakes, on big-endian systems. (#284)
+
+* Fixed #195: Responses required `headers` to be a named list. Now it can also be `NULL`, an empty unnamed list, or it can be unset. (#289)
+
+* Allow responses to omit `body` (or set it as `NULL`) to avoid sending a body or setting the `Content-Length` header. This is intended for use with HTTP 204/304 responses. (#288)
 
 httpuv 1.5.4
 ============
 
-* Fixed #275: Large HTTP request headers could get truncated if they spanned
-  more than one TCP message. (#277)
+* Fixed #275: Large HTTP request headers could get truncated if they spanned more than one TCP message. (#277)
 
 * Fixed build for Solaris. (#271)
 

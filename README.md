@@ -6,7 +6,7 @@
 
 httpuv provides low-level socket and protocol support for handling HTTP and WebSocket requests directly from within R. It uses a multithreaded architecture, where I/O is handled on one thread, and the R callbacks are handled on another.
 
-It is primarily intended as a building block for other packages, rather than making it particularly easy to create complete web applications using httpuv alone. httpuv is built on top of the [libuv](https://github.com/joyent/libuv) and [http-parser](https://github.com/joyent/http-parser) C libraries, both of which were developed by Joyent, Inc.
+It is primarily intended as a building block for other packages, rather than making it particularly easy to create complete web applications using httpuv alone. httpuv is built on top of the [libuv](https://github.com/joyent/libuv) and [http-parser](https://github.com/nodejs/http-parser) C libraries, both of which were developed by Joyent, Inc.
 
 
 ## Installing
@@ -158,7 +158,7 @@ PKG_CPPFLAGS += -DDEBUG_THREAD -UNDEBUG
 PKG_CPPFLAGS += -DDEBUG_TRACE
 ```
 
-To install it directly from Github with these options, you can use `with_makevars`, like this:
+To install it directly from GitHub with these options, you can use `with_makevars`, like this:
 
 ```R
 withr::with_makevars(

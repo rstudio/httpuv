@@ -5,10 +5,8 @@
 #include <iomanip>
 #include <signal.h>
 #include <errno.h>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+#include <functional>
+#include <memory>
 #include "libuv/include/uv.h"
 #include "base64/base64.hpp"
 #include "uvutil.h"
@@ -174,11 +172,11 @@ void sendWSMessage(SEXP conn,
                    Rcpp::RObject message)
 {
   ASSERT_MAIN_THREAD()
-  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
+  Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             auto_deleter_background<boost::shared_ptr<WebSocketConnection> >,
+             auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
              true> conn_xptr(conn);
-  boost::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
+  std::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
 
   Opcode mode;
   SEXP msg_sexp;
@@ -200,8 +198,8 @@ void sendWSMessage(SEXP conn,
   }
 
 
-  boost::function<void (void)> cb(
-    boost::bind(&WebSocketConnection::sendWSMessage, wsc,
+  std::function<void (void)> cb(
+    std::bind(&WebSocketConnection::sendWSMessage, wsc,
       mode,
       safe_vec_addr(*str),
       str->size()
@@ -211,7 +209,7 @@ void sendWSMessage(SEXP conn,
   background_queue->push(cb);
   // Free str after data is written
   // deleter_background<std::vector<char>>(str)
-  background_queue->push(boost::bind(deleter_background<std::vector<char> >, str));
+  background_queue->push(std::bind(deleter_background<std::vector<char> >, str));
 }
 
 // [[Rcpp::export]]
@@ -221,16 +219,16 @@ void closeWS(SEXP conn,
 {
   ASSERT_MAIN_THREAD()
   debug_log("closeWS", LOG_DEBUG);
-  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection>,
+  Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
              Rcpp::PreserveStorage,
-             auto_deleter_background<boost::shared_ptr<WebSocketConnection> >,
+             auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
              true> conn_xptr(conn);
-  boost::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
+  std::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
 
   // Schedule on background thread:
   // wsc->closeWS(code, reason);
   background_queue->push(
-    boost::bind(&WebSocketConnection::closeWS, wsc, code, reason)
+    std::bind(&WebSocketConnection::closeWS, wsc, code, reason)
   );
 }
 
@@ -257,7 +255,7 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // this should be deleted when it goes out of scope.
-  boost::shared_ptr<RWebApplication> pHandler(
+  std::shared_ptr<RWebApplication> pHandler(
     new RWebApplication(onHeaders, onBodyData, onRequest,
                         onWSOpen, onWSMessage, onWSClose,
                         staticPaths, staticPathOptions),
@@ -268,20 +266,20 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   // Use a shared_ptr because the lifetime of this object might be longer than
   // this function, since it is passed to the background thread.
-  boost::shared_ptr<Barrier> blocker = boost::make_shared<Barrier>(2);
+  std::shared_ptr<Barrier> blocker = std::make_shared<Barrier>(2);
 
   uv_stream_t* pServer;
 
   // Run on background thread:
   // createTcpServerSync(
   //   io_loop.get(), host.c_str(), port,
-  //   boost::static_pointer_cast<WebApplication>(pHandler),
+  //   std::static_pointer_cast<WebApplication>(pHandler),
   //   background_queue, &pServer, blocker
   // );
   background_queue->push(
-    boost::bind(createTcpServerSync,
+    std::bind(createTcpServerSync,
       io_loop.get(), host.c_str(), port,
-      boost::static_pointer_cast<WebApplication>(pHandler),
+      std::static_pointer_cast<WebApplication>(pHandler),
       quiet, background_queue, &pServer, blocker
     )
   );
@@ -317,7 +315,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // this should be deleted when it goes out of scope.
-  boost::shared_ptr<RWebApplication> pHandler(
+  std::shared_ptr<RWebApplication> pHandler(
     new RWebApplication(onHeaders, onBodyData, onRequest,
                         onWSOpen, onWSMessage, onWSClose,
                         staticPaths, staticPathOptions),
@@ -326,20 +324,20 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   ensure_io_thread();
 
-  boost::shared_ptr<Barrier> blocker = boost::make_shared<Barrier>(2);
+  std::shared_ptr<Barrier> blocker = std::make_shared<Barrier>(2);
 
   uv_stream_t* pServer;
 
   // Run on background thread:
   // createPipeServerSync(
   //   io_loop.get(), name.c_str(), mask,
-  //   boost::static_pointer_cast<WebApplication>(pHandler),
+  //   std::static_pointer_cast<WebApplication>(pHandler),
   //   background_queue, &pServer, blocker
   // );
   background_queue->push(
-    boost::bind(createPipeServerSync,
+    std::bind(createPipeServerSync,
       io_loop.get(), name.c_str(), mask,
-      boost::static_pointer_cast<WebApplication>(pHandler),
+      std::static_pointer_cast<WebApplication>(pHandler),
       quiet, background_queue, &pServer, blocker
     )
   );
@@ -373,7 +371,7 @@ void stopServer_(uv_stream_t* pServer) {
   // Run on background thread:
   // freeServer(pServer);
   background_queue->push(
-    boost::bind(freeServer, pServer)
+    std::bind(freeServer, pServer)
   );
 }
 
@@ -393,13 +391,13 @@ void stop_loop_timer_cb(uv_timer_t* handle) {
 // Static file serving
 // ============================================================================
 
-boost::shared_ptr<WebApplication> get_pWebApplication(uv_stream_t* pServer) {
+std::shared_ptr<WebApplication> get_pWebApplication(uv_stream_t* pServer) {
   // Copy the Socket shared_ptr
-  boost::shared_ptr<Socket> pSocket(*(boost::shared_ptr<Socket>*)pServer->data);
+  std::shared_ptr<Socket> pSocket(*(std::shared_ptr<Socket>*)pServer->data);
   return pSocket->pWebApplication;
 }
 
-boost::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
+std::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
   uv_stream_t* pServer = internalize_str<uv_stream_t>(handle);
   return get_pWebApplication(pServer);
 }
@@ -698,14 +696,14 @@ void invokeCppCallback(Rcpp::List data, SEXP callback_xptr) {
   if (TYPEOF(callback_xptr) != EXTPTRSXP) {
      throw Rcpp::exception("Expected external pointer.");
   }
-  boost::function<void(Rcpp::List)>* callback_wrapper =
-    (boost::function<void(Rcpp::List)>*)(R_ExternalPtrAddr(callback_xptr));
+  std::function<void(Rcpp::List)>* callback_wrapper =
+    (std::function<void(Rcpp::List)>*)(R_ExternalPtrAddr(callback_xptr));
 
   (*callback_wrapper)(data);
 
   // We want to clear the external pointer to make sure that the C++ function
   // can't get called again by accident. Also delete the heap-allocated
-  // boost::function.
+  // std::function.
   delete callback_wrapper;
   R_ClearExternalPtr(callback_xptr);
 }
@@ -726,13 +724,13 @@ void getRNGState() {
 }
 
 // We are given an external pointer to a
-// boost::shared_ptr<WebSocketConnection>. This returns a hexadecimal string
+// std::shared_ptr<WebSocketConnection>. This returns a hexadecimal string
 // representing the address of the WebSocketConnection (not the shared_ptr to
 // it!).
 //
 //[[Rcpp::export]]
 std::string wsconn_address(SEXP external_ptr) {
-  Rcpp::XPtr<boost::shared_ptr<WebSocketConnection> > xptr(external_ptr);
+  Rcpp::XPtr<std::shared_ptr<WebSocketConnection> > xptr(external_ptr);
   std::ostringstream os;
   os << std::hex << reinterpret_cast<uintptr_t>(xptr.get()->get());
   return os.str();

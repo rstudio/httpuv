@@ -8,8 +8,8 @@ void invoke_callback(void* data) {
   delete cb;
 }
 
-// Schedule a boost::function<void(void)> to be invoked with later().
-void invoke_later(boost::function<void(void)> f, double secs) {
-  BoostFunctionCallback* b_fun = new BoostFunctionCallback(f);
+// Schedule a std::function<void(void)> to be invoked with later().
+void invoke_later(std::function<void(void)> f, double secs) {
+  StdFunctionCallback* b_fun = new StdFunctionCallback(f);
   later::later(invoke_callback, (void*)b_fun, secs);
 }

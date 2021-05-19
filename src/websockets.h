@@ -4,10 +4,9 @@
 #include <string.h>
 #include <stdint.h>
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 
 #include "utils.h"
 #include "thread.h"
@@ -162,7 +161,7 @@ public:
 
 class WebSocketConnection : WSParserCallbacks, NoCopy {
   WSConnState _connState;
-  boost::shared_ptr<WebSocketConnectionCallbacks> _pCallbacks;
+  std::shared_ptr<WebSocketConnectionCallbacks> _pCallbacks;
   WSParser* _pParser;
   WSFrameHeaderInfo _incompleteContentHeader;
   WSFrameHeaderInfo _header;
@@ -170,7 +169,7 @@ class WebSocketConnection : WSParserCallbacks, NoCopy {
   std::vector<char> _payload;
 
 public:
-  WebSocketConnection(boost::shared_ptr<WebSocketConnectionCallbacks> callbacks)
+  WebSocketConnection(std::shared_ptr<WebSocketConnectionCallbacks> callbacks)
       : _connState(WS_OPEN),
         _pCallbacks(callbacks),
         _pParser(NULL) {
@@ -193,7 +192,6 @@ public:
   void sendWSMessage(Opcode opcode, const char* pData, size_t length);
   void closeWS(uint16_t code = 1000, std::string reason = "");
   void read(const char* data, size_t len);
-  void read(boost::shared_ptr<std::vector<char> > buf);
   void markClosed();
 
 protected:

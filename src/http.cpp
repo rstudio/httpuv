@@ -11,8 +11,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+#include <memory>
 
 
 // TODO: Streaming response body (with chunked transfer encoding)
@@ -26,12 +25,12 @@ void on_request(uv_stream_t* handle, int status) {
   }
 
   // Copy the shared_ptr
-  boost::shared_ptr<Socket> pSocket(*(boost::shared_ptr<Socket>*)handle->data);
+  std::shared_ptr<Socket> pSocket(*(std::shared_ptr<Socket>*)handle->data);
   CallbackQueue* bg_queue = pSocket->background_queue;
 
   // Freed by HttpRequest itself when close() is called, which
   // can occur on EOF, error, or when the Socket is destroyed
-  boost::shared_ptr<HttpRequest> req = createHttpRequest(
+  std::shared_ptr<HttpRequest> req = createHttpRequest(
     handle->loop, pSocket->pWebApplication, pSocket, bg_queue
   );
 
@@ -49,7 +48,7 @@ uv_stream_t* createPipeServer(
   uv_loop_t* pLoop,
   const std::string& name,
   int mask,
-  boost::shared_ptr<WebApplication> pWebApplication,
+  std::shared_ptr<WebApplication> pWebApplication,
   bool quiet,
   CallbackQueue* background_queue
 ) {
@@ -59,7 +58,7 @@ uv_stream_t* createPipeServer(
   // the future we have failure cases that stop execution before we get
   // that far, we MUST delete pWebApplication ourselves.
 
-  boost::shared_ptr<Socket> pSocket = boost::make_shared<Socket>(
+  std::shared_ptr<Socket> pSocket = std::make_shared<Socket>(
     pWebApplication, background_queue
   );
 
@@ -68,7 +67,7 @@ uv_stream_t* createPipeServer(
   pSocket->handle.isTcp = false;
   // data is a pointer to the shared_ptr. This is necessary because the
   // uv_stream_t.data field is a void*.
-  pSocket->handle.stream.data = new boost::shared_ptr<Socket>(pSocket);
+  pSocket->handle.stream.data = new std::shared_ptr<Socket>(pSocket);
 
   mode_t oldMask = 0;
   if (mask >= 0)
@@ -102,11 +101,11 @@ void createPipeServerSync(
   uv_loop_t* loop,
   const std::string& name,
   int mask,
-  boost::shared_ptr<WebApplication> pWebApplication,
+  std::shared_ptr<WebApplication> pWebApplication,
   bool quiet,
   CallbackQueue* background_queue,
   uv_stream_t** pServer,
-  boost::shared_ptr<Barrier> blocker
+  std::shared_ptr<Barrier> blocker
 ) {
   ASSERT_BACKGROUND_THREAD()
 
@@ -120,7 +119,7 @@ uv_stream_t* createTcpServer(
   uv_loop_t* pLoop,
   const std::string& host,
   int port,
-  boost::shared_ptr<WebApplication> pWebApplication,
+  std::shared_ptr<WebApplication> pWebApplication,
   bool quiet,
   CallbackQueue* background_queue
 ) {
@@ -130,7 +129,7 @@ uv_stream_t* createTcpServer(
   // the future we have failure cases that stop execution before we get
   // that far, we MUST delete pWebApplication ourselves.
 
-  boost::shared_ptr<Socket> pSocket = boost::make_shared<Socket>(
+  std::shared_ptr<Socket> pSocket = std::make_shared<Socket>(
     pWebApplication, background_queue
   );
 
@@ -139,7 +138,7 @@ uv_stream_t* createTcpServer(
   pSocket->handle.isTcp = true;
   // data is a pointer to the shared_ptr. This is necessary because the
   // uv_stream_t.data field is a void*.
-  pSocket->handle.stream.data = new boost::shared_ptr<Socket>(pSocket);
+  pSocket->handle.stream.data = new std::shared_ptr<Socket>(pSocket);
 
   int r;
   // Lifetime of these needs to encompass use of pAddress in uv_tcp_bind()
@@ -194,11 +193,11 @@ void createTcpServerSync(
   uv_loop_t* pLoop,
   const std::string& host,
   int port,
-  boost::shared_ptr<WebApplication> pWebApplication,
+  std::shared_ptr<WebApplication> pWebApplication,
   bool quiet,
   CallbackQueue* background_queue,
   uv_stream_t** pServer,
-  boost::shared_ptr<Barrier> blocker
+  std::shared_ptr<Barrier> blocker
 ) {
   ASSERT_BACKGROUND_THREAD()
 
@@ -212,7 +211,7 @@ void createTcpServerSync(
 void freeServer(uv_stream_t* pHandle) {
   ASSERT_BACKGROUND_THREAD()
   // TODO: Check if server is still running?
-  boost::shared_ptr<Socket>* ppSocket = (boost::shared_ptr<Socket>*)pHandle->data;
+  std::shared_ptr<Socket>* ppSocket = (std::shared_ptr<Socket>*)pHandle->data;
   (*ppSocket)->close();
   // ppSocket gets deleted in a callback in close()
 }

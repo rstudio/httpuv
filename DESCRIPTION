@@ -2,13 +2,14 @@ Package: httpuv
 Type: Package
 Encoding: UTF-8
 Title: HTTP and WebSocket Server Library
-Version: 1.5.4.9001
+Version: 1.6.1.9000
 Authors@R: c(
     person("Joe", "Cheng", role = c("aut"), email = "joe@rstudio.com"),
     person("Winston", "Chang", role = c("aut", "cre"), email = "winston@rstudio.com"),
     person(family = "RStudio, PBC", role = "cph"),
     person("Hector", "Corrada Bravo", role = "ctb"),
-    person("Jeroen", "Ooms", role = "ctb")
+    person("Jeroen", "Ooms", role = "ctb"),
+    person("Andrzej", "Krzemienski", role = "cph", comment = "optional.hpp")
     )
 Copyright: RStudio, PBC; Joyent, Inc.; Nginx Inc.; Igor Sysoev; Niels Provos;
     Internet Systems Consortium, Inc.; Alexander Chemeris; Berkeley Software
@@ -34,10 +35,10 @@ Imports:
     R6,
     promises,
     later (>= 0.8.0)
-LinkingTo: Rcpp, BH, later
+LinkingTo: Rcpp, later
 URL: https://github.com/rstudio/httpuv
-SystemRequirements: GNU make
-RoxygenNote: 7.1.0.9000
+SystemRequirements: GNU make, C++11
+RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 Suggests:
     testthat,

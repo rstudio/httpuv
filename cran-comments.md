@@ -1,23 +1,45 @@
-I am the new maintainer for the httpuv package. You should have received an email from Joe Cheng about the maintainer change.
+## Comments
+
+#### 2021-01-11
+
+Bug fixes.
+
+Thank you,
+Winston
 
 
-## R CMD check results
+## Test environments and R CMD check results
 
-There were 3 NOTEs, all of which are expected:
+* local macOS install 10.15.7
+  * R 4.0
+* GitHub Actions - https://github.com/rstudio/httpuv/pull/294/checks
+  * macOS - R devel
+  * macOS, windows, ubuntu 16 - R 4.0
+  * windows, ubuntu 16 - R 3.6
+  * ubuntu 16 - R 3.5
+  * ubuntu 16 - R 3.4
+  * ubuntu 16 - R 3.3
 
-* checking CRAN incoming feasibility ... NOTE
-Maintainer: ‘Winston Chang <winston@rstudio.com>’
+* win-builder
+  * devel
 
-New maintainer:
-  Winston Chang <winston@rstudio.com>
-Old maintainer(s):
-  Joe Cheng <joe@rstudio.com>
+#### R CMD check results
+
+There are 2 NOTEs, all of which are expected:
 
 * checking installed package size ... NOTE
-  installed size is  8.9Mb
+  installed size is 11.4Mb
   sub-directories of 1Mb or more:
-    libs   8.6Mb
+    libs  11.0Mb
 
 * checking for GNU extensions in Makefiles ... NOTE
 GNU make is a SystemRequirements.
 
+0 errors | 0 warnings | 2 notes
+
+## revdepcheck results
+
+We checked 57 reverse dependencies (50 from CRAN + 7 from BioConductor), comparing R CMD check results across CRAN and dev versions of this package.
+
+ * We saw 0 new problems
+ * We failed to check 0 packages

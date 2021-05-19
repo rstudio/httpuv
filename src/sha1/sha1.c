@@ -86,6 +86,9 @@ A million repetitions of "a"
 #include <string.h>
 #include <stdint.h>
 
+/* To get WORDS_BIGENDIAN definition. */
+#include <Rconfig.h>
+
 #include "sha1.h"
 
 void SHA1_Transform(uint32_t state[5], const uint8_t buffer[64]);

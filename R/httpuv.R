@@ -3,11 +3,11 @@
 #' Allows R code to listen for and interact with HTTP and WebSocket clients, so
 #' you can serve web traffic directly out of your R process. Implementation is
 #' based on \href{https://github.com/joyent/libuv}{libuv} and
-#' \href{https://github.com/joyent/http-parser}{http-parser}.
+#' \href{https://github.com/nodejs/http-parser}{http-parser}.
 #'
 #' This is a low-level library that provides little more than network I/O and
 #' implementations of the HTTP and WebSocket protocols. For an easy way to
-#' create web applications, try \href{http://rstudio.com/shiny/}{Shiny} instead.
+#' create web applications, try \href{https://shiny.rstudio.com}{Shiny} instead.
 #'
 #' @examples
 #' \dontrun{
@@ -120,6 +120,14 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
   prepare_response <- function(resp) {
     if (is.null(resp) || length(resp) == 0)
       return(NULL)
+
+    # If headers is an empty unnamed list, convert to named list so that
+    # the C++ code won't error.
+    if (is.null(resp$headers) ||
+        (length(resp$headers) == 0 && is.null(names(resp$headers))))
+    {
+      resp$headers <- named_list()
+    }
 
     # Coerce all headers to character
     resp$headers <- lapply(resp$headers, paste)
@@ -476,10 +484,12 @@ WebSocket <- R6Class(
 #'
 #'   \describe{
 #'     \item{\code{call(req)}}{Process the given HTTP request, and return an
-#'     HTTP response. This method should be implemented in accordance with the
+#'     HTTP response (see Response Values). This method should be implemented in
+#'     accordance with the
 #'     \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
-#'     specification.} Note that httpuv augments \code{req} with an additional item,
-#'     \code{req$HEADERS}, which is a named character vector of request headers.
+#'     specification. Note that httpuv augments \code{req} with an additional
+#'     item, \code{req$HEADERS}, which is a named character vector of request
+#'     headers.}
 #'     \item{\code{onHeaders(req)}}{Optional. Similar to \code{call}, but occurs
 #'     when headers are received. Return \code{NULL} to continue normal
 #'     processing of the request, or a Rook response to send that response,
@@ -504,6 +514,26 @@ WebSocket <- R6Class(
 #'   The \code{startPipeServer} variant can be used instead of
 #'   \code{startServer} to listen on a Unix domain socket or named pipe rather
 #'   than a TCP socket (this is not common).
+#'
+#' @section Response Values:
+#'
+#' The \code{call} function is expected to return a list containing the
+#' following, which are converted to an HTTP response and sent to the client:
+#'
+#' \describe{
+#'   \item{\code{status}}{A numeric HTTP status code, e.g. \code{200} or
+#'     \code{404L}.}
+#'
+#'   \item{\code{headers}}{A named list of HTTP headers and their values, as
+#'     strings. This can also be missing, an empty list, or `NULL`, in which
+#'     case no headers (other than the \code{Date} and \code{Content-Length}
+#'     headers, as required) will be added.}
+#'
+#'   \item{\code{body}}{A string (or \code{raw} vector) to be sent as the body
+#'     of the HTTP response. This can also be omitted or set to \code{NULL} to
+#'     avoid sending any body, which is useful for HTTP \code{1xx}, \code{204},
+#'     and \code{304} responses, as well as responses to \code{HEAD} requests.}
+#' }
 #'
 #' @return A \code{\link{WebServer}} or \code{\link{PipeServer}} object.
 #'

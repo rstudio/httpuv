@@ -1,7 +1,7 @@
 #ifndef AUTO_DELETER_HPP
 #define AUTO_DELETER_HPP
 
-#include <boost/bind.hpp>
+#include <functional>
 #include "callbackqueue.h"
 #include "thread.h"
 #include <later_api.h>
@@ -38,7 +38,7 @@ void auto_deleter_main(void* obj) {
 template <typename T>
 void auto_deleter_background(T* obj) {
   if (is_main_thread()) {
-    background_queue->push(boost::bind(auto_deleter_background<T>, obj));
+    background_queue->push(std::bind(auto_deleter_background<T>, obj));
 
   } else if (is_background_thread()) {
     try {

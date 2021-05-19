@@ -64,3 +64,8 @@ logLevel <- function(level = NULL) {
   }
 
 }
+
+# Create an empty named list
+named_list <- function() {
+  list(a = 1)[0]
+}

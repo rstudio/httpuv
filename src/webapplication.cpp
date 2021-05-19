@@ -1,6 +1,5 @@
-#include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+#include <functional>
+#include <memory>
 #include "httpuv.h"
 #include "filedatasource.h"
 #include "webapplication.h"
@@ -99,16 +98,16 @@ Rcpp::List errorResponse() {
 // An analog to errorResponse, but this returns an shared_ptr<HttpResponse>
 // instead of an Rcpp::List, doesn't involve any R objects, and can be run on
 // the background thread.
-boost::shared_ptr<HttpResponse> error_response(boost::shared_ptr<HttpRequest> pRequest, int code) {
+std::shared_ptr<HttpResponse> error_response(std::shared_ptr<HttpRequest> pRequest, int code) {
   std::string description = getStatusDescription(code);
   std::string content = toString(code) + " " + description + "\n";
 
   std::vector<uint8_t> responseData(content.begin(), content.end());
 
   // Freed in on_response_written
-  boost::shared_ptr<DataSource> pDataSource = boost::make_shared<InMemoryDataSource>(responseData);
+  std::shared_ptr<DataSource> pDataSource = std::make_shared<InMemoryDataSource>(responseData);
 
-  return boost::shared_ptr<HttpResponse>(
+  return std::shared_ptr<HttpResponse>(
     new HttpResponse(pRequest, code, description, pDataSource),
     auto_deleter_background<HttpResponse>
   );
@@ -129,7 +128,7 @@ std::pair<std::string, std::string> splitQueryString(const std::string& url) {
 }
 
 
-void requestToEnv(boost::shared_ptr<HttpRequest> pRequest, Rcpp::Environment* pEnv) {
+void requestToEnv(std::shared_ptr<HttpRequest> pRequest, Rcpp::Environment* pEnv) {
   ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
@@ -182,15 +181,15 @@ void requestToEnv(boost::shared_ptr<HttpRequest> pRequest, Rcpp::Environment* pE
 }
 
 
-boost::shared_ptr<HttpResponse> listToResponse(
-  boost::shared_ptr<HttpRequest> pRequest,
+std::shared_ptr<HttpResponse> listToResponse(
+  std::shared_ptr<HttpRequest> pRequest,
   const Rcpp::List& response)
 {
   ASSERT_MAIN_THREAD()
   using namespace Rcpp;
 
   if (response.isNULL() || response.size() == 0) {
-    return boost::shared_ptr<HttpResponse>();
+    return std::shared_ptr<HttpResponse>();
   }
 
   CharacterVector names = response.names();
@@ -201,13 +200,21 @@ boost::shared_ptr<HttpResponse> listToResponse(
   List responseHeaders = response["headers"];
 
   // Self-frees when response is written
-  boost::shared_ptr<DataSource> pDataSource;
+  std::shared_ptr<DataSource> pDataSource;
+
+  // HTTP 1xx, 204 and 304 responses (as well as responses to HEAD requests)
+  // cannot have a body, so permit the body element to be missing or NULL, in
+  // which case pDataSource will be nullptr.
+  //
+  // See https://tools.ietf.org/html/rfc7231#section-6.3.5 and
+  //     https://tools.ietf.org/html/rfc7232#section-4.1
+  bool hasBody = response.containsElementNamed("body") && !Rf_isNull(response["body"]);
 
   // The response can either contain:
   // - bodyFile: String value that names the file that should be streamed
   // - body: Character vector (which is charToRaw-ed) or raw vector, or NULL
   if (std::find(names.begin(), names.end(), "bodyFile") != names.end()) {
-    boost::shared_ptr<FileDataSource> pFDS = boost::make_shared<FileDataSource>();
+    std::shared_ptr<FileDataSource> pFDS = std::make_shared<FileDataSource>();
     FileDataSourceResult ret = pFDS->initialize(
       Rcpp::as<std::string>(response["bodyFile"]),
       Rcpp::as<bool>(response["bodyFileOwned"])
@@ -218,16 +225,16 @@ boost::shared_ptr<HttpResponse> listToResponse(
     }
     pDataSource = pFDS;
   }
-  else if (Rf_isString(response["body"])) {
+  else if (hasBody && Rf_isString(response["body"])) {
     RawVector responseBytes = Function("charToRaw")(response["body"]);
-    pDataSource = boost::make_shared<InMemoryDataSource>(responseBytes);
+    pDataSource = std::make_shared<InMemoryDataSource>(responseBytes);
   }
-  else {
+  else if (hasBody) {
     RawVector responseBytes = response["body"];
-    pDataSource = boost::make_shared<InMemoryDataSource>(responseBytes);
+    pDataSource = std::make_shared<InMemoryDataSource>(responseBytes);
   }
 
-  boost::shared_ptr<HttpResponse> pResp(
+  std::shared_ptr<HttpResponse> pResp(
     new HttpResponse(pRequest, status, statusDesc, pDataSource),
     auto_deleter_background<HttpResponse>
   );
@@ -241,14 +248,14 @@ boost::shared_ptr<HttpResponse> listToResponse(
   return pResp;
 }
 
-void invokeResponseFun(boost::function<void(boost::shared_ptr<HttpResponse>)> fun,
-                       boost::shared_ptr<HttpRequest> pRequest,
+void invokeResponseFun(std::function<void(std::shared_ptr<HttpResponse>)> fun,
+                       std::shared_ptr<HttpRequest> pRequest,
                        Rcpp::List response)
 {
   ASSERT_MAIN_THREAD()
   // new HttpResponse object. The callback will invoke
   // HttpResponse->writeResponse().
-  boost::shared_ptr<HttpResponse> pResponse = listToResponse(pRequest, response);
+  std::shared_ptr<HttpResponse> pResponse = listToResponse(pRequest, response);
   fun(pResponse);
 }
 
@@ -275,12 +282,12 @@ RWebApplication::RWebApplication(
 }
 
 
-void RWebApplication::onHeaders(boost::shared_ptr<HttpRequest> pRequest,
-                                boost::function<void(boost::shared_ptr<HttpResponse>)> callback)
+void RWebApplication::onHeaders(std::shared_ptr<HttpRequest> pRequest,
+                                std::function<void(std::shared_ptr<HttpResponse>)> callback)
 {
   ASSERT_MAIN_THREAD()
   if (_onHeaders.isNULL()) {
-    boost::shared_ptr<HttpResponse> null_ptr;
+    std::shared_ptr<HttpResponse> null_ptr;
     callback(null_ptr);
   }
 
@@ -302,13 +309,13 @@ void RWebApplication::onHeaders(boost::shared_ptr<HttpRequest> pRequest,
   // new HttpResponse object. The callback will invoke
   // HttpResponse->writeResponse(), which adds a callback to destroy(), which
   // deletes the object.
-  boost::shared_ptr<HttpResponse> pResponse = listToResponse(pRequest, response);
+  std::shared_ptr<HttpResponse> pResponse = listToResponse(pRequest, response);
   callback(pResponse);
 }
 
-void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
-      boost::shared_ptr<std::vector<char> > data,
-      boost::function<void(boost::shared_ptr<HttpResponse>)> errorCallback)
+void RWebApplication::onBodyData(std::shared_ptr<HttpRequest> pRequest,
+      std::shared_ptr<std::vector<char> > data,
+      std::function<void(std::shared_ptr<HttpResponse>)> errorCallback)
 {
   ASSERT_MAIN_THREAD()
   debug_log("RWebApplication::onBodyData", LOG_DEBUG);
@@ -335,16 +342,16 @@ void RWebApplication::onBodyData(boost::shared_ptr<HttpRequest> pRequest,
   }
 }
 
-void RWebApplication::getResponse(boost::shared_ptr<HttpRequest> pRequest,
-                                  boost::function<void(boost::shared_ptr<HttpResponse>)> callback) {
+void RWebApplication::getResponse(std::shared_ptr<HttpRequest> pRequest,
+                                  std::function<void(std::shared_ptr<HttpResponse>)> callback) {
   ASSERT_MAIN_THREAD()
   debug_log("RWebApplication::getResponse", LOG_DEBUG);
   using namespace Rcpp;
 
   // Pass callback to R:
   // invokeResponseFun(callback, pRequest, _1)
-  boost::function<void(List)>* callback_wrapper = new boost::function<void(List)>(
-    boost::bind(invokeResponseFun, callback, pRequest, _1)
+  std::function<void(List)>* callback_wrapper = new std::function<void(List)>(
+    std::bind(invokeResponseFun, callback, pRequest, std::placeholders::_1)
   );
 
   SEXP callback_xptr = PROTECT(R_MakeExternalPtr(callback_wrapper, R_NilValue, R_NilValue));
@@ -380,10 +387,10 @@ void RWebApplication::getResponse(boost::shared_ptr<HttpRequest> pRequest,
   UNPROTECT(1);
 }
 
-void RWebApplication::onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
-                               boost::function<void(void)> error_callback) {
+void RWebApplication::onWSOpen(std::shared_ptr<HttpRequest> pRequest,
+                               std::function<void(void)> error_callback) {
   ASSERT_MAIN_THREAD()
-  boost::shared_ptr<WebSocketConnection> pConn = pRequest->websocket();
+  std::shared_ptr<WebSocketConnection> pConn = pRequest->websocket();
   if (!pConn) {
     return;
   }
@@ -399,10 +406,10 @@ void RWebApplication::onWSOpen(boost::shared_ptr<HttpRequest> pRequest,
   }
 }
 
-void RWebApplication::onWSMessage(boost::shared_ptr<WebSocketConnection> pConn,
+void RWebApplication::onWSMessage(std::shared_ptr<WebSocketConnection> pConn,
                                   bool binary,
-                                  boost::shared_ptr<std::vector<char> > data,
-                                  boost::function<void(void)> error_callback)
+                                  std::shared_ptr<std::vector<char> > data,
+                                  std::function<void(void)> error_callback)
 {
   ASSERT_MAIN_THREAD()
   try {
@@ -423,7 +430,7 @@ void RWebApplication::onWSMessage(boost::shared_ptr<WebSocketConnection> pConn,
   }
 }
 
-void RWebApplication::onWSClose(boost::shared_ptr<WebSocketConnection> pConn) {
+void RWebApplication::onWSClose(std::shared_ptr<WebSocketConnection> pConn) {
   ASSERT_MAIN_THREAD()
   _onWSClose(externalize_shared_ptr(pConn));
 }
@@ -436,28 +443,28 @@ void RWebApplication::onWSClose(boost::shared_ptr<WebSocketConnection> pConn) {
 // Unlike most of the methods for an RWebApplication, these ones are called on
 // the background thread.
 
-boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
-  boost::shared_ptr<HttpRequest> pRequest
+std::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
+  std::shared_ptr<HttpRequest> pRequest
 ) {
   ASSERT_BACKGROUND_THREAD()
 
   // If there's any Upgrade header, don't try to serve a static file. Just
   // fall through, even if the path is one that is in the StaticPathManager.
   if (pRequest->hasHeader("Upgrade")) {
-    return boost::shared_ptr<HttpResponse>();
+    return std::shared_ptr<HttpResponse>();
   }
 
   // Strip off query string
   std::pair<std::string, std::string> url_query = splitQueryString(pRequest->url());
   std::string url_path = doDecodeURI(url_query.first, true);
 
-  boost::optional<std::pair<StaticPath, std::string>> sp_pair =
+  std::experimental::optional<std::pair<StaticPath, std::string>> sp_pair =
     _staticPathManager.matchStaticPath(url_path);
 
   if (!sp_pair) {
     // This was not a static path. Fall through to the R code to handle this
     // path.
-    return boost::shared_ptr<HttpResponse>();
+    return std::shared_ptr<HttpResponse>();
   }
 
   // If we get here, we've matched a static path.
@@ -467,8 +474,8 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   const std::string& subpath = sp_pair->second;
 
   // This is an excluded path
-  if (sp.options.exclude.get()) {
-    return boost::shared_ptr<HttpResponse>();
+  if (*sp.options.exclude) {
+    return std::shared_ptr<HttpResponse>();
   }
 
   // Validate headers (if validation pattern was provided).
@@ -496,8 +503,8 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   if (url_path.find("/../") != std::string::npos ||
       (url_path.length() >= 3 && url_path.substr(url_path.length()-3, 3) == "/..")
   ) {
-    if (sp.options.fallthrough.get()) {
-      return boost::shared_ptr<HttpResponse>();
+    if (*sp.options.fallthrough) {
+      return std::shared_ptr<HttpResponse>();
     } else {
       return error_response(pRequest, 400);
     }
@@ -510,18 +517,18 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   }
 
   if (is_directory(local_path)) {
-    if (sp.options.indexhtml.get()) {
+    if (*sp.options.indexhtml) {
       local_path = local_path + "/" + "index.html";
     }
   }
 
-  boost::shared_ptr<FileDataSource> pDataSource = boost::make_shared<FileDataSource>();
+  std::shared_ptr<FileDataSource> pDataSource = std::make_shared<FileDataSource>();
   FileDataSourceResult ret = pDataSource->initialize(local_path, false);
 
   if (ret != FDS_OK) {
     if (ret == FDS_NOT_EXIST || ret == FDS_ISDIR) {
-      if (sp.options.fallthrough.get()) {
-        return boost::shared_ptr<HttpResponse>();
+      if (*sp.options.fallthrough) {
+        return std::shared_ptr<HttpResponse>();
       } else {
         return error_response(pRequest, 404);
       }
@@ -538,8 +545,8 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     content_type = "application/octet-stream";
   } else if (content_type == "text/html") {
     // Add the encoding if specified by the options.
-    if (sp.options.html_charset.get() != "") {
-      content_type = "text/html; charset=" + sp.options.html_charset.get();
+    if (*sp.options.html_charset != "") {
+      content_type = "text/html; charset=" + *sp.options.html_charset;
     }
   }
 
@@ -566,7 +573,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   // start by setting it to point to the same thing as pDataSource, but it can
   // be unset based on various conditions, which means that no body data will
   // be sent.
-  boost::shared_ptr<FileDataSource> pDataSource2 = pDataSource;
+  std::shared_ptr<FileDataSource> pDataSource2 = pDataSource;
 
   if (method == "HEAD") {
     pDataSource2.reset();
@@ -577,7 +584,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
     status_code = 304;
   }
 
-  boost::shared_ptr<HttpResponse> pResponse = boost::shared_ptr<HttpResponse>(
+  std::shared_ptr<HttpResponse> pResponse = std::shared_ptr<HttpResponse>(
     new HttpResponse(pRequest, status_code, getStatusDescription(status_code), pDataSource2),
     auto_deleter_background<HttpResponse>
   );
@@ -585,7 +592,7 @@ boost::shared_ptr<HttpResponse> RWebApplication::staticFileResponse(
   ResponseHeaders& respHeaders = pResponse->headers();
 
   // Add extra user-specified headers.
-  const ResponseHeaders& extraRespHeaders = sp.options.headers.get();
+  const ResponseHeaders& extraRespHeaders = *sp.options.headers;
   if (extraRespHeaders.size() != 0) {
     ResponseHeaders::const_iterator it;
     for (it = extraRespHeaders.begin(); it != extraRespHeaders.end(); it++) {

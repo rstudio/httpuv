@@ -1,7 +1,7 @@
 #ifndef CALLBACK_HPP
 #define CALLBACK_HPP
 
-#include <boost/function.hpp>
+#include <functional>
 #include <later_api.h>
 
 class Callback {
@@ -15,13 +15,13 @@ public:
 void invoke_callback(void* data);
 
 
-// Wrapper class for boost functions
-class BoostFunctionCallback : public Callback {
+// Wrapper class for std functions
+class StdFunctionCallback : public Callback {
 private:
-  boost::function<void (void)> fun;
+  std::function<void (void)> fun;
 
 public:
-  BoostFunctionCallback(boost::function<void (void)> fun)
+  StdFunctionCallback(std::function<void (void)> fun)
     : fun(fun) {
   }
 
@@ -31,6 +31,6 @@ public:
 
 };
 
-void invoke_later(boost::function<void(void)> f, double secs = 0);
+void invoke_later(std::function<void(void)> f, double secs = 0);
 
 #endif
