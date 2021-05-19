@@ -1,6 +1,7 @@
 httpuv 1.6.1.9000
 ============
 
+* Fixed #282: `startPipeServer()` failed with "invalid argument" error after update to libuv 1.37.0. (#283)
 
 httpuv 1.6.1
 ============

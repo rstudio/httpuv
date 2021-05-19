@@ -63,7 +63,7 @@ uv_stream_t* createPipeServer(
   );
 
   // TODO: Handle error
-  uv_pipe_init(pLoop, &pSocket->handle.pipe, true);
+  uv_pipe_init(pLoop, &pSocket->handle.pipe, 0);
   pSocket->handle.isTcp = false;
   // data is a pointer to the shared_ptr. This is necessary because the
   // uv_stream_t.data field is a void*.
