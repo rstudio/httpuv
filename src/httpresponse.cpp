@@ -77,7 +77,7 @@ void HttpResponse::writeResponse() {
   // since they can't have a body.
   //
   // See: https://tools.ietf.org/html/rfc7230#section-3.3.2
-  if (_pBody != nullptr && !hasContentLengthHeader) {
+  if (_pBody != nullptr && !hasContentLengthHeader && _statusCode != 101) {
     response << "Content-Length: " << _pBody->size() << "\r\n";
   }
 
