@@ -33,13 +33,11 @@ public:
   std::vector<uv_buf_t> bufs() {
     std::vector<uv_buf_t> res;
     if (prefix.size() > 0) {
-      uv_buf_t buf_prefix = {&prefix[0], prefix.size()};
-      res.push_back(buf_prefix);
+      res.push_back(uv_buf_init(&prefix[0], prefix.size()));
     }
     res.push_back(buffer);
     if (suffix.size() > 0) {
-      uv_buf_t buf_suffix = {&suffix[0], suffix.size()};
-      res.push_back(buf_suffix);
+      res.push_back(uv_buf_init(&suffix[0], suffix.size()));
     }
     return res;
   }
