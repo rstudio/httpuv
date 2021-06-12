@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "thread.h"
 #include "utils.h"
+#include "gzipdatasource.h"
 #include "libuv/include/uv.h"
 
 
@@ -63,6 +64,7 @@ void HttpResponse::writeResponse() {
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
   response << "HTTP/1.1 " << _statusCode << " " << _status << "\r\n";
+  bool contentEncoding = false;
   std::string contentLength;
   for (ResponseHeaders::const_iterator it = _headers.begin();
      it != _headers.end();
@@ -71,7 +73,40 @@ void HttpResponse::writeResponse() {
       contentLength = it->second;
     } else {
       response << it->first << ": " << it->second << "\r\n";
+      if (strcasecmp(it->first.c_str(), "Content-Encoding") == 0) {
+        contentEncoding = true;
+      }
     }
+  }
+
+  // Determine if gzip compression should be used
+  bool gzip;
+  if (contentEncoding) {
+    // The response already has a Content-Encoding
+    gzip = false;
+  } else if (_statusCode == 101 || _pBody == nullptr) {
+    gzip = false;
+  } else {
+    RequestHeaders h = _pRequest->headers();
+    auto acceptEncoding = h.find("Accept-Encoding");
+    if (acceptEncoding != h.end()) {
+      std::string enc = acceptEncoding->second;
+      if (enc.find("gzip") != std::string::npos) {
+        gzip = true;
+      } else {
+        // There was an "Accept-Encoding", but it didn't include gzip
+        gzip = false;
+      }
+    } else {
+      // No "Accept-Encoding" header
+      gzip = false;
+    }
+  }
+
+  if (gzip) {
+    response << "Content-Encoding: gzip\r\n";
+    _chunked = true;
+    _pBody = std::make_shared<GZipDataSource>(_pBody);
   }
 
   if (_statusCode == 101) {
