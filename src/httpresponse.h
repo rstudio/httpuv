@@ -18,6 +18,7 @@ class HttpResponse : public std::enable_shared_from_this<HttpResponse>  {
   std::vector<char> _responseHeader;
   std::shared_ptr<DataSource> _pBody;
   bool _closeAfterWritten;
+  bool _chunked;
 
 public:
   HttpResponse(std::shared_ptr<HttpRequest> pRequest,
@@ -28,7 +29,8 @@ public:
       _statusCode(statusCode),
       _status(status),
       _pBody(pBody),
-      _closeAfterWritten(false)
+      _closeAfterWritten(false),
+      _chunked(false)
   {
     _headers.push_back(std::make_pair("Date", http_date_string(time(NULL))));
   }

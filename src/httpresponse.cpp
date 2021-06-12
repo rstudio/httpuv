@@ -48,8 +48,9 @@ class HttpResponseExtendedWrite : public ExtendedWrite {
 public:
   HttpResponseExtendedWrite(std::shared_ptr<HttpResponse> pParent,
                             uv_stream_t* pHandle,
-                            std::shared_ptr<DataSource> pDataSource) :
-      ExtendedWrite(pHandle, pDataSource), _pParent(pParent) {}
+                            std::shared_ptr<DataSource> pDataSource,
+                            bool chunked) :
+      ExtendedWrite(pHandle, pDataSource, chunked), _pParent(pParent) {}
 
   void onWriteComplete(int status) {
     delete this;
@@ -62,23 +63,32 @@ void HttpResponse::writeResponse() {
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
   response << "HTTP/1.1 " << _statusCode << " " << _status << "\r\n";
-  bool hasContentLengthHeader = false;
+  std::string contentLength;
   for (ResponseHeaders::const_iterator it = _headers.begin();
      it != _headers.end();
      it++) {
-    response << it->first << ": " << it->second << "\r\n";
-
     if (strcasecmp(it->first.c_str(), "Content-Length") == 0) {
-      hasContentLengthHeader = true;
+      contentLength = it->second;
+    } else {
+      response << it->first << ": " << it->second << "\r\n";
     }
   }
 
-  // Some valid responses (such as HTTP 204 and 304) must not set this header,
-  // since they can't have a body.
-  //
-  // See: https://tools.ietf.org/html/rfc7230#section-3.3.2
-  if (_pBody != nullptr && !hasContentLengthHeader) {
+  if (_statusCode == 101) {
+    // HTTP 101 must not set this header, even if there *is* body data (which is
+    // actually not a true HTTP body, but instead, just the first bytes for the
+    // switched-to protocol)
+  } else if (_chunked) {
+    response << "Transfer-Encoding: chunked\r\n";
+  } else if (!contentLength.empty()) {
+    response << "Content-Length: " << contentLength << "\r\n";
+  } else if (_pBody != nullptr) {
     response << "Content-Length: " << _pBody->size() << "\r\n";
+  } else {
+    // Some valid responses (such as HTTP 204 and 304) must not set this header,
+    // since they can't have a body.
+    //
+    // See: https://tools.ietf.org/html/rfc7230#section-3.3.2
   }
 
   response << "\r\n";
@@ -127,7 +137,7 @@ void HttpResponse::onResponseWritten(int status) {
 
   if (_pBody != NULL) {
     HttpResponseExtendedWrite* pResponseWrite = new HttpResponseExtendedWrite(
-      shared_from_this(), _pRequest->handle(), _pBody);
+      shared_from_this(), _pRequest->handle(), _pBody, this->_chunked);
     pResponseWrite->begin();
   }
 }
