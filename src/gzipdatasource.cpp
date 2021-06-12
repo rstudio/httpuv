@@ -1,4 +1,5 @@
 #include "gzipdatasource.h"
+#include "utils.h"
 
 GZipDataSource::GZipDataSource(std::shared_ptr<DataSource> pData) :
   _pData(pData), _state(Streaming) {
@@ -21,7 +22,7 @@ GZipDataSource::~GZipDataSource() {
 }
 
 uint64_t GZipDataSource::size() const {
-  std::cerr << "GZipDataSource::size() was called, this should never happen\n";
+  debug_log("GZipDataSource::size() was called, this should never happen\n", LOG_WARN);
   return 0;
 }
 
