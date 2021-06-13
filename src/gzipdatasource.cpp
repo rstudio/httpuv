@@ -5,6 +5,7 @@ GZipDataSource::GZipDataSource(std::shared_ptr<DataSource> pData) :
   _pData(pData), _state(Streaming) {
 
   _zstrm = {0};
+  _inputBuf = {0};
   int res = deflateInit2(&_zstrm, 4, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY);
   if (res != Z_OK) {
     if (_zstrm.msg) {
