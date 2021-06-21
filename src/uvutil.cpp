@@ -21,16 +21,19 @@ public:
   }
 
   void setPrefix(const char* data, size_t len) {
+    ASSERT_BACKGROUND_THREAD()
     prefix.clear();
     std::copy(data, data + len, std::back_inserter(prefix));
   }
 
   void setSuffix(const char* data, size_t len) {
+    ASSERT_BACKGROUND_THREAD()
     suffix.clear();
     std::copy(data, data + len, std::back_inserter(suffix));
   }
 
   std::vector<uv_buf_t> bufs() {
+    ASSERT_BACKGROUND_THREAD()
     std::vector<uv_buf_t> res;
     if (prefix.size() > 0) {
       res.push_back(uv_buf_init(&prefix[0], prefix.size()));
