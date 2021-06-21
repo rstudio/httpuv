@@ -145,8 +145,7 @@ void ExtendedWrite::next() {
       // In chunked mode, data chunks must be preceded by 1) the number of bytes
       // in the chunk, as a hexadecimal string; and 2) "\r\n"; and succeeded by
       // another "\r\n"
-      char prefix[16];
-      memset(prefix, 0, sizeof(prefix));
+      char prefix[16] = {0};
       int len = snprintf(prefix, sizeof(prefix), "%lX\r\n", buf.len);
       pWriteOp->setPrefix(prefix, len);
       pWriteOp->setSuffix(CRLF.c_str(), CRLF.length());
