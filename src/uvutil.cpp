@@ -6,30 +6,24 @@
 class WriteOp {
 private:
   ExtendedWrite* pParent;
-  uv_buf_t buffer;
+
   // Bytes to write before writing the buffer
   std::vector<char> prefix;
+
+  // The main payload
+  uv_buf_t buffer;
+
   // Bytes to write after writing the buffer
   std::vector<char> suffix;
+
 public:
   uv_write_t handle;
 
-  WriteOp(ExtendedWrite* parent, uv_buf_t data)
-        : pParent(parent), buffer(data) {
+  WriteOp(ExtendedWrite* parent, std::string prefix, uv_buf_t data, std::string suffix)
+        : pParent(parent), prefix(prefix.begin(), prefix.end()), buffer(data),
+          suffix(suffix.begin(), suffix.end()) {
     memset(&handle, 0, sizeof(uv_write_t));
     handle.data = this;
-  }
-
-  void setPrefix(const char* data, size_t len) {
-    ASSERT_BACKGROUND_THREAD()
-    prefix.clear();
-    std::copy(data, data + len, std::back_inserter(prefix));
-  }
-
-  void setSuffix(const char* data, size_t len) {
-    ASSERT_BACKGROUND_THREAD()
-    suffix.clear();
-    std::copy(data, data + len, std::back_inserter(suffix));
   }
 
   std::vector<uv_buf_t> bufs() {
@@ -106,17 +100,10 @@ const std::string TRAILER = "0\r\n\r\n";
 
 void ExtendedWrite::next() {
   ASSERT_BACKGROUND_THREAD()
-  if (_errored) {
+  if (_errored || _completed) {
     if (_activeWrites == 0) {
       _pDataSource->close();
-      onWriteComplete(1);
-    }
-    return;
-  }
-  if (_completed) {
-    if (_activeWrites == 0) {
-      _pDataSource->close();
-      onWriteComplete(0);
+      onWriteComplete(_errored ? 1 : 0);
     }
     return;
   }
@@ -139,19 +126,20 @@ void ExtendedWrite::next() {
     _completed = true;
   }
 
-  WriteOp* pWriteOp = new WriteOp(this, buf);
+  std::string prefix;
+  std::string suffix;
   if (this->_chunked) {
     if (buf.len == 0) {
       // In chunked mode, the last chunk must be followed by one more "\r\n".
-      pWriteOp->setSuffix(TRAILER.c_str(), TRAILER.length());
+      suffix = TRAILER;
     } else {
       // In chunked mode, data chunks must be preceded by 1) the number of bytes
       // in the chunk, as a hexadecimal string; and 2) "\r\n"; and succeeded by
       // another "\r\n"
-      char prefix[16] = {0};
-      int len = snprintf(prefix, sizeof(prefix), "%lX\r\n", buf.len);
-      pWriteOp->setPrefix(prefix, len);
-      pWriteOp->setSuffix(CRLF.c_str(), CRLF.length());
+      std::stringstream ss;
+      ss << std::uppercase << std::hex << buf.len << "\r\n";
+      prefix = ss.str();
+      suffix = "\r\n";
     }
   } else {
     // Non-chunked mode
@@ -166,6 +154,7 @@ void ExtendedWrite::next() {
       // socket, then we'll come back and see if there's more to write.
     }
   }
+  WriteOp* pWriteOp = new WriteOp(this, prefix, buf, suffix);
   _activeWrites++;
   auto op_bufs = pWriteOp->bufs();
   uv_write(&pWriteOp->handle, _pHandle, &op_bufs[0], op_bufs.size(), &writecb);
