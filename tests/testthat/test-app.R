@@ -27,7 +27,7 @@ test_that("Basic functionality", {
   )
   expect_equal(length(listServers()), 2)
 
-  r1 <- fetch(local_url("/", s1$getPort()))
+  r1 <- fetch(local_url("/", s1$getPort()), gzip = FALSE)
   r2 <- fetch(local_url("/", s2$getPort()))
 
   expect_equal(r1$status_code, 200)
@@ -116,7 +116,7 @@ test_that("Content length depends on the presence of 'body'", {
   on.exit(s$stop())
   expect_equal(length(listServers()), 1)
 
-  r1 <- fetch(local_url("/ok", s$getPort()))
+  r1 <- fetch(local_url("/ok", s$getPort()), gzip = FALSE)
   # HEAD requests should not have a body.
   r2 <- fetch(local_url("/ok", s$getPort()), new_handle(nobody = TRUE))
   r3 <- fetch(local_url("/nullbody", s$getPort()))

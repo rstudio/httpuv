@@ -4,15 +4,39 @@
 
 
 class WriteOp {
-public:
-  uv_write_t handle;
+private:
   ExtendedWrite* pParent;
+
+  // Bytes to write before writing the buffer
+  std::vector<char> prefix;
+
+  // The main payload
   uv_buf_t buffer;
 
-  WriteOp(ExtendedWrite* parent, uv_buf_t data)
-        : pParent(parent), buffer(data) {
+  // Bytes to write after writing the buffer
+  std::vector<char> suffix;
+
+public:
+  uv_write_t handle;
+
+  WriteOp(ExtendedWrite* parent, std::string prefix, uv_buf_t data, std::string suffix)
+        : pParent(parent), prefix(prefix.begin(), prefix.end()), buffer(data),
+          suffix(suffix.begin(), suffix.end()) {
     memset(&handle, 0, sizeof(uv_write_t));
     handle.data = this;
+  }
+
+  std::vector<uv_buf_t> bufs() {
+    ASSERT_BACKGROUND_THREAD()
+    std::vector<uv_buf_t> res;
+    if (prefix.size() > 0) {
+      res.push_back(uv_buf_init(&prefix[0], prefix.size()));
+    }
+    res.push_back(buffer);
+    if (suffix.size() > 0) {
+      res.push_back(uv_buf_init(&suffix[0], suffix.size()));
+    }
+    return res;
   }
 
   void end() {
@@ -71,12 +95,15 @@ void ExtendedWrite::begin() {
   next();
 }
 
+const std::string CRLF = "\r\n";
+const std::string TRAILER = "0\r\n\r\n";
+
 void ExtendedWrite::next() {
   ASSERT_BACKGROUND_THREAD()
-  if (_errored) {
+  if (_errored || _completed) {
     if (_activeWrites == 0) {
       _pDataSource->close();
-      onWriteComplete(1);
+      onWriteComplete(_errored ? 1 : 0);
     }
     return;
   }
@@ -93,15 +120,42 @@ void ExtendedWrite::next() {
     return;
   }
   if (buf.len == 0) {
-    _pDataSource->freeData(buf);
-    if (_activeWrites == 0) {
-      _pDataSource->close();
-      onWriteComplete(0);
-    }
-    return;
+    // No more data is going to come.
+    // Ensure future calls to next() results in disposal (assuming that all
+    // outstanding writes are done).
+    _completed = true;
   }
-  WriteOp* pWriteOp = new WriteOp(this, buf);
-  uv_write(&pWriteOp->handle, _pHandle, &pWriteOp->buffer, 1, &writecb);
+
+  std::string prefix;
+  std::string suffix;
+  if (this->_chunked) {
+    if (buf.len == 0) {
+      // In chunked mode, the last chunk must be followed by one more "\r\n".
+      suffix = TRAILER;
+    } else {
+      // In chunked mode, data chunks must be preceded by 1) the number of bytes
+      // in the chunk, as a hexadecimal string; and 2) "\r\n"; and succeeded by
+      // another "\r\n"
+      std::stringstream ss;
+      ss << std::uppercase << std::hex << buf.len << "\r\n";
+      prefix = ss.str();
+      suffix = "\r\n";
+    }
+  } else {
+    // Non-chunked mode
+    if (buf.len == 0) {
+      // We've reached the end of the response body. Technically there's nothing
+      // to uv_write; we're passing a uv_buf_t, but it's actually empty. The
+      // reason we're doing it anyway is to avoid having two cleanup paths, one
+      // for chunked and one for non-chunked; it's hard enough to reason about
+      // as it is.
+    } else {
+      // This is the simple/common case; we're about to write some data to the
+      // socket, then we'll come back and see if there's more to write.
+    }
+  }
+  WriteOp* pWriteOp = new WriteOp(this, prefix, buf, suffix);
   _activeWrites++;
-  //uv_write(pReq)
+  auto op_bufs = pWriteOp->bufs();
+  uv_write(&pWriteOp->handle, _pHandle, &op_bufs[0], op_bufs.size(), &writecb);
 }

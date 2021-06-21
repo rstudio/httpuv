@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "thread.h"
 #include "utils.h"
+#include "gzipdatasource.h"
 #include "libuv/include/uv.h"
 
 
@@ -48,8 +49,9 @@ class HttpResponseExtendedWrite : public ExtendedWrite {
 public:
   HttpResponseExtendedWrite(std::shared_ptr<HttpResponse> pParent,
                             uv_stream_t* pHandle,
-                            std::shared_ptr<DataSource> pDataSource) :
-      ExtendedWrite(pHandle, pDataSource), _pParent(pParent) {}
+                            std::shared_ptr<DataSource> pDataSource,
+                            bool chunked) :
+      ExtendedWrite(pHandle, pDataSource, chunked), _pParent(pParent) {}
 
   void onWriteComplete(int status) {
     delete this;
@@ -62,23 +64,66 @@ void HttpResponse::writeResponse() {
   // TODO: Optimize
   std::ostringstream response(std::ios_base::binary);
   response << "HTTP/1.1 " << _statusCode << " " << _status << "\r\n";
-  bool hasContentLengthHeader = false;
+  bool contentEncoding = false;
+  std::string contentLength;
   for (ResponseHeaders::const_iterator it = _headers.begin();
      it != _headers.end();
      it++) {
-    response << it->first << ": " << it->second << "\r\n";
-
     if (strcasecmp(it->first.c_str(), "Content-Length") == 0) {
-      hasContentLengthHeader = true;
+      contentLength = it->second;
+    } else {
+      response << it->first << ": " << it->second << "\r\n";
+      if (strcasecmp(it->first.c_str(), "Content-Encoding") == 0) {
+        contentEncoding = true;
+      }
     }
   }
 
-  // Some valid responses (such as HTTP 204 and 304) must not set this header,
-  // since they can't have a body.
-  //
-  // See: https://tools.ietf.org/html/rfc7230#section-3.3.2
-  if (_pBody != nullptr && !hasContentLengthHeader) {
+  // Determine if gzip compression should be used
+  bool gzip;
+  if (contentEncoding) {
+    // The response already has a Content-Encoding
+    gzip = false;
+  } else if (_statusCode == 101 || _pBody == nullptr) {
+    gzip = false;
+  } else {
+    RequestHeaders h = _pRequest->headers();
+    auto acceptEncoding = h.find("Accept-Encoding");
+    if (acceptEncoding != h.end()) {
+      std::string enc = acceptEncoding->second;
+      if (enc.find("gzip") != std::string::npos) {
+        gzip = true;
+      } else {
+        // There was an "Accept-Encoding", but it didn't include gzip
+        gzip = false;
+      }
+    } else {
+      // No "Accept-Encoding" header
+      gzip = false;
+    }
+  }
+
+  if (gzip) {
+    response << "Content-Encoding: gzip\r\n";
+    _chunked = true;
+    _pBody = std::make_shared<GZipDataSource>(_pBody);
+  }
+
+  if (_statusCode == 101) {
+    // HTTP 101 must not set this header, even if there *is* body data (which is
+    // actually not a true HTTP body, but instead, just the first bytes for the
+    // switched-to protocol)
+  } else if (_chunked) {
+    response << "Transfer-Encoding: chunked\r\n";
+  } else if (!contentLength.empty()) {
+    response << "Content-Length: " << contentLength << "\r\n";
+  } else if (_pBody != nullptr) {
     response << "Content-Length: " << _pBody->size() << "\r\n";
+  } else {
+    // Some valid responses (such as HTTP 204 and 304) must not set this header,
+    // since they can't have a body.
+    //
+    // See: https://tools.ietf.org/html/rfc7230#section-3.3.2
   }
 
   response << "\r\n";
@@ -127,7 +172,7 @@ void HttpResponse::onResponseWritten(int status) {
 
   if (_pBody != NULL) {
     HttpResponseExtendedWrite* pResponseWrite = new HttpResponseExtendedWrite(
-      shared_from_this(), _pRequest->handle(), _pBody);
+      shared_from_this(), _pRequest->handle(), _pBody, this->_chunked);
     pResponseWrite->begin();
   }
 }

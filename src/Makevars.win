@@ -2,7 +2,7 @@
 CXX_STD=CXX11
 
 PKG_LIBS = ./libuv/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o \
-	-lpthread -lws2_32 -lkernel32 -lpsapi -liphlpapi -lshell32 -luserenv
+	-lpthread -lws2_32 -lkernel32 -lpsapi -liphlpapi -lshell32 -luserenv -lz
 
 PKG_CFLAGS = $(C_VISIBILITY) -DSTRICT_R_HEADERS
 PKG_CXXFLAGS = $(CXX_VISIBILITY) -DSTRICT_R_HEADERS

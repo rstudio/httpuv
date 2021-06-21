@@ -24,7 +24,7 @@ test_that("Basic static file serving", {
   on.exit(s$stop())
 
   # Fetch index.html
-  r <- fetch(local_url("/", s$getPort()))
+  r <- fetch(local_url("/", s$getPort()), gzip = FALSE)
   expect_equal(r$status_code, 200)
   expect_identical(r$content, index_file_content)
 
@@ -43,33 +43,33 @@ test_that("Basic static file serving", {
 
 
   # Testing index for other paths
-  r1 <- fetch(local_url("/1", s$getPort()))
+  r1 <- fetch(local_url("/1", s$getPort()), gzip = FALSE)
   h1 <- parse_headers_list(r1$headers)
   expect_identical(r$content, r1$content)
   expect_identical(h$`content-length`, h1$`content-length`)
   expect_identical(h$`content-type`, h1$`content-type`)
 
-  r2 <- fetch(local_url("/1/", s$getPort()))
+  r2 <- fetch(local_url("/1/", s$getPort()), gzip = FALSE)
   h2 <- parse_headers_list(r2$headers)
   expect_identical(r$content, r2$content)
   expect_identical(h$`content-length`, h2$`content-length`)
   expect_identical(h$`content-type`, h2$`content-type`)
 
-  r3 <- fetch(local_url("/1/index.html", s$getPort()))
+  r3 <- fetch(local_url("/1/index.html", s$getPort()), gzip = FALSE)
   h3 <- parse_headers_list(r3$headers)
   expect_identical(r$content, r3$content)
   expect_identical(h$`content-length`, h3$`content-length`)
   expect_identical(h$`content-type`, h3$`content-type`)
 
   # Missing file (404)
-  r <- fetch(local_url("/foo", s$getPort()))
+  r <- fetch(local_url("/foo", s$getPort()), gzip = FALSE)
   h <- parse_headers_list(r$headers)
   expect_equal(r$status_code, 404)
   expect_identical(rawToChar(r$content), "404 Not Found\n")
   expect_equal(h$`content-length`, "14")
 
   # Missing directory in path (404)
-  r <- fetch(local_url("/foo/bar", s$getPort()))
+  r <- fetch(local_url("/foo/bar", s$getPort()), gzip = FALSE)
   h <- parse_headers_list(r$headers)
   expect_equal(r$status_code, 404)
   expect_identical(rawToChar(r$content), "404 Not Found\n")
@@ -651,13 +651,13 @@ test_that("HEAD, POST, PUT requests", {
   on.exit(s$stop())
 
   # The GET results, for comparison to HEAD.
-  r_get <- fetch(local_url("/static", s$getPort()))
+  r_get <- fetch(local_url("/static", s$getPort()), gzip = FALSE)
   h_get <- parse_headers_list(r_get$headers)
 
   # HEAD is OK.
   # Note the weird interface for a HEAD request:
   # https://github.com/jeroen/curl/issues/24
-  r <- fetch(local_url("/static", s$getPort()), new_handle(nobody = TRUE))
+  r <- fetch(local_url("/static", s$getPort()), new_handle(nobody = TRUE), gzip = FALSE)
   expect_equal(r$status_code, 200)
   expect_true(length(r$content) == 0)  # No message body for HEAD
   h <- parse_headers_list(r$headers)

@@ -67,14 +67,16 @@ public:
 // not to buffer too much data in memory (happens when you try
 // to write too much data to a slow uv_stream_t).
 class ExtendedWrite {
+  bool _chunked;
   int _activeWrites;
   bool _errored;
+  bool _completed;
   uv_stream_t* _pHandle;
   std::shared_ptr<DataSource> _pDataSource;
 
 public:
-  ExtendedWrite(uv_stream_t* pHandle, std::shared_ptr<DataSource> pDataSource)
-      : _activeWrites(0), _errored(false), _pHandle(pHandle),
+  ExtendedWrite(uv_stream_t* pHandle, std::shared_ptr<DataSource> pDataSource, bool chunked)
+      : _chunked(chunked), _activeWrites(0), _errored(false), _completed(false), _pHandle(pHandle),
         _pDataSource(pDataSource) {}
   virtual ~ExtendedWrite() {}
 

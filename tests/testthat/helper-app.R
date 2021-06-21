@@ -79,7 +79,13 @@ extract <- function(promise) {
 
 
 # Make an HTTP request using curl.
-fetch <- function(url, handle = new_handle()) {
+fetch <- function(url, handle = curl::new_handle(), gzip = TRUE) {
+  if (!gzip) {
+    # Disable gzip; this is often needed only because the unit tests predate
+    # gzip support in httpuv
+    handle_setopt(handle, accept_encoding = NULL)
+  }
+
   p <- curl_fetch_async(url, handle = handle)
   extract(p)
 }
