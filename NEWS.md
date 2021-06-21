@@ -3,6 +3,10 @@ httpuv 1.6.1.9000
 
 * Fixed #282: `startPipeServer()` failed with "invalid argument" error after update to libuv 1.37.0. (#283)
 
+* Fixed #303: Don't return Content-Length header when the HTTP status is "101 Switching Protocols". (#305)
+
+* Added support for gzip-compressed HTTP responses. (#305)
+
 httpuv 1.6.1
 ============
 
