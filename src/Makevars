@@ -31,7 +31,7 @@ CONFIGURE_FLAGS="--quiet"
 
 #### Debugging flags ####
 # Uncomment to enable thread assertions
-# PKG_CPPFLAGS += -DDEBUG_THREAD -UNDEBUG
+PKG_CPPFLAGS += -DDEBUG_THREAD -UNDEBUG
 
 #### Other flags ####
 # Uncomment to suppress lots of warnings on Fedora 28
