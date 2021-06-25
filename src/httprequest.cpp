@@ -1,3 +1,4 @@
+#include <atomic>
 #include <functional>
 #include <memory>
 #include "httprequest.h"
@@ -429,6 +430,7 @@ void HttpRequest::_on_headers_complete_complete(std::shared_ptr<HttpResponse> pR
   this->_parse_http_data_from_buffer();
 }
 
+std::atomic<int> bodyWrites{0};
 
 // ============================================================================
 // Message body (for POST)
@@ -454,6 +456,7 @@ int HttpRequest::_on_body(http_parser* pParser, const char* pAt, size_t length) 
       _pWebApplication,
       shared_from_this(),
       buf,
+      bodyWrites++,
       schedule_bg_callback
     )
   );

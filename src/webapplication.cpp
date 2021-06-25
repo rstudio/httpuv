@@ -313,12 +313,20 @@ void RWebApplication::onHeaders(std::shared_ptr<HttpRequest> pRequest,
   callback(pResponse);
 }
 
+int writes = -1;
+
 void RWebApplication::onBodyData(std::shared_ptr<HttpRequest> pRequest,
       std::shared_ptr<std::vector<char> > data,
+      int counter,
       std::function<void(std::shared_ptr<HttpResponse>)> errorCallback)
 {
   ASSERT_MAIN_THREAD()
   debug_log("RWebApplication::onBodyData", LOG_DEBUG);
+
+  if (counter <= writes) {
+    std::cerr << "Out-of-order onBodyData!\n";
+  }
+  writes = counter;
 
   // We're in an error state, but the background thread has already scheduled
   // more data to be processed here. Don't process more data.

@@ -18,6 +18,7 @@ public:
                          std::function<void(std::shared_ptr<HttpResponse>)> callback) = 0;
   virtual void onBodyData(std::shared_ptr<HttpRequest> pRequest,
                           std::shared_ptr<std::vector<char> > data,
+                          int counter,
                           std::function<void(std::shared_ptr<HttpResponse>)> errorCallback) = 0;
   virtual void getResponse(std::shared_ptr<HttpRequest> request,
                            std::function<void(std::shared_ptr<HttpResponse>)> callback) = 0;
@@ -64,6 +65,7 @@ public:
                          std::function<void(std::shared_ptr<HttpResponse>)> callback);
   virtual void onBodyData(std::shared_ptr<HttpRequest> pRequest,
                           std::shared_ptr<std::vector<char> > data,
+                          int counter,
                           std::function<void(std::shared_ptr<HttpResponse>)> errorCallback);
   virtual void getResponse(std::shared_ptr<HttpRequest> request,
                            std::function<void(std::shared_ptr<HttpResponse>)> callback);
