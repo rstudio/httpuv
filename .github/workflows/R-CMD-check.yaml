@@ -52,12 +52,20 @@ jobs:
           - {os: macOS-latest,   r: '${{ needs.rversions.outputs.release }}'}
           - {os: windows-latest, r: '${{ needs.rversions.outputs.release }}'}
           - {os: windows-latest, r: '3.6'}
+
           - {os: ubuntu-20.04,   r: '${{ needs.rversions.outputs.devel }}',   rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest", http-user-agent: "release" }
           - {os: ubuntu-20.04,   r: '${{ needs.rversions.outputs.release }}', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
           - {os: ubuntu-20.04,   r: '${{ needs.rversions.outputs.oldrel1 }}', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
           - {os: ubuntu-20.04,   r: '${{ needs.rversions.outputs.oldrel2 }}', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
           - {os: ubuntu-20.04,   r: '${{ needs.rversions.outputs.oldrel3 }}', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
           - {os: ubuntu-20.04,   r: '${{ needs.rversions.outputs.oldrel4 }}', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
+
+          - {os: ubuntu-18.04,   r: '${{ needs.rversions.outputs.devel }}',   rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest", http-user-agent: "release" }
+          - {os: ubuntu-18.04,   r: '${{ needs.rversions.outputs.release }}', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
+          - {os: ubuntu-18.04,   r: '${{ needs.rversions.outputs.oldrel1 }}', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
+          - {os: ubuntu-18.04,   r: '${{ needs.rversions.outputs.oldrel2 }}', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
+          - {os: ubuntu-18.04,   r: '${{ needs.rversions.outputs.oldrel3 }}', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
+          - {os: ubuntu-18.04,   r: '${{ needs.rversions.outputs.oldrel4 }}', rspm: "https://packagemanager.rstudio.com/cran/__linux__/bionic/latest"}
 
     env:
       RSPM: ${{ matrix.config.rspm }}
