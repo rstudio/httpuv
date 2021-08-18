@@ -12,3 +12,4 @@ src/httpuv.creator.user
 src/httpuv.files
 src/httpuv.includes
 .Rproj.user
+CRAN-RELEASE
