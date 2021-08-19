@@ -11,7 +11,9 @@
 ^src/libuv/m4/lt~obsolete.m4$
 ^CONTRIBUTING.md$
 ^.*/\.libs/$
+^.*/\.dirstamp/$
 ^.*/\.deps/$
 ^revdep$
 ^\.github$
 ^cran-comments\.md$
+^CRAN-RELEASE$

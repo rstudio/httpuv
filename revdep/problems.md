@@ -1,3 +1,26 @@
+# ambiorix
+
+<details>
+
+* Version: 1.0.2
+* GitHub: https://github.com/JohnCoene/ambiorix
+* Source code: https://github.com/cran/ambiorix
+* Date/Publication: 2021-01-27 10:00:07 UTC
+* Number of recursive dependencies: 45
+
+Run `revdep_details(, "ambiorix")` for more info
+
+</details>
+
+## In both
+
+*   checking dependencies in R code ... NOTE
+    ```
+    Namespaces in Imports field not imported from:
+      ‘glue’ ‘promises’ ‘websocket’
+      All declared Imports should be used.
+    ```
+
 # autota
 
 <details>
@@ -6,7 +29,7 @@
 * GitHub: NA
 * Source code: https://github.com/cran/autota
 * Date/Publication: 2020-03-22 07:10:09 UTC
-* Number of recursive dependencies: 51
+* Number of recursive dependencies: 49
 
 Run `revdep_details(, "autota")` for more info
 
@@ -28,7 +51,7 @@ Run `revdep_details(, "autota")` for more info
 * GitHub: https://github.com/us-bea/bea.R
 * Source code: https://github.com/cran/bea.R
 * Date/Publication: 2018-02-23 19:30:19 UTC
-* Number of recursive dependencies: 79
+* Number of recursive dependencies: 67
 
 Run `revdep_details(, "bea.R")` for more info
 
@@ -49,11 +72,11 @@ Run `revdep_details(, "bea.R")` for more info
 
 <details>
 
-* Version: 4.3
+* Version: 4.3.2
 * GitHub: https://github.com/jeroen/curl
 * Source code: https://github.com/cran/curl
-* Date/Publication: 2019-12-02 14:00:03 UTC
-* Number of recursive dependencies: 56
+* Date/Publication: 2021-06-23 07:00:06 UTC
+* Number of recursive dependencies: 52
 
 Run `revdep_details(, "curl")` for more info
 
@@ -75,10 +98,10 @@ Run `revdep_details(, "curl")` for more info
 
 <details>
 
-* Version: 0.1.24
+* Version: 0.1.28
 * GitHub: https://github.com/EU-ECDC/epitweetr
 * Source code: https://github.com/cran/epitweetr
-* Date/Publication: 2020-10-23 13:00:05 UTC
+* Date/Publication: 2021-04-08 22:20:03 UTC
 * Number of recursive dependencies: 131
 
 Run `revdep_details(, "epitweetr")` for more info
@@ -107,7 +130,7 @@ Run `revdep_details(, "epitweetr")` for more info
 * GitHub: NA
 * Source code: https://github.com/cran/igvR
 * Date/Publication: 2020-10-27
-* Number of recursive dependencies: 103
+* Number of recursive dependencies: 106
 
 Run `revdep_details(, "igvR")` for more info
 
@@ -119,10 +142,10 @@ Run `revdep_details(, "igvR")` for more info
     ```
     Found the following significant warnings:
       Warning: package ‘GenomicRanges’ was built under R version 4.0.3
-      Warning: package ‘BiocGenerics’ was built under R version 4.0.3
+      Warning: package ‘BiocGenerics’ was built under R version 4.0.5
       Warning: package ‘S4Vectors’ was built under R version 4.0.3
       Warning: package ‘IRanges’ was built under R version 4.0.3
-      Warning: package ‘GenomeInfoDb’ was built under R version 4.0.3
+      Warning: package ‘GenomeInfoDb’ was built under R version 4.0.5
       Warning: package ‘GenomicAlignments’ was built under R version 4.0.3
       Warning: package ‘SummarizedExperiment’ was built under R version 4.0.3
       Warning: package ‘MatrixGenerics’ was built under R version 4.0.3
@@ -131,7 +154,7 @@ Run `revdep_details(, "igvR")` for more info
       Warning: package ‘XVector’ was built under R version 4.0.3
       Warning: package ‘Rsamtools’ was built under R version 4.0.3
       Warning: package ‘BrowserViz’ was built under R version 4.0.3
-    See ‘/Users/barret/Documents/git/rstudio/httpuv/httpuv/revdep/checks.noindex/igvR/new/igvR.Rcheck/00install.out’ for details.
+    See ‘/Users/barret/Documents/git/rstudio/httpuv/httpuv.nosync/revdep/checks.noindex/igvR/new/igvR.Rcheck/00install.out’ for details.
     ```
 
 *   checking whether the namespace can be unloaded cleanly ... WARNING
@@ -156,6 +179,28 @@ Run `revdep_details(, "igvR")` for more info
         extdata   1.9Mb
     ```
 
+# JBrowseR
+
+<details>
+
+* Version: 0.8.1
+* GitHub: https://github.com/GMOD/JBrowseR
+* Source code: https://github.com/cran/JBrowseR
+* Date/Publication: 2021-07-07 20:30:06 UTC
+* Number of recursive dependencies: 68
+
+Run `revdep_details(, "JBrowseR")` for more info
+
+</details>
+
+## In both
+
+*   checking dependencies in R code ... NOTE
+    ```
+    Namespace in Imports field not imported from: ‘ids’
+      All declared Imports should be used.
+    ```
+
 # MetaIntegrator
 
 <details>
@@ -164,7 +209,7 @@ Run `revdep_details(, "igvR")` for more info
 * GitHub: NA
 * Source code: https://github.com/cran/MetaIntegrator
 * Date/Publication: 2020-02-26 13:00:11 UTC
-* Number of recursive dependencies: 178
+* Number of recursive dependencies: 167
 
 Run `revdep_details(, "MetaIntegrator")` for more info
 
@@ -184,11 +229,11 @@ Run `revdep_details(, "MetaIntegrator")` for more info
 
 <details>
 
-* Version: 1.13.1
+* Version: 1.19.0
 * GitHub: https://github.com/mlflow/mlflow
 * Source code: https://github.com/cran/mlflow
-* Date/Publication: 2021-01-06 07:20:02 UTC
-* Number of recursive dependencies: 87
+* Date/Publication: 2021-07-14 15:10:12 UTC
+* Number of recursive dependencies: 100
 
 Run `revdep_details(, "mlflow")` for more info
 
@@ -206,11 +251,11 @@ Run `revdep_details(, "mlflow")` for more info
 
 <details>
 
-* Version: 2.2.1
+* Version: 2.2.5
 * GitHub: https://github.com/opencpu/opencpu
 * Source code: https://github.com/cran/opencpu
-* Date/Publication: 2020-10-10 06:40:10 UTC
-* Number of recursive dependencies: 60
+* Date/Publication: 2021-08-17 16:10:15 UTC
+* Number of recursive dependencies: 64
 
 Run `revdep_details(, "opencpu")` for more info
 
@@ -231,7 +276,7 @@ Run `revdep_details(, "opencpu")` for more info
 * GitHub: https://github.com/ctlab/phantasus
 * Source code: https://github.com/cran/phantasus
 * Date/Publication: 2020-10-27
-* Number of recursive dependencies: 148
+* Number of recursive dependencies: 152
 
 Run `revdep_details(, "phantasus")` for more info
 
@@ -276,6 +321,28 @@ Run `revdep_details(, "phantasus")` for more info
     prepare_Rd: convertByAnnotationDB.Rd:27-32: Dropping empty section \examples
     ```
 
+# plumbertableau
+
+<details>
+
+* Version: 0.1.0
+* GitHub: https://github.com/rstudio/plumbertableau
+* Source code: https://github.com/cran/plumbertableau
+* Date/Publication: 2021-08-06 08:00:02 UTC
+* Number of recursive dependencies: 62
+
+Run `revdep_details(, "plumbertableau")` for more info
+
+</details>
+
+## In both
+
+*   checking dependencies in R code ... NOTE
+    ```
+    Namespace in Imports field not imported from: ‘glue’
+      All declared Imports should be used.
+    ```
+
 # RCyjs
 
 <details>
@@ -297,8 +364,8 @@ Run `revdep_details(, "RCyjs")` for more info
     Found the following significant warnings:
       Warning: package ‘BrowserViz’ was built under R version 4.0.3
       Warning: package ‘graph’ was built under R version 4.0.3
-      Warning: package ‘BiocGenerics’ was built under R version 4.0.3
-    See ‘/Users/barret/Documents/git/rstudio/httpuv/httpuv/revdep/checks.noindex/RCyjs/new/RCyjs.Rcheck/00install.out’ for details.
+      Warning: package ‘BiocGenerics’ was built under R version 4.0.5
+    See ‘/Users/barret/Documents/git/rstudio/httpuv/httpuv.nosync/revdep/checks.noindex/RCyjs/new/RCyjs.Rcheck/00install.out’ for details.
     ```
 
 *   checking Rd \usage sections ... WARNING
@@ -335,7 +402,7 @@ Run `revdep_details(, "RCyjs")` for more info
 * GitHub: https://github.com/ropensci/rfigshare
 * Source code: https://github.com/cran/rfigshare
 * Date/Publication: 2015-06-15 07:59:06
-* Number of recursive dependencies: 67
+* Number of recursive dependencies: 63
 
 Run `revdep_details(, "rfigshare")` for more info
 
@@ -364,7 +431,7 @@ Run `revdep_details(, "rfigshare")` for more info
 * GitHub: https://github.com/thomasp85/routr
 * Source code: https://github.com/cran/routr
 * Date/Publication: 2019-10-03 07:20:02 UTC
-* Number of recursive dependencies: 63
+* Number of recursive dependencies: 60
 
 Run `revdep_details(, "routr")` for more info
 
@@ -387,7 +454,7 @@ Run `revdep_details(, "routr")` for more info
 * GitHub: https://github.com/ropensci/rtweet
 * Source code: https://github.com/cran/rtweet
 * Date/Publication: 2020-01-08 23:00:10 UTC
-* Number of recursive dependencies: 82
+* Number of recursive dependencies: 85
 
 Run `revdep_details(, "rtweet")` for more info
 
@@ -410,11 +477,11 @@ Run `revdep_details(, "rtweet")` for more info
 
 <details>
 
-* Version: 1.5.0
+* Version: 1.6.0
 * GitHub: https://github.com/rstudio/shiny
 * Source code: https://github.com/cran/shiny
-* Date/Publication: 2020-06-23 13:30:03 UTC
-* Number of recursive dependencies: 101
+* Date/Publication: 2021-01-25 21:50:02 UTC
+* Number of recursive dependencies: 104
 
 Run `revdep_details(, "shiny")` for more info
 
@@ -424,21 +491,21 @@ Run `revdep_details(, "shiny")` for more info
 
 *   checking installed package size ... NOTE
     ```
-      installed size is 11.7Mb
+      installed size is 12.2Mb
       sub-directories of 1Mb or more:
-        R     2.0Mb
-        www   8.5Mb
+        R     2.1Mb
+        www   8.8Mb
     ```
 
 # shinyloadtest
 
 <details>
 
-* Version: 1.0.1
+* Version: 1.1.0
 * GitHub: https://github.com/rstudio/shinyloadtest
 * Source code: https://github.com/cran/shinyloadtest
-* Date/Publication: 2020-01-09 10:20:02 UTC
-* Number of recursive dependencies: 98
+* Date/Publication: 2021-02-11 14:50:02 UTC
+* Number of recursive dependencies: 85
 
 Run `revdep_details(, "shinyloadtest")` for more info
 
@@ -449,7 +516,29 @@ Run `revdep_details(, "shinyloadtest")` for more info
 *   checking dependencies in R code ... NOTE
     ```
     Namespaces in Imports field not imported from:
-      ‘R6’ ‘getPass’ ‘svglite’ ‘websocket’
+      ‘R6’ ‘scales’ ‘websocket’
+      All declared Imports should be used.
+    ```
+
+# spotGUI
+
+<details>
+
+* Version: 0.2.3
+* GitHub: NA
+* Source code: https://github.com/cran/spotGUI
+* Date/Publication: 2021-03-30 17:50:02 UTC
+* Number of recursive dependencies: 162
+
+Run `revdep_details(, "spotGUI")` for more info
+
+</details>
+
+## In both
+
+*   checking dependencies in R code ... NOTE
+    ```
+    Namespace in Imports field not imported from: ‘batchtools’
       All declared Imports should be used.
     ```
 
@@ -461,7 +550,7 @@ Run `revdep_details(, "shinyloadtest")` for more info
 * GitHub: NA
 * Source code: https://github.com/cran/Ularcirc
 * Date/Publication: 2020-10-27
-* Number of recursive dependencies: 151
+* Number of recursive dependencies: 141
 
 Run `revdep_details(, "Ularcirc")` for more info
 
@@ -494,7 +583,7 @@ Run `revdep_details(, "Ularcirc")` for more info
 * GitHub: https://github.com/r-barnes/webglobe
 * Source code: https://github.com/cran/webglobe
 * Date/Publication: 2020-09-15 22:20:03 UTC
-* Number of recursive dependencies: 68
+* Number of recursive dependencies: 83
 
 Run `revdep_details(, "webglobe")` for more info
 
@@ -514,11 +603,11 @@ Run `revdep_details(, "webglobe")` for more info
 
 <details>
 
-* Version: 1.3.1
+* Version: 1.4.0
 * GitHub: NA
 * Source code: https://github.com/cran/websocket
-* Date/Publication: 2020-07-13 19:40:03 UTC
-* Number of recursive dependencies: 52
+* Date/Publication: 2021-04-23 20:30:02 UTC
+* Number of recursive dependencies: 49
 
 Run `revdep_details(, "websocket")` for more info
 
