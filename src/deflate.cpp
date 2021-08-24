@@ -7,28 +7,32 @@ namespace deflator {
 typedef int(*flate_func)(z_stream* strm, int flush);
 
 // Generic function for driving I/O loop for inflate/deflate
-int flate(flate_func func, z_stream* strm, char* data, size_t data_len, std::vector<char>& output) {
+int flate(flate_func func, z_stream* strm, const char* data, size_t data_len, std::vector<char>& output) {
 
-  strm->next_in = reinterpret_cast<unsigned char*>(data);
+  strm->next_in = reinterpret_cast<unsigned char*>(const_cast<char*>(data));
   strm->avail_in = data_len;
+
+  size_t orig_output_size = output.size();
 
   while (strm->avail_in) {
     // Ensure enough room is allocated on the output to receive 1024 more bytes
     const size_t CHUNK_SIZE = 1024;
-    output.reserve(output.size() + CHUNK_SIZE);
+    output.resize(output.size() + CHUNK_SIZE);
 
-    strm->next_out = reinterpret_cast<unsigned char*>(&output[output.size()]);
-    strm->avail_out = output.capacity() - output.size();
+    strm->next_out = reinterpret_cast<unsigned char*>(&output[output.size() - CHUNK_SIZE]);
+    strm->avail_out = CHUNK_SIZE;
 
-    size_t total_out_start = strm->total_out;
     int error = func(strm, Z_SYNC_FLUSH);
     if (error != Z_OK && error != Z_STREAM_END) {
       // std::cerr << strm->msg << "\n";
       return error;
     }
-    size_t bytes_written = strm->total_out - total_out_start;
-    std::copy(&output[output.size()], &output[output.size()] + bytes_written,
-      std::back_inserter(output));
+  }
+  size_t bytes_written = strm->total_out;
+  size_t bytes_allocated = output.size() - orig_output_size;
+  size_t bytes_to_erase = bytes_allocated - bytes_written;
+  if (bytes_to_erase > 0) {
+    output.erase(output.end() - bytes_to_erase, output.end());
   }
 
   return Z_OK;
@@ -71,7 +75,7 @@ int Deflator::init(DeflateMode mode, int level, int windowBits, int memLevel, in
   return result;
 }
 
-int Deflator::deflate(char* data, size_t data_len, std::vector<char>& output) {
+int Deflator::deflate(const char* data, size_t data_len, std::vector<char>& output) {
   if (_state != DeflatorStateReady) {
     throw std::runtime_error("Deflator.init() must be called before deflate()");
   }
@@ -115,7 +119,7 @@ int Inflator::init(DeflateMode mode, int windowBits) {
   return result;
 }
 
-int Inflator::inflate(char* data, size_t data_len, std::vector<char>& output) {
+int Inflator::inflate(const char* data, size_t data_len, std::vector<char>& output) {
   if (_state != DeflatorStateReady) {
     throw std::runtime_error("Inflator.init() must be called before deflate()");
   }

@@ -29,7 +29,7 @@ public:
   int init(DeflateMode mode, int level = Z_DEFAULT_COMPRESSION,
     int windowBits = 13, int memLevel = 8,
     int strategy = Z_DEFAULT_STRATEGY);
-  int deflate(char* data, size_t data_len, std::vector<char>& output);
+  int deflate(const char* data, size_t data_len, std::vector<char>& output);
 };
 
 class Inflator {
@@ -41,7 +41,7 @@ public:
   Inflator();
   ~Inflator();
   int init(DeflateMode mode, int windowBits = 15);
-  int inflate(char* data, size_t data_len, std::vector<char>& output);
+  int inflate(const char* data, size_t data_len, std::vector<char>& output);
 };
 
 }
