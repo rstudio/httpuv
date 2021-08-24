@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "utils.h"
+#include "deflate.h"
 #include "thread.h"
 #include "constants.h"
 #include "websockets-base.h"
@@ -17,6 +18,7 @@
 class WSFrameHeaderInfo {
 public:
   bool fin;
+  bool rsv1;
   Opcode opcode;
   bool masked;
   std::vector<uint8_t> maskingKey;
@@ -56,6 +58,9 @@ public:
 private:
 
   bool fin() const;
+  bool rsv1() const;
+  bool rsv2() const;
+  bool rsv3() const;
   Opcode opcode() const;
   bool masked() const;
   void maskingKey(uint8_t key[4]) const;
@@ -92,10 +97,11 @@ public:
                          const RequestHeaders& requestHeaders,
                          char** ppData, size_t* pLen,
                          ResponseHeaders* responseHeaders,
-                         std::vector<uint8_t>* pResponse) const = 0;
+                         std::vector<uint8_t>* pResponse,
+                         WebSocketConnectionContext* pContext) const = 0;
 
   virtual void createFrameHeaderFooter(
-                         Opcode opcode, bool mask, size_t payloadSize,
+                         Opcode opcode, bool rsv1, bool mask, size_t payloadSize,
                          int32_t maskingKey,
                          char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
                          char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen
@@ -125,10 +131,11 @@ public:
                  const RequestHeaders& requestHeaders,
                  char** ppData, size_t* pLen,
                  ResponseHeaders* responseHeaders,
-                 std::vector<uint8_t>* pResponse) const;
+                 std::vector<uint8_t>* pResponse,
+                 WebSocketConnectionContext* pContext) const;
 
   void createFrameHeaderFooter(
-                         Opcode opcode, bool mask, size_t payloadSize,
+                         Opcode opcode, bool rsv1, bool mask, size_t payloadSize,
                          int32_t maskingKey,
                          char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
                          char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen
@@ -172,6 +179,9 @@ class WebSocketConnection : WSParserCallbacks, NoCopy {
   std::vector<char> _incompleteContentPayload;
   std::vector<char> _payload;
   uv_timer_t* _pPingTimer;
+  WebSocketConnectionContext _context;
+  deflator::Deflator _deflator;
+  deflator::Inflator _inflator;
 
 public:
   WebSocketConnection(

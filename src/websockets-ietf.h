@@ -16,7 +16,8 @@ public:
                  const RequestHeaders& requestHeaders,
                  char** ppData, size_t* pLen,
                  ResponseHeaders* responseHeaders,
-                 std::vector<uint8_t>* pResponse) const;
+                 std::vector<uint8_t>* pResponse,
+                 WebSocketConnectionContext* pContext) const;
 
   bool isFin(uint8_t firstBit) const;
   uint8_t toFin(bool isFin) const;
