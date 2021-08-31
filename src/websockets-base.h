@@ -6,9 +6,19 @@
 #include "constants.h"
 
 struct WebSocketConnectionContext {
+  WebSocketConnectionContext() :
+    permessageDeflate(false),
+    clientMaxWindowBits(-1),
+    serverMaxWindowBits(-1),
+    clientNoContextTakeover(false),
+    serverNoContextTakeover(false) {
+  }
+
   bool permessageDeflate;
   int clientMaxWindowBits;
   int serverMaxWindowBits;
+  bool clientNoContextTakeover;
+  bool serverNoContextTakeover;
 };
 
 class WebSocketProto {

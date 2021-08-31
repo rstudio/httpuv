@@ -190,7 +190,9 @@ public:
       : _pLoop(pLoop),
         _connState(WS_OPEN),
         _pCallbacks(callbacks),
-        _pParser(NULL) {
+        _pParser(NULL),
+        _deflator(),
+        _inflator() {
     ASSERT_BACKGROUND_THREAD()
     debug_log("WebSocketConnection::WebSocketConnection", LOG_DEBUG);
 

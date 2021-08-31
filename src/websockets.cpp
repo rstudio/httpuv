@@ -268,11 +268,11 @@ void WebSocketConnection::handshake(const std::string& url,
   if (_context.permessageDeflate) {
     int error;
     // TODO: Handle errors
-    error = _inflator.init(deflator::DeflateModeRaw);
+    error = _inflator.init(deflator::DeflateModeRaw, _context.clientMaxWindowBits);
     if (error != Z_OK) {
       debug_log("Failed to init inflator", LOG_ERROR);
     }
-    error = _deflator.init(deflator::DeflateModeRaw, Z_DEFAULT_COMPRESSION, 9);
+    error = _deflator.init(deflator::DeflateModeRaw, Z_DEFAULT_COMPRESSION, _context.serverMaxWindowBits);
     if (error != Z_OK) {
       debug_log("Failed to init deflator", LOG_ERROR);
     }
@@ -415,7 +415,12 @@ void WebSocketConnection::onFrameComplete() {
           _payload.push_back(0xFF);
           _payload.push_back(0xFF);
           std::vector<char> inflated(0);
-          _inflator.inflate(safe_vec_addr(_payload), _payload.size(), inflated);
+          int error = _inflator.inflate(safe_vec_addr(_payload), _payload.size(), inflated);
+          if (error != Z_OK) {
+            // TODO: Handle error
+            std::cerr << "Inflate failed with error " << error << "\n";
+          }
+
           _pCallbacks->onWSMessage(_header.opcode == Binary, safe_vec_addr(inflated), inflated.size());
         } else {
           _pCallbacks->onWSMessage(_header.opcode == Binary, safe_vec_addr(_payload), _payload.size());

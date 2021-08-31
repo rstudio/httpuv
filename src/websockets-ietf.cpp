@@ -8,35 +8,15 @@
 #include "sha1/sha1.h"
 #include "base64/base64.hpp"
 
-struct ExtensionInfo {
-  std::string extension;
-  std::map<std::string, std::string> params;
-};
-
-ExtensionInfo parseExtensionInfo(const std::string str) {
-  std::vector<std::string> parts = split(str, ";");
-  std::string extension = parts[0];
-  std::map<std::string, std::string> params;
-  for (size_t i = 1; i < parts.size(); i++) {
-    std::vector<std::string> param = split(parts[i], "=");
-    params[param[0]] = param.size() > 1 ? param[1] : "";
-  }
-  ExtensionInfo result;
-  result.extension = extension;
-  result.params = params;
-  return result;
-}
-
-std::vector<std::string> splitExtensionsHeader(const std::string& header) {
-  return split(header, ",");
-}
+#include "wse-permessage-deflate.h"
 
 bool WebSocketProto_IETF::canHandle(const RequestHeaders& requestHeaders,
                                     const char* pData, size_t len) const {
 
   return requestHeaders.find("upgrade") != requestHeaders.end() &&
          strcasecmp(requestHeaders.at("upgrade").c_str(), "websocket") == 0 &&
-         requestHeaders.find("sec-websocket-key") != requestHeaders.end();
+         requestHeaders.find("sec-websocket-key") != requestHeaders.end() &&
+         permessage_deflate::isValid(requestHeaders);
 }
 
 void WebSocketProto_IETF::handshake(const std::string& url,
@@ -65,21 +45,7 @@ void WebSocketProto_IETF::handshake(const std::string& url,
   pResponseHeaders->push_back(
     std::pair<std::string, std::string>("Sec-WebSocket-Accept", response));
 
-  auto swe = requestHeaders.find("sec-websocket-extensions");
-  if (swe != requestHeaders.end()) {
-    auto extensions = split(swe->second, ",");
-    std::vector<ExtensionInfo> extInfos;
-    std::transform(extensions.begin(), extensions.end(),
-      std::back_inserter(extInfos),
-      parseExtensionInfo);
-
-    for (auto pos = extInfos.begin(); pos != extInfos.end(); pos++) {
-      if (trim(pos->extension) == "permessage-deflate") {
-        pResponseHeaders->push_back(std::make_pair("Sec-WebSocket-Extensions", "permessage-deflate"));
-        pContext->permessageDeflate = true;
-      }
-    }
-  }
+  permessage_deflate::handshake(requestHeaders, pResponseHeaders, pContext);
 }
 
 bool WebSocketProto_IETF::isFin(uint8_t firstBit) const {

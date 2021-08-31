@@ -1,5 +1,6 @@
 #include "deflate.h"
 #include <stdexcept>
+#include <algorithm>
 #include "utils.h"
 
 namespace deflator {
@@ -8,32 +9,37 @@ typedef int(*flate_func)(z_stream* strm, int flush);
 
 // Generic function for driving I/O loop for inflate/deflate
 int flate(flate_func func, z_stream* strm, const char* data, size_t data_len, std::vector<char>& output) {
+  int error;
 
+  const size_t CHUNK_SIZE = 256;
+  unsigned char temp[CHUNK_SIZE];
+  memset(temp, 0, CHUNK_SIZE);
+  
   strm->next_in = reinterpret_cast<unsigned char*>(const_cast<char*>(data));
   strm->avail_in = data_len;
 
-  size_t orig_output_size = output.size();
-
-  while (strm->avail_in) {
-    // Ensure enough room is allocated on the output to receive 1024 more bytes
-    const size_t CHUNK_SIZE = 1024;
-    output.resize(output.size() + CHUNK_SIZE);
-
-    strm->next_out = reinterpret_cast<unsigned char*>(&output[output.size() - CHUNK_SIZE]);
+  do {
+    strm->next_out = temp;
     strm->avail_out = CHUNK_SIZE;
-
-    int error = func(strm, Z_SYNC_FLUSH);
-    if (error != Z_OK && error != Z_STREAM_END) {
-      // std::cerr << strm->msg << "\n";
+    error = func(strm, Z_NO_FLUSH);
+    if (error != Z_OK && error != Z_BUF_ERROR) {
+      debug_log("flate failed", LOG_INFO);
       return error;
     }
-  }
-  size_t bytes_written = strm->total_out;
-  size_t bytes_allocated = output.size() - orig_output_size;
-  size_t bytes_to_erase = bytes_allocated - bytes_written;
-  if (bytes_to_erase > 0) {
-    output.erase(output.end() - bytes_to_erase, output.end());
-  }
+    // This might not copy any data; sometimes deflate() just populates buffers
+    output.insert(output.end(), (char*)temp, (char*)(temp + CHUNK_SIZE - strm->avail_out));
+  } while (strm->avail_out == 0 || strm->avail_in > 0);
+
+  do {
+    strm->next_out = temp;
+    strm->avail_out = CHUNK_SIZE;
+    error = func(strm, Z_SYNC_FLUSH);
+    if (error != Z_OK && error != Z_BUF_ERROR) {
+      debug_log("flate failed", LOG_INFO);
+      return error;
+    }
+    output.insert(output.end(), (char*)temp, (char*)(temp + CHUNK_SIZE - strm->avail_out));
+  } while (strm->avail_out == 0);
 
   return Z_OK;
 }
@@ -46,7 +52,9 @@ Deflator::Deflator() {
 Deflator::~Deflator() {
   if (_state == DeflatorStateReady) {
     int error = deflateEnd(&_stream);
-    if (error != Z_OK) {
+    if (error == Z_STREAM_ERROR) {
+      // deflateEnd can return other errors, but they're nothing to worry about.
+      // https://stackoverflow.com/a/19816633/139922
       debug_log("deflateEnd failed", LOG_WARN);
     }
   }
@@ -90,7 +98,9 @@ Inflator::Inflator() {
 Inflator::~Inflator() {
   if (_state == DeflatorStateReady) {
     int error = inflateEnd(&_stream);
-    if (error != Z_OK) {
+    if (error == Z_STREAM_ERROR) {
+      // inflateEnd can return other errors, but they're nothing to worry about.
+      // https://stackoverflow.com/a/19816633/139922
       debug_log("inflateEnd failed", LOG_WARN);
     }
   }
@@ -121,7 +131,7 @@ int Inflator::init(DeflateMode mode, int windowBits) {
 
 int Inflator::inflate(const char* data, size_t data_len, std::vector<char>& output) {
   if (_state != DeflatorStateReady) {
-    throw std::runtime_error("Inflator.init() must be called before deflate()");
+    throw std::runtime_error("Inflator.init() must be called before inflate()");
   }
   return flate(::inflate, &_stream, data, data_len, output);
 }
