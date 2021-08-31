@@ -290,7 +290,7 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
   size_t footerLength = 0;
 
   std::vector<char> deflated(0);
-  bool deflate = _context.permessageDeflate;
+  bool deflate = _context.permessageDeflate && (opcode == Continuation || opcode == Text || opcode == Binary);
   if (deflate) {
     // TODO: Handle errors
     int error = _deflator.deflate(pData, length, deflated);
