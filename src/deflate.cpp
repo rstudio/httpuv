@@ -83,6 +83,10 @@ int Deflator::init(DeflateMode mode, int level, int windowBits, int memLevel, in
   return result;
 }
 
+int Deflator::reset() {
+  return deflateReset(&_stream);
+}
+
 int Deflator::deflate(const char* data, size_t data_len, std::vector<char>& output) {
   if (_state != DeflatorStateReady) {
     throw std::runtime_error("Deflator.init() must be called before deflate()");
@@ -127,6 +131,10 @@ int Inflator::init(DeflateMode mode, int windowBits) {
     _state = DeflatorStateReady;
   }
   return result;
+}
+
+int Inflator::reset() {
+  return inflateReset(&_stream);
 }
 
 int Inflator::inflate(const char* data, size_t data_len, std::vector<char>& output) {

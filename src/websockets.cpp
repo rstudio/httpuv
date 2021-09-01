@@ -292,8 +292,15 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
   std::vector<char> deflated(0);
   bool deflate = _context.permessageDeflate && (opcode == Continuation || opcode == Text || opcode == Binary);
   if (deflate) {
+    int error;
     // TODO: Handle errors
-    int error = _deflator.deflate(pData, length, deflated);
+    if (_context.serverNoContextTakeover) {
+      error = _deflator.reset();
+      if (error != Z_OK) {
+        debug_log("An error occurred during deflate reset", LOG_ERROR);
+      }
+    }
+    error = _deflator.deflate(pData, length, deflated);
     if (error != Z_OK) {
       debug_log("An error occurred during deflate", LOG_ERROR);
     }
@@ -415,10 +422,17 @@ void WebSocketConnection::onFrameComplete() {
           _payload.push_back(0xFF);
           _payload.push_back(0xFF);
           std::vector<char> inflated(0);
-          int error = _inflator.inflate(safe_vec_addr(_payload), _payload.size(), inflated);
+          int error;
+          // TODO: Handle errors
+          if (_context.clientNoContextTakeover) {
+            error = _inflator.reset();
+            if (error != Z_OK) {
+              debug_log("An error occurred during inflate reset", LOG_ERROR);
+            }
+          }
+          error = _inflator.inflate(safe_vec_addr(_payload), _payload.size(), inflated);
           if (error != Z_OK) {
-            // TODO: Handle error
-            std::cerr << "Inflate failed with error " << error << "\n";
+            debug_log("An error occurred during inflate", LOG_ERROR);
           }
 
           _pCallbacks->onWSMessage(_header.opcode == Binary, safe_vec_addr(inflated), inflated.size());

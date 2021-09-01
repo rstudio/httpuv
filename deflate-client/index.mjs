@@ -7,7 +7,7 @@ const MAX_BITS = 21;
 
 async function runMD5Test(address, perMessageDeflate) {
   await withWS(address + "md5", { perMessageDeflate }, async (ws, wsr) => {
-    process.stderr.write("   md5: ");
+    process.stderr.write("Testing: ");
     for (let i = 0; i <= MAX_BITS; i++) {
       process.stderr.write(".");
       const payload = randomBytes(2**i);
@@ -21,7 +21,7 @@ async function runMD5Test(address, perMessageDeflate) {
 
 async function runEchoTest(address, perMessageDeflate) {
   await withWS(address + "echo", { perMessageDeflate }, async (ws, wsr) => {
-    process.stderr.write("  echo: ");
+    process.stderr.write("Testing: ");
     for (let i = 0; i <= MAX_BITS; i++) {
       process.stderr.write(".");
       const payload = randomBytes(2**i);
@@ -43,6 +43,7 @@ async function main() {
   await runTest("ws://127.0.0.1:9100/", false);
   await runTest("ws://127.0.0.1:9100/", true);
   await runTest("ws://127.0.0.1:9100/", { threshold: 0 });
+  await runTest("ws://127.0.0.1:9100/", { threshold: 0, serverMaxWindowBits: 9 });
   await runTest("ws://127.0.0.1:9100/", {
     threshold: 0,
     serverMaxWindowBits: 9,
@@ -53,6 +54,13 @@ async function main() {
     serverMaxWindowBits: 9,
     clientMaxWindowBits: 9,
     serverNoContextTakeover: true
+  });
+  await runTest("ws://127.0.0.1:9100/", {
+    threshold: 0,
+    serverMaxWindowBits: 9,
+    clientMaxWindowBits: 9,
+    serverNoContextTakeover: true,
+    clientNoContextTakeover: true
   });
 }
 
