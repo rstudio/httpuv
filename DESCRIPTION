@@ -30,7 +30,7 @@ License: GPL (>= 2) | file LICENSE
 Depends:
     R (>= 2.15.1)
 Imports:
-    Rcpp (>= 0.11.0),
+    Rcpp (>= 1.0.7),
     utils,
     R6,
     promises,
