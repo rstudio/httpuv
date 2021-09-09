@@ -1,4 +1,4 @@
-httpuv (development version)
+httpuv 1.6.3
 ============
 
 * Increased required version of Rcpp to 1.0.7, to work around an incompatibility between Rcpp 1.0.6 and packages compiled with Rcpp 1.0.7.
