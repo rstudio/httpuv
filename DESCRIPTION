@@ -37,7 +37,7 @@ Imports:
     later (>= 0.8.0)
 LinkingTo: Rcpp, later
 URL: https://github.com/rstudio/httpuv
-SystemRequirements: GNU make, C++11
+SystemRequirements: GNU make, C++11, zlib
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 Suggests:
