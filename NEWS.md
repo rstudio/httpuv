@@ -1,6 +1,7 @@
 httpuv 1.6.3.9000 (development)
 ============
 
+* Added zlib to SystemRequirements in DESCRIPTION file. (#315)
 
 httpuv 1.6.3
 ============
