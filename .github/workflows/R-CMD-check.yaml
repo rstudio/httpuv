@@ -16,4 +16,4 @@ jobs:
   R-CMD-check:
     uses: rstudio/shinycoreci/.github/workflows/call-R-CMD-check.yaml@v1
     with:
-      ubuntu: "ubuntu-20.04 ubuntu-18.04"
+      ubuntu: "ubuntu-18.04 ubuntu-20.04"
