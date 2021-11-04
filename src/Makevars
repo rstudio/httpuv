@@ -63,11 +63,14 @@ libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
 # use "-r aclocal.m4" to ensure that all three files are guaranteed to have
 # precisely the same timestamp value.
 libuv/Makefile: libuv/m4/lt~obsolete.m4
-	(cd libuv \
-		&& touch aclocal.m4 \
-		&& touch -r aclocal.m4 configure Makefile.in \
-		&& chmod +x configure \
-		&& CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" LDFLAGS="$(LDFLAGS)" ./configure $(CONFIGURE_FLAGS))
+	cd libuv; \
+	if [! command -v automake >/dev/null 2>&1 ]; then \
+		echo "automake not found. Touching files so configure will not try to run automake."; \
+		touch aclocal.m4; \
+		touch -r aclocal.m4 configure Makefile.in; \
+	fi; \
+	chmod +x configure; \
+	CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" LDFLAGS="$(LDFLAGS)" ./configure $(CONFIGURE_FLAGS)
 
 libuv/.libs/libuv.a: libuv/Makefile
 	$(MAKE) --directory=libuv \
