@@ -50,10 +50,18 @@ $(SHLIB): libuv/.libs/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base6
 libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
 	cp -p -f libuv/m4/lt_obsolete.m4 libuv/m4/lt~obsolete.m4
 
-# Run ./configure. We need to touch various autotools-related files to avoid
-# it trying to run autotools programs again. We also need to make sure
-# configure is executable, because on some platforms, calling unzip() in R
-# does not preserve the executable bit.
+# Run ./configure to create the Makefile.
+#
+# On systems that do _not_ have automake installed, we need to make sure that
+# configure does not try to run automake, because it will fail. To do that, we
+# we need to touch various autotools-related files so it doesn't try to run
+# autotools programs again. We also need to make sure configure is executable,
+# because on some platforms, calling unzip() in R does not preserve the
+# executable bit.
+#
+# If the system does have automake, then we'll just run configure; it may in
+# turn run automake if the version of automake on the system is newer than the
+# one used when the configure file was created.
 #
 # It's VERY IMPORTANT that mtime(aclocal.m4) <= mtime(configure), and also
 # mtime(aclocal.m4) <= mtime(Makefile.in). On some platforms, passing multiple
