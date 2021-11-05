@@ -29,6 +29,12 @@ std::string normalizeHeaderName(const std::string& name) {
   return result;
 }
 
+
+//' Get HTTP status description
+//'
+//' @keywords internal
+//' @export
+// [[Rcpp::export]]
 const std::string& getStatusDescription(int code) {
   static std::map<int, std::string> statusDescs;
   static std::string unknown("Dunno");

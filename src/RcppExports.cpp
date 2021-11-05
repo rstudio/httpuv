@@ -252,6 +252,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// getStatusDescription
+const std::string& getStatusDescription(int code);
+RcppExport SEXP _httpuv_getStatusDescription(SEXP codeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type code(codeSEXP);
+    rcpp_result_gen = Rcpp::wrap(getStatusDescription(code));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_sendWSMessage", (DL_FUNC) &_httpuv_sendWSMessage, 3},
@@ -274,6 +285,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
     {"_httpuv_wsconn_address", (DL_FUNC) &_httpuv_wsconn_address, 1},
     {"_httpuv_log_level", (DL_FUNC) &_httpuv_log_level, 1},
+    {"_httpuv_getStatusDescription", (DL_FUNC) &_httpuv_getStatusDescription, 1},
     {NULL, NULL, 0}
 };
 

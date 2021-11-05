@@ -145,3 +145,11 @@ log_level <- function(level) {
     .Call('_httpuv_log_level', PACKAGE = 'httpuv', level)
 }
 
+#' Get HTTP status description
+#'
+#' @keywords internal
+#' @export
+getStatusDescription <- function(code) {
+    .Call('_httpuv_getStatusDescription', PACKAGE = 'httpuv', code)
+}
+

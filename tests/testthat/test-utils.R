@@ -98,3 +98,9 @@ test_that("ipFamily works correctly", {
   expect_identical(ipFamily("123"), -1L)
   expect_identical(ipFamily("localhost"), -1L)
 })
+
+test_that("Test status description", {
+  expect_identical(getStatusDescription(400L), "Bad Request")
+  expect_identical(getStatusDescription(404L), "Not Found")
+  expect_identical(getStatusDescription(500L), "Internal Server Error")
+})
