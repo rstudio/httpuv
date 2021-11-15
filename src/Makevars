@@ -63,15 +63,20 @@ libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
 # use "-r aclocal.m4" to ensure that all three files are guaranteed to have
 # precisely the same timestamp value.
 libuv/Makefile: libuv/m4/lt~obsolete.m4
-	(cd libuv \
+	@echo "==> Configuring libuv ..."
+	@(cd libuv \
 		&& touch aclocal.m4 \
 		&& touch -r aclocal.m4 configure Makefile.in \
 		&& chmod +x configure \
 		&& CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" LDFLAGS="$(LDFLAGS)" ./configure $(CONFIGURE_FLAGS))
 
 libuv/.libs/libuv.a: libuv/Makefile
-	$(MAKE) --directory=libuv \
-		HAVE_DTRACE=0
+	@echo "==> Building libuv ..."
+	@(cd libuv && $(MAKE) HAVE_DTRACE=0)
 
-clean:
-	$(MAKE) --directory=libuv distclean
+libuv-clean:
+	@echo "==> Cleaning libuv ..."
+	@(cd libuv && $(MAKE) -s distclean)
+
+clean: libuv-clean
+shlib-clean: libuv-clean
