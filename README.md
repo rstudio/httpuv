@@ -1,7 +1,7 @@
 # httpuv: HTTP and WebSocket server library for R
 
   <!-- badges: start -->
-  [![R build status](https://github.com/rstudio/httpuv/workflows/R-CMD-check/badge.svg)](https://github.com/rstudio/httpuv/actions)
+  [![R build status](https://github.com/rstudio/httpuv/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/rstudio/httpuv/actions)
   <!-- badges: end -->
 
 httpuv provides low-level socket and protocol support for handling HTTP and WebSocket requests directly from within R. It uses a multithreaded architecture, where I/O is handled on one thread, and the R callbacks are handled on another.
