@@ -50,22 +50,12 @@ $(SHLIB): libuv/.libs/libuv.a http-parser/http_parser.o sha1/sha1.o base64/base6
 libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
 	cp -p -f libuv/m4/lt_obsolete.m4 libuv/m4/lt~obsolete.m4
 
-# Run ./configure. We need to touch various autotools-related files to avoid
-# it trying to run autotools programs again. We also need to make sure
-# configure is executable, because on some platforms, calling unzip() in R
-# does not preserve the executable bit.
+# Run ./configure.
+# We also need to make sure configure is executable, because on some platforms,
+# calling unzip() in R does not preserve the executable bit.
 #
-# It's VERY IMPORTANT that mtime(aclocal.m4) <= mtime(configure), and also
-# mtime(aclocal.m4) <= mtime(Makefile.in). On some platforms, passing multiple
-# files to a single touch command gives them all the same time, but on others
-# (Solaris and possibly some Fedoras) the timestamps are slightly increasing
-# from one to the next, i.e. the order matters. To remove this fragility, we
-# use "-r aclocal.m4" to ensure that all three files are guaranteed to have
-# precisely the same timestamp value.
 libuv/Makefile: libuv/m4/lt~obsolete.m4
 	(cd libuv \
-		&& touch aclocal.m4 \
-		&& touch -r aclocal.m4 configure Makefile.in \
 		&& chmod +x configure \
 		&& CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" LDFLAGS="$(LDFLAGS)" ./configure $(CONFIGURE_FLAGS))
 
