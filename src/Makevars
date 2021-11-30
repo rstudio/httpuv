@@ -76,6 +76,8 @@ libuv/Makefile: libuv/m4/lt~obsolete.m4
 		echo "automake not found. Touching files so configure will not try to run automake."; \
 		touch aclocal.m4; \
 		touch -r aclocal.m4 configure Makefile.in; \
+	else \
+		touch configure.ac; \
 	fi; \
 	chmod +x configure; \
 	CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" LDFLAGS="$(LDFLAGS)" ./configure $(CONFIGURE_FLAGS)
