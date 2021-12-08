@@ -89,8 +89,8 @@ libuv/Makefile: libuv/m4/lt~obsolete.m4
 		touch aclocal.m4; \
 		touch -r aclocal.m4 configure Makefile.in; \
 	else \
-		echo "automake found. Touching configure.ac."; \
-		touch configure.ac; \
+		echo "automake found. Running autogen.sh."; \
+		sh autogen.sh; \
 	fi; \
 	chmod +x configure; \
 	CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY)" AR="$(AR)" RANLIB="$(RANLIB)" LDFLAGS="$(LDFLAGS)" ./configure $(CONFIGURE_FLAGS)
