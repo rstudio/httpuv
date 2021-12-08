@@ -76,11 +76,13 @@ libuv/Makefile: libuv/m4/lt~obsolete.m4
 		echo "automake NOT FOUND"; \
 	else \
 		echo "automake FOUND"; \
+		automake --version; \
 	fi; \
 	if ! command -v autoconf >/dev/null 2>&1 ; then \
 		echo "autoconf NOT FOUND"; \
 	else \
 		echo "autoconf FOUND"; \
+		autoconf --version; \
 	fi; \
 	if ! command -v automake >/dev/null 2>&1 ; then \
 		echo "automake not found. Touching files so configure will not try to run automake."; \
