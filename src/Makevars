@@ -59,9 +59,9 @@ libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
 # because on some platforms, calling unzip() in R does not preserve the
 # executable bit.
 #
-# If the system does have automake, then we'll just run configure; it may in
-# turn run automake if the version of automake on the system is newer than the
-# one used when the configure file was created.
+# If the system does have automake, then we'll run autogen.sh before configure,
+# as per the official build instructions for libuv. autogen.sh will in turn run
+# aclocal, autoconf, and automake.
 #
 # It's VERY IMPORTANT that mtime(aclocal.m4) <= mtime(configure), and also
 # mtime(aclocal.m4) <= mtime(Makefile.in). On some platforms, passing multiple
@@ -72,18 +72,6 @@ libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
 # precisely the same timestamp value.
 libuv/Makefile: libuv/m4/lt~obsolete.m4
 	cd libuv; \
-	if ! command -v automake >/dev/null 2>&1 ; then \
-		echo "automake NOT FOUND"; \
-	else \
-		echo "automake FOUND"; \
-		automake --version; \
-	fi; \
-	if ! command -v autoconf >/dev/null 2>&1 ; then \
-		echo "autoconf NOT FOUND"; \
-	else \
-		echo "autoconf FOUND"; \
-		autoconf --version; \
-	fi; \
 	if ! command -v automake >/dev/null 2>&1 ; then \
 		echo "automake not found. Touching files so configure will not try to run automake."; \
 		touch aclocal.m4; \
