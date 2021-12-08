@@ -72,7 +72,7 @@ libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
 # precisely the same timestamp value.
 libuv/Makefile: libuv/m4/lt~obsolete.m4
 	cd libuv; \
-	if [! command -v automake >/dev/null 2>&1 ]; then \
+	if ! command -v automake >/dev/null 2>&1 ; then \
 		echo "automake not found. Touching files so configure will not try to run automake."; \
 		touch aclocal.m4; \
 		touch -r aclocal.m4 configure Makefile.in; \
