@@ -1,7 +1,9 @@
-httpuv 1.6.3.9000 (development)
+httpuv 1.6.3.9001 (development)
 ============
 
 * Added zlib to SystemRequirements in DESCRIPTION file. (#315)
+
+* Closed #280: Fix builds on Alpine Linux (and other versions which have automake >1.16.1). (#319)
 
 httpuv 1.6.3
 ============
