@@ -1,0 +1,24 @@
+# Use C++11 if available
+CXX_STD=CXX11
+
+PKG_LIBS = ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o \
+	-luv -lpthread -lws2_32 -lkernel32 -lpsapi -liphlpapi -lshell32 -luserenv -lz
+
+PKG_CFLAGS = $(C_VISIBILITY) -DSTRICT_R_HEADERS
+PKG_CXXFLAGS = $(CXX_VISIBILITY) -DSTRICT_R_HEADERS
+PKG_CPPFLAGS += -D_WIN32_WINNT=0x0600 -DSTRICT_R_HEADERS
+
+# Additional flags for libuv borrowed from libuv/Makefile.mingw
+LIBUV_CFLAGS = -Iinclude -Isrc -Isrc/win -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0600
+
+#### Debugging flags ####
+# Uncomment to enable thread assertions
+# PKG_CPPFLAGS += -DDEBUG_THREAD -UNDEBUG
+
+
+$(SHLIB): http-parser/http_parser.o sha1/sha1.o base64/base64.o
+
+clean:
+	$(MAKE) --directory=libuv distclean
+
+shlib-clean: clean
