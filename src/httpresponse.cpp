@@ -4,7 +4,7 @@
 #include "thread.h"
 #include "utils.h"
 #include "gzipdatasource.h"
-#include "libuv/include/uv.h"
+#include <uv.h>
 
 
 void on_response_written(uv_write_t* handle, int status) {

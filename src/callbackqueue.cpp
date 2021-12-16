@@ -2,7 +2,7 @@
 #include "callbackqueue.h"
 #include "tqueue.h"
 #include "thread.h"
-#include "libuv/include/uv.h"
+#include <uv.h>
 
 
 // This non-class function is a plain C wrapper for CallbackQueue::flush(), and
