@@ -14,10 +14,10 @@ name: Package checks
 
 jobs:
   website:
-    uses: rstudio/shiny-workflows/.github/workflows/website.yaml@v1
+    uses: rstudio/shiny-workflows/.github/workflows/website.yaml@rlib_v2
   routine:
-    uses: rstudio/shiny-workflows/.github/workflows/routine.yaml@v1
+    uses: rstudio/shiny-workflows/.github/workflows/routine.yaml@rlib_v2
   R-CMD-check:
-    uses: rstudio/shiny-workflows/.github/workflows/R-CMD-check.yaml@v1
+    uses: rstudio/shiny-workflows/.github/workflows/R-CMD-check.yaml@rlib_v2
     with:
       ubuntu: "ubuntu-18.04 ubuntu-20.04"
