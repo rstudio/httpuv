@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <functional>
 #include <memory>
-#include "libuv/include/uv.h"
+#include <uv.h>
 #include "base64/base64.hpp"
 #include "uvutil.h"
 #include "webapplication.h"

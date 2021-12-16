@@ -1,7 +1,7 @@
 #include "socket.h"
 #include "httprequest.h"
 #include <later_api.h>
-#include "libuv/include/uv.h"
+#include <uv.h>
 
 void on_Socket_close(uv_handle_t* pHandle);
 

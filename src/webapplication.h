@@ -2,7 +2,7 @@
 #define WEBAPPLICATION_HPP
 
 #include <functional>
-#include "libuv/include/uv.h"
+#include <uv.h>
 #include <Rcpp.h>
 #include "websockets.h"
 #include "thread.h"
