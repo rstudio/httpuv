@@ -147,7 +147,7 @@ static connection_context_t* create_connection_context(
   connection_context_t* context;
 
   context = (connection_context_t*) malloc(sizeof *context);
-  ASSERT(context != NULL);
+  ASSERT_NOT_NULL(context);
 
   context->sock = sock;
   context->is_server_connection = is_server_connection;
@@ -464,7 +464,7 @@ static server_context_t* create_server_context(
   server_context_t* context;
 
   context = (server_context_t*) malloc(sizeof *context);
-  ASSERT(context != NULL);
+  ASSERT_NOT_NULL(context);
 
   context->sock = sock;
   context->connections = 0;
@@ -592,10 +592,19 @@ static void start_poll_test(void) {
   MAKE_VALGRIND_HAPPY();
 }
 
-
+ 
+/* Issuing a shutdown() on IBM i PASE with parameter SHUT_WR
+ * also sends a normal close sequence to the partner program.
+ * This leads to timing issues and ECONNRESET failures in the
+ * test 'poll_duplex' and 'poll_unidirectional'.
+ * 
+ * https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_74/apis/shutdn.htm
+ */
 TEST_IMPL(poll_duplex) {
 #if defined(NO_SELF_CONNECT)
   RETURN_SKIP(NO_SELF_CONNECT);
+#elif defined(__PASE__)
+  RETURN_SKIP("API shutdown() may lead to timing issue on IBM i PASE");
 #endif
   test_mode = DUPLEX;
   start_poll_test();
@@ -606,6 +615,8 @@ TEST_IMPL(poll_duplex) {
 TEST_IMPL(poll_unidirectional) {
 #if defined(NO_SELF_CONNECT)
   RETURN_SKIP(NO_SELF_CONNECT);
+#elif defined(__PASE__)
+  RETURN_SKIP("API shutdown() may lead to timing issue on IBM i PASE");
 #endif
   test_mode = UNIDIRECTIONAL;
   start_poll_test();
