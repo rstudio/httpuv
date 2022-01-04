@@ -1,4 +1,4 @@
-httpuv 1.6.4.9000
+httpuv 1.6.5
 ============
 
 * Added support for R on Windows UCRT. (#324)
