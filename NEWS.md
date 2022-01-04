@@ -3,6 +3,8 @@ httpuv 1.6.4.9000
 
 * Added support for R on Windows UCRT. (#324)
 
+* When using a system-wide copy of libuv, httpuv will now compile using the system-wide headers for libuv, instead of the local copy of the libuv headers. (#327)
+
 httpuv 1.6.4
 ============
 

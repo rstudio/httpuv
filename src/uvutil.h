@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "libuv/include/uv.h"
+#include <uv.h>
 
 #include <Rcpp.h>
 

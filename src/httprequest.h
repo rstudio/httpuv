@@ -6,7 +6,7 @@
 
 #include <functional>
 #include <memory>
-#include "libuv/include/uv.h"
+#include <uv.h>
 #include "http-parser/http_parser.h"
 #include "socket.h"
 #include "webapplication.h"

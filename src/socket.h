@@ -3,7 +3,7 @@
 
 #include "http.h"
 #include <memory>
-#include "libuv/include/uv.h"
+#include <uv.h>
 
 class HttpRequest;
 class WebApplication;

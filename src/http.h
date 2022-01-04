@@ -1,7 +1,7 @@
 #ifndef HTTP_HPP
 #define HTTP_HPP
 
-#include "libuv/include/uv.h"
+#include <uv.h>
 #include <memory>
 #include <functional>
 #include "webapplication.h"

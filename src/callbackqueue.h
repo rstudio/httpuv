@@ -3,7 +3,7 @@
 
 #include "tqueue.h"
 #include <functional>
-#include "libuv/include/uv.h"
+#include <uv.h>
 
 class CallbackQueue {
 public:
