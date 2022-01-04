@@ -56,17 +56,13 @@ To update libuv to a new version, do the following:
 
     ```
     # Fix for unnamed structs on MinGW
-    git cherry-pick 327a0a9
+    git cherry-pick 7106577
     # Fix for empty translation unit warning on Windows with -pedantic
-    git cherry-pick d5a24b7
+    git cherry-pick 8ab31ef
     # Fix for Solaris
-    git cherry-pick fea361c
-    # Use C-style comments
-    git cherry-pick bf9dd71
-    # Workaround for warning on Windows about no return statement
-    git cherry-pick 7648442
+    git cherry-pick 1898a29
     # Workaround for pragma NOTE
-    git cherry-pick 577fe91
+    git cherry-pick 421f092
     ```
 
 * If the cherry-picked commits needed any modification, update this README to refer to the new cherry-picked commits, then commit.
