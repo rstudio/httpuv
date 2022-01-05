@@ -4152,6 +4152,10 @@ typedef const UNICODE_STRING *PCUNICODE_STRING;
       struct {
         UCHAR  DataBuffer[1];
       } GenericReparseBuffer;
+      struct {
+        ULONG StringCount;
+        WCHAR StringList[1];
+      } AppExecLinkReparseBuffer;
     } u;
   } REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
 #endif
@@ -4517,6 +4521,9 @@ typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
 #ifndef IO_REPARSE_TAG_SYMLINK
 # define IO_REPARSE_TAG_SYMLINK (0xA000000CL)
 #endif
+#ifndef IO_REPARSE_TAG_APPEXECLINK
+# define IO_REPARSE_TAG_APPEXECLINK (0x8000001BL)
+#endif
 
 typedef VOID (NTAPI *PIO_APC_ROUTINE)
              (PVOID ApcContext,
@@ -4719,6 +4726,18 @@ typedef HWINEVENTHOOK (WINAPI *sSetWinEventHook)
                        DWORD        idThread,
                        UINT         dwflags);
 
+/* From mstcpip.h */
+typedef struct _TCP_INITIAL_RTO_PARAMETERS {
+  USHORT Rtt;
+  UCHAR  MaxSynRetransmissions;
+} TCP_INITIAL_RTO_PARAMETERS, *PTCP_INITIAL_RTO_PARAMETERS;
+
+#ifndef TCP_INITIAL_RTO_NO_SYN_RETRANSMISSIONS
+# define TCP_INITIAL_RTO_NO_SYN_RETRANSMISSIONS ((UCHAR) -2)
+#endif
+#ifndef SIO_TCP_INITIAL_RTO
+# define  SIO_TCP_INITIAL_RTO _WSAIOW(IOC_VENDOR,17)
+#endif
 
 /* Ntdll function pointers */
 extern sRtlGetVersion pRtlGetVersion;
@@ -4739,5 +4758,12 @@ extern sPowerRegisterSuspendResumeNotification pPowerRegisterSuspendResumeNotifi
 
 /* User32.dll function pointer */
 extern sSetWinEventHook pSetWinEventHook;
+
+/* ws2_32.dll function pointer */
+/* mingw doesn't have this definition, so let's declare it here locally */
+typedef int (WINAPI *uv_sGetHostNameW)
+            (PWSTR,
+             int);
+extern uv_sGetHostNameW pGetHostNameW;
 
 #endif /* UV_WIN_WINAPI_H_ */

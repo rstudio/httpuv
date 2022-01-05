@@ -77,7 +77,7 @@ static void uv__signal_global_init(void) {
 }
 
 
-UV_DESTRUCTOR(static void uv__signal_global_fini(void)) {
+void uv__signal_cleanup(void) {
   /* We can only use signal-safe functions here.
    * That includes read/write and close, fortunately.
    * We do all of this directly here instead of resetting
@@ -98,7 +98,7 @@ UV_DESTRUCTOR(static void uv__signal_global_fini(void)) {
 
 
 static void uv__signal_global_reinit(void) {
-  uv__signal_global_fini();
+  uv__signal_cleanup();
 
   if (uv__make_pipe(uv__signal_lock_pipefd, 0))
     abort();
@@ -143,6 +143,8 @@ static void uv__signal_block_and_lock(sigset_t* saved_sigmask) {
   if (sigfillset(&new_mask))
     abort();
 
+  /* to shut up valgrind */
+  sigemptyset(saved_sigmask);
   if (pthread_sigmask(SIG_SETMASK, &new_mask, saved_sigmask))
     abort();
 
@@ -263,7 +265,7 @@ static int uv__signal_loop_once_init(uv_loop_t* loop) {
   if (loop->signal_pipefd[0] != -1)
     return 0;
 
-  err = uv__make_pipe(loop->signal_pipefd, UV__F_NONBLOCK);
+  err = uv__make_pipe(loop->signal_pipefd, UV_NONBLOCK_PIPE);
   if (err)
     return err;
 

@@ -160,14 +160,20 @@ static void post(QUEUE* q, enum uv__work_kind kind) {
 }
 
 
-#ifndef _WIN32
-UV_DESTRUCTOR(static void cleanup(void)) {
+#ifdef __MVS__
+/* TODO(itodorov) - zos: revisit when Woz compiler is available. */
+__attribute__((destructor))
+#endif
+void uv__threadpool_cleanup(void) {
   unsigned int i;
 
   if (nthreads == 0)
     return;
 
+#ifndef __MVS__
+  /* TODO(gabylb) - zos: revisit when Woz compiler is available. */
   post(&exit_message, UV__WORK_CPU);
+#endif
 
   for (i = 0; i < nthreads; i++)
     if (uv_thread_join(threads + i))
@@ -182,7 +188,6 @@ UV_DESTRUCTOR(static void cleanup(void)) {
   threads = NULL;
   nthreads = 0;
 }
-#endif
 
 
 static void init_threads(void) {

@@ -42,7 +42,7 @@ as other activities and other I/O operations are kept waiting.
 
 One of the standard solutions is to use threads. Each blocking I/O operation is
 started in a separate thread (or in a thread pool). When the blocking function
-gets invoked in the thread, the processor can schedule another thread to run,
+gets invoked in the thread, the operating system can schedule another thread to run,
 which actually needs the CPU.
 
 The approach followed by libuv uses another style, which is the **asynchronous,
@@ -87,6 +87,7 @@ nothing, except start a loop which will exit immediately.
 
 .. rubric:: helloworld/main.c
 .. literalinclude:: ../../code/helloworld/main.c
+    :language: c
     :linenos:
 
 This program quits immediately because it has no events to process. A libuv
@@ -202,6 +203,7 @@ event watchers are active.
 
 .. rubric:: idle-basic/main.c
 .. literalinclude:: ../../code/idle-basic/main.c
+    :language: c
     :emphasize-lines: 6,10,14-17
 
 Storing context

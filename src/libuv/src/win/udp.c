@@ -125,17 +125,10 @@ static int uv_udp_set_socket(uv_loop_t* loop, uv_udp_t* handle, SOCKET socket,
 }
 
 
-int uv_udp_init_ex(uv_loop_t* loop, uv_udp_t* handle, unsigned int flags) {
-  int domain;
-
-  /* Use the lower 8 bits for the domain */
-  domain = flags & 0xFF;
-  if (domain != AF_INET && domain != AF_INET6 && domain != AF_UNSPEC)
-    return UV_EINVAL;
-
-  if (flags & ~0xFF)
-    return UV_EINVAL;
-
+int uv__udp_init_ex(uv_loop_t* loop,
+                    uv_udp_t* handle,
+                    unsigned flags,
+                    int domain) {
   uv__handle_init(loop, (uv_handle_t*) handle, UV_UDP);
   handle->socket = INVALID_SOCKET;
   handle->reqs_pending = 0;
@@ -174,11 +167,6 @@ int uv_udp_init_ex(uv_loop_t* loop, uv_udp_t* handle, unsigned int flags) {
 }
 
 
-int uv_udp_init(uv_loop_t* loop, uv_udp_t* handle) {
-  return uv_udp_init_ex(loop, handle, AF_UNSPEC);
-}
-
-
 void uv_udp_close(uv_loop_t* loop, uv_udp_t* handle) {
   uv_udp_recv_stop(handle);
   closesocket(handle->socket);
@@ -198,6 +186,11 @@ void uv_udp_endgame(uv_loop_t* loop, uv_udp_t* handle) {
     assert(!(handle->flags & UV_HANDLE_CLOSED));
     uv__handle_close(handle);
   }
+}
+
+
+int uv_udp_using_recvmmsg(const uv_udp_t* handle) {
+  return 0;
 }
 
 
@@ -291,7 +284,7 @@ static void uv_udp_queue_recv(uv_loop_t* loop, uv_udp_t* handle) {
     handle->flags &= ~UV_HANDLE_ZERO_READ;
 
     handle->recv_buffer = uv_buf_init(NULL, 0);
-    handle->alloc_cb((uv_handle_t*) handle, 65536, &handle->recv_buffer);
+    handle->alloc_cb((uv_handle_t*) handle, UV__UDP_DGRAM_MAXSIZE, &handle->recv_buffer);
     if (handle->recv_buffer.base == NULL || handle->recv_buffer.len == 0) {
       handle->recv_cb(handle, UV_ENOBUFS, &handle->recv_buffer, NULL, 0);
       return;
@@ -508,7 +501,7 @@ void uv_process_udp_recv_req(uv_loop_t* loop, uv_udp_t* handle,
     /* Do a nonblocking receive.
      * TODO: try to read multiple datagrams at once. FIONREAD maybe? */
     buf = uv_buf_init(NULL, 0);
-    handle->alloc_cb((uv_handle_t*) handle, 65536, &buf);
+    handle->alloc_cb((uv_handle_t*) handle, UV__UDP_DGRAM_MAXSIZE, &buf);
     if (buf.base == NULL || buf.len == 0) {
       handle->recv_cb(handle, UV_ENOBUFS, &buf, NULL, 0);
       goto done;
@@ -764,6 +757,9 @@ int uv__udp_set_source_membership6(uv_udp_t* handle,
   int optname;
   int err;
 
+  STATIC_ASSERT(sizeof(mreq.gsr_group) >= sizeof(*multicast_addr));
+  STATIC_ASSERT(sizeof(mreq.gsr_source) >= sizeof(*source_addr));
+
   if ((handle->flags & UV_HANDLE_BOUND) && !(handle->flags & UV_HANDLE_IPV6))
     return UV_EINVAL;
 
@@ -786,8 +782,8 @@ int uv__udp_set_source_membership6(uv_udp_t* handle,
     mreq.gsr_interface = 0;
   }
 
-  memcpy(&mreq.gsr_group, multicast_addr, sizeof(mreq.gsr_group));
-  memcpy(&mreq.gsr_source, source_addr, sizeof(mreq.gsr_source));
+  memcpy(&mreq.gsr_group, multicast_addr, sizeof(*multicast_addr));
+  memcpy(&mreq.gsr_source, source_addr, sizeof(*source_addr));
 
   if (membership == UV_JOIN_GROUP)
     optname = MCAST_JOIN_SOURCE_GROUP;
@@ -1077,7 +1073,7 @@ int uv__udp_connect(uv_udp_t* handle,
 
   err = connect(handle->socket, addr, addrlen);
   if (err)
-    return uv_translate_sys_error(err);
+    return uv_translate_sys_error(WSAGetLastError());
 
   handle->flags |= UV_HANDLE_UDP_CONNECTED;
 
@@ -1087,13 +1083,13 @@ int uv__udp_connect(uv_udp_t* handle,
 
 int uv__udp_disconnect(uv_udp_t* handle) {
     int err;
-    struct sockaddr addr;
+    struct sockaddr_storage addr;
 
     memset(&addr, 0, sizeof(addr));
 
     err = connect(handle->socket, &addr, sizeof(addr));
     if (err)
-      return uv_translate_sys_error(err);
+      return uv_translate_sys_error(WSAGetLastError());
 
     handle->flags &= ~UV_HANDLE_UDP_CONNECTED;
     return 0;
