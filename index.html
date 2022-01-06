@@ -93,11 +93,11 @@
 <div class="section level2">
 <h2 id="basic-usage">Basic Usage<a class="anchor" aria-label="anchor" href="#basic-usage"></a>
 </h2>
-<p>This is a basic web server that listens on port 5000 and responds to HTTP requests with a web page containing the current system time and the path of the request:</p>
+<p>This is a basic web server that listens on port 8080 and responds to HTTP requests with a web page containing the current system time and the path of the request:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rstudio/httpuv" class="external-link">httpuv</a></span><span class="op">)</span>
 
-<span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/startServer.html">startServer</a></span><span class="op">(</span>host <span class="op">=</span> <span class="st">"0.0.0.0"</span>, port <span class="op">=</span> <span class="fl">5000</span>,
+<span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/startServer.html">startServer</a></span><span class="op">(</span>host <span class="op">=</span> <span class="st">"0.0.0.0"</span>, port <span class="op">=</span> <span class="fl">8080</span>,
   app <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
     call <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">req</span><span class="op">)</span> <span class="op">{</span>
       <span class="va">body</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Time: "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"&lt;br&gt;Path requested: "</span>, <span class="va">req</span><span class="op">$</span><span class="va">PATH_INFO</span><span class="op">)</span>
@@ -110,7 +110,7 @@
   <span class="op">)</span>
 <span class="op">)</span></code></pre></div>
 <p>Note that when <code>host</code> is 0.0.0.0, it listens on all network interfaces. If <code>host</code> is 127.0.0.1, it will only listen to connections from the local host.</p>
-<p>The <code><a href="reference/startServer.html">startServer()</a></code> function takes an <em>app object</em>, which is a named list with functions that are invoked in response to certain events. In the example above, the list contains a function <code>call</code>. This function is invoked when a complete HTTP request is received by the server, and it is passed an environment object <code>req</code>, which contains information about HTTP request. <code>req$PATH_INFO</code> is the path requested (if the request was for <a href="http://127.0.0.1:5000/foo" class="external-link uri">http://127.0.0.1:5000/foo</a>, it would be <code>"/foo"</code>).</p>
+<p>The <code><a href="reference/startServer.html">startServer()</a></code> function takes an <em>app object</em>, which is a named list with functions that are invoked in response to certain events. In the example above, the list contains a function <code>call</code>. This function is invoked when a complete HTTP request is received by the server, and it is passed an environment object <code>req</code>, which contains information about HTTP request. <code>req$PATH_INFO</code> is the path requested (if the request was for <a href="http://127.0.0.1:8080/foo" class="external-link uri">http://127.0.0.1:8080/foo</a>, it would be <code>"/foo"</code>).</p>
 <p>The <code>call</code> function is expected to return a list containing <code>status</code>, <code>headers</code>, and <code>body</code>. That list will be transformed into a HTTP response and sent to the client.</p>
 <p>To stop the server:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -124,7 +124,7 @@
 <p>A httpuv server application can serve up files on disk. This happens entirely within the I/O thread, so doing so will not block or be blocked by activity in the main R thread.</p>
 <p>To serve a path, use <code>staticPaths</code> in the app. This will serve the <code>www/</code> subdirectory of the current directory (from when <code>startServer</code> is called) as the root of the web path:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/startServer.html">startServer</a></span><span class="op">(</span><span class="st">"0.0.0.0"</span>, path <span class="op">=</span> <span class="fl">5000</span>,
+<code class="sourceCode R"><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/startServer.html">startServer</a></span><span class="op">(</span><span class="st">"0.0.0.0"</span>, <span class="fl">8080</span>,
   app <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
     staticPaths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"/"</span> <span class="op">=</span> <span class="st">"www/"</span><span class="op">)</span>
   <span class="op">)</span>
@@ -132,7 +132,7 @@
 <p>By default, if a file named <code>index.html</code> exists in the directory, it will be served when <code>/</code> is requested.</p>
 <p><code>staticPaths</code> can be combined with <code>call</code>. In this example, the web paths <code>/assets</code> and <code>/lib</code> are served from disk, but requests for any other paths go through the <code>call</code> function.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/startServer.html">startServer</a></span><span class="op">(</span><span class="st">"0.0.0.0"</span>, <span class="fl">5000</span>,
+<code class="sourceCode R"><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/startServer.html">startServer</a></span><span class="op">(</span><span class="st">"0.0.0.0"</span>, <span class="fl">8080</span>,
   <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
     call <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">req</span><span class="op">)</span> <span class="op">{</span>
       <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
