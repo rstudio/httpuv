@@ -401,11 +401,11 @@ INLINE static int fs__readlink_handle(HANDLE handle, char** target_ptr,
 
   } else if (reparse_data->ReparseTag == IO_REPARSE_TAG_APPEXECLINK) {
     /* String #3 in the list has the target filename. */
-    if (reparse_data->AppExecLinkReparseBuffer.StringCount < 3) {
+    if (reparse_data->u.AppExecLinkReparseBuffer.StringCount < 3) {
       SetLastError(ERROR_SYMLINK_NOT_SUPPORTED);
       return -1;
     }
-    w_target = reparse_data->AppExecLinkReparseBuffer.StringList;
+    w_target = reparse_data->u.AppExecLinkReparseBuffer.StringList;
     /* The StringList buffer contains a list of strings separated by "\0",   */
     /* with "\0\0" terminating the list. Move to the 3rd string in the list: */
     for (i = 0; i < 2; ++i) {
