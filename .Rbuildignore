@@ -1,6 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 /\.mailmap$
+/\.readthedocs.yaml$
 /\.git$
 /\.o$
 /\.so$
