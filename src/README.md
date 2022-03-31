@@ -58,6 +58,8 @@ To update libuv to a new version, do the following:
     # Fixes for unnamed structs on MinGW
     git cherry-pick 7106577
     git cherry-pick 4bea58e
+    # Fix for incompatible pointer type on MinGW
+    git cherry-pick ef944cf
     # Fix for empty translation unit warning on Windows with -pedantic
     git cherry-pick 8ab31ef
     # Fix for Solaris
