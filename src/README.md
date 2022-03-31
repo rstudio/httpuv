@@ -55,8 +55,9 @@ To update libuv to a new version, do the following:
 * Cherry-pick some fixes:
 
     ```
-    # Fix for unnamed structs on MinGW
+    # Fixes for unnamed structs on MinGW
     git cherry-pick 7106577
+    git cherry-pick 4bea58e
     # Fix for empty translation unit warning on Windows with -pedantic
     git cherry-pick 8ab31ef
     # Fix for Solaris
