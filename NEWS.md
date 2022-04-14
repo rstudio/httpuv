@@ -3,6 +3,8 @@ httpuv 1.6.5.9000
 
 * Updated to libuv 1.43.0. (#328)
 
+* Fixed #336: `encodeURI()` and `encodeURIComponent()` printed a space instead of a leading zero, as in `"% A"` instead of `"%0A"`. (#337)
+
 httpuv 1.6.5
 ============
 
