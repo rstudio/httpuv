@@ -4,8 +4,8 @@ test_that("encodeURI and encodeURIComponent", {
   # "abc \ue5 \u4e2d" is identical to "abc å 中" when the system's encoding is
   # UTF-8. However, the former is always encoded as UTF-8, while the latter will
   # be encoded using the system's native encoding.
-  utf8_str             <- "abc \ue5 \u4e2d"
-  utf8_str_encoded     <- "abc%20%C3%A5%20%E4%B8%AD"
+  utf8_str             <- "abc \ue5 \u4e2d\r\n"
+  utf8_str_encoded     <- "abc%20%C3%A5%20%E4%B8%AD%0D%0A"
   reserved_str         <- ",/?:@"
   reserved_str_encoded <- "%2C%2F%3F%3A%40"
 
