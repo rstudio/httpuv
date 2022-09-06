@@ -1,6 +1,8 @@
 httpuv 1.6.6
 ============
 
+* Update docs for CRAN (#343)
+
 * Updated to libuv 1.43.0. (#328)
 
 * Fixed #336: `encodeURI()` and `encodeURIComponent()` printed a space instead of a leading zero, as in `"% A"` instead of `"%0A"`. (#337)
