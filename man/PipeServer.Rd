@@ -51,32 +51,32 @@ a named item in \code{.list}.
 }
 \keyword{internal}
 \section{Super class}{
-\code{\link[httpuv:Server]{httpuv::Server}} -> \code{PipeServer}
+\code{httpuv::Server} -> \code{PipeServer}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{PipeServer$new()}}
-\item \href{#method-getName}{\code{PipeServer$getName()}}
-\item \href{#method-getMask}{\code{PipeServer$getMask()}}
+\item \href{#method-PipeServer-new}{\code{PipeServer$new()}}
+\item \href{#method-PipeServer-getName}{\code{PipeServer$getName()}}
+\item \href{#method-PipeServer-getMask}{\code{PipeServer$getMask()}}
 }
 }
-\if{html}{
-\out{<details ><summary>Inherited methods</summary>}
-\itemize{
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPathOptions">}\href{../../httpuv/html/Server.html#method-getStaticPathOptions}{\code{httpuv::Server$getStaticPathOptions()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPaths">}\href{../../httpuv/html/Server.html#method-getStaticPaths}{\code{httpuv::Server$getStaticPaths()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="isRunning">}\href{../../httpuv/html/Server.html#method-isRunning}{\code{httpuv::Server$isRunning()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="removeStaticPath">}\href{../../httpuv/html/Server.html#method-removeStaticPath}{\code{httpuv::Server$removeStaticPath()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPath">}\href{../../httpuv/html/Server.html#method-setStaticPath}{\code{httpuv::Server$setStaticPath()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPathOption">}\href{../../httpuv/html/Server.html#method-setStaticPathOption}{\code{httpuv::Server$setStaticPathOption()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="stop">}\href{../../httpuv/html/Server.html#method-stop}{\code{httpuv::Server$stop()}}\out{</span>}
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details><summary>Inherited methods</summary>
+<ul>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPathOptions"><a href='../../httpuv/html/Server.html#method-Server-getStaticPathOptions'><code>httpuv::Server$getStaticPathOptions()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPaths"><a href='../../httpuv/html/Server.html#method-Server-getStaticPaths'><code>httpuv::Server$getStaticPaths()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="isRunning"><a href='../../httpuv/html/Server.html#method-Server-isRunning'><code>httpuv::Server$isRunning()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="removeStaticPath"><a href='../../httpuv/html/Server.html#method-Server-removeStaticPath'><code>httpuv::Server$removeStaticPath()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPath"><a href='../../httpuv/html/Server.html#method-Server-setStaticPath'><code>httpuv::Server$setStaticPath()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPathOption"><a href='../../httpuv/html/Server.html#method-Server-setStaticPathOption'><code>httpuv::Server$setStaticPathOption()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="stop"><a href='../../httpuv/html/Server.html#method-Server-stop'><code>httpuv::Server$stop()</code></a></span></li>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-PipeServer-new"></a>}}
+\if{latex}{\out{\hypertarget{method-PipeServer-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PipeServer$new(name, mask, app, quiet = FALSE)}\if{html}{\out{</div>}}
@@ -84,8 +84,8 @@ a named item in \code{.list}.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getName"></a>}}
-\if{latex}{\out{\hypertarget{method-getName}{}}}
+\if{html}{\out{<a id="method-PipeServer-getName"></a>}}
+\if{latex}{\out{\hypertarget{method-PipeServer-getName}{}}}
 \subsection{Method \code{getName()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PipeServer$getName()}\if{html}{\out{</div>}}
@@ -93,8 +93,8 @@ a named item in \code{.list}.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getMask"></a>}}
-\if{latex}{\out{\hypertarget{method-getMask}{}}}
+\if{html}{\out{<a id="method-PipeServer-getMask"></a>}}
+\if{latex}{\out{\hypertarget{method-PipeServer-getMask}{}}}
 \subsection{Method \code{getMask()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PipeServer$getMask()}\if{html}{\out{</div>}}
