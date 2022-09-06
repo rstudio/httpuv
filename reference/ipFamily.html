@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">httpuv</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.5.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.6</span>
       </span>
     </div>
 
@@ -53,34 +53,37 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">ipFamily</span><span class="op">(</span><span class="va">ip</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ipFamily</span><span class="op">(</span><span class="va">ip</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>ip</dt>
 <dd><p>A single string representing an IP address.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>For IPv4 addresses, <code>4</code>; for IPv6 addresses, <code>6</code>. If the address is
+    
+
+<p>For IPv4 addresses, <code>4</code>; for IPv6 addresses, <code>6</code>. If the address is
 neither, <code>-1</code>.</p>
     </div>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"127.0.0.1"</span><span class="op">)</span>   <span class="co"># 4</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"127.0.0.1"</span><span class="op">)</span>   <span class="co"># 4</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4</span>
-<span class="r-in"><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"500.0.0.500"</span><span class="op">)</span> <span class="co"># -1</span></span>
+<span class="r-in"><span><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"500.0.0.500"</span><span class="op">)</span> <span class="co"># -1</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] -1</span>
-<span class="r-in"><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"500.0.0.500"</span><span class="op">)</span> <span class="co"># -1</span></span>
+<span class="r-in"><span><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"500.0.0.500"</span><span class="op">)</span> <span class="co"># -1</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] -1</span>
-<span class="r-in"></span>
-<span class="r-in"><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"::"</span><span class="op">)</span>          <span class="co"># 6</span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"::"</span><span class="op">)</span>          <span class="co"># 6</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 6</span>
-<span class="r-in"><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"::1"</span><span class="op">)</span>         <span class="co"># 6</span></span>
+<span class="r-in"><span><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"::1"</span><span class="op">)</span>         <span class="co"># 6</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 6</span>
-<span class="r-in"><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"fe80::1ff:fe23:4567:890a"</span><span class="op">)</span> <span class="co"># 6</span></span>
+<span class="r-in"><span><span class="fu">ipFamily</span><span class="op">(</span><span class="st">"fe80::1ff:fe23:4567:890a"</span><span class="op">)</span> <span class="co"># 6</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 6</span>
 </code></pre></div>
     </div>
@@ -96,7 +99,7 @@ neither, <code>-1</code>.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>

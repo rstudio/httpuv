@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">httpuv</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.5.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.6</span>
       </span>
     </div>
 
@@ -53,9 +53,9 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">startServer</span><span class="op">(</span><span class="va">host</span>, <span class="va">port</span>, <span class="va">app</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
-
-<span class="fu">startPipeServer</span><span class="op">(</span><span class="va">name</span>, <span class="va">mask</span>, <span class="va">app</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">startServer</span><span class="op">(</span><span class="va">host</span>, <span class="va">port</span>, <span class="va">app</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">startPipeServer</span><span class="op">(</span><span class="va">name</span>, <span class="va">mask</span>, <span class="va">app</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -63,18 +63,28 @@
     <dl><dt>host</dt>
 <dd><p>A string that is a valid IPv4 address that is owned by this
 server, or <code>"0.0.0.0"</code> to listen on all IP addresses.</p></dd>
+
+
 <dt>port</dt>
 <dd><p>A number or integer that indicates the server port that should be
 listened on. Note that on most Unix-like systems including Linux and Mac OS
 X, port numbers smaller than 1025 require root privileges.</p></dd>
+
+
 <dt>app</dt>
 <dd><p>A collection of functions that define your application. See
 Details.</p></dd>
+
+
 <dt>quiet</dt>
 <dd><p>If <code>TRUE</code>, suppress error messages from starting app.</p></dd>
+
+
 <dt>name</dt>
 <dd><p>A string that indicates the path for the domain socket (on
 Unix-like systems) or the name of the named pipe (on Windows).</p></dd>
+
+
 <dt>mask</dt>
 <dd><p>If non-<code>NULL</code> and non-negative, this numeric value is used
 to temporarily modify the process's umask while the domain socket is being
@@ -82,12 +92,17 @@ created. To ensure that only root can access the domain socket, use
 <code>strtoi("777", 8)</code>; or to allow owner and group read/write access, use
 <code>strtoi("117", 8)</code>. If the value is <code>NULL</code> then the process's
 umask is left unchanged. (This parameter has no effect on Windows.)</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A handle for this server that can be passed to
-<code><a href="stopServer.html">stopServer</a></code> to shut the server down.
-A <code><a href="WebServer.html">WebServer</a></code> or <code><a href="PipeServer.html">PipeServer</a></code> object.</p>
+    
+
+<p>A handle for this server that can be passed to
+<code><a href="stopServer.html">stopServer</a></code> to shut the server down.</p>
+
+
+<p>A <code><a href="WebServer.html">WebServer</a></code> or <code><a href="PipeServer.html">PipeServer</a></code> object.</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -191,54 +206,54 @@ and <code>304</code> responses, as well as responses to <code>HEAD</code> reques
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in"><span class="co"># A very basic application</span></span>
-<span class="r-in"><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu">startServer</span><span class="op">(</span><span class="st">"0.0.0.0"</span>, <span class="fl">5000</span>,</span>
-<span class="r-in">  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span class="r-in">    call <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">req</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in">      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span class="r-in">        status <span class="op">=</span> <span class="fl">200L</span>,</span>
-<span class="r-in">        headers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span class="r-in">          <span class="st">'Content-Type'</span> <span class="op">=</span> <span class="st">'text/html'</span></span>
-<span class="r-in">        <span class="op">)</span>,</span>
-<span class="r-in">        body <span class="op">=</span> <span class="st">"Hello world!"</span></span>
-<span class="r-in">      <span class="op">)</span></span>
-<span class="r-in">    <span class="op">}</span></span>
-<span class="r-in">  <span class="op">)</span></span>
-<span class="r-in"><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="va">s</span><span class="op">$</span><span class="kw">stop</span><span class="op">(</span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># An application that serves static assets at the URL paths /assets and /lib</span></span>
-<span class="r-in"><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu">startServer</span><span class="op">(</span><span class="st">"0.0.0.0"</span>, <span class="fl">5000</span>,</span>
-<span class="r-in">  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span class="r-in">    call <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">req</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in">      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span class="r-in">        status <span class="op">=</span> <span class="fl">200L</span>,</span>
-<span class="r-in">        headers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span class="r-in">          <span class="st">'Content-Type'</span> <span class="op">=</span> <span class="st">'text/html'</span></span>
-<span class="r-in">        <span class="op">)</span>,</span>
-<span class="r-in">        body <span class="op">=</span> <span class="st">"Hello world!"</span></span>
-<span class="r-in">      <span class="op">)</span></span>
-<span class="r-in">    <span class="op">}</span>,</span>
-<span class="r-in">    staticPaths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span class="r-in">      <span class="st">"/assets"</span> <span class="op">=</span> <span class="st">"content/assets/"</span>,</span>
-<span class="r-in">      <span class="st">"/lib"</span> <span class="op">=</span> <span class="fu"><a href="staticPath.html">staticPath</a></span><span class="op">(</span></span>
-<span class="r-in">        <span class="st">"content/lib"</span>,</span>
-<span class="r-in">        indexhtml <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span class="r-in">      <span class="op">)</span>,</span>
-<span class="r-in">      <span class="co"># This subdirectory of /lib should always be handled by the R code path</span></span>
-<span class="r-in">      <span class="st">"/lib/dynamic"</span> <span class="op">=</span> <span class="fu"><a href="staticPath.html">excludeStaticPath</a></span><span class="op">(</span><span class="op">)</span></span>
-<span class="r-in">    <span class="op">)</span>,</span>
-<span class="r-in">    staticPathOptions <span class="op">=</span> <span class="fu"><a href="staticPathOptions.html">staticPathOptions</a></span><span class="op">(</span></span>
-<span class="r-in">      indexhtml <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span class="r-in">    <span class="op">)</span></span>
-<span class="r-in">  <span class="op">)</span></span>
-<span class="r-in"><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="va">s</span><span class="op">$</span><span class="kw">stop</span><span class="op">(</span><span class="op">)</span></span>
-<span class="r-in"><span class="op">}</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="co"># A very basic application</span></span></span>
+<span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu">startServer</span><span class="op">(</span><span class="st">"0.0.0.0"</span>, <span class="fl">5000</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    call <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">req</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        status <span class="op">=</span> <span class="fl">200L</span>,</span></span>
+<span class="r-in"><span>        headers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>          <span class="st">'Content-Type'</span> <span class="op">=</span> <span class="st">'text/html'</span></span></span>
+<span class="r-in"><span>        <span class="op">)</span>,</span></span>
+<span class="r-in"><span>        body <span class="op">=</span> <span class="st">"Hello world!"</span></span></span>
+<span class="r-in"><span>      <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">}</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="kw">stop</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># An application that serves static assets at the URL paths /assets and /lib</span></span></span>
+<span class="r-in"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu">startServer</span><span class="op">(</span><span class="st">"0.0.0.0"</span>, <span class="fl">5000</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    call <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">req</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        status <span class="op">=</span> <span class="fl">200L</span>,</span></span>
+<span class="r-in"><span>        headers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>          <span class="st">'Content-Type'</span> <span class="op">=</span> <span class="st">'text/html'</span></span></span>
+<span class="r-in"><span>        <span class="op">)</span>,</span></span>
+<span class="r-in"><span>        body <span class="op">=</span> <span class="st">"Hello world!"</span></span></span>
+<span class="r-in"><span>      <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">}</span>,</span></span>
+<span class="r-in"><span>    staticPaths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      <span class="st">"/assets"</span> <span class="op">=</span> <span class="st">"content/assets/"</span>,</span></span>
+<span class="r-in"><span>      <span class="st">"/lib"</span> <span class="op">=</span> <span class="fu"><a href="staticPath.html">staticPath</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="st">"content/lib"</span>,</span></span>
+<span class="r-in"><span>        indexhtml <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span>      <span class="op">)</span>,</span></span>
+<span class="r-in"><span>      <span class="co"># This subdirectory of /lib should always be handled by the R code path</span></span></span>
+<span class="r-in"><span>      <span class="st">"/lib/dynamic"</span> <span class="op">=</span> <span class="fu"><a href="staticPath.html">excludeStaticPath</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    staticPathOptions <span class="op">=</span> <span class="fu"><a href="staticPathOptions.html">staticPathOptions</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      indexhtml <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="kw">stop</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -253,7 +268,7 @@ and <code>304</code> responses, as well as responses to <code>HEAD</code> reques
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>

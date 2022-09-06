@@ -20,7 +20,7 @@ from the staticPathOptions set for the application as a whole."><!-- mathjax -->
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">httpuv</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.5.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.6.6</span>
       </span>
     </div>
 
@@ -59,25 +59,29 @@ from the staticPathOptions set for the application as a whole.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">staticPath</span><span class="op">(</span>
-  <span class="va">path</span>,
-  indexhtml <span class="op">=</span> <span class="cn">NULL</span>,
-  fallthrough <span class="op">=</span> <span class="cn">NULL</span>,
-  html_charset <span class="op">=</span> <span class="cn">NULL</span>,
-  headers <span class="op">=</span> <span class="cn">NULL</span>,
-  validation <span class="op">=</span> <span class="cn">NULL</span>
-<span class="op">)</span>
-
-<span class="fu">excludeStaticPath</span><span class="op">(</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">staticPath</span><span class="op">(</span></span>
+<span>  <span class="va">path</span>,</span>
+<span>  indexhtml <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  fallthrough <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  html_charset <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  headers <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  validation <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">excludeStaticPath</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>path</dt>
 <dd><p>The local path.</p></dd>
+
+
 <dt>indexhtml</dt>
 <dd><p>If an index.html file is present, should it be served up
 when the client requests the static path or any subdirectory?</p></dd>
+
+
 <dt>fallthrough</dt>
 <dd><p>With the default value, <code>FALSE</code>, if a request is made
 for a file that doesn't exist, then httpuv will immediately send a 404
@@ -85,15 +89,21 @@ response from the background I/O thread, without needing to call back into
 the main R thread. This offers the best performance. If the value is
 <code>TRUE</code>, then instead of sending a 404 response, httpuv will call the
 application's <code>call</code> function, and allow it to handle the request.</p></dd>
+
+
 <dt>html_charset</dt>
 <dd><p>When HTML files are served, the value that will be
 provided for <code>charset</code> in the Content-Type header. For example, with
 the default value, <code>"utf-8"</code>, the header is <code>Content-Type:
   text/html; charset=utf-8</code>. If <code>""</code> is used, then no <code>charset</code>
 will be added in the Content-Type header.</p></dd>
+
+
 <dt>headers</dt>
 <dd><p>Additional headers and values that will be included in the
 response.</p></dd>
+
+
 <dt>validation</dt>
 <dd><p>An optional validation pattern. Presently, the only type of
 validation supported is an exact string match of a header. For example, if
@@ -102,6 +112,7 @@ header named <code>abc</code> (case-insensitive) with the value <code>xyz</code>
 (case-sensitive). If a request does not have a matching header, than httpuv
 will give a 403 Forbidden response. If the <code>character(0)</code> (the
 default), then no validation check will be performed.</p></dd>
+
 </dl></div>
     <div id="details">
     <h2>Details</h2>
@@ -129,7 +140,7 @@ only for directories; it can also exclude specific files.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>
