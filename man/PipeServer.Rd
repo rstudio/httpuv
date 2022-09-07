@@ -51,7 +51,7 @@ a named item in \code{.list}.
 }
 \keyword{internal}
 \section{Super class}{
-\code{httpuv::Server} -> \code{PipeServer}
+\code{\link[httpuv:Server]{httpuv::Server}} -> \code{PipeServer}
 }
 \section{Methods}{
 \subsection{Public methods}{
