@@ -12,8 +12,8 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-AC_PREREQ(2.57)
-AC_INIT([libuv], [1.43.0], [https://github.com/libuv/libuv/issues])
+AC_PREREQ([2.71])
+AC_INIT([libuv],[1.43.0],[https://github.com/libuv/libuv/issues])
 AC_CONFIG_MACRO_DIR([m4])
 m4_include([m4/libuv-extra-automake-flags.m4])
 m4_include([m4/as_case.m4])
@@ -39,8 +39,8 @@ CC_CHECK_CFLAGS_APPEND([-Wno-declaration-after-statement])
 CC_CHECK_CFLAGS_APPEND([-Wstrict-prototypes])
 # AM_PROG_AR is not available in automake v0.11 but it's essential in v0.12.
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
-# autoconf complains if AC_PROG_LIBTOOL precedes AM_PROG_AR.
-AC_PROG_LIBTOOL
+# autoconf complains if LT_INIT precedes AM_PROG_AR.
+LT_INIT
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 LT_INIT
 AX_PTHREAD([

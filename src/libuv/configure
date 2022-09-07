@@ -5163,6 +5163,55 @@ fi
   done
 
 
+  for flag in -Wno-declaration-after-statement; do
+
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if $CC supports $flag flag" >&5
+printf %s "checking if $CC supports $flag flag... " >&6; }
+if { as_var=`printf "%s\n" "cc_cv_cflags_$flag" | $as_tr_sh`; eval test \${$as_var+y}; }
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+
+  if { as_var=`printf "%s\n" "cc_cv_cflags_$flag" | $as_tr_sh`; eval test \${$as_var+y}; }
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_save_CFLAGS="$CFLAGS"
+     CFLAGS="$CFLAGS $flag"
+     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int a;
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  eval "`printf "%s\n" "cc_cv_cflags_$flag" | $as_tr_sh`='yes'"
+else $as_nop
+  eval "`printf "%s\n" "cc_cv_cflags_$flag" | $as_tr_sh`='no'"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+     CFLAGS="$ac_save_CFLAGS"
+
+fi
+
+
+  if eval test x$`printf "%s\n" "cc_cv_cflags_$flag" | $as_tr_sh` = xyes
+then :
+
+fi
+
+fi
+eval ac_res=\$`printf "%s\n" "cc_cv_cflags_$flag" | $as_tr_sh`
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+
+  if eval test x$`printf "%s\n" "cc_cv_cflags_$flag" | $as_tr_sh` = xyes
+then :
+  CFLAGS="$CFLAGS $flag"; DEBUG_CFLAGS="$DEBUG_CFLAGS $flag";
+fi
+
+  done
+
+
   for flag in -Wstrict-prototypes; do
 
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if $CC supports $flag flag" >&5
@@ -5396,7 +5445,7 @@ unknown)
   ;;
 esac
 
-# autoconf complains if AC_PROG_LIBTOOL precedes AM_PROG_AR.
+# autoconf complains if LT_INIT precedes AM_PROG_AR.
 case `pwd` in
   *\ * | *\	*)
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: Libtool does not cope well with whitespace in \`pwd\`" >&5

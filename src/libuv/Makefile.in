@@ -334,6 +334,7 @@ check_PROGRAMS = test/run-tests$(EXEEXT)
 @SUNOS_TRUE@am__append_56 = include/uv/sunos.h
 @SUNOS_TRUE@am__append_57 = -D__EXTENSIONS__ \
 @SUNOS_TRUE@                   -D_XOPEN_SOURCE=500 \
+@SUNOS_TRUE@                   -DSUNOS_NO_IFADDRS \
 @SUNOS_TRUE@                   -D_REENTRANT
 
 @SUNOS_TRUE@am__append_58 = src/unix/no-proctitle.c \
