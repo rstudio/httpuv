@@ -66,6 +66,8 @@ To update libuv to a new version, do the following:
     git cherry-pick 1898a29
     # Workaround for pragma NOTE
     git cherry-pick 421f092
+    # Avoid "ISO C90 forbids mixed declarations and code" warning
+    git cherry-pick 1431d4f
     ```
 
 * If the cherry-picked commits needed any modification, update this README to refer to the new cherry-picked commits, then commit.
@@ -112,6 +114,25 @@ libuv_la_CFLAGS += -D__EXTENSIONS__ -D_XOPEN_SOURCE=500 -DSUNOS_NO_IFADDRS
 #### C-style comments
 
 In src/libuv/include/uv.h, the original file has some C++-style comments, but this raises a significant warning for `R CMD check` on r-devel-linux-x86_64-debian-gcc (as of 2020-05-15). The fix is to replace with C-style comments.
+
+
+#### Avoid `ISO C90 forbids mixed declarations and code` warning
+
+On CRAN's R-devel Debian machines (as of 2022-09-07), we saw the following significant warning:
+
+```
+* checking whether package ‘httpuv’ can be installed ... [88s/88s] WARNING
+Found the following significant warnings:
+  ./src/uv-common.h:61:3: warning: ISO C90 forbids mixed declarations and code [-Wdeclaration-after-statement]
+```
+
+We think that the `-Wdeclaration-after-statement` compiler flag is set on this system, but when compiling libuv, it results in a warning. There is a [libuv issue](https://github.com/libuv/libuv/issues/3131) about this, but it hasn't yet been fixed.
+
+This fix modifies src/libuv/configure.ac by adding the following line:
+
+```
+CC_CHECK_CFLAGS_APPEND([-Wno-declaration-after-statement])
+```
 
 
 #### Run `autogen.sh`
