@@ -15,4 +15,4 @@ if (devtools:::yesno("Ready to submit ", pkg$package, " (", pkg$version, ") to C
 }
 
 devtools:::upload_cran(pkg, built_path)
-usethis::with_project(pkg$path, flag_release(pkg))
+usethis::with_project(pkg$path, devtools:::flag_release(pkg))
