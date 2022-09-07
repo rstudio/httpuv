@@ -14,6 +14,9 @@
 ^.*/\.libs/$
 ^.*/\.dirstamp/$
 ^.*/\.deps/$
+^.*/\.libs$
+^.*/\.dirstamp$
+^.*/\.deps$
 ^revdep$
 ^\.github$
 ^cran-comments\.md$
