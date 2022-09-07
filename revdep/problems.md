@@ -2,11 +2,11 @@
 
 <details>
 
-* Version: 1.0.2
-* GitHub: https://github.com/JohnCoene/ambiorix
+* Version: 2.1.0
+* GitHub: https://github.com/devOpifex/ambiorix
 * Source code: https://github.com/cran/ambiorix
-* Date/Publication: 2021-01-27 10:00:07 UTC
-* Number of recursive dependencies: 45
+* Date/Publication: 2022-04-06 18:42:29 UTC
+* Number of recursive dependencies: 73
 
 Run `revdep_details(, "ambiorix")` for more info
 
@@ -17,7 +17,7 @@ Run `revdep_details(, "ambiorix")` for more info
 *   checking dependencies in R code ... NOTE
     ```
     Namespaces in Imports field not imported from:
-      ‘glue’ ‘promises’ ‘websocket’
+      ‘promises’ ‘websocket’
       All declared Imports should be used.
     ```
 
@@ -29,7 +29,7 @@ Run `revdep_details(, "ambiorix")` for more info
 * GitHub: NA
 * Source code: https://github.com/cran/autota
 * Date/Publication: 2020-03-22 07:10:09 UTC
-* Number of recursive dependencies: 49
+* Number of recursive dependencies: 50
 
 Run `revdep_details(, "autota")` for more info
 
@@ -37,10 +37,38 @@ Run `revdep_details(, "autota")` for more info
 
 ## In both
 
+*   checking tests ...
+    ```
+      Running ‘testthat.R’
+     ERROR
+    Running the tests in ‘tests/testthat.R’ failed.
+    Last 13 lines of output:
+      Backtrace:
+          ▆
+       1. ├─testthat::test_check("autota")
+       2. │ └─testthat::test_dir(...)
+       3. │   └─testthat:::test_files(...)
+       4. │     └─testthat:::test_files(...)
+       5. │       └─testthat:::test_files_check(...)
+       6. │         └─base::stop("Test failures", call. = FALSE)
+       7. └─autota (local) `<fn>`()
+      Auto TA failed while trying to handle your error. Try re-installing the package to see if that fixes your issue. Otherwise, click Addins > Disable Auto TA for now.
+      To help us improve the Auto TA, please take a screenshot and file an issue on our GitHub:
+        https://github.com/willcrichton/r-autota
+      The specific error was:
+        Error in viewer(full_url): could not find function "viewer"
+      Execution halted
+    ```
+
 *   checking dependencies in R code ... NOTE
     ```
     Namespace in Imports field not imported from: ‘memoise’
       All declared Imports should be used.
+    ```
+
+*   checking LazyData ... NOTE
+    ```
+      'LazyData' is specified without a 'data' directory
     ```
 
 # bea.R
@@ -51,7 +79,7 @@ Run `revdep_details(, "autota")` for more info
 * GitHub: https://github.com/us-bea/bea.R
 * Source code: https://github.com/cran/bea.R
 * Date/Publication: 2018-02-23 19:30:19 UTC
-* Number of recursive dependencies: 67
+* Number of recursive dependencies: 69
 
 Run `revdep_details(, "bea.R")` for more info
 
@@ -68,6 +96,30 @@ Run `revdep_details(, "bea.R")` for more info
       All declared Imports should be used.
     ```
 
+# bs4Dash
+
+<details>
+
+* Version: 2.1.0
+* GitHub: https://github.com/RinteRface/bs4Dash
+* Source code: https://github.com/cran/bs4Dash
+* Date/Publication: 2022-05-05 10:50:02 UTC
+* Number of recursive dependencies: 106
+
+Run `revdep_details(, "bs4Dash")` for more info
+
+</details>
+
+## In both
+
+*   checking installed package size ... NOTE
+    ```
+      installed size is  5.6Mb
+      sub-directories of 1Mb or more:
+        doc    2.1Mb
+        help   1.3Mb
+    ```
+
 # curl
 
 <details>
@@ -76,11 +128,38 @@ Run `revdep_details(, "bea.R")` for more info
 * GitHub: https://github.com/jeroen/curl
 * Source code: https://github.com/cran/curl
 * Date/Publication: 2021-06-23 07:00:06 UTC
-* Number of recursive dependencies: 52
+* Number of recursive dependencies: 57
 
 Run `revdep_details(, "curl")` for more info
 
 </details>
+
+## Newly fixed
+
+*   checking tests ...
+    ```
+      Running ‘engine.R’
+      Comparing ‘engine.Rout’ to ‘engine.Rout.save’ ...4d3
+    < Using libcurl 7.79.1 with LibreSSL/3.3.6
+      Running ‘spelling.R’
+      Running ‘testthat.R’
+     ERROR
+    Running the tests in ‘tests/testthat.R’ failed.
+    Last 13 lines of output:
+      • libcurl does not have libidn (1)
+      
+    ...
+      Backtrace:
+          ▆
+       1. └─curl::curl_echo(handle = handle) at test-echo.R:10:2
+       2.   └─httpuv::startServer("0.0.0.0", port, list(call = echo_handler))
+       3.     └─WebServer$new(host, port, app, quiet)
+       4.       └─httpuv (local) initialize(...)
+      
+      [ FAIL 1 | WARN 0 | SKIP 1 | PASS 212 ]
+      Error: Test failures
+      Execution halted
+    ```
 
 ## In both
 
@@ -98,11 +177,11 @@ Run `revdep_details(, "curl")` for more info
 
 <details>
 
-* Version: 0.1.28
+* Version: 2.0.3
 * GitHub: https://github.com/EU-ECDC/epitweetr
 * Source code: https://github.com/cran/epitweetr
-* Date/Publication: 2021-04-08 22:20:03 UTC
-* Number of recursive dependencies: 131
+* Date/Publication: 2022-01-05 10:00:08 UTC
+* Number of recursive dependencies: 144
 
 Run `revdep_details(, "epitweetr")` for more info
 
@@ -115,47 +194,57 @@ Run `revdep_details(, "epitweetr")` for more info
     Package suggested but not available for checking: ‘taskscheduleR’
     ```
 
+*   checking installed package size ... NOTE
+    ```
+      installed size is  5.2Mb
+      sub-directories of 1Mb or more:
+        doc    3.0Mb
+        java   1.3Mb
+    ```
+
 *   checking dependencies in R code ... NOTE
     ```
     Namespaces in Imports field not imported from:
-      ‘httpuv’ ‘plyr’ ‘rgdal’ ‘rgeos’ ‘tidyverse’ ‘tokenizers’
+      ‘httpuv’ ‘knitr’ ‘plyr’ ‘tidyverse’ ‘tokenizers’ ‘xml2’
       All declared Imports should be used.
+    ```
+
+# ganalytics
+
+<details>
+
+* Version: 0.10.7
+* GitHub: https://github.com/jdeboer/ganalytics
+* Source code: https://github.com/cran/ganalytics
+* Date/Publication: 2019-03-02 09:20:03 UTC
+* Number of recursive dependencies: 129
+
+Run `revdep_details(, "ganalytics")` for more info
+
+</details>
+
+## In both
+
+*   checking LazyData ... NOTE
+    ```
+      'LazyData' is specified without a 'data' directory
     ```
 
 # igvR
 
 <details>
 
-* Version: 1.10.0
+* Version: 1.14.0
 * GitHub: NA
 * Source code: https://github.com/cran/igvR
-* Date/Publication: 2020-10-27
-* Number of recursive dependencies: 106
+* Date/Publication: 2021-10-26
+* Number of recursive dependencies: 114
 
 Run `revdep_details(, "igvR")` for more info
 
 </details>
 
 ## In both
-
-*   checking whether package ‘igvR’ can be installed ... WARNING
-    ```
-    Found the following significant warnings:
-      Warning: package ‘GenomicRanges’ was built under R version 4.0.3
-      Warning: package ‘BiocGenerics’ was built under R version 4.0.5
-      Warning: package ‘S4Vectors’ was built under R version 4.0.3
-      Warning: package ‘IRanges’ was built under R version 4.0.3
-      Warning: package ‘GenomeInfoDb’ was built under R version 4.0.5
-      Warning: package ‘GenomicAlignments’ was built under R version 4.0.3
-      Warning: package ‘SummarizedExperiment’ was built under R version 4.0.3
-      Warning: package ‘MatrixGenerics’ was built under R version 4.0.3
-      Warning: package ‘Biobase’ was built under R version 4.0.3
-      Warning: package ‘Biostrings’ was built under R version 4.0.3
-      Warning: package ‘XVector’ was built under R version 4.0.3
-      Warning: package ‘Rsamtools’ was built under R version 4.0.3
-      Warning: package ‘BrowserViz’ was built under R version 4.0.3
-    See ‘/Users/barret/Documents/git/rstudio/httpuv/httpuv.nosync/revdep/checks.noindex/igvR/new/igvR.Rcheck/00install.out’ for details.
-    ```
 
 *   checking whether the namespace can be unloaded cleanly ... WARNING
     ```
@@ -173,21 +262,21 @@ Run `revdep_details(, "igvR")` for more info
 
 *   checking installed package size ... NOTE
     ```
-      installed size is  5.9Mb
+      installed size is  6.7Mb
       sub-directories of 1Mb or more:
-        doc       2.6Mb
-        extdata   1.9Mb
+        doc       3.2Mb
+        extdata   2.0Mb
     ```
 
 # JBrowseR
 
 <details>
 
-* Version: 0.8.1
+* Version: 0.9.1
 * GitHub: https://github.com/GMOD/JBrowseR
 * Source code: https://github.com/cran/JBrowseR
-* Date/Publication: 2021-07-07 20:30:06 UTC
-* Number of recursive dependencies: 68
+* Date/Publication: 2022-07-19 22:30:02 UTC
+* Number of recursive dependencies: 74
 
 Run `revdep_details(, "JBrowseR")` for more info
 
@@ -209,7 +298,7 @@ Run `revdep_details(, "JBrowseR")` for more info
 * GitHub: NA
 * Source code: https://github.com/cran/MetaIntegrator
 * Date/Publication: 2020-02-26 13:00:11 UTC
-* Number of recursive dependencies: 167
+* Number of recursive dependencies: 179
 
 Run `revdep_details(, "MetaIntegrator")` for more info
 
@@ -225,36 +314,14 @@ Run `revdep_details(, "MetaIntegrator")` for more info
       All declared Imports should be used.
     ```
 
-# mlflow
-
-<details>
-
-* Version: 1.19.0
-* GitHub: https://github.com/mlflow/mlflow
-* Source code: https://github.com/cran/mlflow
-* Date/Publication: 2021-07-14 15:10:12 UTC
-* Number of recursive dependencies: 100
-
-Run `revdep_details(, "mlflow")` for more info
-
-</details>
-
-## In both
-
-*   checking dependencies in R code ... NOTE
-    ```
-    Namespace in Imports field not imported from: ‘xml2’
-      All declared Imports should be used.
-    ```
-
 # opencpu
 
 <details>
 
-* Version: 2.2.5
+* Version: 2.2.8
 * GitHub: https://github.com/opencpu/opencpu
 * Source code: https://github.com/cran/opencpu
-* Date/Publication: 2021-08-17 16:10:15 UTC
+* Date/Publication: 2022-05-18 08:10:02 UTC
 * Number of recursive dependencies: 64
 
 Run `revdep_details(, "opencpu")` for more info
@@ -272,17 +339,40 @@ Run `revdep_details(, "opencpu")` for more info
 
 <details>
 
-* Version: 1.10.0
+* Version: 1.14.0
 * GitHub: https://github.com/ctlab/phantasus
 * Source code: https://github.com/cran/phantasus
-* Date/Publication: 2020-10-27
-* Number of recursive dependencies: 152
+* Date/Publication: 2021-10-28
+* Number of recursive dependencies: 159
 
 Run `revdep_details(, "phantasus")` for more info
 
 </details>
 
 ## In both
+
+*   checking examples ... ERROR
+    ```
+    Running examples in ‘phantasus-Ex.R’ failed
+    The error most likely occurred in:
+    
+    > ### Name: generatePreloadedSession
+    > ### Title: Generate files for preloaded session from a session link.
+    > ### Aliases: generatePreloadedSession
+    > 
+    > ### ** Examples
+    > 
+    > sessionURL <- "https://ctlab.itmo.ru/phantasus/?session=x063c1b365b9211" # link from 'Get dataset link...' tool in phantasus
+    > newName <- "my_session" # user defined name
+    > preloadedDir <- "./preloaded" # directory where files will be stored. In order too get access through phantasus web-app should be preloadedDir
+    > dir.create(preloadedDir, showWarnings = FALSE)
+    > generatePreloadedSession(sessionURL= sessionURL,
+    +                          preloadedName = newName,
+    +                          preloadedDir = preloadedDir)
+    Error in generatePreloadedSession(sessionURL = sessionURL, preloadedName = newName,  : 
+      Invalid session
+    Execution halted
+    ```
 
 *   checking installed package size ... NOTE
     ```
@@ -329,11 +419,38 @@ Run `revdep_details(, "phantasus")` for more info
 * GitHub: https://github.com/rstudio/plumbertableau
 * Source code: https://github.com/cran/plumbertableau
 * Date/Publication: 2021-08-06 08:00:02 UTC
-* Number of recursive dependencies: 62
+* Number of recursive dependencies: 69
 
 Run `revdep_details(, "plumbertableau")` for more info
 
 </details>
+
+## Newly fixed
+
+*   checking examples ... ERROR
+    ```
+    Running examples in ‘plumbertableau-Ex.R’ failed
+    The error most likely occurred in:
+    
+    > ### Name: tableau_invoke
+    > ### Title: Programatically invoke a Tableau extension function
+    > ### Aliases: tableau_invoke
+    > 
+    > ### ** Examples
+    > 
+    > pr_path <- system.file("plumber/stringutils/plumber.R",
+    ...
+    +   package = "plumbertableau")
+    > 
+    > tableau_invoke(pr_path, "/lowercase", LETTERS[1:5])
+    Verbose logging is off. To enable it please set the environment variable `DEBUGME` to include `plumbertableau`.
+    
+    
+    createTcpServer: address already in use
+    Error in initialize(...) : Failed to create server
+    Calls: tableau_invoke ... <Anonymous> -> startServer -> <Anonymous> -> initialize
+    Execution halted
+    ```
 
 ## In both
 
@@ -343,15 +460,36 @@ Run `revdep_details(, "plumbertableau")` for more info
       All declared Imports should be used.
     ```
 
+# rchie
+
+<details>
+
+* Version: 1.0.2
+* GitHub: https://github.com/noamross/rchie
+* Source code: https://github.com/cran/rchie
+* Date/Publication: 2019-05-07 22:11:19 UTC
+* Number of recursive dependencies: 52
+
+Run `revdep_details(, "rchie")` for more info
+
+</details>
+
+## In both
+
+*   checking LazyData ... NOTE
+    ```
+      'LazyData' is specified without a 'data' directory
+    ```
+
 # RCyjs
 
 <details>
 
-* Version: 2.12.0
+* Version: 2.16.0
 * GitHub: NA
 * Source code: https://github.com/cran/RCyjs
-* Date/Publication: 2020-10-27
-* Number of recursive dependencies: 31
+* Date/Publication: 2021-10-26
+* Number of recursive dependencies: 36
 
 Run `revdep_details(, "RCyjs")` for more info
 
@@ -359,18 +497,8 @@ Run `revdep_details(, "RCyjs")` for more info
 
 ## In both
 
-*   checking whether package ‘RCyjs’ can be installed ... WARNING
-    ```
-    Found the following significant warnings:
-      Warning: package ‘BrowserViz’ was built under R version 4.0.3
-      Warning: package ‘graph’ was built under R version 4.0.3
-      Warning: package ‘BiocGenerics’ was built under R version 4.0.5
-    See ‘/Users/barret/Documents/git/rstudio/httpuv/httpuv.nosync/revdep/checks.noindex/RCyjs/new/RCyjs.Rcheck/00install.out’ for details.
-    ```
-
 *   checking Rd \usage sections ... WARNING
     ```
-    ...
     Undocumented arguments in documentation object 'hideNodes,RCyjs-method'
       ‘nodeIDs’
     
@@ -381,7 +509,7 @@ Run `revdep_details(, "RCyjs")` for more info
     
     Undocumented arguments in documentation object 'readAndStandardizeJSONStyleFile'
       ‘filename’
-    Documented arguments not in \usage in documentation object 'readAndStandardizeJSONStyleFile':
+    ...
       ‘file’
     
     Undocumented arguments in documentation object 'showNodes,RCyjs-method'
@@ -394,46 +522,38 @@ Run `revdep_details(, "RCyjs")` for more info
     Extensions’ manual.
     ```
 
-# rfigshare
+# Rlinkedin
 
 <details>
 
-* Version: 0.3.7
-* GitHub: https://github.com/ropensci/rfigshare
-* Source code: https://github.com/cran/rfigshare
-* Date/Publication: 2015-06-15 07:59:06
-* Number of recursive dependencies: 63
+* Version: 0.2
+* GitHub: https://github.com/mpiccirilli/Rlinkedin
+* Source code: https://github.com/cran/Rlinkedin
+* Date/Publication: 2016-10-30 08:58:23
+* Number of recursive dependencies: 15
 
-Run `revdep_details(, "rfigshare")` for more info
+Run `revdep_details(, "Rlinkedin")` for more info
 
 </details>
 
 ## In both
 
-*   checking R code for possible problems ... NOTE
+*   checking LazyData ... NOTE
     ```
-    fs_author_ids : <anonymous>: no visible global function definition for
-      ‘select.list’
-    fs_download : <anonymous>: no visible global function definition for
-      ‘download.file’
-    Undefined global functions or variables:
-      download.file select.list
-    Consider adding
-      importFrom("utils", "download.file", "select.list")
-    to your NAMESPACE file.
+      'LazyData' is specified without a 'data' directory
     ```
 
-# routr
+# rStrava
 
 <details>
 
-* Version: 0.4.0
-* GitHub: https://github.com/thomasp85/routr
-* Source code: https://github.com/cran/routr
-* Date/Publication: 2019-10-03 07:20:02 UTC
-* Number of recursive dependencies: 60
+* Version: 1.1.4
+* GitHub: https://github.com/fawda123/rStrava
+* Source code: https://github.com/cran/rStrava
+* Date/Publication: 2021-10-27 11:40:05 UTC
+* Number of recursive dependencies: 88
 
-Run `revdep_details(, "routr")` for more info
+Run `revdep_details(, "rStrava")` for more info
 
 </details>
 
@@ -442,46 +562,19 @@ Run `revdep_details(, "routr")` for more info
 *   checking dependencies in R code ... NOTE
     ```
     Namespaces in Imports field not imported from:
-      ‘httpuv’ ‘utils’
+      ‘bitops’ ‘httpuv’
       All declared Imports should be used.
-    ```
-
-# rtweet
-
-<details>
-
-* Version: 0.7.0
-* GitHub: https://github.com/ropensci/rtweet
-* Source code: https://github.com/cran/rtweet
-* Date/Publication: 2020-01-08 23:00:10 UTC
-* Number of recursive dependencies: 85
-
-Run `revdep_details(, "rtweet")` for more info
-
-</details>
-
-## In both
-
-*   checking dependencies in R code ... NOTE
-    ```
-    Namespace in Imports field not imported from: ‘Rcpp’
-      All declared Imports should be used.
-    ```
-
-*   checking data for non-ASCII characters ... NOTE
-    ```
-      Note: found 113868 marked UTF-8 strings
     ```
 
 # shiny
 
 <details>
 
-* Version: 1.6.0
+* Version: 1.7.2
 * GitHub: https://github.com/rstudio/shiny
 * Source code: https://github.com/cran/shiny
-* Date/Publication: 2021-01-25 21:50:02 UTC
-* Number of recursive dependencies: 104
+* Date/Publication: 2022-07-19 03:30:02 UTC
+* Number of recursive dependencies: 91
 
 Run `revdep_details(, "shiny")` for more info
 
@@ -491,10 +584,10 @@ Run `revdep_details(, "shiny")` for more info
 
 *   checking installed package size ... NOTE
     ```
-      installed size is 12.2Mb
+      installed size is 10.4Mb
       sub-directories of 1Mb or more:
-        R     2.1Mb
-        www   8.8Mb
+        R     2.0Mb
+        www   7.1Mb
     ```
 
 # shinyloadtest
@@ -505,7 +598,7 @@ Run `revdep_details(, "shiny")` for more info
 * GitHub: https://github.com/rstudio/shinyloadtest
 * Source code: https://github.com/cran/shinyloadtest
 * Date/Publication: 2021-02-11 14:50:02 UTC
-* Number of recursive dependencies: 85
+* Number of recursive dependencies: 91
 
 Run `revdep_details(, "shinyloadtest")` for more info
 
@@ -528,7 +621,7 @@ Run `revdep_details(, "shinyloadtest")` for more info
 * GitHub: NA
 * Source code: https://github.com/cran/spotGUI
 * Date/Publication: 2021-03-30 17:50:02 UTC
-* Number of recursive dependencies: 162
+* Number of recursive dependencies: 172
 
 Run `revdep_details(, "spotGUI")` for more info
 
@@ -542,21 +635,66 @@ Run `revdep_details(, "spotGUI")` for more info
       All declared Imports should be used.
     ```
 
+# tfdeploy
+
+<details>
+
+* Version: 0.6.1
+* GitHub: NA
+* Source code: https://github.com/cran/tfdeploy
+* Date/Publication: 2019-06-14 16:30:03 UTC
+* Number of recursive dependencies: 82
+
+Run `revdep_details(, "tfdeploy")` for more info
+
+</details>
+
+## In both
+
+*   checking LazyData ... NOTE
+    ```
+      'LazyData' is specified without a 'data' directory
+    ```
+
 # Ularcirc
 
 <details>
 
-* Version: 1.8.0
+* Version: 1.12.0
 * GitHub: NA
 * Source code: https://github.com/cran/Ularcirc
-* Date/Publication: 2020-10-27
-* Number of recursive dependencies: 141
+* Date/Publication: 2021-10-26
+* Number of recursive dependencies: 147
 
 Run `revdep_details(, "Ularcirc")` for more info
 
 </details>
 
 ## In both
+
+*   checking examples ... ERROR
+    ```
+    Running examples in ‘Ularcirc-Ex.R’ failed
+    The error most likely occurred in:
+    
+    > ### Name: bsj_to_circRNA_sequence
+    > ### Title: bsj_to_circRNA_sequence
+    > ### Aliases: bsj_to_circRNA_sequence
+    > 
+    > ### ** Examples
+    > 
+    > 
+    > library('Ularcirc')
+    > library('BSgenome.Hsapiens.UCSC.hg38')
+    Error in library("BSgenome.Hsapiens.UCSC.hg38") : 
+      there is no package called ‘BSgenome.Hsapiens.UCSC.hg38’
+    Execution halted
+    ```
+
+*   checking package dependencies ... NOTE
+    ```
+    Package suggested but not available for checking: ‘BSgenome.Hsapiens.UCSC.hg38’
+    ```
 
 *   checking installed package size ... NOTE
     ```
@@ -583,7 +721,7 @@ Run `revdep_details(, "Ularcirc")` for more info
 * GitHub: https://github.com/r-barnes/webglobe
 * Source code: https://github.com/cran/webglobe
 * Date/Publication: 2020-09-15 22:20:03 UTC
-* Number of recursive dependencies: 83
+* Number of recursive dependencies: 90
 
 Run `revdep_details(, "webglobe")` for more info
 
@@ -603,11 +741,11 @@ Run `revdep_details(, "webglobe")` for more info
 
 <details>
 
-* Version: 1.4.0
-* GitHub: NA
+* Version: 1.4.1
+* GitHub: https://github.com/rstudio/websocket
 * Source code: https://github.com/cran/websocket
-* Date/Publication: 2021-04-23 20:30:02 UTC
-* Number of recursive dependencies: 49
+* Date/Publication: 2021-08-18 20:30:02 UTC
+* Number of recursive dependencies: 54
 
 Run `revdep_details(, "websocket")` for more info
 
