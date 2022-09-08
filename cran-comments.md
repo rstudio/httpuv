@@ -1,8 +1,10 @@
 ## Comments
 
-#### 2022-09-07
+#### 2022-09-08
 
 Releasing a patch to `{httpuv}` which has documentation by the latest version of `{roxygen2}`.
+
+This patch also includes a small update to the configure script of libuv.
 
 Best,
 Winston
@@ -52,7 +54,7 @@ GNU make is a SystemRequirements.
 
 ## revdepcheck results
 
-We checked 70 reverse dependencies (63 from CRAN + 7 from Bioconductor), comparing R CMD check results across CRAN and dev versions of this package.
+We checked 71 reverse dependencies (64 from CRAN + 7 from Bioconductor), comparing R CMD check results across CRAN and dev versions of this package.
 
  * We saw 0 new problems
  * We failed to check 0 packages
