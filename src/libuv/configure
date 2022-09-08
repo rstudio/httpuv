@@ -5445,7 +5445,7 @@ unknown)
   ;;
 esac
 
-# autoconf complains if LT_INIT precedes AM_PROG_AR.
+# autoconf complains if AC_PROG_LIBTOOL precedes AM_PROG_AR.
 case `pwd` in
   *\ * | *\	*)
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: Libtool does not cope well with whitespace in \`pwd\`" >&5
