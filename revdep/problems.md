@@ -96,44 +96,6 @@ Run `revdep_details(, "bea.R")` for more info
       All declared Imports should be used.
     ```
 
-# biobtreeR
-
-<details>
-
-* Version: 1.6.0
-* GitHub: https://github.com/tamerh/biobtreeR
-* Source code: https://github.com/cran/biobtreeR
-* Date/Publication: 2021-10-26
-* Number of recursive dependencies: 62
-
-Run `revdep_details(, "biobtreeR")` for more info
-
-</details>
-
-## Newly broken
-
-*   checking examples ... ERROR
-    ```
-    Running examples in ‘biobtreeR-Ex.R’ failed
-    The error most likely occurred in:
-    
-    > ### Name: bbEntryPage
-    > ### Title: Retrieve entry result page
-    > ### Aliases: bbEntryPage
-    > 
-    > ### ** Examples
-    > 
-    > 
-    > bbStart() # if not already started
-    [1] "There is a running biobtree which can be used or first bbStop() to start again"
-    [1] FALSE
-    > bbEntryPage("ENSG00000141956","ensembl",0,0)
-    Error in open.connection(con, "rb") : 
-      Recv failure: Connection reset by peer
-    Calls: bbEntryPage ... parse_and_simplify -> parseJSON -> parse_con -> open -> open.connection
-    Execution halted
-    ```
-
 # bs4Dash
 
 <details>
@@ -239,47 +201,6 @@ Run `revdep_details(, "ganalytics")` for more info
 *   checking LazyData ... NOTE
     ```
       'LazyData' is specified without a 'data' directory
-    ```
-
-# httr2
-
-<details>
-
-* Version: 0.2.1
-* GitHub: https://github.com/r-lib/httr2
-* Source code: https://github.com/cran/httr2
-* Date/Publication: 2022-05-10 22:30:02 UTC
-* Number of recursive dependencies: 69
-
-Run `revdep_details(, "httr2")` for more info
-
-</details>
-
-## Newly broken
-
-*   checking examples ... ERROR
-    ```
-    Running examples in ‘httr2-Ex.R’ failed
-    The error most likely occurred in:
-    
-    > ### Name: oauth_client_req_auth
-    > ### Title: OAuth client authentication
-    > ### Aliases: oauth_client_req_auth oauth_client_req_auth_header
-    > ###   oauth_client_req_auth_body oauth_client_req_auth_jwt_sig
-    > 
-    > ### ** Examples
-    > 
-    ...
-    +   token_url = "https://example.com/oauth/access_token",
-    +   name = "oauth-example",
-    +   auth = "body" # the default
-    + )
-    > # calls oauth_client_req_auth_body()
-    > req_dry_run(oauth_client_req_auth(req, client1))
-    createTcpServer: address already in use
-    Error in initialize(...) : Failed to create server
-    Calls: req_dry_run ... <Anonymous> -> <Anonymous> -> <Anonymous> -> initialize
-    Execution halted
     ```
 
 # igvR
@@ -568,45 +489,6 @@ Run `revdep_details(, "Rlinkedin")` for more info
       'LazyData' is specified without a 'data' directory
     ```
 
-# rsconnect
-
-<details>
-
-* Version: 0.8.27
-* GitHub: https://github.com/rstudio/rsconnect
-* Source code: https://github.com/cran/rsconnect
-* Date/Publication: 2022-07-12 17:00:02 UTC
-* Number of recursive dependencies: 77
-
-Run `revdep_details(, "rsconnect")` for more info
-
-</details>
-
-## In both
-
-*   checking tests ...
-    ```
-      Running ‘testthat.R’
-     ERROR
-    Running the tests in ‘tests/testthat.R’ failed.
-    Last 13 lines of output:
-      ══ Skipped tests ═══════════════════════════════════════════════════════════════
-      • On CRAN (43)
-      
-      ══ Failed tests ════════════════════════════════════════════════════════════════
-      ── Failure (test-http.R:136:5): posting JSON works ─────────────────────────────
-      request$REQUEST_METHOD not equal to "POST".
-      1/1 mismatches
-      x[1]: "GET"
-      y[1]: "POST"
-      ── Failure (test-http.R:139:5): posting JSON works ─────────────────────────────
-      Unexpected request body '', with transport rcurl
-      
-      [ FAIL 2 | WARN 0 | SKIP 43 | PASS 285 ]
-      Error: Test failures
-      Execution halted
-    ```
-
 # rStrava
 
 <details>
@@ -652,45 +534,6 @@ Run `revdep_details(, "shiny")` for more info
       sub-directories of 1Mb or more:
         R     2.0Mb
         www   7.1Mb
-    ```
-
-# shinylight
-
-<details>
-
-* Version: 0.7
-* GitHub: NA
-* Source code: https://github.com/cran/shinylight
-* Date/Publication: 2022-09-01 15:40:02 UTC
-* Number of recursive dependencies: 11
-
-Run `revdep_details(, "shinylight")` for more info
-
-</details>
-
-## Newly broken
-
-*   checking examples ... ERROR
-    ```
-    Running examples in ‘shinylight-Ex.R’ failed
-    The error most likely occurred in:
-    
-    > ### Name: getAddress
-    > ### Title: Obtains the address that the server is listening on
-    > ### Aliases: getAddress
-    > 
-    > ### ** Examples
-    > 
-    > server <- slServer(
-    +   port = 50051,
-    +   interface = list(
-    +     multiply = function(x, y) { x * y }
-    +   )
-    + )
-    createTcpServer: address already in use
-    Error in initialize(...) : Failed to create server
-    Calls: slServer ... rrpcServer -> <Anonymous> -> <Anonymous> -> initialize
-    Execution halted
     ```
 
 # shinyloadtest
