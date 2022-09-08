@@ -84,17 +84,17 @@ startServer("0.0.0.0", 8080,
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{WebSocket$new()}}
-\item \href{#method-onMessage}{\code{WebSocket$onMessage()}}
-\item \href{#method-onClose}{\code{WebSocket$onClose()}}
-\item \href{#method-send}{\code{WebSocket$send()}}
-\item \href{#method-close}{\code{WebSocket$close()}}
-\item \href{#method-clone}{\code{WebSocket$clone()}}
+\item \href{#method-WebSocket-new}{\code{WebSocket$new()}}
+\item \href{#method-WebSocket-onMessage}{\code{WebSocket$onMessage()}}
+\item \href{#method-WebSocket-onClose}{\code{WebSocket$onClose()}}
+\item \href{#method-WebSocket-send}{\code{WebSocket$send()}}
+\item \href{#method-WebSocket-close}{\code{WebSocket$close()}}
+\item \href{#method-WebSocket-clone}{\code{WebSocket$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-WebSocket-new"></a>}}
+\if{latex}{\out{\hypertarget{method-WebSocket-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebSocket$new(handle, req)}\if{html}{\out{</div>}}
@@ -102,8 +102,8 @@ startServer("0.0.0.0", 8080,
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-onMessage"></a>}}
-\if{latex}{\out{\hypertarget{method-onMessage}{}}}
+\if{html}{\out{<a id="method-WebSocket-onMessage"></a>}}
+\if{latex}{\out{\hypertarget{method-WebSocket-onMessage}{}}}
 \subsection{Method \code{onMessage()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebSocket$onMessage(func)}\if{html}{\out{</div>}}
@@ -111,8 +111,8 @@ startServer("0.0.0.0", 8080,
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-onClose"></a>}}
-\if{latex}{\out{\hypertarget{method-onClose}{}}}
+\if{html}{\out{<a id="method-WebSocket-onClose"></a>}}
+\if{latex}{\out{\hypertarget{method-WebSocket-onClose}{}}}
 \subsection{Method \code{onClose()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebSocket$onClose(func)}\if{html}{\out{</div>}}
@@ -120,8 +120,8 @@ startServer("0.0.0.0", 8080,
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-send"></a>}}
-\if{latex}{\out{\hypertarget{method-send}{}}}
+\if{html}{\out{<a id="method-WebSocket-send"></a>}}
+\if{latex}{\out{\hypertarget{method-WebSocket-send}{}}}
 \subsection{Method \code{send()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebSocket$send(message)}\if{html}{\out{</div>}}
@@ -129,8 +129,8 @@ startServer("0.0.0.0", 8080,
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-close"></a>}}
-\if{latex}{\out{\hypertarget{method-close}{}}}
+\if{html}{\out{<a id="method-WebSocket-close"></a>}}
+\if{latex}{\out{\hypertarget{method-WebSocket-close}{}}}
 \subsection{Method \code{close()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebSocket$close(code = 1000L, reason = "")}\if{html}{\out{</div>}}
@@ -138,8 +138,8 @@ startServer("0.0.0.0", 8080,
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-WebSocket-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-WebSocket-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

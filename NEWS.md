@@ -1,5 +1,7 @@
-httpuv 1.6.5.9000
+httpuv 1.6.6
 ============
+
+* Update docs for CRAN (#343)
 
 * Updated to libuv 1.43.0. (#328)
 

@@ -202,18 +202,17 @@ AppWrapper <- R6Class(
       # effect on the behavior of the application.
       #
       # If private$app is a reference class, accessing private$app$staticPaths
-      # can error if not present.
-      if (class(try(private$app$staticPaths, silent = TRUE)) == "try-error" ||
-          is.null(private$app$staticPaths))
-      {
+      # can error if not present. Saving here in a separate var because R CMD
+      # check complains if you compare class(x) with a string.
+      try_obj_class <- class(try(private$app$staticPaths, silent = TRUE))
+      if (try_obj_class == "try-error" || is.null(private$app$staticPaths)) {
         self$staticPaths <- list()
       } else {
         self$staticPaths <- normalizeStaticPaths(private$app$staticPaths)
       }
 
-      if (class(try(private$app$staticPathOptions, silent = TRUE)) == "try-error" ||
-          is.null(private$app$staticPathOptions))
-      {
+      try_obj_class <- class(try(private$app$staticPathOptions, silent = TRUE))
+      if (try_obj_class == "try-error" || is.null(private$app$staticPathOptions)) {
         # Use defaults
         self$staticPathOptions <- staticPathOptions()
       } else if (inherits(private$app$staticPathOptions, "staticPathOptions")) {
