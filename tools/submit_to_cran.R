@@ -3,7 +3,7 @@
 
 # Remove all unknown files
 cli::cli_alert_info("Cleaning")
-system("git clean -xdi")
+system("git clean -xdi src")
 
 pkg <- devtools::as.package(".")
 built_path <- devtools:::build_cran(pkg, args = NULL)
