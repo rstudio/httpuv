@@ -2,50 +2,33 @@
 #include <time.h>
 #include <stdlib.h>
 
-#ifdef _WIN32
-#include <errno.h>
-#include <timezoneapi.h>
-
-time_t timegm2(struct tm *tm) {
-  SYSTEMTIME st = {0};
-  st.wYear = tm->tm_year + 1900;
-  st.wMonth = tm->tm_mon + 1;
-  st.wDay = tm->tm_mday;
-  st.wHour = tm->tm_hour;
-  st.wMinute = tm->tm_min;
-  st.wSecond = tm->tm_sec;
-  st.wDayOfWeek = tm->tm_wday;
-
-  FILETIME ft = {0};
-  if (!SystemTimeToFileTime(&st, &ft)) {
-    errno = EOVERFLOW;
-    return -1;
-  }
-
-  ULARGE_INTEGER res;
-  res.LowPart = ft.dwLowDateTime;
-  res.HighPart = ft.dwHighDateTime;
-  return res.QuadPart / 10000000ULL - 11644473600ULL;
+// From https://stackoverflow.com/a/58037981/412655
+int days_since_1970(int y, int m, int d)
+{
+    y -= m <= 2;
+    int era = y / 400;
+    int yoe = y - era * 400;                                   // [0, 399]
+    int doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;  // [0, 365]
+    int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;           // [0, 146096]
+    return era * 146097 + doe - 719468;
 }
 
-#else
+time_t timegm2(struct tm const* t)
+{
+    int year = t->tm_year + 1900;
+    int month = t->tm_mon;          // 0-11
+    if (month > 11)
+    {
+        year += month / 12;
+        month %= 12;
+    }
+    else if (month < 0)
+    {
+        int years_diff = (11 - month) / 12;
+        year -= years_diff;
+        month += 12 * years_diff;
+    }
+    int days_since_epoch = days_since_1970(year, month + 1, t->tm_mday);
 
-// We use this function instead of timegm(), because timegm() is a nonstandard
-// GNU extension.
-time_t timegm2(struct tm *tm) {
-  time_t ret;
-  char *tz;
-
-  tz = getenv("TZ");
-  setenv("TZ", "", 1);
-  tzset();
-  ret = mktime(tm);
-  if (tz)
-      setenv("TZ", tz, 1);
-  else
-      unsetenv("TZ");
-  tzset();
-  return ret;
+    return 60 * (60 * (24L * days_since_epoch + t->tm_hour) + t->tm_min) + t->tm_sec;
 }
-
-#endif

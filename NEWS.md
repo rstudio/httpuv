@@ -1,3 +1,11 @@
+httpuv 1.6.6.9000
+============
+
+* Fixed rstudio/shiny#3741: The `TZ` environment variable could get unset in some cases. (#346)
+
+* Closed #302: Fixed potential thread-safety issues with `timegm2` implementation. (#346)
+
+
 httpuv 1.6.6
 ============
 

@@ -3,6 +3,6 @@
 
 #include <time.h>
 
-time_t timegm2(struct tm *tm);
+time_t timegm2(struct tm const *t);
 
 #endif
