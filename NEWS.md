@@ -1,4 +1,4 @@
-httpuv 1.6.6.9000
+httpuv 1.6.7
 ============
 
 * Fixed rstudio/shiny#3741: The `TZ` environment variable could get unset in some cases. (#346)
