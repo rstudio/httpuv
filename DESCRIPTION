@@ -2,7 +2,7 @@ Package: httpuv
 Type: Package
 Encoding: UTF-8
 Title: HTTP and WebSocket Server Library
-Version: 1.6.7
+Version: 1.6.7.9000
 Authors@R: c(
     person("Joe", "Cheng", role = c("aut"), email = "joe@rstudio.com"),
     person("Winston", "Chang", role = c("aut", "cre"), email = "winston@rstudio.com"),
