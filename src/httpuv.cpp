@@ -112,6 +112,8 @@ void block_sigpipe() {
 void io_thread(void* data) {
   register_background_thread();
   std::shared_ptr<Barrier>* pBlocker = reinterpret_cast<std::shared_ptr<Barrier>*>(data);
+  std::shared_ptr<Barrier> blocker = std::shared_ptr<Barrier>(*pBlocker);
+  delete pBlocker;
 
   io_thread_running.set(true);
 
@@ -123,8 +125,7 @@ void io_thread(void* data) {
   uv_async_init(io_loop.get(), &async_stop_io_loop, stop_io_loop);
 
   // Tell other thread that it can continue.
-  (*pBlocker)->wait();
-  delete pBlocker;
+  blocker->wait();
 
   // Must ignore SIGPIPE for libuv code; otherwise unexpectedly closed
   // connections kill us. https://github.com/rstudio/httpuv/issues/168
