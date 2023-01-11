@@ -111,7 +111,9 @@ void block_sigpipe() {
 
 void io_thread(void* data) {
   register_background_thread();
-  Barrier* blocker = reinterpret_cast<Barrier*>(data);
+  std::shared_ptr<Barrier>* pBlocker = reinterpret_cast<std::shared_ptr<Barrier>*>(data);
+  std::shared_ptr<Barrier> blocker = std::shared_ptr<Barrier>(*pBlocker);
+  delete pBlocker;
 
   io_thread_running.set(true);
 
@@ -151,10 +153,17 @@ void ensure_io_thread() {
     return;
   }
 
-  Barrier blocker(2);
-  int ret = uv_thread_create(&io_thread_id, io_thread, &blocker);
+  // Use a shared_ptr because the lifetime of this object might be longer than
+  // this function, since it is passed to the background thread.
+  std::shared_ptr<Barrier> blocker = std::make_shared<Barrier>(2);
+
+  // We want to pass a copy of the shared_ptr to the new pthread. To do that, we
+  // need to create a new shared_ptr and get the regular pointer to it.
+  std::shared_ptr<Barrier>* pBlocker = new std::shared_ptr<Barrier>(blocker);
+
+  int ret = uv_thread_create(&io_thread_id, io_thread, pBlocker);
   // Wait for io_loop to be initialized before continuing
-  blocker.wait();
+  blocker->wait();
 
   if (ret != 0) {
     Rcpp::stop(std::string("Error: ") + uv_strerror(ret));
