@@ -805,7 +805,7 @@ void HttpRequest::_parse_http_data(char* buffer, const ssize_t n) {
       if (body.size() > 0) {
         pDS->add(body);
       }
-      body.empty();
+      body.clear();
 
       pResp->writeResponse();
 

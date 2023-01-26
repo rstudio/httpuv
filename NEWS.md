@@ -1,5 +1,6 @@
 # httpuv 1.6.8.9000
 
+* Fixed #354: The incorrect method was called to clear a `vector`. (#355)
 
 # httpuv 1.6.8
 
