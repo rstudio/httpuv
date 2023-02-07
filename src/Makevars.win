@@ -1,5 +1,11 @@
-# Use C++11 if available
+# On R prior to 4.0, specify C++11.
+# Versions of R 4.0 and above always have C++11.
+# Versions of R 4.3 and above will complain if CXX_STD is set to CXX11.
+# To satisfy all these versions, we'll set CXX_STD=CXX11 only when R < 4.0.
+R_VERSION=$(shell $(R_HOME)/bin$(R_ARCH_BIN)/Rscript --vanilla -e 'if (getRversion()<4) cat("lt4") else cat("ge4")')
+ifeq ($(R_VERSION), lt4)
 CXX_STD=CXX11
+endif
 
 PKG_LIBS = ./libuv/libuv.a ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o \
 	-lpthread -lws2_32 -lkernel32 -lpsapi -liphlpapi -lshell32 -luserenv -lz
