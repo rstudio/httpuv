@@ -2,6 +2,9 @@
 
 * Fixed #354: The incorrect method was called to clear a `vector`. (#355)
 
+* The `src/Makevars` file no longer sets `CXX_STD=CXX11`, and the `DESCRIPTION` file no longer lists `SystemRequirements: C++11`, because newer R versions always support C++11. (#356, #357)
+
+
 # httpuv 1.6.8
 
 * Fixed #351: A race condition could cause httpuv to crash when starting the background thread for I/O. (#352)
