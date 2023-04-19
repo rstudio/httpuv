@@ -220,6 +220,10 @@ void WSHyBiParser::read(const char* data, size_t len) {
   }
 }
 
+void WebSocketConnection::startPingTimer() {
+  uv_timer_start(&_pingTimer, pingTimerCallback, 20000, 20000);
+}
+
 bool WebSocketConnection::accept(const RequestHeaders& requestHeaders,
                                  const char* pData, size_t len) {
   ASSERT_BACKGROUND_THREAD()
@@ -229,12 +233,14 @@ bool WebSocketConnection::accept(const RequestHeaders& requestHeaders,
   WebSocketProto_IETF ietf;
   if (ietf.canHandle(requestHeaders, pData, len)) {
     _pParser = new WSHyBiParser(this, new WebSocketProto_IETF());
+    this->startPingTimer();
     return true;
   }
 
   WebSocketProto_HyBi03 hybi03;
   if (hybi03.canHandle(requestHeaders, pData, len)) {
     _pParser = new WSHixie76Parser(this);
+    this->startPingTimer();
     return true;
   }
   return false;
@@ -272,6 +278,13 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
   _pCallbacks->sendWSFrame(safe_vec_addr(header), header.size(),
                            pData, length,
                            safe_vec_addr(footer), footer.size());
+}
+
+void WebSocketConnection::sendPing() {
+  ASSERT_BACKGROUND_THREAD()
+  assert(_pParser);
+  debug_log("WebSocketConnection::sendPing", LOG_DEBUG);
+  this->sendWSMessage(Ping, NULL, 0);
 }
 
 void WebSocketConnection::closeWS(uint16_t code, std::string reason) {
@@ -403,4 +416,11 @@ void WebSocketConnection::onFrameComplete() {
   }
 
   _payload.clear();
+}
+
+void pingTimerCallback(uv_timer_t* pHandle) {
+  ASSERT_BACKGROUND_THREAD()
+
+  WebSocketConnection* c = reinterpret_cast<WebSocketConnection*>(pHandle->data);
+  c->sendPing();
 }

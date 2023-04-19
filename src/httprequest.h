@@ -205,7 +205,7 @@ public:
     );
 
     _pWebSocketConnection = std::shared_ptr<WebSocketConnection>(
-      new WebSocketConnection(this_base),
+      new WebSocketConnection(this->_pLoop, this_base),
       auto_deleter_background<WebSocketConnection>
     );
 

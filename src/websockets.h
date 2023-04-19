@@ -12,6 +12,7 @@
 #include "thread.h"
 #include "constants.h"
 #include "websockets-base.h"
+#include "uvutil.h"
 
 class WSFrameHeaderInfo {
 public:
@@ -159,7 +160,10 @@ public:
   virtual void closeWSSocket() = 0;
 };
 
+void pingTimerCallback(uv_timer_t *handle);
+
 class WebSocketConnection : WSParserCallbacks, NoCopy {
+  uv_loop_t* _pLoop;
   WSConnState _connState;
   std::shared_ptr<WebSocketConnectionCallbacks> _pCallbacks;
   WSParser* _pParser;
@@ -167,16 +171,28 @@ class WebSocketConnection : WSParserCallbacks, NoCopy {
   WSFrameHeaderInfo _header;
   std::vector<char> _incompleteContentPayload;
   std::vector<char> _payload;
+  uv_timer_t _pingTimer;
 
 public:
-  WebSocketConnection(std::shared_ptr<WebSocketConnectionCallbacks> callbacks)
-      : _connState(WS_OPEN),
+  WebSocketConnection(
+    uv_loop_t* pLoop,
+    std::shared_ptr<WebSocketConnectionCallbacks> callbacks)
+      : _pLoop(pLoop),
+        _connState(WS_OPEN),
         _pCallbacks(callbacks),
         _pParser(NULL) {
+    ASSERT_BACKGROUND_THREAD()
+    debug_log("WebSocketConnection::WebSocketConnection", LOG_DEBUG);
+
+    uv_timer_init(_pLoop, &_pingTimer);
+    _pingTimer.data = this;
   }
+
   virtual ~WebSocketConnection() {
     ASSERT_BACKGROUND_THREAD()
     debug_log("WebSocketConnection::~WebSocketConnection", LOG_DEBUG);
+    uv_timer_stop(&_pingTimer);
+    uv_close(toHandle(&_pingTimer), NULL);
     try {
       delete _pParser;
     } catch(...) {}
@@ -190,9 +206,11 @@ public:
                  std::vector<uint8_t>* pResponse);
 
   void sendWSMessage(Opcode opcode, const char* pData, size_t length);
+  void sendPing();
   void closeWS(uint16_t code = 1000, std::string reason = "");
   void read(const char* data, size_t len);
   void markClosed();
+  void startPingTimer();
 
 protected:
   void onHeaderComplete(const WSFrameHeaderInfo& header);
