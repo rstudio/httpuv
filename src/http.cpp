@@ -24,6 +24,8 @@ void on_request(uv_stream_t* handle, int status) {
     return;
   }
 
+  uv_tcp_keepalive(reinterpret_cast<uv_tcp_t*>(handle), 1, 20);
+
   // Copy the shared_ptr
   std::shared_ptr<Socket> pSocket(*(std::shared_ptr<Socket>*)handle->data);
   CallbackQueue* bg_queue = pSocket->background_queue;
