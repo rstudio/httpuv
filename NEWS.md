@@ -1,5 +1,7 @@
 # httpuv 1.6.9.9000
 
+* WebSocket connections now send Ping frames to the client every 20 seconds. This is only intended to serve as a keepalive for proxies that might be sitting in front of us; we don't pay attention to whether a Pong response is received in a timely manner.
+
 
 # httpuv 1.6.9
 
