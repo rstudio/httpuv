@@ -110,15 +110,15 @@ umask is left unchanged. (This parameter has no effect on Windows.)</p></dd>
 connections on an thread running in the background. This background thread
 handles the I/O, and when it receives a HTTP request, it will schedule a
 call to the user-defined R functions in <code>app</code> to handle the request.
-This scheduling is done with <code><a href="https://rdrr.io/pkg/later/man/later.html" class="external-link">later</a>()</code>. When the R call
+This scheduling is done with <code><a href="https://r-lib.github.io/later/reference/later.html" class="external-link">later</a>()</code>. When the R call
 stack is empty -- in other words, when an interactive R session is sitting
 idle at the command prompt -- R will automatically run the scheduled calls.
 However, if the call stack is not empty -- if R is evaluating other R code
 -- then the callbacks will not execute until either the call stack is
-empty, or the <code><a href="https://rdrr.io/pkg/later/man/run_now.html" class="external-link">run_now</a>()</code> function is called. This
+empty, or the <code><a href="https://r-lib.github.io/later/reference/run_now.html" class="external-link">run_now</a>()</code> function is called. This
 function tells R to execute any callbacks that have been scheduled by
-<code><a href="https://rdrr.io/pkg/later/man/later.html" class="external-link">later</a>()</code>. The <code><a href="service.html">service</a>()</code> function is
-essentially a wrapper for <code><a href="https://rdrr.io/pkg/later/man/run_now.html" class="external-link">run_now</a>()</code>.</p>
+<code><a href="https://r-lib.github.io/later/reference/later.html" class="external-link">later</a>()</code>. The <code><a href="service.html">service</a>()</code> function is
+essentially a wrapper for <code><a href="https://r-lib.github.io/later/reference/run_now.html" class="external-link">run_now</a>()</code>.</p>
 <p>In older versions of httpuv (1.3.5 and below), it did not use a background
 thread for I/O, and when this function was called, it did not accept
 connections immediately. It was necessary to call <code><a href="service.html">service</a></code>

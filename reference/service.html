@@ -59,7 +59,7 @@ stack -- if R is sitting idle at the command prompt -- it is not necessary to
 call this function, because requests will be handled automatically. However,
 if R is executing code, then requests will not be handled until either the
 call stack is empty, or this function is called (or alternatively,
-<code><a href="https://rdrr.io/pkg/later/man/run_now.html" class="external-link">run_now</a></code> is called).</p>
+<code><a href="https://r-lib.github.io/later/reference/run_now.html" class="external-link">run_now</a></code> is called).</p>
     </div>
 
     <div id="ref-usage">
@@ -80,8 +80,8 @@ If NA, performs a non-blocking run without waiting.</p></dd>
     <p>In previous versions of httpuv (1.3.5 and below), even if a server created by
 <code><a href="startServer.html">startServer</a></code> exists, no requests were serviced unless and until
 <code>service</code> was called.</p>
-<p>This function simply calls <code><a href="https://rdrr.io/pkg/later/man/run_now.html" class="external-link">run_now</a>()</code>, so if your
-application schedules any <code><a href="https://rdrr.io/pkg/later/man/later.html" class="external-link">later</a></code> callbacks, they will be
+<p>This function simply calls <code><a href="https://r-lib.github.io/later/reference/run_now.html" class="external-link">run_now</a>()</code>, so if your
+application schedules any <code><a href="https://r-lib.github.io/later/reference/later.html" class="external-link">later</a></code> callbacks, they will be
 invoked.</p>
     </div>
 
