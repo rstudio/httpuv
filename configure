@@ -1,0 +1,82 @@
+# Anticonf (tm) script by Jeroen Ooms (2021)
+# This script will query 'pkg-config' for the required cflags and ldflags.
+# If pkg-config is unavailable or does not find the library, try setting
+# INCLUDE_DIR and LIB_DIR manually via e.g:
+# R CMD INSTALL --configure-vars='INCLUDE_DIR=/.../include LIB_DIR=/.../lib'
+
+# Library settings
+PKG_CONFIG_NAME="libuv"
+PKG_DEB_NAME="libuv1-dev"
+PKG_RPM_NAME="libuv-devel"
+# PKG_CSW_NAME="libsodium_dev"
+PKG_BREW_NAME="libuv"
+PKG_TEST_HEADER="<uv.h>"
+PKG_LIBS="-luv"
+PKG_CFLAGS=""
+DEPS=""
+
+# Use pkg-config if available
+if [ `command -v pkg-config` ]; then
+  PKGCONFIG_CFLAGS=`pkg-config --cflags --silence-errors ${PKG_CONFIG_NAME}`
+  PKGCONFIG_LIBS=`pkg-config --libs ${PKG_CONFIG_NAME}`
+fi
+
+# Note that cflags may be empty in case of success
+if [ "$INCLUDE_DIR" ] || [ "$LIB_DIR" ]; then
+  echo "Found INCLUDE_DIR and/or LIB_DIR!"
+  PKG_CFLAGS="-I$INCLUDE_DIR $PKG_CFLAGS"
+  PKG_LIBS="-L$LIB_DIR $PKG_LIBS"
+elif [ "$PKGCONFIG_CFLAGS" ] || [ "$PKGCONFIG_LIBS" ]; then
+  echo "Found pkg-config cflags and libs!"
+  PKG_CFLAGS=${PKGCONFIG_CFLAGS}
+  PKG_LIBS=${PKGCONFIG_LIBS}
+elif [ `uname` = "Darwin" ]; then
+  test ! "$CI" && brew --version 2>/dev/null
+  if [ $? -eq 0 ]; then
+    BREWDIR=`brew --prefix`
+    PKG_CFLAGS="-I$BREWDIR/include"
+    PKG_LIBS="-L$BREWDIR/lib $PKG_LIBS"
+  fi
+fi
+
+# For debugging
+echo "Using PKG_CFLAGS=$PKG_CFLAGS"
+echo "Using PKG_LIBS=$PKG_LIBS"
+
+# Find compiler
+CC=`${R_HOME}/bin/R CMD config CC`
+CFLAGS=`${R_HOME}/bin/R CMD config CFLAGS`
+CPPFLAGS=`${R_HOME}/bin/R CMD config CPPFLAGS`
+
+# Test configuration
+echo "#include $PKG_TEST_HEADER" | ${CC} ${CPPFLAGS} ${PKG_CFLAGS} ${CFLAGS} -E -xc - >/dev/null 2>configure.log
+
+# Customize the error
+if [ $? -ne 0 ]; then
+  echo "--------------------------- [ANTICONF] --------------------------------"
+  echo "Didn't find $PKG_CONFIG_NAME on your system, so we'll use a copy that we bundle"
+  echo "with httpuv. If you would prefer to use a system copy, try installing:"
+  echo " * deb: $PKG_DEB_NAME (Debian, Ubuntu, etc)"
+  echo " * rpm: $PKG_RPM_NAME (Fedora, EPEL)"
+  # echo " * csw: $PKG_CSW_NAME (Solaris)"
+  echo " * brew: $PKG_BREW_NAME (OSX)"
+  echo "If $PKG_CONFIG_NAME is already installed, check that 'pkg-config' is in your"
+  echo "PATH and PKG_CONFIG_PATH contains a $PKG_CONFIG_NAME.pc file. If pkg-config"
+  echo "is unavailable you can set INCLUDE_DIR and LIB_DIR manually via:"
+  echo "R CMD INSTALL --configure-vars='INCLUDE_DIR=... LIB_DIR=...'"
+  echo "-------------------------- [ERROR MESSAGE] ---------------------------"
+  cat configure.log
+  echo "----------------------------------------------------------------------"
+  echo "Continuing with bundled copy of libuv."
+  # Use bundled libuv:
+  #
+  PKG_CFLAGS="-Ilibuv/include"
+  PKG_LIBS="./libuv/.libs/libuv.a"
+  DEPS="libuv/.libs/libuv.a"
+fi
+
+# Write to Makevars
+sed -e "s|@cflags@|$PKG_CFLAGS|" -e "s|@libs@|$PKG_LIBS|" -e "s|@deps@|$DEPS|" src/Makevars.in > src/Makevars
+
+# Success
+exit 0
