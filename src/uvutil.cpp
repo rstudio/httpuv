@@ -3,6 +3,10 @@
 #include <string.h>
 
 
+void freeAfterClose(uv_handle_t* handle) {
+  free(handle);
+}
+
 class WriteOp {
 private:
   ExtendedWrite* pParent;

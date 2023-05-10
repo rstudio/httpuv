@@ -171,7 +171,7 @@ class WebSocketConnection : WSParserCallbacks, NoCopy {
   WSFrameHeaderInfo _header;
   std::vector<char> _incompleteContentPayload;
   std::vector<char> _payload;
-  uv_timer_t _pingTimer;
+  uv_timer_t* _pingTimer;
 
 public:
   WebSocketConnection(
@@ -184,15 +184,16 @@ public:
     ASSERT_BACKGROUND_THREAD()
     debug_log("WebSocketConnection::WebSocketConnection", LOG_DEBUG);
 
-    uv_timer_init(_pLoop, &_pingTimer);
-    _pingTimer.data = this;
+    _pingTimer = static_cast<uv_timer_t*>(malloc(sizeof(uv_timer_t)));
+    uv_timer_init(_pLoop, _pingTimer);
+    _pingTimer->data = this;
   }
 
   virtual ~WebSocketConnection() {
     ASSERT_BACKGROUND_THREAD()
     debug_log("WebSocketConnection::~WebSocketConnection", LOG_DEBUG);
-    uv_timer_stop(&_pingTimer);
-    uv_close(toHandle(&_pingTimer), NULL);
+    // calling uv_close() on a timer implicitly calls uv_timer_stop()
+    uv_close(toHandle(_pingTimer), freeAfterClose);
     try {
       delete _pParser;
     } catch(...) {}

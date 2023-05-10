@@ -223,7 +223,7 @@ void WSHyBiParser::read(const char* data, size_t len) {
 void WebSocketConnection::startPingTimer() {
   ASSERT_BACKGROUND_THREAD()
 
-  uv_timer_start(&_pingTimer, pingTimerCallback, 20000, 20000);
+  uv_timer_start(_pingTimer, pingTimerCallback, 20000, 20000);
 }
 
 bool WebSocketConnection::accept(const RequestHeaders& requestHeaders,

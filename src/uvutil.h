@@ -23,6 +23,8 @@ inline uv_stream_t* toStream(uv_tcp_t* tcp) {
   return (uv_stream_t*)tcp;
 }
 
+void freeAfterClose(uv_handle_t* handle);
+
 class WriteOp;
 
 // Abstract class for synchronously streaming known-length data
