@@ -1,3 +1,10 @@
+# httpuv 1.6.11
+
+* Fix race condition introduced in 1.6.10. (#363)
+
+* Hygiene and metadata improvements requested by CRAN. (#366, #369, #370)
+
+
 # httpuv 1.6.10
 
 * WebSocket connections now send Ping frames to the client every 20 seconds. This is only intended to serve as a keepalive for proxies that might be sitting in front of us; we don't pay attention to whether a Pong response is received in a timely manner. (#359)
