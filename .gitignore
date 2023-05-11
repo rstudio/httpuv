@@ -16,3 +16,5 @@ CRAN-RELEASE
 httpuv_*.tar.gz
 src/Makevars
 configure.log
+.vscode
+*.orig
