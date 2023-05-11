@@ -16,7 +16,7 @@ based on \href{https://github.com/joyent/libuv}{libuv} and
 
 This is a low-level library that provides little more than network I/O and
 implementations of the HTTP and WebSocket protocols. For an easy way to
-create web applications, try \href{https://shiny.rstudio.com}{Shiny} instead.
+create web applications, try \href{https://shiny.posit.co}{Shiny} instead.
 }
 \examples{
 \dontrun{
