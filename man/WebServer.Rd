@@ -56,27 +56,27 @@ a named item in \code{.list}.
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{WebServer$new()}}
-\item \href{#method-getHost}{\code{WebServer$getHost()}}
-\item \href{#method-getPort}{\code{WebServer$getPort()}}
+\item \href{#method-WebServer-new}{\code{WebServer$new()}}
+\item \href{#method-WebServer-getHost}{\code{WebServer$getHost()}}
+\item \href{#method-WebServer-getPort}{\code{WebServer$getPort()}}
 }
 }
-\if{html}{
-\out{<details ><summary>Inherited methods</summary>}
-\itemize{
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPathOptions">}\href{../../httpuv/html/Server.html#method-getStaticPathOptions}{\code{httpuv::Server$getStaticPathOptions()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPaths">}\href{../../httpuv/html/Server.html#method-getStaticPaths}{\code{httpuv::Server$getStaticPaths()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="isRunning">}\href{../../httpuv/html/Server.html#method-isRunning}{\code{httpuv::Server$isRunning()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="removeStaticPath">}\href{../../httpuv/html/Server.html#method-removeStaticPath}{\code{httpuv::Server$removeStaticPath()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPath">}\href{../../httpuv/html/Server.html#method-setStaticPath}{\code{httpuv::Server$setStaticPath()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPathOption">}\href{../../httpuv/html/Server.html#method-setStaticPathOption}{\code{httpuv::Server$setStaticPathOption()}}\out{</span>}
-\item \out{<span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="stop">}\href{../../httpuv/html/Server.html#method-stop}{\code{httpuv::Server$stop()}}\out{</span>}
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details><summary>Inherited methods</summary>
+<ul>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPathOptions"><a href='../../httpuv/html/Server.html#method-Server-getStaticPathOptions'><code>httpuv::Server$getStaticPathOptions()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPaths"><a href='../../httpuv/html/Server.html#method-Server-getStaticPaths'><code>httpuv::Server$getStaticPaths()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="isRunning"><a href='../../httpuv/html/Server.html#method-Server-isRunning'><code>httpuv::Server$isRunning()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="removeStaticPath"><a href='../../httpuv/html/Server.html#method-Server-removeStaticPath'><code>httpuv::Server$removeStaticPath()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPath"><a href='../../httpuv/html/Server.html#method-Server-setStaticPath'><code>httpuv::Server$setStaticPath()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPathOption"><a href='../../httpuv/html/Server.html#method-Server-setStaticPathOption'><code>httpuv::Server$setStaticPathOption()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="stop"><a href='../../httpuv/html/Server.html#method-Server-stop'><code>httpuv::Server$stop()</code></a></span></li>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-WebServer-new"></a>}}
+\if{latex}{\out{\hypertarget{method-WebServer-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebServer$new(host, port, app, quiet = FALSE)}\if{html}{\out{</div>}}
@@ -84,8 +84,8 @@ a named item in \code{.list}.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getHost"></a>}}
-\if{latex}{\out{\hypertarget{method-getHost}{}}}
+\if{html}{\out{<a id="method-WebServer-getHost"></a>}}
+\if{latex}{\out{\hypertarget{method-WebServer-getHost}{}}}
 \subsection{Method \code{getHost()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebServer$getHost()}\if{html}{\out{</div>}}
@@ -93,8 +93,8 @@ a named item in \code{.list}.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getPort"></a>}}
-\if{latex}{\out{\hypertarget{method-getPort}{}}}
+\if{html}{\out{<a id="method-WebServer-getPort"></a>}}
+\if{latex}{\out{\hypertarget{method-WebServer-getPort}{}}}
 \subsection{Method \code{getPort()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebServer$getPort()}\if{html}{\out{</div>}}

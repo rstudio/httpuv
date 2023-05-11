@@ -6,7 +6,7 @@
 
 httpuv provides low-level socket and protocol support for handling HTTP and WebSocket requests directly from within R. It uses a multithreaded architecture, where I/O is handled on one thread, and the R callbacks are handled on another.
 
-It is primarily intended as a building block for other packages, rather than making it particularly easy to create complete web applications using httpuv alone. httpuv is built on top of the [libuv](https://github.com/joyent/libuv) and [http-parser](https://github.com/nodejs/http-parser) C libraries, both of which were developed by Joyent, Inc.
+It is primarily intended as a building block for other packages, rather than making it particularly easy to create complete web applications using httpuv alone. httpuv is built on top of the [libuv](https://github.com/libuv/libuv) and [http-parser](https://github.com/nodejs/http-parser) C libraries, both of which were developed by Joyent, Inc.
 
 
 ## Installing
@@ -27,12 +27,12 @@ Since httpuv contains C code, you'll need to make sure you're set up to install 
 
 ## Basic Usage
 
-This is a basic web server that listens on port 5000 and responds to HTTP requests with a web page containing the current system time and the path of the request:
+This is a basic web server that listens on port 8080 and responds to HTTP requests with a web page containing the current system time and the path of the request:
 
 ```R
 library(httpuv)
 
-s <- startServer(host = "0.0.0.0", port = 5000,
+s <- startServer(host = "0.0.0.0", port = 8080,
   app = list(
     call = function(req) {
       body <- paste0("Time: ", Sys.time(), "<br>Path requested: ", req$PATH_INFO)
@@ -48,7 +48,7 @@ s <- startServer(host = "0.0.0.0", port = 5000,
 
 Note that when `host` is 0.0.0.0, it listens on all network interfaces. If `host` is 127.0.0.1, it will only listen to connections from the local host.
 
-The `startServer()` function takes an _app object_, which is a named list with functions that are invoked in response to certain events. In the example above, the list contains a function `call`. This function is invoked when a complete HTTP request is received by the server, and it is passed an environment object `req`, which contains information about HTTP request. `req$PATH_INFO` is the path requested (if the request was for http://127.0.0.1:5000/foo, it would be `"/foo"`).
+The `startServer()` function takes an _app object_, which is a named list with functions that are invoked in response to certain events. In the example above, the list contains a function `call`. This function is invoked when a complete HTTP request is received by the server, and it is passed an environment object `req`, which contains information about HTTP request. `req$PATH_INFO` is the path requested (if the request was for http://127.0.0.1:8080/foo, it would be `"/foo"`).
 
 The `call` function is expected to return a list containing `status`, `headers`, and `body`. That list will be transformed into a HTTP response and sent to the client.
 
@@ -72,7 +72,7 @@ A httpuv server application can serve up files on disk. This happens entirely wi
 To serve a path, use `staticPaths` in the app. This will serve the `www/` subdirectory of the current directory (from when `startServer` is called) as the root of the web path:
 
 ```R
-s <- startServer("0.0.0.0", path = 5000,
+s <- startServer("0.0.0.0", 8080,
   app = list(
     staticPaths = list("/" = "www/")
   )
@@ -84,7 +84,7 @@ By default, if a file named `index.html` exists in the directory, it will be ser
 `staticPaths` can be combined with `call`. In this example, the web paths `/assets` and `/lib` are served from disk, but requests for any other paths go through the `call` function.
 
 ```R
-s <- startServer("0.0.0.0", 5000,
+s <- startServer("0.0.0.0", 8080,
   list(
     call = function(req) {
       list(

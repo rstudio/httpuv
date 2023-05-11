@@ -2,9 +2,9 @@ We welcome contributions to the **httpuv** package. To submit a contribution:
 
 1. [Fork](https://github.com/rstudio/httpuv/fork) the repository and make your changes.
 
-2. Ensure that you have signed the [individual](https://rstudioblog.files.wordpress.com/2017/05/rstudio_individual_contributor_agreement.pdf) or [corporate](https://rstudioblog.files.wordpress.com/2017/05/rstudio_corporate_contributor_agreement.pdf) contributor agreement as appropriate. You can send the signed copy to jj@rstudio.com.
+2. Submit a [pull request](https://help.github.com/articles/using-pull-requests).
 
-3. Submit a [pull request](https://help.github.com/articles/using-pull-requests).
+3. You will be prompted to read and agree to the "RStudio Corporate and Individual Contributor Agreement."
 
 We generally do not merge pull requests that update included web libraries (such as Bootstrap or jQuery) because it is difficult for us to verify that the update is done correctly; we prefer to update these libraries ourselves.
 

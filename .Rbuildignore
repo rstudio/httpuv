@@ -1,6 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 /\.mailmap$
+/\.readthedocs.yaml$
 /\.git$
 /\.o$
 /\.so$
@@ -13,7 +14,11 @@
 ^.*/\.libs/$
 ^.*/\.dirstamp/$
 ^.*/\.deps/$
+^.*/\.libs$
+^.*/\.dirstamp$
+^.*/\.deps$
 ^revdep$
 ^\.github$
 ^cran-comments\.md$
 ^CRAN-RELEASE$
+^CRAN-SUBMISSION$
