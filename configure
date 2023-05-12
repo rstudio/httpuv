@@ -1,85 +1,43 @@
-# Derived from: Anticonf (tm) script by Jeroen Ooms (2021)
+#!/usr/bin/env sh
 
-# Library settings
 PKG_CONFIG_NAME="libuv"
-PKG_DEB_NAME="libuv1-dev"
-PKG_RPM_NAME="libuv-devel"
-PKG_BREW_NAME="libuv"
-PKG_LIBS="-luv"
-PKG_CFLAGS=""
-DEPS=""
-
-# For messaging; if changing this, be sure also to set UV_VERSION_HEX check 
-MINIMUM_LIBUV_VERSION="1.43"
+LIBUV_VERSION_REQUIRED="$PKG_CONFIG_NAME >= 1.43 $PKG_CONFIG_NAME < 2"
 
 # If unset (default), will try to find libuv on system and fall back to bundled
 # If true (case insensitive), will not look for system library
 # If false, will not fall back to bundled if system library not found
 USE_BUNDLED_LIBUV=`echo $USE_BUNDLED_LIBUV | tr '[:upper:]' '[:lower:]'`
 
-
-if [ "${USE_BUNDLED_LIBUV}" != "true" ]; then
-  # First, look for libuv installed on the system (pkg-config, then brew)
-  if pkg-config ${PKG_CONFIG_NAME} 2>&1; then
-    echo "** Using libuv found by pkg-config in `pkg-config --variable=prefix --silence-errors ${PKG_CONFIG_NAME}`"
-    PKG_CFLAGS=`pkg-config --cflags --silence-errors ${PKG_CONFIG_NAME}`
-    PKG_LIBS=`pkg-config --libs ${PKG_CONFIG_NAME}`
-    LIBUV_FOUND="true"
-  elif brew --prefix ${PKG_BREW_NAME} > /dev/null 2>&1; then
-    BREWDIR=`brew --prefix ${PKG_BREW_NAME}`
-    echo "** Using Homebrew libuv in ${BREWDIR}"
-    PKG_CFLAGS="-I$BREWDIR/include"
-    PKG_LIBS="-L$BREWDIR/lib $PKG_LIBS"
-    LIBUV_FOUND="true"
-  fi
-
-  # If found, check that its version is recent enough
-  if [ "${LIBUV_FOUND}" = "true" ]; then
-    # Find compiler
-    CC=`${R_HOME}/bin/R CMD config CC`
-    CFLAGS=`${R_HOME}/bin/R CMD config CFLAGS`
-    CPPFLAGS=`${R_HOME}/bin/R CMD config CPPFLAGS`
-
-    # Test whether libuv really is there and is the right version
-    # Minor versions only add backwards-compatible changes, but
-    # major versions may break, so assert 1.43 <= v < 2
-    # See libuv/docs/src/version.rst about UV_VERSION_HEX
-    # 1.43 -> 01 2B in hex
-    echo "
-    #include <uv.h>
-    #if UV_VERSION_HEX < 0x012B00L
-    #error libuv version too old: >= ${MINIMUM_LIBUV_VERSION} required
-    #endif
-    #if UV_MAJOR_VERSION > 1
-    #error libuv version too new (1.x required)
-    #endif" | ${CC} ${CPPFLAGS} ${PKG_CFLAGS} ${CFLAGS} -E -xc - >/dev/null 2>configure.log
-    if [ $? -ne 0 ]; then
-      echo "** Found libuv is not suitable"
-      cat configure.log
-      unset LIBUV_FOUND
-    fi
-  fi
+if [ `uname -s` = "Darwin" ]; then
+  # Always do static linking on macOS
+  PKG_CONFIG="pkg-config --static"
+else
+  PKG_CONFIG="pkg-config"
 fi
 
-# If libuv not found, use the bundled copy (unless USE_BUNDLED_LIBUV=false)
-if [ "${LIBUV_FOUND}" != "true" ]; then
-  if [ "${USE_BUNDLED_LIBUV}" = "false" ]; then
-    echo "** Did not find suitable libuv on your system,"
-    echo "** and not building from source because USE_BUNDLED_LIBUV=false."
-    echo "** Please install libuv >= ${MINIMUM_LIBUV_VERSION} or unset USE_BUNDLED_LIBUV"
-    exit 1
-  else
-    echo "** Using bundled copy of libuv"
-    PKG_CFLAGS="-Ilibuv/include"
-    PKG_LIBS="./libuv/.libs/libuv.a"
-    # By setting DEPS, this triggers the libuv build in src/Makevars
-    DEPS="libuv/.libs/libuv.a"
-  fi
+# First, look for suitable libuv installed on the system 
+if [ "${USE_BUNDLED_LIBUV}" != "true" ] && ${PKG_CONFIG} --exists ''"${LIBUV_VERSION_REQUIRED}"'' 2>&1; then
+  echo "** Using libuv found by pkg-config in `${PKG_CONFIG} --variable=prefix --silence-errors ${PKG_CONFIG_NAME}`"
+  PKG_CFLAGS=`${PKG_CONFIG} --cflags --silence-errors ${PKG_CONFIG_NAME}`
+  PKG_LIBS=`${PKG_CONFIG} --libs ${PKG_CONFIG_NAME}`
+  DEPS=""
+elif [ "${USE_BUNDLED_LIBUV}" != "false" ]; then
+  # If not found, use the bundled copy (unless directed otherwise)
+  echo "** Using bundled copy of libuv"
+  PKG_CFLAGS="-Ilibuv/include"
+  PKG_LIBS="./libuv/.libs/libuv.a"
+  # By setting DEPS, this triggers the libuv build in src/Makevars
+  DEPS="libuv/.libs/libuv.a"
+else
+  echo "** Did not find suitable libuv on your system,"
+  echo "** and not building from source because USE_BUNDLED_LIBUV=false."
+  echo "** Please install ${LIBUV_VERSION_REQUIRED} or unset USE_BUNDLED_LIBUV"
+  exit 1
 fi
 
 # For debugging
-echo "Using PKG_CFLAGS=$PKG_CFLAGS"
-echo "Using PKG_LIBS=$PKG_LIBS"
+echo "** PKG_CFLAGS=$PKG_CFLAGS"
+echo "** PKG_LIBS=$PKG_LIBS"
 # Write to Makevars
 sed -e "s|@cflags@|$PKG_CFLAGS|" -e "s|@libs@|$PKG_LIBS|" -e "s|@deps@|$DEPS|" src/Makevars.in > src/Makevars
 
