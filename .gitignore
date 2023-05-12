@@ -13,3 +13,4 @@ src/httpuv.files
 src/httpuv.includes
 .Rproj.user
 CRAN-RELEASE
+httpuv_*.tar.gz

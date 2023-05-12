@@ -3,6 +3,10 @@
 #include <string.h>
 
 
+void freeAfterClose(uv_handle_t* handle) {
+  free(handle);
+}
+
 class WriteOp {
 private:
   ExtendedWrite* pParent;
@@ -32,7 +36,9 @@ public:
     if (prefix.size() > 0) {
       res.push_back(uv_buf_init(&prefix[0], prefix.size()));
     }
-    res.push_back(buffer);
+    if (buffer.len != 0) {
+      res.push_back(buffer);
+    }
     if (suffix.size() > 0) {
       res.push_back(uv_buf_init(&suffix[0], suffix.size()));
     }
@@ -144,16 +150,23 @@ void ExtendedWrite::next() {
   } else {
     // Non-chunked mode
     if (buf.len == 0) {
-      // We've reached the end of the response body. Technically there's nothing
-      // to uv_write; we're passing a uv_buf_t, but it's actually empty. The
-      // reason we're doing it anyway is to avoid having two cleanup paths, one
-      // for chunked and one for non-chunked; it's hard enough to reason about
-      // as it is.
+      // We've reached the end of the response body. We'll exit before calling
+      // uv_write, below.
     } else {
       // This is the simple/common case; we're about to write some data to the
       // socket, then we'll come back and see if there's more to write.
     }
   }
+
+  if (prefix.size() == 0 && buf.len == 0 && suffix.size() == 0) {
+    // It's not safe to proceed with uv_write() in this situation. uv_write
+    // will not tolerate being called with 0 buffers, and clang-ASAN will
+    // complain if any buf.base is NULL (even if buf.len is 0).
+    _pDataSource->freeData(buf);
+    next();
+    return;
+  }
+
   WriteOp* pWriteOp = new WriteOp(this, prefix, buf, suffix);
   _activeWrites++;
   auto op_bufs = pWriteOp->bufs();
