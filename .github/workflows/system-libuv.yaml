@@ -1,0 +1,79 @@
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  push:
+    branches: [main, rc-**]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1' # every monday
+
+name: Test system libuv
+
+jobs:
+  R-CMD-check:
+    # Ubuntu 22.04 has libuv1-dev version 1.43, which is sufficient
+    runs-on: ubuntu-latest
+    name: Installed=${{ matrix.config.install }} Bundled=${{ matrix.config.use }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          # This one should test that we've used system and everything runs ok
+          - {install: true}
+          # This one should test for bundling log message
+          - {install: true, use: true}
+          # This one should test for failure
+          - {install: false, use: false}
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      - name: Install libuv
+        if: ${{ matrix.config.install }}
+        # If we add tests for e.g. rhel/centos, we couldn't assume apt-get
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libuv1-dev
+
+      - name: Ensure libuv is not on the system
+        if: ${{ !matrix.config.install }}
+        run: |
+          sudo apt-get remove -y libuv1-dev || true
+                   
+      - uses: r-lib/actions/check-r-package@v2
+        if: ${{ matrix.config.install }}
+        env:
+          USE_BUNDLED_LIBUV: ${{ matrix.config.use }}
+        with:
+          upload-snapshots: true
+      
+      - name: Confirm that USE_BUNDLED_LIBUV was respected
+        if: ${{ matrix.config.install }}
+        env:
+          USE_BUNDLED_LIBUV: ${{ matrix.config.use }}
+        run: |
+          if [ "$USE_BUNDLED_LIBUV" = "true" ]; then
+            grep "Using bundled copy of libuv" check/httpuv.Rcheck/00install.out
+          else
+            grep "Using libuv found by pkg-config" check/httpuv.Rcheck/00install.out
+          fi
+
+      - name: Confirm error if system libuv missing and use=false
+        if: ${{ !matrix.config.install && !matrix.config.use }}
+        env:
+          USE_BUNDLED_LIBUV: ${{ matrix.config.use }}
+        run: |
+          R CMD INSTALL . > install.log || true
+          grep "Did not find suitable libuv on your system" install.log

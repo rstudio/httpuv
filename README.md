@@ -24,6 +24,7 @@ remotes::install_github("rstudio/httpuv")
 
 Since httpuv contains C code, you'll need to make sure you're set up to install packages with compiled code. Follow the instructions at http://www.rstudio.com/ide/docs/packages/prerequisites
 
+httpuv may optionally be built using a `libuv` system package, which you can install prior to installing the R package. It goes by different names on different package managers: `libuv1-dev` (deb), `libuv-devel` (rpm), `libuv` (brew). Version 1.43 or greater is required. If `libuv` is not found on the system, it will be built from source along with the R package.
 
 ## Basic Usage
 
