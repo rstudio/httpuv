@@ -8,26 +8,40 @@ LIBUV_VERSION_REQUIRED="$PKG_CONFIG_NAME >= 1.43 $PKG_CONFIG_NAME < 2"
 # If false, will not fall back to bundled if system library not found
 USE_BUNDLED_LIBUV=`echo $USE_BUNDLED_LIBUV | tr '[:upper:]' '[:lower:]'`
 
-if [ `uname -s` = "Darwin" ]; then
-  # Always do static linking on macOS
-  PKG_CONFIG="pkg-config --static"
-else
-  PKG_CONFIG="pkg-config"
-fi
-
-# First, look for suitable libuv installed on the system 
-if [ "${USE_BUNDLED_LIBUV}" != "true" ] && ${PKG_CONFIG} --exists ''"${LIBUV_VERSION_REQUIRED}"'' 2>&1; then
-  echo "** Using libuv found by pkg-config in `${PKG_CONFIG} --variable=prefix --silence-errors ${PKG_CONFIG_NAME}`"
-  PKG_CFLAGS=`${PKG_CONFIG} --cflags --silence-errors ${PKG_CONFIG_NAME}`
-  PKG_LIBS=`${PKG_CONFIG} --libs ${PKG_CONFIG_NAME}`
-  DEPS=""
-elif [ "${USE_BUNDLED_LIBUV}" != "false" ]; then
-  # If not found, use the bundled copy (unless directed otherwise)
+bundle_libuv () {
   echo "** Using bundled copy of libuv"
   PKG_CFLAGS="-Ilibuv/include"
   PKG_LIBS="./libuv/.libs/libuv.a"
   # By setting DEPS, this triggers the libuv build in src/Makevars
   DEPS="libuv/.libs/libuv.a"
+}
+
+# First, look for suitable libuv installed on the system
+if [ "${USE_BUNDLED_LIBUV}" != "true" ] && pkg-config --exists ''"${LIBUV_VERSION_REQUIRED}"'' 2>&1; then
+  LIB_DIR="`pkg-config --variable=prefix --silence-errors ${PKG_CONFIG_NAME}`"
+  PKG_CFLAGS=`pkg-config --cflags --silence-errors ${PKG_CONFIG_NAME}`
+  PKG_LIBS=`pkg-config --libs ${PKG_CONFIG_NAME}`
+  DEPS=""
+  if [ `uname -s` = "Darwin" ]; then
+    # We need to do static linking, but the macOS linker always prefers dynamic
+    # so we'll look for libuv.a and move it somewhere else and pass that as -L
+    NEW_LIB_DIR="src/libuv/.libs"
+    mkdir -p ${NEW_LIB_DIR} && cp -f "${LIB_DIR}/lib/libuv.a" ${NEW_LIB_DIR}/libuv_static.a || true
+    if [ -f "${NEW_LIB_DIR}/libuv_static.a" ]; then
+      # Use it
+      PKG_LIBS="-L`pwd`/${NEW_LIB_DIR} -luv_static"
+      echo "** Using static libuv found by pkg-config in ${LIB_DIR}"
+    else
+      # libuv.a not there or otherwise that failed to copy, so fall back
+      echo "** pkg-config did not find static libuv"
+      bundle_libuv
+    fi
+  else
+    echo "** Using libuv found by pkg-config in ${LIB_DIR}"
+  fi
+elif [ "${USE_BUNDLED_LIBUV}" != "false" ]; then
+  # If not found, use the bundled copy (unless directed otherwise)
+  bundle_libuv
 else
   echo "** Did not find suitable libuv on your system,"
   echo "** and not building from source because USE_BUNDLED_LIBUV=false."
