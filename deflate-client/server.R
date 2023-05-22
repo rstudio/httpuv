@@ -25,4 +25,4 @@ server <- list(
   }
 )
 
-httpuv::runServer("127.0.0.1", 9100, server)
+httpuv::runServer("127.0.0.1", 14252, server)

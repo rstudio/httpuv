@@ -40,22 +40,22 @@ async function runTest(address, perMessageDeflate) {
 
 async function main() {
   await sleep(1000);
-  await runTest("ws://127.0.0.1:9100/", false);
-  await runTest("ws://127.0.0.1:9100/", true);
-  await runTest("ws://127.0.0.1:9100/", { threshold: 0 });
-  await runTest("ws://127.0.0.1:9100/", { threshold: 0, serverMaxWindowBits: 9 });
-  await runTest("ws://127.0.0.1:9100/", {
+  await runTest("ws://127.0.0.1:14252/", false);
+  await runTest("ws://127.0.0.1:14252/", true);
+  await runTest("ws://127.0.0.1:14252/", { threshold: 0 });
+  await runTest("ws://127.0.0.1:14252/", { threshold: 0, serverMaxWindowBits: 9 });
+  await runTest("ws://127.0.0.1:14252/", {
     threshold: 0,
     serverMaxWindowBits: 9,
     clientMaxWindowBits: 9
   });
-  await runTest("ws://127.0.0.1:9100/", {
+  await runTest("ws://127.0.0.1:14252/", {
     threshold: 0,
     serverMaxWindowBits: 9,
     clientMaxWindowBits: 9,
     serverNoContextTakeover: true
   });
-  await runTest("ws://127.0.0.1:9100/", {
+  await runTest("ws://127.0.0.1:14252/", {
     threshold: 0,
     serverMaxWindowBits: 9,
     clientMaxWindowBits: 9,

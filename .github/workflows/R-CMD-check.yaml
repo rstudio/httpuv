@@ -7,7 +7,7 @@ on:
     branches: [main, rc-**]
   pull_request:
   schedule:
-    - cron: '0 6 * * 1' # every monday
+    - cron: "0 6 * * 1" # every monday
 
 name: Package checks
 
@@ -20,3 +20,29 @@ jobs:
     uses: rstudio/shiny-workflows/.github/workflows/R-CMD-check.yaml@v1
     with:
       ubuntu: "ubuntu-20.04 ubuntu-latest"
+  permessage-deflate-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install R package dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+
+      - name: Install R package
+        run: R CMD INSTALL .
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18"
+
+      - name: Install npm dependencies
+        run: npm install
+        working-directory: deflate-client
+
+      - name: Run npm tests
+        run: npm test
+        working-directory: deflate-client
