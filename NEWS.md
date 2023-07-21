@@ -1,6 +1,6 @@
 # httpuv 1.6.11.9000
 
-* Remove a workaround to support `shiny` older than version 1.0.6 (2017)
+* Remove a workaround to support `shiny` older than version 1.0.6 (#378)
 
 # httpuv 1.6.11
 
