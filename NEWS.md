@@ -1,3 +1,7 @@
+# httpuv 1.6.11.9000
+
+* Remove a workaround to support `shiny` older than version 1.0.6 (2017)
+
 # httpuv 1.6.11
 
 * Fix race condition introduced in 1.6.10. (#363)

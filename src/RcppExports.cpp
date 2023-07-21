@@ -253,8 +253,6 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP httpuv_decodeURIComponent(SEXP);
-
 static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_sendWSMessage", (DL_FUNC) &_httpuv_sendWSMessage, 3},
     {"_httpuv_closeWS", (DL_FUNC) &_httpuv_closeWS, 3},
@@ -276,7 +274,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_httpuv_getRNGState", (DL_FUNC) &_httpuv_getRNGState, 0},
     {"_httpuv_wsconn_address", (DL_FUNC) &_httpuv_wsconn_address, 1},
     {"_httpuv_log_level", (DL_FUNC) &_httpuv_log_level, 1},
-    {"httpuv_decodeURIComponent", (DL_FUNC) &httpuv_decodeURIComponent, 1},
     {NULL, NULL, 0}
 };
 
