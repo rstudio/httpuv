@@ -48,13 +48,18 @@
     </div>
 
     <div class="section level2">
+<h2 class="page-header" data-toc-text="1.6.11.9000" id="httpuv-16119000">httpuv 1.6.11.9000<a class="anchor" aria-label="anchor" href="#httpuv-16119000"></a></h2>
+<ul><li>Remove a workaround to support <code>shiny</code> older than version 1.0.6 (<a href="https://github.com/rstudio/httpuv/issues/378" class="external-link">#378</a>)</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="page-header" data-toc-text="1.6.11" id="httpuv-1611">httpuv 1.6.11<small>2023-05-11</small><a class="anchor" aria-label="anchor" href="#httpuv-1611"></a></h2>
 <ul><li><p>Fix race condition introduced in 1.6.10. (<a href="https://github.com/rstudio/httpuv/issues/363" class="external-link">#363</a>)</p></li>
 <li><p>Hygiene and metadata improvements requested by CRAN. (<a href="https://github.com/rstudio/httpuv/issues/366" class="external-link">#366</a>, <a href="https://github.com/rstudio/httpuv/issues/369" class="external-link">#369</a>, <a href="https://github.com/rstudio/httpuv/issues/370" class="external-link">#370</a>)</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.6.10" id="httpuv-1610">httpuv 1.6.10<small>2023-05-08</small><a class="anchor" aria-label="anchor" href="#httpuv-1610"></a></h2>
-<ul><li>WebSocket connections now send Ping frames to the client every 20 seconds. This is only intended to serve as a keepalive for proxies that might be sitting in front of us; we don’t pay attention to whether a Pong response is received in a timely manner. (<a href="https://github.com/rstudio/httpuv/issues/359" class="external-link">#359</a>)</li></ul></div>
+<ul><li>WebSocket connections now send Ping frames to the client every 20 seconds. This is only intended to serve as a keepalive for proxies that might be sitting in front of us; we don’t pay attention to whether a Pong response is received in a timely manner. (<a href="https://github.com/rstudio/httpuv/issues/359" class="external-link">#359</a>)</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.6.9" id="httpuv-169">httpuv 1.6.9<small>2023-02-14</small><a class="anchor" aria-label="anchor" href="#httpuv-169"></a></h2>
 <ul><li><p>Fixed <a href="https://github.com/rstudio/httpuv/issues/354" class="external-link">#354</a>: The incorrect method was called to clear a <code>vector</code>. (<a href="https://github.com/rstudio/httpuv/issues/355" class="external-link">#355</a>)</p></li>
@@ -62,7 +67,8 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.6.8" id="httpuv-168">httpuv 1.6.8<small>2023-01-12</small><a class="anchor" aria-label="anchor" href="#httpuv-168"></a></h2>
-<ul><li>Fixed <a href="https://github.com/rstudio/httpuv/issues/351" class="external-link">#351</a>: A race condition could cause httpuv to crash when starting the background thread for I/O. (<a href="https://github.com/rstudio/httpuv/issues/352" class="external-link">#352</a>)</li></ul></div>
+<ul><li>Fixed <a href="https://github.com/rstudio/httpuv/issues/351" class="external-link">#351</a>: A race condition could cause httpuv to crash when starting the background thread for I/O. (<a href="https://github.com/rstudio/httpuv/issues/352" class="external-link">#352</a>)</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.6.7" id="httpuv-167">httpuv 1.6.7<small>2022-12-14</small><a class="anchor" aria-label="anchor" href="#httpuv-167"></a></h2>
 <ul><li><p>Fixed rstudio/shiny#3741: The <code>TZ</code> environment variable could get unset in some cases. (<a href="https://github.com/rstudio/httpuv/issues/346" class="external-link">#346</a>)</p></li>
@@ -86,7 +92,8 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.6.3" id="httpuv-163">httpuv 1.6.3<small>2021-09-09</small><a class="anchor" aria-label="anchor" href="#httpuv-163"></a></h2>
-<ul><li>Increased required version of Rcpp to 1.0.7, to work around an incompatibility between Rcpp 1.0.6 and packages compiled with Rcpp 1.0.7.</li></ul></div>
+<ul><li>Increased required version of Rcpp to 1.0.7, to work around an incompatibility between Rcpp 1.0.6 and packages compiled with Rcpp 1.0.7.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.6.2" id="httpuv-162">httpuv 1.6.2<small>2021-08-18</small><a class="anchor" aria-label="anchor" href="#httpuv-162"></a></h2>
 <ul><li><p>Fixed <a href="https://github.com/rstudio/httpuv/issues/282" class="external-link">#282</a>: <code><a href="../reference/startServer.html">startPipeServer()</a></code> failed with “invalid argument” error after update to libuv 1.37.0. (<a href="https://github.com/rstudio/httpuv/issues/283" class="external-link">#283</a>)</p></li>
@@ -95,10 +102,12 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.6.1" id="httpuv-161">httpuv 1.6.1<small>2021-05-07</small><a class="anchor" aria-label="anchor" href="#httpuv-161"></a></h2>
-<ul><li>The <code>timegm()</code> function is a non-standard GNU extension, so it has been replaced with an internal <code>timegm2()</code> function. (<a href="https://github.com/rstudio/httpuv/issues/300" class="external-link">#300</a>)</li></ul></div>
+<ul><li>The <code>timegm()</code> function is a non-standard GNU extension, so it has been replaced with an internal <code>timegm2()</code> function. (<a href="https://github.com/rstudio/httpuv/issues/300" class="external-link">#300</a>)</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.6.0" id="httpuv-160">httpuv 1.6.0<small>2021-04-23</small><a class="anchor" aria-label="anchor" href="#httpuv-160"></a></h2>
-<ul><li>Remove BH dependency. httpuv now requires a compiler which supports C++11. (<a href="https://github.com/rstudio/httpuv/issues/297" class="external-link">#297</a>)</li></ul></div>
+<ul><li>Remove BH dependency. httpuv now requires a compiler which supports C++11. (<a href="https://github.com/rstudio/httpuv/issues/297" class="external-link">#297</a>)</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.5.5" id="httpuv-155">httpuv 1.5.5<small>2021-01-13</small><a class="anchor" aria-label="anchor" href="#httpuv-155"></a></h2>
 <ul><li><p>Fix SHA1 calculation, and thus WebSocket server handshakes, on big-endian systems. (<a href="https://github.com/rstudio/httpuv/issues/284" class="external-link">#284</a>)</p></li>
@@ -152,16 +161,20 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.4.5.1" id="httpuv-1451">httpuv 1.4.5.1<small>2018-12-18</small><a class="anchor" aria-label="anchor" href="#httpuv-1451"></a></h2>
-<ul><li>Moved the <code>C_VISIBILITY</code> from <code>PKG_CPPFLAGS</code> to <code>PKG_CFLAGS</code>, and added <code>CXX_VISIBILITY</code> to <code>PKG_CXXFLAGS</code>, as requested by the CRAN maintainers.</li></ul></div>
+<ul><li>Moved the <code>C_VISIBILITY</code> from <code>PKG_CPPFLAGS</code> to <code>PKG_CFLAGS</code>, and added <code>CXX_VISIBILITY</code> to <code>PKG_CXXFLAGS</code>, as requested by the CRAN maintainers.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.4.5" id="httpuv-145">httpuv 1.4.5<small>2018-07-19</small><a class="anchor" aria-label="anchor" href="#httpuv-145"></a></h2>
-<ul><li>Fixed <a href="https://github.com/rstudio/httpuv/issues/161" class="external-link">#161</a>: An HTTP connection could get upgraded to a WebSocket too early, which sometimes resulted in closed connections. (<a href="https://github.com/rstudio/httpuv/issues/162" class="external-link">#162</a>)</li></ul></div>
+<ul><li>Fixed <a href="https://github.com/rstudio/httpuv/issues/161" class="external-link">#161</a>: An HTTP connection could get upgraded to a WebSocket too early, which sometimes resulted in closed connections. (<a href="https://github.com/rstudio/httpuv/issues/162" class="external-link">#162</a>)</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.4.4.2" id="httpuv-1442">httpuv 1.4.4.2<small>2018-07-02</small><a class="anchor" aria-label="anchor" href="#httpuv-1442"></a></h2>
-<ul><li>Changed compiler flags to work with gcc 8.10 on Windows, so that httpuv will build with the new versions of Rtools. (<a href="https://github.com/rstudio/httpuv/issues/160" class="external-link">#160</a>)</li></ul></div>
+<ul><li>Changed compiler flags to work with gcc 8.10 on Windows, so that httpuv will build with the new versions of Rtools. (<a href="https://github.com/rstudio/httpuv/issues/160" class="external-link">#160</a>)</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.4.4.1" id="httpuv-1441">httpuv 1.4.4.1<small>2018-06-18</small><a class="anchor" aria-label="anchor" href="#httpuv-1441"></a></h2>
-<ul><li>Remove <code>_GLIBCXX_ASSERTIONS</code> compile flag, which caused CRAN checks to fail on gcc 7.</li></ul></div>
+<ul><li>Remove <code>_GLIBCXX_ASSERTIONS</code> compile flag, which caused CRAN checks to fail on gcc 7.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.4.4" id="httpuv-144">httpuv 1.4.4<a class="anchor" aria-label="anchor" href="#httpuv-144"></a></h2>
 <ul><li><p>Fixed <a href="https://github.com/rstudio/httpuv/issues/144" class="external-link">#144</a>: Before closing a handle, make sure that it is not already closing. (<a href="https://github.com/rstudio/httpuv/issues/145" class="external-link">#145</a>)</p></li>
@@ -207,7 +220,8 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.3.5" id="httpuv-135">httpuv 1.3.5<small>2017-07-04</small><a class="anchor" aria-label="anchor" href="#httpuv-135"></a></h2>
-<ul><li>Added function <code>getRNGState</code>.</li></ul></div>
+<ul><li>Added function <code>getRNGState</code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.3.3" id="httpuv-133">httpuv 1.3.3<small>2015-08-04</small><a class="anchor" aria-label="anchor" href="#httpuv-133"></a></h2>
 <ul><li><p>Error messages are now sent as UTF-8.</p></li>
@@ -220,13 +234,16 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.3.1" id="httpuv-131">httpuv 1.3.1<a class="anchor" aria-label="anchor" href="#httpuv-131"></a></h2>
-<ul><li>Fix bug where websocket headers split over multiple packets would cause the payload to be parsed incorrectly.</li></ul></div>
+<ul><li>Fix bug where websocket headers split over multiple packets would cause the payload to be parsed incorrectly.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.3.0" id="httpuv-130">httpuv 1.3.0<small>2014-04-04</small><a class="anchor" aria-label="anchor" href="#httpuv-130"></a></h2>
-<ul><li>Add experimental support for running httpuv servers in the background (see <code><a href="../reference/startDaemonizedServer.html">?startDaemonizedServer</a></code> and <code><a href="../reference/stopDaemonizedServer.html">?stopDaemonizedServer</a></code>). Many thanks to Héctor Corrada Bravo for the contribution!</li></ul></div>
+<ul><li>Add experimental support for running httpuv servers in the background (see <code><a href="../reference/startDaemonizedServer.html">?startDaemonizedServer</a></code> and <code><a href="../reference/stopDaemonizedServer.html">?stopDaemonizedServer</a></code>). Many thanks to Héctor Corrada Bravo for the contribution!</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.2.3" id="httpuv-123">httpuv 1.2.3<small>2014-02-19</small><a class="anchor" aria-label="anchor" href="#httpuv-123"></a></h2>
-<ul><li>Require Rcpp 0.11.0. The absence of this requirement made it too easy for Windows and Mac users with Rcpp 0.10 already installed to grab httpuv 1.2.2 binaries from CRAN, which are built against Rcpp 0.11, causing bad crashes due to Rcpp’s linkage changes.</li></ul></div>
+<ul><li>Require Rcpp 0.11.0. The absence of this requirement made it too easy for Windows and Mac users with Rcpp 0.10 already installed to grab httpuv 1.2.2 binaries from CRAN, which are built against Rcpp 0.11, causing bad crashes due to Rcpp’s linkage changes.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.2.2" id="httpuv-122">httpuv 1.2.2<small>2014-01-31</small><a class="anchor" aria-label="anchor" href="#httpuv-122"></a></h2>
 <ul><li><p>Export base64 encoding function <code>rawToBase64</code>.</p></li>
@@ -234,7 +251,8 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.2.1" id="httpuv-121">httpuv 1.2.1<small>2013-12-07</small><a class="anchor" aria-label="anchor" href="#httpuv-121"></a></h2>
-<ul><li>Solaris 10 compatibility fixes (courtesy of Dr. Brian Ripley).</li></ul></div>
+<ul><li>Solaris 10 compatibility fixes (courtesy of Dr. Brian Ripley).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.2.0" id="httpuv-120">httpuv 1.2.0<small>2013-10-14</small><a class="anchor" aria-label="anchor" href="#httpuv-120"></a></h2>
 <ul><li><p>Fix IE10 websocket handshake failure.</p></li>
@@ -251,7 +269,8 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.0.6.3" id="httpuv-1063">httpuv 1.0.6.3<small>2013-06-01</small><a class="anchor" aria-label="anchor" href="#httpuv-1063"></a></h2>
-<ul><li>Greatly improved stability under heavy load by ignoring SIGPIPE.</li></ul></div>
+<ul><li>Greatly improved stability under heavy load by ignoring SIGPIPE.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.0.6.2" id="httpuv-1062">httpuv 1.0.6.2<a class="anchor" aria-label="anchor" href="#httpuv-1062"></a></h2>
 <ul><li><p>Work properly with <code>body=c(file="foo")</code>. Previously this only worked if body was a list, not a character vector.</p></li>
@@ -261,7 +280,8 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.0.6.1" id="httpuv-1061">httpuv 1.0.6.1<a class="anchor" aria-label="anchor" href="#httpuv-1061"></a></h2>
-<ul><li>Make request available on websocket object.</li></ul></div>
+<ul><li>Make request available on websocket object.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.0.6" id="httpuv-106">httpuv 1.0.6<a class="anchor" aria-label="anchor" href="#httpuv-106"></a></h2>
 <ul><li><p>Support listening on pipes (Unix domain sockets have been tested, Windows named pipes have not been tested but may work).</p></li>
@@ -269,7 +289,8 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.0.5" id="httpuv-105">httpuv 1.0.5<small>2013-03-11</small><a class="anchor" aria-label="anchor" href="#httpuv-105"></a></h2>
-<ul><li>Initial release.</li></ul></div>
+<ul><li>Initial release.</li>
+</ul></div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
