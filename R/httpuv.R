@@ -763,8 +763,3 @@ rawToBase64 <- function(x) {
 #' @export
 startDaemonizedServer <- startServer
 
-
-# Needed so that Rcpp registers the 'httpuv_decodeURIComponent' symbol
-legacy_dummy <- function(value){
-  .Call('httpuv_decodeURIComponent', PACKAGE = "httpuv", value)
-}
