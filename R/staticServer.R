@@ -55,6 +55,7 @@ runStaticServer <- function(
   if (background) return(invisible(server))
 
   on.exit(stopServer(server))
+  message("Press Esc or Ctrl + C to stop the server")
   service(0)
 }
 
