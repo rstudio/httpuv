@@ -26,7 +26,9 @@ randomPort <- function(min = 1024L, max = 49151L, host = "127.0.0.1", n = 20) {
 
   n <- min(n, length(valid_ports))
   # Try up to n ports
-  for (port in sample(valid_ports, n)) {
+  try_ports <- if (n < 2) valid_ports else sample(valid_ports, n)
+
+  for (port in try_ports) {
     s <- NULL
 
     # Check if port is open
