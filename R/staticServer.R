@@ -36,6 +36,7 @@ runStaticServer <- function(
     "`port` must be a single integer" = length(port) == 1
   )
 
+  browse <- isTRUE(browse)
   port <- requested_or_random_port(port, host)
   root <- staticPath(dir)
 
@@ -46,9 +47,11 @@ runStaticServer <- function(
   )
 
   message("Serving: '", dir, "'")
-  message("View at: http://", host, ":", port, sep = "")
+  if (!interactive() || !browse) {
+    message("View at: http://", host, ":", port, sep = "")
+  }
 
-  if (isTRUE(browse)) {
+  if (browse) {
     utils::browseURL(paste0("http://", host, ":", port))
   }
 
