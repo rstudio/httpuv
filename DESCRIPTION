@@ -66,5 +66,6 @@ Collate:
     'httpuv.R'
     'random_port.R'
     'server.R'
+    'staticServer.R'
     'static_paths.R'
     'utils.R'
