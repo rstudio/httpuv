@@ -47,9 +47,7 @@ runStaticServer <- function(
   )
 
   message("Serving: '", dir, "'")
-  if (!interactive() || !browse) {
-    message("View at: http://", host, ":", port, sep = "")
-  }
+  message("View at: http://", host, ":", port, sep = "")
 
   if (browse) {
     utils::browseURL(paste0("http://", host, ":", port))
