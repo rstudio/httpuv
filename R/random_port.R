@@ -29,22 +29,29 @@ randomPort <- function(min = 1024L, max = 49151L, host = "127.0.0.1", n = 20) {
   try_ports <- if (n < 2) valid_ports else sample(valid_ports, n)
 
   for (port in try_ports) {
-    s <- NULL
-
-    # Check if port is open
-    tryCatch(
-      s <- startServer(host, port, list(), quiet = TRUE),
-      error = function(e) { }
-    )
-    if (!is.null(s)) {
-      s$stop()
+    if (is_port_available(port, host)) {
       return(port)
     }
   }
 
+  error_unavailable_port()
+}
+
+is_port_available <- function(port, host = "127.0.0.1") {
+  tryCatch(
+    {
+      s <- startServer(host, port, list(), quiet = TRUE)
+      s$stop()
+      TRUE
+    },
+    error = function(e) FALSE
+  )
+}
+
+error_unavailable_port <- function(message = "Cannot find an available port.") {
   stop(
     structure(
-      list(message = "Cannot find an available port.", call = sys.call()),
+      list(message = message, call = sys.call(-1)),
       class = c("httpuv_unavailable_port", "error", "condition")
     )
   )
