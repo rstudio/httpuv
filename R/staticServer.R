@@ -26,18 +26,25 @@
 runStaticServer <- function(
   dir = getwd(),
   host = "127.0.0.1",
-  port = 7446,
+  port = NULL,
   background = FALSE,
   browse = interactive()
 ) {
-  stopifnot(
-    "`port` must be an integer" = is.numeric(port),
-    "`port` must be an integer" = port == as.integer(port),
-    "`port` must be a single integer" = length(port) == 1
-  )
+  if (is.null(port)) {
+    port <- if (is_port_available(7446, host)) 7446 else randomPort(host = host)
+  } else {
+    stopifnot(
+      "`port` must be an integer" = is.numeric(port),
+      "`port` must be an integer" = port == as.integer(port),
+      "`port` must be a single integer" = length(port) == 1
+    )
+
+    if (!is_port_available(port, host)) {
+      error_unavailable_port(paste0("Port ", port, " is not available"))
+    }
+  }
 
   browse <- isTRUE(browse)
-  port <- requested_or_random_port(port, host)
   root <- staticPath(dir)
 
   server <- startServer(
@@ -58,23 +65,4 @@ runStaticServer <- function(
   on.exit(stopServer(server))
   message("Press Esc or Ctrl + C to stop the server")
   service(0)
-}
-
-requested_or_random_port <- function(port, host = "127.0.0.1") {
-  tryCatch(
-    # Is the requested port open?
-    randomPort(port, port, host = host),
-    error = function(err) {
-      msg <- conditionMessage(err)
-      if (!grepl("Cannot find an available port", msg, fixed = TRUE)) {
-        stop(msg)
-      }
-      warning(
-        "Port ", port, " is not available. Using a random port.",
-        immediate. = TRUE,
-        call. = FALSE
-      )
-      randomPort(host = host)
-    }
-  )
 }
