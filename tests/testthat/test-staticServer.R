@@ -60,9 +60,6 @@ test_that("runStaticServer() throws an error for invalid ports", {
     runStaticServer(path_example_site(), port = 0, background = TRUE)
   )
   expect_error(
-    runStaticServer(path_example_site(), port = sample(unsafe_ports, 1), background = TRUE)
-  )
-  expect_error(
     runStaticServer(path_example_site(), port = 700:720, background = TRUE)
   )
   expect_error(
@@ -70,6 +67,22 @@ test_that("runStaticServer() throws an error for invalid ports", {
   )
   expect_error(
     runStaticServer(path_example_site(), port = "1234", background = TRUE)
+  )
+})
+
+test_that("runStaticServer() throws an error if the requested port is used", {
+  on.exit({ stopAllServers() }) # in case of a test failure
+
+  find_unsafe_port <- function() {
+    for (port in unsafe_ports) {
+      if (!is_port_available(port)) {
+        return(port)
+      }
+    }
+  }
+
+  expect_error(
+    runStaticServer(path_example_site(), port = find_unsafe_port(), background = TRUE)
   )
 })
 
