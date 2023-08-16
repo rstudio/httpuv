@@ -49,7 +49,9 @@ runStaticServer <- function(
     )
 
     if (!is_port_available(port, host)) {
-      error_unavailable_port(paste0("Port ", port, " is not available"))
+      error_unavailable_port(
+        paste("Port", port, "is not available on host", host)
+      )
     }
   }
 
