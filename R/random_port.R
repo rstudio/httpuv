@@ -22,6 +22,8 @@
 #'
 #' @export
 randomPort <- function(min = 1024L, max = 49151L, host = "127.0.0.1", n = 20) {
+  min <- max(1L, min)
+  max <- min(max, 65535L)
   valid_ports <- setdiff(seq.int(min, max), unsafe_ports)
 
   n <- min(n, length(valid_ports))
