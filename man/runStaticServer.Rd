@@ -40,7 +40,8 @@ server runs in the foreground and is accessible at \verb{http://127.0.0.1:7446}.
 When \code{background = TRUE}, the \code{server} object is returned invisibly.
 }
 \description{
-Run a server to host a static directory.
+\code{runStaticServer()} provides a convenient interface to start a server to host
+a single static directory, either in the foreground or the background.
 }
 \examples{
 \dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
