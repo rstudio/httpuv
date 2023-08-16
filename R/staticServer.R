@@ -9,6 +9,7 @@
 #'
 #' @param dir The directory to serve. Defaults to the current working directory.
 #' @inheritParams startServer
+#' @inheritDotParams staticPath
 #' @param background Whether to run the server in the background. By default,
 #'   the server runs in the foreground and blocks the R console. You can stop
 #'   the server by interrupting it with `Ctrl + C`.
@@ -34,10 +35,11 @@ runStaticServer <- function(
   dir = getwd(),
   host = "127.0.0.1",
   port = NULL,
+  ...,
   background = FALSE,
   browse = interactive()
 ) {
-  root <- staticPath(dir)
+  root <- staticPath(dir, ...)
 
   if (is.null(port)) {
     port <- if (is_port_available(7446, host)) 7446 else randomPort(host = host)

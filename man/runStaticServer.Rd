@@ -8,6 +8,7 @@ runStaticServer(
   dir = getwd(),
   host = "127.0.0.1",
   port = NULL,
+  ...,
   background = FALSE,
   browse = interactive()
 )
@@ -21,6 +22,34 @@ server, or \code{"0.0.0.0"} to listen on all IP addresses.}
 \item{port}{A number or integer that indicates the server port that should be
 listened on. Note that on most Unix-like systems including Linux and Mac OS
 X, port numbers smaller than 1025 require root privileges.}
+
+\item{...}{
+  Arguments passed on to \code{\link[=staticPath]{staticPath}}
+  \describe{
+    \item{\code{path}}{The local path.}
+    \item{\code{indexhtml}}{If an index.html file is present, should it be served up
+when the client requests the static path or any subdirectory?}
+    \item{\code{fallthrough}}{With the default value, \code{FALSE}, if a request is made
+for a file that doesn't exist, then httpuv will immediately send a 404
+response from the background I/O thread, without needing to call back into
+the main R thread. This offers the best performance. If the value is
+\code{TRUE}, then instead of sending a 404 response, httpuv will call the
+application's \code{call} function, and allow it to handle the request.}
+    \item{\code{html_charset}}{When HTML files are served, the value that will be
+provided for \code{charset} in the Content-Type header. For example, with
+the default value, \code{"utf-8"}, the header is \code{Content-Type:
+  text/html; charset=utf-8}. If \code{""} is used, then no \code{charset}
+will be added in the Content-Type header.}
+    \item{\code{headers}}{Additional headers and values that will be included in the
+response.}
+    \item{\code{validation}}{An optional validation pattern. Presently, the only type of
+validation supported is an exact string match of a header. For example, if
+\code{validation} is \code{'"abc" = "xyz"'}, then HTTP requests must have a
+header named \code{abc} (case-insensitive) with the value \code{xyz}
+(case-sensitive). If a request does not have a matching header, than httpuv
+will give a 403 Forbidden response. If the \code{character(0)} (the
+default), then no validation check will be performed.}
+  }}
 
 \item{background}{Whether to run the server in the background. By default,
 the server runs in the foreground and blocks the R console. You can stop
