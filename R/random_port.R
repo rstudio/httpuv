@@ -22,25 +22,41 @@
 #'
 #' @export
 randomPort <- function(min = 1024L, max = 49151L, host = "127.0.0.1", n = 20) {
+  min <- max(1L, min)
+  max <- min(max, 65535L)
   valid_ports <- setdiff(seq.int(min, max), unsafe_ports)
 
   n <- min(n, length(valid_ports))
   # Try up to n ports
-  for (port in sample(valid_ports, n)) {
-    s <- NULL
+  try_ports <- if (n < 2) valid_ports else sample(valid_ports, n)
 
-    # Check if port is open
-    tryCatch(
-      s <- startServer(host, port, list(), quiet = TRUE),
-      error = function(e) { }
-    )
-    if (!is.null(s)) {
-      s$stop()
+  for (port in try_ports) {
+    if (is_port_available(port, host)) {
       return(port)
     }
   }
 
-  stop("Cannot find an available port.")
+  error_unavailable_port()
+}
+
+is_port_available <- function(port, host = "127.0.0.1") {
+  tryCatch(
+    {
+      s <- startServer(host, port, list(), quiet = TRUE)
+      s$stop()
+      TRUE
+    },
+    error = function(e) FALSE
+  )
+}
+
+error_unavailable_port <- function(message = "Cannot find an available port.") {
+  stop(
+    structure(
+      list(message = message, call = sys.call(-1)),
+      class = c("httpuv_unavailable_port", "error", "condition")
+    )
+  )
 }
 
 # Ports that are considered unsafe by Chrome
