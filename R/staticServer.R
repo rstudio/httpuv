@@ -45,7 +45,9 @@ runStaticServer <- function(
     stopifnot(
       "`port` must be an integer" = is.numeric(port),
       "`port` must be an integer" = port == as.integer(port),
-      "`port` must be a single integer" = length(port) == 1
+      "`port` must be a single integer" = length(port) == 1,
+      "`port` must be a positive integer" = port > 0,
+      "`port` must be less than 65536" = port < 65536
     )
 
     if (!is_port_available(port, host)) {
