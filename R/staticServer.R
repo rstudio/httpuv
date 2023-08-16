@@ -30,6 +30,8 @@ runStaticServer <- function(
   background = FALSE,
   browse = interactive()
 ) {
+  root <- staticPath(dir)
+
   if (is.null(port)) {
     port <- if (is_port_available(7446, host)) 7446 else randomPort(host = host)
   } else {
@@ -44,9 +46,6 @@ runStaticServer <- function(
     }
   }
 
-  browse <- isTRUE(browse)
-  root <- staticPath(dir)
-
   server <- startServer(
     app = list(staticPaths = list("/" = root)),
     host = host,
@@ -56,11 +55,13 @@ runStaticServer <- function(
   message("Serving: '", dir, "'")
   message("View at: http://", host, ":", port, sep = "")
 
-  if (browse) {
+  if (isTRUE(browse)) {
     utils::browseURL(paste0("http://", host, ":", port))
   }
 
-  if (background) return(invisible(server))
+  if (isTRUE(background)) {
+    return(invisible(server))
+  }
 
   on.exit(stopServer(server))
   message("Press Esc or Ctrl + C to stop the server")
