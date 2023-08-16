@@ -42,7 +42,12 @@ randomPort <- function(min = 1024L, max = 49151L, host = "127.0.0.1", n = 20) {
     }
   }
 
-  stop("Cannot find an available port.")
+  stop(
+    structure(
+      list(message = "Cannot find an available port.", call = sys.call()),
+      class = c("httpuv_unavailable_port", "error", "condition")
+    )
+  )
 }
 
 # Ports that are considered unsafe by Chrome
