@@ -7,7 +7,7 @@
 runStaticServer(
   dir = getwd(),
   host = "127.0.0.1",
-  port = 7446,
+  port = NULL,
   background = FALSE,
   browse = interactive()
 )
@@ -30,6 +30,14 @@ When \code{background = TRUE}, the server will run in the background and will
 process requests when the R console is idle. To stop a background server,
 call \code{\link[=stopAllServers]{stopAllServers()}} or call \code{\link[=stopServer]{stopServer()}} on the server object
 returned (invisibly) by this function.}
+
+\item{browse}{Whether to automatically open the served directory in a web
+browser. Defaults to \code{TRUE} when running interactively.}
+}
+\value{
+Starts a server on the specified host and port. By default the
+server runs in the foreground and is accessible at \verb{http://127.0.0.1:7446}.
+When \code{background = TRUE}, the \code{server} object is returned invisibly.
 }
 \description{
 Run a server to host a static directory.

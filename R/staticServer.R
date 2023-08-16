@@ -16,6 +16,12 @@
 #'   process requests when the R console is idle. To stop a background server,
 #'   call [stopAllServers()] or call [stopServer()] on the server object
 #'   returned (invisibly) by this function.
+#' @param browse Whether to automatically open the served directory in a web
+#'   browser. Defaults to `TRUE` when running interactively.
+#'
+#' @returns Starts a server on the specified host and port. By default the
+#'   server runs in the foreground and is accessible at `http://127.0.0.1:7446`.
+#'   When `background = TRUE`, the `server` object is returned invisibly.
 #'
 #' @seealso [runServer()] provides a similar interface for running a dynamic
 #'   app server. Both `runStaticServer()` and [runServer()] are built on top of
