@@ -3,8 +3,8 @@ Package: httpuv
 Title: HTTP and WebSocket Server Library
 Version: 1.6.12
 Authors@R: c(
-    person("Joe", "Cheng", , "joe@rstudio.com", role = "aut"),
-    person("Winston", "Chang", , "winston@rstudio.com", role = c("aut", "cre")),
+    person("Joe", "Cheng", , "joe@posit.co", role = "aut"),
+    person("Winston", "Chang", , "winston@posit.co", role = c("aut", "cre")),
     person("Posit, PBC", "fnd", role = "cph"),
     person("Hector", "Corrada Bravo", role = "ctb"),
     person("Jeroen", "Ooms", role = "ctb"),
@@ -66,7 +66,7 @@ Suggests:
     curl,
     testthat,
     websocket
-LinkingTo: 
+LinkingTo:
     later,
     Rcpp
 Encoding: UTF-8
