@@ -1,8 +1,8 @@
-# httpuv 1.6.11.9000
-
-* Remove a workaround to support `shiny` older than version 1.0.6 (#378)
+# httpuv 1.6.12
 
 * New `runStaticServer()` provides a convenient interface for serving a directory of static files. (#380)
+
+* Remove a workaround to support `shiny` older than version 1.0.6 (#378)
 
 # httpuv 1.6.11
 
