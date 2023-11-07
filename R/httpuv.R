@@ -440,8 +440,8 @@ WebSocket <- R6Class(
 #' @param host A string that is a valid IPv4 address that is owned by this
 #'   server, or \code{"0.0.0.0"} to listen on all IP addresses.
 #' @param port A number or integer that indicates the server port that should be
-#'   listened on. Note that on most Unix-like systems including Linux and Mac OS
-#'   X, port numbers smaller than 1025 require root privileges.
+#'   listened on. Note that on most Unix-like systems including Linux and macOS,
+#'   port numbers smaller than 1024 require root privileges.
 #' @param app A collection of functions that define your application. See
 #'   Details.
 #' @param quiet If \code{TRUE}, suppress error messages from starting app.
@@ -683,8 +683,8 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 #'   represents all IPv4 addresses and \code{"::/0"} represents all IPv6
 #'   addresses.
 #' @param port A number or integer that indicates the server port that should be
-#'   listened on. Note that on most Unix-like systems including Linux and Mac OS
-#'   X, port numbers smaller than 1025 require root privileges.
+#'   listened on. Note that on most Unix-like systems including Linux and macOS,
+#'   port numbers smaller than 1024 require root privileges.
 #' @param app A collection of functions that define your application. See
 #'   \code{\link{startServer}}.
 #' @param interruptIntervalMs Deprecated (last used in httpuv 1.3.5).
