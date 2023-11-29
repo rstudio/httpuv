@@ -220,7 +220,7 @@ std::shared_ptr<HttpResponse> listToResponse(
       Rcpp::as<bool>(response["bodyFileOwned"])
     );
     if (ret != FDS_OK) {
-      REprintf(pFDS->lastErrorMessage().c_str());
+      REprintf("%s", pFDS->lastErrorMessage().c_str());
       return error_response(pRequest, 500);
     }
     pDataSource = pFDS;
