@@ -1,5 +1,7 @@
 # httpuv (development version)
 
+* Closed #388: Fix R CMD check warning re error() format strings (for r-devel). (#389)
+
 # httpuv 1.6.12
 
 * New `runStaticServer()` provides a convenient interface for serving a directory of static files. (#380)
