@@ -1,4 +1,4 @@
-# httpuv (development version)
+# httpuv 1.6.13
 
 * Closed #388: Fix R CMD check warning re error() format strings (for r-devel). (#389)
 
