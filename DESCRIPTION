@@ -1,7 +1,7 @@
 Type: Package
 Package: httpuv
 Title: HTTP and WebSocket Server Library
-Version: 1.6.13
+Version: 1.6.13.9000
 Authors@R: c(
     person("Joe", "Cheng", , "joe@posit.co", role = "aut"),
     person("Winston", "Chang", , "winston@posit.co", role = c("aut", "cre")),
