@@ -1,6 +1,6 @@
 # httpuv (development version)
 
-# httpuv 1.6.13.9000
+# httpuv 1.6.14
 
 * Updated Makevars.ucrt for upcoming release of Rtools (thanks to Tomas Kalibera).
 
