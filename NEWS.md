@@ -1,5 +1,9 @@
 # httpuv (development version)
 
+# httpuv 1.6.13.9000
+
+* Updated Makevars.ucrt for upcoming release of Rtools (thanks to Tomas Kalibera).
+
 # httpuv 1.6.13
 
 * Closed #388: Fix R CMD check warning re error() format strings (for r-devel). (#389)

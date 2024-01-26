@@ -1,5 +1,12 @@
-PKG_LIBS = ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o \
-	-luv -lpthread -lws2_32 -lkernel32 -lpsapi -liphlpapi -lshell32 -luserenv -lz
+PKG_LIBS = ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o
+
+ifeq (,$(shell pkg-config --version 2>/dev/null))
+   PKG_LIBS += \
+	-luv -lpthread -lws2_32 -lkernel32 -lpsapi -liphlpapi -lshell32 -luserenv -lz \
+        -ldbghelp -luuid -lole32
+else
+   PKG_LIBS += $(shell pkg-config --libs zlib libuv)
+endif
 
 PKG_CFLAGS = $(C_VISIBILITY) -DSTRICT_R_HEADERS
 PKG_CXXFLAGS = $(CXX_VISIBILITY) -DSTRICT_R_HEADERS
