@@ -13,8 +13,8 @@ represents all IPv4 addresses and \code{"::/0"} represents all IPv6
 addresses.}
 
 \item{port}{A number or integer that indicates the server port that should be
-listened on. Note that on most Unix-like systems including Linux and Mac OS
-X, port numbers smaller than 1025 require root privileges.}
+listened on. Note that on most Unix-like systems including Linux and macOS,
+port numbers smaller than 1024 require root privileges.}
 
 \item{app}{A collection of functions that define your application. See
 \code{\link{startServer}}.}

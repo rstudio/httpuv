@@ -14,8 +14,8 @@ startPipeServer(name, mask, app, quiet = FALSE)
 server, or \code{"0.0.0.0"} to listen on all IP addresses.}
 
 \item{port}{A number or integer that indicates the server port that should be
-listened on. Note that on most Unix-like systems including Linux and Mac OS
-X, port numbers smaller than 1025 require root privileges.}
+listened on. Note that on most Unix-like systems including Linux and macOS,
+port numbers smaller than 1024 require root privileges.}
 
 \item{app}{A collection of functions that define your application. See
 Details.}
