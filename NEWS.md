@@ -4,6 +4,8 @@
 
 * Updated Makevars.ucrt for upcoming release of Rtools (thanks to Tomas Kalibera).
 
+* Fixed linking to zlib on macOS (thanks to @jeroen). (#387)
+
 # httpuv 1.6.13
 
 * Closed #388: Fix R CMD check warning re error() format strings (for r-devel). (#389)
