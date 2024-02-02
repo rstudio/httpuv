@@ -69,7 +69,12 @@ runStaticServer <- function(
   message("View at: http://", host, ":", port, sep = "")
 
   if (isTRUE(browse)) {
-    utils::browseURL(paste0("http://", host, ":", port))
+    tryCatch(
+      utils::browseURL(paste0("http://", host, ":", port)),
+      error = function(err) {
+        message("Could not open browser due to error in `utils::browseURL()`: ", conditionMessage(err))
+      }
+    )
   }
 
   if (isTRUE(background)) {

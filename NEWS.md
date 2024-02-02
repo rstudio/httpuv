@@ -1,5 +1,7 @@
 # httpuv (development version)
 
+* `runStaticServer()` no longer fails if `browse = TRUE` but `utils::browseURL()` is unable to open the server. (#395)
+
 # httpuv 1.6.14
 
 * Updated Makevars.ucrt for upcoming release of Rtools (thanks to Tomas Kalibera).
