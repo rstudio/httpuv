@@ -73,16 +73,10 @@ test_that("runStaticServer() throws an error for invalid ports", {
 test_that("runStaticServer() throws an error if the requested port is used", {
   on.exit({ stopAllServers() }) # in case of a test failure
 
-  find_unsafe_port <- function() {
-    for (port in unsafe_ports) {
-      if (!is_port_available(port)) {
-        return(port)
-      }
-    }
-  }
+  s1 <- runStaticServer(path_example_site(), background = TRUE, browse = FALSE)
 
   expect_error(
-    runStaticServer(path_example_site(), port = find_unsafe_port(), background = TRUE)
+    runStaticServer(path_example_site(), port = s1$getPort(), background = TRUE, browse = FALSE)
   )
 })
 
