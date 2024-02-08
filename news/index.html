@@ -49,8 +49,8 @@
 
     <div class="section level2">
 <h2 class="page-header" data-toc-text="development version" id="httpuv-development-version">httpuv (development version)<a class="anchor" aria-label="anchor" href="#httpuv-development-version"></a></h2>
-<ul><li>
-<code><a href="../reference/runStaticServer.html">runStaticServer()</a></code> no longer fails if <code>browse = TRUE</code> but <code><a href="https://rdrr.io/r/utils/browseURL.html" class="external-link">utils::browseURL()</a></code> is unable to open the server. (<a href="https://github.com/rstudio/httpuv/issues/395" class="external-link">#395</a>)</li>
+<ul><li><p><code><a href="../reference/runStaticServer.html">runStaticServer()</a></code> no longer fails if <code>browse = TRUE</code> but <code><a href="https://rdrr.io/r/utils/browseURL.html" class="external-link">utils::browseURL()</a></code> is unable to open the server. (<a href="https://github.com/rstudio/httpuv/issues/395" class="external-link">#395</a>)</p></li>
+<li><p>Improved testing of <code><a href="../reference/runStaticServer.html">runStaticServer()</a></code> to accurately test that <code><a href="../reference/runStaticServer.html">runStaticServer()</a></code> throws an error when a requested port is not available on FreeBSD. (<a href="https://github.com/rstudio/httpuv/issues/396" class="external-link">#396</a>)</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.6.14" id="httpuv-1614">httpuv 1.6.14<small>2024-01-26</small><a class="anchor" aria-label="anchor" href="#httpuv-1614"></a></h2>
