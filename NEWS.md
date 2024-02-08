@@ -2,6 +2,8 @@
 
 * `runStaticServer()` no longer fails if `browse = TRUE` but `utils::browseURL()` is unable to open the server. (#395)
 
+* Improved testing of `runStaticServer()` to accurately test that `runStaticServer()` throws an error when a requested port is not available on FreeBSD. (#396)
+
 # httpuv 1.6.14
 
 * Updated Makevars.ucrt for upcoming release of Rtools (thanks to Tomas Kalibera).
