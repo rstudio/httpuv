@@ -54,7 +54,8 @@ void WebSocketProto_HyBi03::handshake(const std::string& url,
                                       const RequestHeaders& requestHeaders,
                                       char** ppData, size_t* pLen,
                                       ResponseHeaders* pResponseHeaders,
-                                      std::vector<uint8_t>* pResponse) const {
+                                      std::vector<uint8_t>* pResponse,
+                                      WebSocketConnectionContext* pContext) const {
 
   assert(*pLen >= 8);
 

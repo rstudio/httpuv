@@ -5,6 +5,22 @@
 
 #include "constants.h"
 
+struct WebSocketConnectionContext {
+  WebSocketConnectionContext() :
+    permessageDeflate(false),
+    clientMaxWindowBits(-1),
+    serverMaxWindowBits(-1),
+    clientNoContextTakeover(false),
+    serverNoContextTakeover(false) {
+  }
+
+  bool permessageDeflate;
+  int clientMaxWindowBits;
+  int serverMaxWindowBits;
+  bool clientNoContextTakeover;
+  bool serverNoContextTakeover;
+};
+
 class WebSocketProto {
 
 public:
@@ -22,9 +38,10 @@ public:
                          const RequestHeaders& requestHeaders,
                          char** ppData, size_t* pLen,
                          ResponseHeaders* responseHeaders,
-                         std::vector<uint8_t>* pResponse) const = 0;
+                         std::vector<uint8_t>* pResponse,
+                         WebSocketConnectionContext* pContext) const = 0;
 
-  void createFrameHeader(Opcode opcode, bool mask, size_t payloadSize,
+  void createFrameHeader(Opcode opcode, bool rsv1, bool mask, size_t payloadSize,
                          int32_t maskingKey,
                          char pData[MAX_HEADER_BYTES], size_t* pLen) const;
 

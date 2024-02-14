@@ -5,13 +5,14 @@ void WSHixie76Parser::handshake(const std::string& url,
                                 const RequestHeaders& requestHeaders,
                                 char** ppData, size_t* pLen,
                                 ResponseHeaders* responseHeaders,
-                                std::vector<uint8_t>* pResponse) const {
+                                std::vector<uint8_t>* pResponse,
+                                WebSocketConnectionContext* pContext) const {
   _hybi03.handshake(url, requestHeaders, ppData, pLen, responseHeaders,
-                    pResponse);
+                    pResponse, pContext);
 }
 
 void WSHixie76Parser::createFrameHeaderFooter(
-                       Opcode opcode, bool mask, size_t payloadSize,
+                       Opcode opcode, bool rsv1, bool mask, size_t payloadSize,
                        int32_t maskingKey,
                        char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
                        char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen) const {

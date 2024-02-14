@@ -38,10 +38,11 @@ public:
                  const RequestHeaders& requestHeaders,
                  char** ppData, size_t* pLen,
                  ResponseHeaders* responseHeaders,
-                 std::vector<uint8_t>* pResponse) const;
+                 std::vector<uint8_t>* pResponse,
+                 WebSocketConnectionContext* pContext) const;
 
   void createFrameHeaderFooter(
-                 Opcode opcode, bool mask, size_t payloadSize,
+                 Opcode opcode, bool rsv1, bool mask, size_t payloadSize,
                  int32_t maskingKey,
                  char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
                  char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen
