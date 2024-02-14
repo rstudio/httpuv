@@ -3,6 +3,7 @@
 
 #include <map>
 #include <iostream>
+#include <chrono>
 
 #include <functional>
 #include <memory>
@@ -92,6 +93,10 @@ private:
   };
   LastHeaderState _last_header_state;
 
+  // Sys.time()-compatible timestamp, which can later be used to instrument
+  // roundtrip latency in R.
+  std::chrono::time_point<std::chrono::system_clock> _timestamp;
+
 public:
   HttpRequest(uv_loop_t* pLoop,
               std::shared_ptr<WebApplication> pWebApplication,
@@ -106,7 +111,8 @@ public:
       _is_upgrade(false),
       _response_scheduled(false),
       _handling_request(false),
-      _background_queue(backgroundQueue)
+      _background_queue(backgroundQueue),
+      _timestamp(std::chrono::system_clock::now())
   {
     ASSERT_BACKGROUND_THREAD()
     uv_tcp_init(pLoop, &_handle.tcp);
@@ -165,6 +171,9 @@ public:
   // (when the response has been sent). It is currently used to detect
   // pipelined HTTP requests.
   void requestCompleted();
+
+  // Returns timestamp compatible with R/Def.h's currentTime().
+  double timestamp() const;
 
   void _call_r_on_ws_open();
   void _schedule_on_headers_complete_complete(std::shared_ptr<HttpResponse> pResponse);
