@@ -927,6 +927,7 @@ static int uv__udp_set_membership6(uv_udp_t* handle,
     !defined(__NetBSD__) &&                                         \
     !defined(__ANDROID__) &&                                        \
     !defined(__DragonFly__) &&                                      \
+    (!defined(__APPLE__) || (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)) && \
     !defined(__QNX__)
 static int uv__udp_set_source_membership4(uv_udp_t* handle,
                                           const struct sockaddr_in* multicast_addr,
@@ -1119,6 +1120,7 @@ int uv_udp_set_source_membership(uv_udp_t* handle,
     !defined(__NetBSD__) &&                                         \
     !defined(__ANDROID__) &&                                        \
     !defined(__DragonFly__) &&                                      \
+    (!defined(__APPLE__) || (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070)) && \
     !defined(__QNX__)
   int err;
   union uv__sockaddr mcast_addr;
