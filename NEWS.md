@@ -1,4 +1,4 @@
-# httpuv (development version)
+# httpuv 1.6.15
 
 * `runStaticServer()` no longer fails if `browse = TRUE` but `utils::browseURL()` is unable to open the server. (#395)
 
