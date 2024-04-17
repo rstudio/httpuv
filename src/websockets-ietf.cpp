@@ -1,23 +1,30 @@
 #include "websockets-ietf.h"
 
+#include <map>
+#include <optional>
+
 #include "utils.h"
 
 #include "sha1/sha1.h"
 #include "base64/base64.hpp"
+
+#include "wse-permessage-deflate.h"
 
 bool WebSocketProto_IETF::canHandle(const RequestHeaders& requestHeaders,
                                     const char* pData, size_t len) const {
 
   return requestHeaders.find("upgrade") != requestHeaders.end() &&
          strcasecmp(requestHeaders.at("upgrade").c_str(), "websocket") == 0 &&
-         requestHeaders.find("sec-websocket-key") != requestHeaders.end();
+         requestHeaders.find("sec-websocket-key") != requestHeaders.end() &&
+         permessage_deflate::isValid(requestHeaders);
 }
 
 void WebSocketProto_IETF::handshake(const std::string& url,
                                     const RequestHeaders& requestHeaders,
                                     char** ppData, size_t* pLen,
                                     ResponseHeaders* pResponseHeaders,
-                                    std::vector<uint8_t>* pResponse) const {
+                                    std::vector<uint8_t>* pResponse,
+                                    WebSocketConnectionContext* pContext) const {
 
   std::string key = requestHeaders.at("sec-websocket-key");
 
@@ -37,6 +44,8 @@ void WebSocketProto_IETF::handshake(const std::string& url,
     std::pair<std::string, std::string>("Upgrade", "websocket"));
   pResponseHeaders->push_back(
     std::pair<std::string, std::string>("Sec-WebSocket-Accept", response));
+
+  permessage_deflate::handshake(requestHeaders, pResponseHeaders, pContext);
 }
 
 bool WebSocketProto_IETF::isFin(uint8_t firstBit) const {

@@ -45,6 +45,7 @@ bool WSHyBiFrameHeader::isHeaderComplete() const {
 WSFrameHeaderInfo WSHyBiFrameHeader::info() const {
   WSFrameHeaderInfo inf;
   inf.fin = fin();
+  inf.rsv1 = rsv1();
   inf.opcode = opcode();
   inf.hasLength = true;
   inf.masked = masked();
@@ -58,6 +59,9 @@ WSFrameHeaderInfo WSHyBiFrameHeader::info() const {
 
 bool WSHyBiFrameHeader::fin() const {
   return _pProto->isFin(read(0, 1));
+}
+bool WSHyBiFrameHeader::rsv1() const {
+  return read(1, 1);
 }
 Opcode WSHyBiFrameHeader::opcode() const {
   uint8_t oc = read(4, 4);
@@ -140,19 +144,20 @@ void WSHyBiParser::handshake(const std::string& url,
                              const RequestHeaders& requestHeaders,
                              char** ppData, size_t* pLen,
                              ResponseHeaders* pResponseHeaders,
-                             std::vector<uint8_t>* pResponse) const {
+                             std::vector<uint8_t>* pResponse,
+                             WebSocketConnectionContext* pContext) const {
   ASSERT_BACKGROUND_THREAD()
   _pProto->handshake(url, requestHeaders, ppData, pLen, pResponseHeaders,
-                     pResponse);
+                     pResponse, pContext);
 }
 
 void WSHyBiParser::createFrameHeaderFooter(
-                     Opcode opcode, bool mask, size_t payloadSize,
+                     Opcode opcode, bool rsv1, bool mask, size_t payloadSize,
                      int32_t maskingKey,
                      char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
                      char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen
                      ) const {
-  _pProto->createFrameHeader(opcode, mask, payloadSize, maskingKey,
+  _pProto->createFrameHeader(opcode, rsv1, mask, payloadSize, maskingKey,
                              pHeaderData, pHeaderLen);
 }
 
@@ -258,7 +263,20 @@ void WebSocketConnection::handshake(const std::string& url,
   if (_connState == WS_CLOSED) return;
 
   _pParser->handshake(url, requestHeaders, ppData, pLen, pResponseHeaders,
-                      pResponse);
+                      pResponse, &_context);
+
+  if (_context.permessageDeflate) {
+    int error;
+    // TODO: Handle errors
+    error = _inflator.init(deflator::DeflateModeRaw, _context.clientMaxWindowBits);
+    if (error != Z_OK) {
+      debug_log("Failed to init inflator", LOG_ERROR);
+    }
+    error = _deflator.init(deflator::DeflateModeRaw, Z_DEFAULT_COMPRESSION, _context.serverMaxWindowBits);
+    if (error != Z_OK) {
+      debug_log("Failed to init deflator", LOG_ERROR);
+    }
+  }
 }
 
 void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t length) {
@@ -271,7 +289,30 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
   size_t headerLength = 0;
   size_t footerLength = 0;
 
-  _pParser->createFrameHeaderFooter(opcode, false, length, 0,
+  std::vector<char> deflated(0);
+  bool deflate = _context.permessageDeflate && (opcode == Continuation || opcode == Text || opcode == Binary);
+  if (deflate) {
+    int error;
+    // TODO: Handle errors
+    if (_context.serverNoContextTakeover) {
+      error = _deflator.reset();
+      if (error != Z_OK) {
+        debug_log("An error occurred during deflate reset", LOG_ERROR);
+      }
+    }
+    error = _deflator.deflate(pData, length, deflated);
+    if (error != Z_OK) {
+      debug_log("An error occurred during deflate", LOG_ERROR);
+    }
+    deflated.pop_back();
+    deflated.pop_back();
+    deflated.pop_back();
+    deflated.pop_back();
+    pData = safe_vec_addr(deflated);
+    length = deflated.size();
+  }
+
+  _pParser->createFrameHeaderFooter(opcode, deflate, false, length, 0,
     safe_vec_addr(header), &headerLength,
     safe_vec_addr(footer), &footerLength);
   header.resize(headerLength);
@@ -375,7 +416,29 @@ void WebSocketConnection::onFrameComplete() {
       }
       case Text:
       case Binary: {
-        _pCallbacks->onWSMessage(_header.opcode == Binary, safe_vec_addr(_payload), _payload.size());
+        if (_context.permessageDeflate && _header.rsv1) {
+          _payload.push_back(0);
+          _payload.push_back(0);
+          _payload.push_back(0xFF);
+          _payload.push_back(0xFF);
+          std::vector<char> inflated(0);
+          int error;
+          // TODO: Handle errors
+          if (_context.clientNoContextTakeover) {
+            error = _inflator.reset();
+            if (error != Z_OK) {
+              debug_log("An error occurred during inflate reset", LOG_ERROR);
+            }
+          }
+          error = _inflator.inflate(safe_vec_addr(_payload), _payload.size(), inflated);
+          if (error != Z_OK) {
+            debug_log("An error occurred during inflate", LOG_ERROR);
+          }
+
+          _pCallbacks->onWSMessage(_header.opcode == Binary, safe_vec_addr(inflated), inflated.size());
+        } else {
+          _pCallbacks->onWSMessage(_header.opcode == Binary, safe_vec_addr(_payload), _payload.size());
+        }
         break;
       }
       case Close: {

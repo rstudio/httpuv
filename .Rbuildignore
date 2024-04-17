@@ -22,3 +22,4 @@
 ^cran-comments\.md$
 ^CRAN-RELEASE$
 ^CRAN-SUBMISSION$
+^deflate-client$
