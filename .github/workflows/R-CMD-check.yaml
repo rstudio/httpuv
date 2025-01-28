@@ -17,6 +17,6 @@ jobs:
   routine:
     uses: rstudio/shiny-workflows/.github/workflows/routine.yaml@v1
   R-CMD-check:
-    uses: rstudio/shiny-workflows/.github/workflows/R-CMD-check.yaml@v1
+    uses: rstudio/shiny-workflows/.github/workflows/R-CMD-check.yaml@debug-httpuv
     with:
       ubuntu: "ubuntu-20.04 ubuntu-latest"
