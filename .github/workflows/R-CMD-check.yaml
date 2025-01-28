@@ -11,6 +11,9 @@ on:
 
 name: Package checks
 
+env:
+  USE_BUNDLED_LIBUV: true
+
 jobs:
   website:
     uses: rstudio/shiny-workflows/.github/workflows/website.yaml@v1
@@ -20,3 +23,4 @@ jobs:
     uses: rstudio/shiny-workflows/.github/workflows/R-CMD-check.yaml@v1
     with:
       ubuntu: "ubuntu-20.04 ubuntu-latest"
+
