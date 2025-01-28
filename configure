@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 PKG_CONFIG_NAME="libuv"
-LIBUV_VERSION_REQUIRED="$PKG_CONFIG_NAME >= 1.43 $PKG_CONFIG_NAME < 2"
+LIBUV_VERSION_REQUIRED="$PKG_CONFIG_NAME >= 1.44 $PKG_CONFIG_NAME < 2"
 
 # If unset (default), will try to find libuv on system and fall back to bundled
 # If true (case insensitive), will not look for system library
