@@ -1,93 +1,33 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>/404.html</loc>
-  </url>
-  <url>
-    <loc>/CONTRIBUTING.html</loc>
-  </url>
-  <url>
-    <loc>/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>/authors.html</loc>
-  </url>
-  <url>
-    <loc>/index.html</loc>
-  </url>
-  <url>
-    <loc>/news/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/PipeServer.html</loc>
-  </url>
-  <url>
-    <loc>/reference/Server.html</loc>
-  </url>
-  <url>
-    <loc>/reference/WebServer.html</loc>
-  </url>
-  <url>
-    <loc>/reference/WebSocket.html</loc>
-  </url>
-  <url>
-    <loc>/reference/encodeURI.html</loc>
-  </url>
-  <url>
-    <loc>/reference/getRNGState.html</loc>
-  </url>
-  <url>
-    <loc>/reference/httpuv-package.html</loc>
-  </url>
-  <url>
-    <loc>/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/interrupt.html</loc>
-  </url>
-  <url>
-    <loc>/reference/ipFamily.html</loc>
-  </url>
-  <url>
-    <loc>/reference/listServers.html</loc>
-  </url>
-  <url>
-    <loc>/reference/logLevel.html</loc>
-  </url>
-  <url>
-    <loc>/reference/randomPort.html</loc>
-  </url>
-  <url>
-    <loc>/reference/rawToBase64.html</loc>
-  </url>
-  <url>
-    <loc>/reference/runServer.html</loc>
-  </url>
-  <url>
-    <loc>/reference/runStaticServer.html</loc>
-  </url>
-  <url>
-    <loc>/reference/service.html</loc>
-  </url>
-  <url>
-    <loc>/reference/startDaemonizedServer.html</loc>
-  </url>
-  <url>
-    <loc>/reference/startServer.html</loc>
-  </url>
-  <url>
-    <loc>/reference/staticPath.html</loc>
-  </url>
-  <url>
-    <loc>/reference/staticPathOptions.html</loc>
-  </url>
-  <url>
-    <loc>/reference/stopAllServers.html</loc>
-  </url>
-  <url>
-    <loc>/reference/stopDaemonizedServer.html</loc>
-  </url>
-  <url>
-    <loc>/reference/stopServer.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/CONTRIBUTING.html</loc></url>
+<url><loc>/LICENSE-text.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/news/index.html</loc></url>
+<url><loc>/reference/PipeServer.html</loc></url>
+<url><loc>/reference/Server.html</loc></url>
+<url><loc>/reference/WebServer.html</loc></url>
+<url><loc>/reference/WebSocket.html</loc></url>
+<url><loc>/reference/encodeURI.html</loc></url>
+<url><loc>/reference/getRNGState.html</loc></url>
+<url><loc>/reference/httpuv-package.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/interrupt.html</loc></url>
+<url><loc>/reference/ipFamily.html</loc></url>
+<url><loc>/reference/listServers.html</loc></url>
+<url><loc>/reference/logLevel.html</loc></url>
+<url><loc>/reference/randomPort.html</loc></url>
+<url><loc>/reference/rawToBase64.html</loc></url>
+<url><loc>/reference/runServer.html</loc></url>
+<url><loc>/reference/runStaticServer.html</loc></url>
+<url><loc>/reference/service.html</loc></url>
+<url><loc>/reference/startDaemonizedServer.html</loc></url>
+<url><loc>/reference/startServer.html</loc></url>
+<url><loc>/reference/staticPath.html</loc></url>
+<url><loc>/reference/staticPathOptions.html</loc></url>
+<url><loc>/reference/stopAllServers.html</loc></url>
+<url><loc>/reference/stopDaemonizedServer.html</loc></url>
+<url><loc>/reference/stopServer.html</loc></url>
 </urlset>
+
