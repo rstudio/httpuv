@@ -1,5 +1,7 @@
 # httpuv (development version)
 
+* Added a mime type entry for `.wasm` files, which should be served as `application/wasm`. (#407)
+
 # httpuv 1.6.15
 
 * `runStaticServer()` no longer fails if `browse = TRUE` but `utils::browseURL()` is unable to open the server. (#395)
