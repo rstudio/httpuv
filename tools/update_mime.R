@@ -5,14 +5,6 @@ dest_file <- rprojroot::find_package_root_file("src", "mime.cpp")
 
 mimemap <- mime::mimemap
 
-# Manually add .wasm -> application/wasm because mime package doesn't know
-# about it yet.
-if ("wasm" %in% names(mimemap)) {
-  warning("The mime::mimemap table now contains .wasm -> application/wasm and the workaround in update_mime.R should be removed.")
-} else {
-  mimemap["wasm"] <- "application/wasm"
-}
-
 mime_map_text <- mapply(
   function(ext, mime_type) {
     sprintf('  {"%s", "%s"}', ext, mime_type);

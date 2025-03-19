@@ -2,6 +2,8 @@
 
 * Added a mime type entry for `.wasm` files, which should be served as `application/wasm`. (#407)
 
+* Updated mime lookup table using mime R package 0.13. (#408)
+
 # httpuv 1.6.15
 
 * `runStaticServer()` no longer fails if `browse = TRUE` but `utils::browseURL()` is unable to open the server. (#395)
