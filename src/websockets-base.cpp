@@ -25,7 +25,7 @@ void swapByteOrder(unsigned char* pStart, unsigned char* pEnd) {
 }
 
 void WebSocketProto::createFrameHeader(
-    Opcode opcode, bool mask, size_t payloadSize, int32_t maskingKey,
+    Opcode opcode, bool rsv1, bool mask, size_t payloadSize, int32_t maskingKey,
     char pData[MAX_HEADER_BYTES], size_t* pLen) const {
 
   unsigned char* pBuf = (unsigned char*)pData;
@@ -35,6 +35,7 @@ void WebSocketProto::createFrameHeader(
 
   pBuf[0] =
     toFin(true) << 7 | // FIN; always true
+    (rsv1 << 6) |
     encodeOpcode(opcode);
   pBuf[1] = mask ? 1 << 7 : 0;
   if (payloadSize_64 <= 125) {

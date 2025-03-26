@@ -54,4 +54,23 @@ static inline std::string trim(const std::string &s) {
   return s.substr(start, end-start);
 }
 
+static inline std::vector<std::string> split(const std::string& s, const std::string& delim) {
+  std::vector<std::string> results;
+  size_t pos = 0;
+  while (true) {
+    size_t i = s.find(delim, pos);
+    if (i == std::string::npos) {
+      break;
+    }
+    if (i != pos) {
+      results.push_back(s.substr(pos, i - pos));
+    }
+    pos = i + 1;
+  }
+  if (pos != s.length()) {
+    results.push_back(s.substr(pos));
+  }
+  return results;
+}
+
 #endif // CONSTANTS_H

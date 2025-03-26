@@ -1,0 +1,12 @@
+{
+  "name": "deflate-client",
+  "version": "1.0.0",
+  "description": "This directory contains Node.js based tests for exercising different WebSocket compression parameters in httpuv.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.2.1"
+  }
+}
