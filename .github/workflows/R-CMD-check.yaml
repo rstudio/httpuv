@@ -19,4 +19,4 @@ jobs:
   R-CMD-check:
     uses: rstudio/shiny-workflows/.github/workflows/R-CMD-check.yaml@v1
     with:
-      ubuntu: "ubuntu-20.04 ubuntu-latest"
+      ubuntu: "ubuntu-22.04 ubuntu-latest"
