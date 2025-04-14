@@ -4,6 +4,8 @@
 
 * Updated mime lookup table using mime R package 0.13. (#408)
 
+* Avoid some time-sensitive tests on CRAN. (#412)
+
 # httpuv 1.6.15
 
 * `runStaticServer()` no longer fails if `browse = TRUE` but `utils::browseURL()` is unable to open the server. (#395)
