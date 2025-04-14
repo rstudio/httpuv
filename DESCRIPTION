@@ -64,6 +64,7 @@ Imports:
 Suggests:
     callr,
     curl,
+    jsonlite,
     testthat,
     websocket
 LinkingTo:
