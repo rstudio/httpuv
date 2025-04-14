@@ -11,9 +11,9 @@ USE_BUNDLED_LIBUV=`echo $USE_BUNDLED_LIBUV | tr '[:upper:]' '[:lower:]'`
 bundle_libuv () {
   echo "** Using bundled copy of libuv"
   PKG_CFLAGS="-Ilibuv/include"
-  PKG_LIBS="./libuv/.libs/libuv.a"
+  PKG_LIBS="./libuv/.libs/libuv.b"
   # By setting DEPS, this triggers the libuv build in src/Makevars
-  DEPS="libuv/.libs/libuv.a"
+  DEPS="libuv/.libs/libuv.b"
 }
 
 # First, look for suitable libuv installed on the system
@@ -24,15 +24,13 @@ if [ "${USE_BUNDLED_LIBUV}" != "true" ] && pkg-config --exists ''"${LIBUV_VERSIO
   DEPS=""
   if [ `uname -s` = "Darwin" ]; then
     # We need to do static linking, but the macOS linker always prefers dynamic
-    # so we'll look for libuv.a and move it somewhere else and pass that as -L
-    NEW_LIB_DIR="src/libuv/.libs"
-    mkdir -p ${NEW_LIB_DIR} && cp -f "${LIB_DIR}/lib/libuv.a" ${NEW_LIB_DIR}/libuv_static.a || true
-    if [ -f "${NEW_LIB_DIR}/libuv_static.a" ]; then
+    # so we'll look for libuv.a and explicitly link to it if available
+    if [ -f "${LIB_DIR}/lib/libuv.a" ]; then
       # Use it
-      PKG_LIBS="-L`pwd`/${NEW_LIB_DIR} -luv_static"
+      PKG_LIBS="${LIB_DIR}/lib/libuv.a"
       echo "** Using static libuv found by pkg-config in ${LIB_DIR}"
     else
-      # libuv.a not there or otherwise that failed to copy, so fall back
+      # libuv.a not there, so fall back
       echo "** pkg-config did not find static libuv"
       bundle_libuv
     fi
