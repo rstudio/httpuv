@@ -79,9 +79,10 @@ libuv/Makefile: libuv/m4/lt~obsolete.m4
 	chmod +x configure; \
 	CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY) -DNDEBUG" CPPFLAGS="$(CPPFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" LDFLAGS="$(LDFLAGS)" ./configure $(CONFIGURE_FLAGS)
 
-libuv/.libs/libuv.a: libuv/Makefile
+libuv/.libs/libuv.b: libuv/Makefile
 	$(MAKE) --directory=libuv \
 		HAVE_DTRACE=0
+	@mv libuv/.libs/libuv.a libuv/.libs/libuv.b
 
 clean:
 	$(MAKE) --directory=libuv distclean
