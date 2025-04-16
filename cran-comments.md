@@ -1,10 +1,12 @@
+This submission fixes some non-deterministic check errors and some minor bugs.
+
 ## R CMD check results
 
-There is 1 NOTE regarding the update of the maintainer's email address.
+0 errors | 0 warnings | 0 notes
 
 ## revdepcheck results
 
-We checked 63 reverse dependencies (56 from CRAN + 7 from Bioconductor), comparing R CMD check results across CRAN and dev versions of this package.
+We checked 62 reverse dependencies, comparing R CMD check results across CRAN and dev versions of this package.
 
  * We saw 0 new problems
  * We failed to check 0 packages
