@@ -1,3 +1,5 @@
+# httpuv (development version)
+
 # httpuv 1.6.16
 
 * Added a mime type entry for `.wasm` files, which should be served as `application/wasm`. (#407)
