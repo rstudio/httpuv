@@ -7,7 +7,7 @@ on:
     branches: [main, rc-**]
   pull_request:
   schedule:
-    - cron: '0 6 * * 1' # every monday
+    - cron: "0 6 * * 1" # every monday
 
 name: Package checks
 
