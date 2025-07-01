@@ -46,11 +46,14 @@ NULL
 #' @seealso \code{\link{WebServer}} and \code{\link{PipeServer}}.
 #' @keywords internal
 #' @importFrom R6 R6Class
-Server <- R6Class("Server",
+Server <- R6Class(
+  "Server",
   cloneable = FALSE,
   public = list(
     stop = function() {
-      if (!private$running) return(invisible())
+      if (!private$running) {
+        return(invisible())
+      }
 
       stopServer_(private$handle)
       private$running <- FALSE
@@ -64,30 +67,40 @@ Server <- R6Class("Server",
       private$running
     },
     getStaticPaths = function() {
-      if (!private$running) return(NULL)
+      if (!private$running) {
+        return(NULL)
+      }
 
       getStaticPaths_(private$handle)
     },
     setStaticPath = function(..., .list = NULL) {
-      if (!private$running) return(invisible())
+      if (!private$running) {
+        return(invisible())
+      }
 
       paths <- c(list(...), .list)
       paths <- normalizeStaticPaths(paths)
       invisible(setStaticPaths_(private$handle, paths))
     },
     removeStaticPath = function(path) {
-      if (!private$running) return(invisible())
+      if (!private$running) {
+        return(invisible())
+      }
 
       path <- as.character(path)
       invisible(removeStaticPaths_(private$handle, path))
     },
     getStaticPathOptions = function() {
-      if (!private$running) return(NULL)
+      if (!private$running) {
+        return(NULL)
+      }
 
       getStaticPathOptions_(private$handle)
     },
     setStaticPathOption = function(..., .list = NULL) {
-      if (!private$running) return(invisible())
+      if (!private$running) {
+        return(invisible())
+      }
 
       opts <- c(list(...), .list)
       opts <- drop_duplicate_names(opts)
@@ -157,7 +170,8 @@ Server <- R6Class("Server",
 #'
 #' @seealso \code{\link{Server}} and \code{\link{PipeServer}}.
 #' @keywords internal
-WebServer <- R6Class("WebServer",
+WebServer <- R6Class(
+  "WebServer",
   cloneable = FALSE,
   inherit = Server,
   public = list(
@@ -167,7 +181,8 @@ WebServer <- R6Class("WebServer",
       private$appWrapper <- AppWrapper$new(app)
 
       private$handle <- makeTcpServer(
-        host, port,
+        host,
+        port,
         private$appWrapper$onHeaders,
         private$appWrapper$onBodyData,
         private$appWrapper$call,
@@ -248,7 +263,8 @@ WebServer <- R6Class("WebServer",
 #'
 #' @seealso \code{\link{Server}} and \code{\link{WebServer}}.
 #' @keywords internal
-PipeServer <- R6Class("PipeServer",
+PipeServer <- R6Class(
+  "PipeServer",
   cloneable = FALSE,
   inherit = Server,
   public = list(
@@ -260,7 +276,8 @@ PipeServer <- R6Class("PipeServer",
       private$appWrapper <- AppWrapper$new(app)
 
       private$handle <- makePipeServer(
-        name, mask,
+        name,
+        mask,
         private$appWrapper$onHeaders,
         private$appWrapper$onBodyData,
         private$appWrapper$call,
@@ -352,10 +369,10 @@ deregisterServer <- function(server) {
     }
   }
 
-  warning("Unable to deregister server: server not found in list of running servers.")
+  warning(
+    "Unable to deregister server: server not found in list of running servers."
+  )
 }
-
-
 
 
 #' Stop a running daemonized server in Unix environments (deprecated)

@@ -2,11 +2,15 @@ context("static")
 
 index_file_content <- raw_file_content(test_path("apps/content/index.html"))
 data_file_content <- raw_file_content(test_path("apps/content/data.txt"))
-subdir_index_file_content <- raw_file_content(test_path("apps/content/subdir/index.html"))
+subdir_index_file_content <- raw_file_content(test_path(
+  "apps/content/subdir/index.html"
+))
 index_file_1_content <- raw_file_content(test_path("apps/content_1/index.html"))
 
 test_that("Basic static file serving", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       staticPaths = list(
         # Testing out various leading and trailing slashes
@@ -39,8 +43,9 @@ test_that("Basic static file serving", {
   expect_identical(h$`content-type`, "text/html; charset=utf-8")
   expect_identical(h$`test-code-path`, "C++")
   # Check that response time is within 1 minute of now. (Possible DST problems?)
-  expect_true(abs(as.numeric(parse_http_date(h$date)) - as.numeric(Sys.time())) < 60)
-
+  expect_true(
+    abs(as.numeric(parse_http_date(h$date)) - as.numeric(Sys.time())) < 60
+  )
 
   # Testing index for other paths
   r1 <- fetch(local_url("/1", s$getPort()), gzip = FALSE)
@@ -87,7 +92,9 @@ test_that("Basic static file serving", {
 
 
 test_that("Missing file fallthrough", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         return(list(
@@ -117,7 +124,9 @@ test_that("Missing file fallthrough", {
 
 
 test_that("Longer paths override shorter ones", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       staticPaths = list(
         # Testing out various leading and trailing slashes
@@ -159,7 +168,9 @@ test_that("Longer paths override shorter ones", {
 
 
 test_that("Options and option inheritance", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         return(list(
@@ -230,7 +241,9 @@ test_that("Options and option inheritance", {
 
 
 test_that("Excluding subpaths", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         # Return a 403 for the R code path; the C++ code path will return 404
@@ -254,7 +267,9 @@ test_that("Excluding subpaths", {
   )
   on.exit(s$stop())
 
-  exclude_subdir_index_file_content <- raw_file_content(test_path("apps/content/exclude/subdir/index.html"))
+  exclude_subdir_index_file_content <- raw_file_content(test_path(
+    "apps/content/exclude/subdir/index.html"
+  ))
 
   # Basic test
   r <- fetch(local_url("/", s$getPort()))
@@ -311,7 +326,9 @@ test_that("Excluding subpaths", {
 })
 
 test_that("Header validation", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         if (!identical(req$HTTP_TEST_VALIDATION, "aaa")) {
@@ -360,16 +377,20 @@ test_that("Header validation", {
   expect_false("test-code-path" %in% names(h))
   expect_identical(rawToChar(r$content), "403 Forbidden\n")
 
-  r <- fetch(local_url("/default", s$getPort()),
-    handle_setheaders(new_handle(), "test-validation" = "aaa"))
+  r <- fetch(
+    local_url("/default", s$getPort()),
+    handle_setheaders(new_handle(), "test-validation" = "aaa")
+  )
   h <- parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_identical(h$`test-code-path`, "C++")
   expect_identical(r$content, index_file_content)
 
   # Check case insensitive
-  r <- fetch(local_url("/default", s$getPort()),
-    handle_setheaders(new_handle(), "tesT-ValidatioN" = "aaa"))
+  r <- fetch(
+    local_url("/default", s$getPort()),
+    handle_setheaders(new_handle(), "tesT-ValidatioN" = "aaa")
+  )
   expect_equal(r$status_code, 200)
 
   r <- fetch(local_url("/unset", s$getPort()))
@@ -387,8 +408,10 @@ test_that("Header validation", {
   expect_false("test-code-path" %in% names(h))
   expect_identical(rawToChar(r$content), "403 Forbidden\n")
 
-  r <- fetch(local_url("/fallthrough/missingfile", s$getPort()),
-    handle_setheaders(new_handle(), "test-validation" = "aaa"))
+  r <- fetch(
+    local_url("/fallthrough/missingfile", s$getPort()),
+    handle_setheaders(new_handle(), "test-validation" = "aaa")
+  )
   h <- parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_identical(h$`test-code-path`, "R")
@@ -397,7 +420,9 @@ test_that("Header validation", {
 
 
 test_that("Dynamically changing paths", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         list(
@@ -454,7 +479,9 @@ test_that("Dynamically changing paths", {
 
 
 test_that("Dynamically changing options", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         list(
@@ -488,8 +515,10 @@ test_that("Dynamically changing options", {
   )
   r <- fetch(local_url("/static", s$getPort()))
   expect_equal(r$status_code, 403)
-  r <- fetch(local_url("/static", s$getPort()),
-    handle_setheaders(new_handle(), "test-validation" = "aaa"))
+  r <- fetch(
+    local_url("/static", s$getPort()),
+    handle_setheaders(new_handle(), "test-validation" = "aaa")
+  )
   h <- parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_identical(h$`test-headers`, "aaa")
@@ -512,11 +541,15 @@ test_that("Escaped characters in paths", {
   dir.create(static_dir)
   # Use writeBin() instead of cat() because in Windows, cat() will convert "\n"
   # to "\r\n".
-  writeBin(charToRaw("This is file content.\n"), file.path(static_dir, "file with space.txt"))
+  writeBin(
+    charToRaw("This is file content.\n"),
+    file.path(static_dir, "file with space.txt")
+  )
   on.exit(unlink(static_dir, recursive = TRUE))
 
-
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         list(
@@ -539,7 +572,9 @@ test_that("Escaped characters in paths", {
 
 
 test_that("Paths with ..", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         list(
@@ -587,12 +622,12 @@ test_that("Paths with ..", {
   res <- http_request_con("GET /static/foo../", "127.0.0.1", s$getPort())
   expect_identical(res[1], "HTTP/1.1 404 Not Found")
   expect_false(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
-
-
 })
 
 test_that("Paths with backslash", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         list(
@@ -623,18 +658,28 @@ test_that("Paths with backslash", {
   expect_true(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
 
   # Raw backslash with ..
-  res <- http_request_con("GET /static/..\\index.html", "127.0.0.1", s$getPort())
+  res <- http_request_con(
+    "GET /static/..\\index.html",
+    "127.0.0.1",
+    s$getPort()
+  )
   expect_identical(res[1], "HTTP/1.1 400 Bad Request")
   expect_true(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
 
   # Escaped backslash with ..
-  res <- http_request_con("GET /static/..%5cindex.html", "127.0.0.1", s$getPort())
+  res <- http_request_con(
+    "GET /static/..%5cindex.html",
+    "127.0.0.1",
+    s$getPort()
+  )
   expect_identical(res[1], "HTTP/1.1 400 Bad Request")
   expect_true(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
 })
 
 test_that("HEAD, POST, PUT requests", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         list(
@@ -657,27 +702,39 @@ test_that("HEAD, POST, PUT requests", {
   # HEAD is OK.
   # Note the weird interface for a HEAD request:
   # https://github.com/jeroen/curl/issues/24
-  r <- fetch(local_url("/static", s$getPort()), new_handle(nobody = TRUE), gzip = FALSE)
+  r <- fetch(
+    local_url("/static", s$getPort()),
+    new_handle(nobody = TRUE),
+    gzip = FALSE
+  )
   expect_equal(r$status_code, 200)
-  expect_true(length(r$content) == 0)  # No message body for HEAD
+  expect_true(length(r$content) == 0) # No message body for HEAD
   h <- parse_headers_list(r$headers)
   # Headers should match GET request, except for date.
-  expect_identical(h[setdiff(names(h), "date")], h_get[setdiff(names(h_get), "date")])
+  expect_identical(
+    h[setdiff(names(h), "date")],
+    h_get[setdiff(names(h_get), "date")]
+  )
 
   # POST and PUT are not OK
-  r <- fetch(local_url("/static", s$getPort()),
-    handle_setopt(new_handle(), customrequest = "POST"))
+  r <- fetch(
+    local_url("/static", s$getPort()),
+    handle_setopt(new_handle(), customrequest = "POST")
+  )
   expect_equal(r$status_code, 400)
 
-  r <- fetch(local_url("/static", s$getPort()),
-    handle_setopt(new_handle(), customrequest = "PUT"))
+  r <- fetch(
+    local_url("/static", s$getPort()),
+    handle_setopt(new_handle(), customrequest = "PUT")
+  )
   expect_equal(r$status_code, 400)
 })
 
 
-
 test_that("Last-Modified and If-Modified-Since headers", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       staticPaths = list(
         "/" = staticPath(
@@ -694,7 +751,9 @@ test_that("Last-Modified and If-Modified-Since headers", {
   on.exit(s$stop())
 
   # mtime of the target file, rounded down to nearest second.
-  file_mtime <- as.POSIXct(trunc(file.info(test_path("apps/content/mtcars.csv"))$mtime))
+  file_mtime <- as.POSIXct(trunc(
+    file.info(test_path("apps/content/mtcars.csv"))$mtime
+  ))
 
   # First time retrieving: no Last-Modified header.
   r <- fetch(local_url("/mtcars.csv", s$getPort()))
@@ -702,12 +761,10 @@ test_that("Last-Modified and If-Modified-Since headers", {
   http_mtime <- r$modified
   expect_equal(file_mtime, http_mtime)
 
-
   # Use the Last-Modified value in the If-Modified-Since header.
-  r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
-    handle_setheaders(new_handle(),
-      "If-Modified-Since" = h$`last-modified`
-    )
+  r1 <- fetch(
+    local_url("/mtcars.csv", s$getPort()),
+    handle_setheaders(new_handle(), "If-Modified-Since" = h$`last-modified`)
   )
   expect_identical(r1$status_code, 304L)
   expect_true(length(r1$content) == 0)
@@ -716,24 +773,29 @@ test_that("Last-Modified and If-Modified-Since headers", {
   # them if the corresponding 200 response would have them):
   # Cache-Control, Content-Location, Date, ETag, Expires, Vary
   # https://httpstatuses.com/304
-  expect_identical(h[c("cache-control", "etag")], h1[c("cache-control", "etag")])
+  expect_identical(
+    h[c("cache-control", "etag")],
+    h1[c("cache-control", "etag")]
+  )
   # The Date header differs from the previous response because the request was
   # made at a different time. We just need to check that it's present.
   expect_true("date" %in% names(h1))
 
-
   # The mtime plus 1 second should result in a 304.
-  r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
-    handle_setheaders(new_handle(),
+  r1 <- fetch(
+    local_url("/mtcars.csv", s$getPort()),
+    handle_setheaders(
+      new_handle(),
       "If-Modified-Since" = http_date_string(file_mtime + 1)
     )
   )
   expect_identical(r1$status_code, 304L)
 
-
   # Last-Modified header minus 1 second should result in a regular 200 response.
-  r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
-    handle_setheaders(new_handle(),
+  r1 <- fetch(
+    local_url("/mtcars.csv", s$getPort()),
+    handle_setheaders(
+      new_handle(),
       "If-Modified-Since" = http_date_string(file_mtime - 1)
     )
   )
@@ -741,22 +803,25 @@ test_that("Last-Modified and If-Modified-Since headers", {
   h1 <- parse_headers_list(r1$headers)
   expect_identical(h[setdiff(names(h), "date")], h1[setdiff(names(h1), "date")])
 
-
   # Malformed If-Modified-Since value should be ignored.
   #
   # First, a date far in the future should result in 304. Note that the 2038
   # date is used here because on 32-bit Windows, dates that are beyond
   # 2038-01-19 will overflow and wrap around, and this request will get a 200
   # instead of 304. Other platforms seem not to have this limitation.
-  r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
-    handle_setheaders(new_handle(),
+  r1 <- fetch(
+    local_url("/mtcars.csv", s$getPort()),
+    handle_setheaders(
+      new_handle(),
       "If-Modified-Since" = "Mon, 01 Jan 2038 12:00:00 GMT"
     )
   )
   expect_identical(r1$status_code, 304L)
   # Next, almost the same date, but slightly malformed, should result in 200.
-  r1 <- fetch(local_url("/mtcars.csv", s$getPort()),
-    handle_setheaders(new_handle(),
+  r1 <- fetch(
+    local_url("/mtcars.csv", s$getPort()),
+    handle_setheaders(
+      new_handle(),
       "If-Modified-Since" = "Mon, 01 Jan 2038 12:100:00 GMT"
     )
   )
@@ -781,7 +846,9 @@ test_that("Paths with non-ASCII characters", {
   writeLines("Hello world!", index_file_path)
   file_content <- raw_file_content(index_file_path)
 
-  s <- startServer("0.0.0.0", randomPort(),
+  s <- startServer(
+    "0.0.0.0",
+    randomPort(),
     list(
       call = function(req) {
         list(

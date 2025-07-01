@@ -14,7 +14,7 @@ url <- paste0("https://github.com/libuv/libuv/archive/", tag, ".tar.gz")
 message("Downloading ", url)
 download.file(url, dest_file)
 
-src_dir   <- rprojroot::find_package_root_file("src")
+src_dir <- rprojroot::find_package_root_file("src")
 libuv_dir <- rprojroot::find_package_root_file("src/libuv")
 
 untar(dest_file, exdir = src_dir)
@@ -33,4 +33,6 @@ file.copy(
   libuv_dir
 )
 
-message("Make sure to fix up the libuv sources in src/libuv/ as described in src/README.md.")
+message(
+  "Make sure to fix up the libuv sources in src/libuv/ as described in src/README.md."
+)

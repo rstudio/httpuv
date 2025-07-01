@@ -29,10 +29,18 @@ parse_ab_output <- function(p) {
   )
 
   line <- text[grepl("^Complete requests:\\s+", text)]
-  results$completed <- as.integer(sub("^Complete requests:\\s+(\\d+).*", "\\1", line))
+  results$completed <- as.integer(sub(
+    "^Complete requests:\\s+(\\d+).*",
+    "\\1",
+    line
+  ))
 
   line <- text[grepl("^Failed requests:\\s+", text)]
-  results$failed <- as.integer(sub("^Failed requests:\\s+(\\d+).*", "\\1", line))
+  results$failed <- as.integer(sub(
+    "^Failed requests:\\s+(\\d+).*",
+    "\\1",
+    line
+  ))
 
   results
 }
@@ -46,7 +54,9 @@ start_app <- function(port) {
       service(Inf)
     },
     args = list(app_port = port),
-    stdout = outfile, stderr = outfile, supervise = TRUE
+    stdout = outfile,
+    stderr = outfile,
+    supervise = TRUE
   )
 }
 
@@ -55,8 +65,13 @@ start_ab <- function(port, path, n = 400, concurrent = 100) {
   outfile <- tempfile()
   callr::process$new(
     "ab",
-    args = c(paste0("-n", n), paste0("-c", concurrent), sprintf("http://127.0.0.1:%d%s", port, path)),
-    stdout = outfile, stderr = outfile
+    args = c(
+      paste0("-n", n),
+      paste0("-c", concurrent),
+      sprintf("http://127.0.0.1:%d%s", port, path)
+    ),
+    stdout = outfile,
+    stderr = outfile
   )
 }
 
@@ -216,7 +231,6 @@ test_that("/async /async-error endpoints", {
 })
 
 
-
 test_that("/body-error /async-error endpoints", {
   skip_if_not_possible()
   port <- randomPort()
@@ -269,7 +283,6 @@ test_that("static paths", {
 
   bench$kill()
   bencha$kill()
-
 
   # Check fallthrough
   bench <- start_ab(port, "/static_fallthrough", n = 2000)

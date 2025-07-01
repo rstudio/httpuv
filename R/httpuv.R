@@ -40,13 +40,15 @@ InputStream <- R6Class(
     },
     read = function(l = -1L) {
       # l < 0 means read all remaining bytes
-      if (l < 0)
+      if (l < 0) {
         l <- private$length - seek(private$conn)
+      }
 
-      if (l == 0)
+      if (l == 0) {
         return(raw())
-      else
+      } else {
         return(readBin(private$conn, raw(), l))
+      }
     },
     rewind = function() {
       seek(private$conn, 0)
@@ -79,8 +81,8 @@ nullInputStream <- NullInputStream$new()
 ErrorStream <- R6Class(
   'ErrorStream',
   public = list(
-    cat = function(... , sep = " ", fill = FALSE, labels = NULL) {
-      base::cat(..., sep=sep, fill=fill, labels=labels, file=stderr())
+    cat = function(..., sep = " ", fill = FALSE, labels = NULL) {
+      base::cat(..., sep = sep, fill = fill, labels = labels, file = stderr())
     },
     flush = function() {
       base::flush(stderr())
@@ -92,14 +94,14 @@ stdErrStream <- ErrorStream$new()
 
 #' @importFrom promises promise then finally is.promise %...>% %...!%
 rookCall <- function(func, req, data = NULL, dataLength = -1) {
-
   # Break the processing into two parts: first, the computation with func();
   # second, the preparation of the response object.
   compute <- function() {
-    inputStream <- if(is.null(data))
+    inputStream <- if (is.null(data)) {
       nullInputStream
-    else
+    } else {
       InputStream$new(data, dataLength)
+    }
 
     req$rook.input <- inputStream
 
@@ -108,24 +110,28 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
     req$httpuv.version <- httpuv_version()
 
     # These appear to be required for Rook multipart parsing to work
-    if (!is.null(req$HTTP_CONTENT_TYPE))
+    if (!is.null(req$HTTP_CONTENT_TYPE)) {
       req$CONTENT_TYPE <- req$HTTP_CONTENT_TYPE
-    if (!is.null(req$HTTP_CONTENT_LENGTH))
+    }
+    if (!is.null(req$HTTP_CONTENT_LENGTH)) {
       req$CONTENT_LENGTH <- req$HTTP_CONTENT_LENGTH
+    }
 
     # func() may return a regular value or a promise.
     func(req)
   }
 
   prepare_response <- function(resp) {
-    if (is.null(resp) || length(resp) == 0)
+    if (is.null(resp) || length(resp) == 0) {
       return(NULL)
+    }
 
     # If headers is an empty unnamed list, convert to named list so that
     # the C++ code won't error.
-    if (is.null(resp$headers) ||
-        (length(resp$headers) == 0 && is.null(names(resp$headers))))
-    {
+    if (
+      is.null(resp$headers) ||
+        (length(resp$headers) == 0 && is.null(names(resp$headers)))
+    ) {
       resp$headers <- named_list()
     }
 
@@ -135,8 +141,9 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
     if ('file' %in% names(resp$body)) {
       filename <- resp$body[['file']]
       owned <- FALSE
-      if ('owned' %in% names(resp$body))
+      if ('owned' %in% names(resp$body)) {
         owned <- as.logical(resp$body$owned)
+      }
 
       resp$body <- NULL
       resp$bodyFile <- filename
@@ -147,12 +154,12 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
 
   on_error <- function(e) {
     list(
-      status=500L,
-      headers=list(
-        'Content-Type'='text/plain; charset=UTF-8'
+      status = 500L,
+      headers = list(
+        'Content-Type' = 'text/plain; charset=UTF-8'
       ),
-      body=charToRaw(enc2utf8(
-        paste("ERROR:", conditionMessage(e), collapse="\n")
+      body = charToRaw(enc2utf8(
+        paste("ERROR:", conditionMessage(e), collapse = "\n")
       ))
     )
   }
@@ -179,19 +186,23 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
 AppWrapper <- R6Class(
   'AppWrapper',
   private = list(
-    app = NULL,                    # List defining app
-    wsconns = NULL,                # An environment containing websocket connections
-    supportsOnHeaders = NULL       # Logical
+    app = NULL, # List defining app
+    wsconns = NULL, # An environment containing websocket connections
+    supportsOnHeaders = NULL # Logical
   ),
   public = list(
     initialize = function(app) {
-      if (is.function(app))
-        private$app <- list(call=app)
-      else
+      if (is.function(app)) {
+        private$app <- list(call = app)
+      } else {
         private$app <- app
+      }
 
       # private$app$onHeaders can error (e.g. if private$app is a reference class)
-      private$supportsOnHeaders <- isTRUE(try(!is.null(private$app$onHeaders), silent=TRUE))
+      private$supportsOnHeaders <- isTRUE(try(
+        !is.null(private$app$onHeaders),
+        silent = TRUE
+      ))
 
       # staticPaths are saved in a field on this object, because they are read
       # from the app object only during initialization. This is the only time
@@ -212,11 +223,15 @@ AppWrapper <- R6Class(
       }
 
       try_obj_class <- class(try(private$app$staticPathOptions, silent = TRUE))
-      if (try_obj_class == "try-error" || is.null(private$app$staticPathOptions)) {
+      if (
+        try_obj_class == "try-error" || is.null(private$app$staticPathOptions)
+      ) {
         # Use defaults
         self$staticPathOptions <- staticPathOptions()
       } else if (inherits(private$app$staticPathOptions, "staticPathOptions")) {
-        self$staticPathOptions <- normalizeStaticPathOptions(private$app$staticPathOptions)
+        self$staticPathOptions <- normalizeStaticPathOptions(
+          private$app$staticPathOptions
+        )
       } else {
         stop("staticPathOptions must be an object of class staticPathOptions.")
       }
@@ -224,14 +239,16 @@ AppWrapper <- R6Class(
       private$wsconns <- new.env(parent = emptyenv())
     },
     onHeaders = function(req) {
-      if (!private$supportsOnHeaders)
+      if (!private$supportsOnHeaders) {
         return(NULL)
+      }
 
       rookCall(private$app$onHeaders, req)
     },
     onBodyData = function(req, bytes) {
-      if (is.null(req$.bodyData))
-        req$.bodyData <- file(open='w+b', encoding='UTF-8')
+      if (is.null(req$.bodyData)) {
+        req$.bodyData <- file(open = 'w+b', encoding = 'UTF-8')
+      }
       writeBin(bytes, req$.bodyData)
     },
     call = function(req, cpp_callback) {
@@ -263,7 +280,6 @@ AppWrapper <- R6Class(
         # Slower path if resp is a promise
         resp <- resp %...>% invokeCppCallback(., cpp_callback)
         finally(resp, clean_up)
-
       } else {
         # Fast path if resp is a regular value
         on.exit(clean_up())
@@ -283,10 +299,15 @@ AppWrapper <- R6Class(
       }
     },
     onWSMessage = function(handle, binary, message) {
-      for (handler in private$wsconns[[wsconn_address(handle)]]$messageCallbacks) {
+      for (handler in private$wsconns[[wsconn_address(
+        handle
+      )]]$messageCallbacks) {
         result <- try(handler(binary, message))
         if (inherits(result, 'try-error')) {
-          private$wsconns[[wsconn_address(handle)]]$close(1011, "Error executing onWSMessage")
+          private$wsconns[[wsconn_address(handle)]]$close(
+            1011,
+            "Error executing onWSMessage"
+          )
           return()
         }
       }
@@ -301,8 +322,8 @@ AppWrapper <- R6Class(
       }
     },
 
-    staticPaths = NULL,            # List of static paths
-    staticPathOptions = NULL       # StaticPathOptions object
+    staticPaths = NULL, # List of static paths
+    staticPathOptions = NULL # StaticPathOptions object
   )
 )
 
@@ -399,19 +420,21 @@ WebSocket <- R6Class(
       self$closeCallbacks <- c(self$closeCallbacks, func)
     },
     send = function(message) {
-      if (is.null(self$handle))
+      if (is.null(self$handle)) {
         return()
+      }
 
-      if (is.raw(message))
+      if (is.raw(message)) {
         sendWSMessage(self$handle, TRUE, message)
-      else {
+      } else {
         # TODO: Ensure that message is UTF-8 encoded
         sendWSMessage(self$handle, FALSE, as.character(message))
       }
     },
     close = function(code = 1000L, reason = "") {
-      if (is.null(self$handle))
+      if (is.null(self$handle)) {
         return()
+      }
 
       # Make sure the code will fit in a short int (2 bytes); if not just use
       # "Going Away" error code.
@@ -648,7 +671,6 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
   if (is.na(timeoutMs)) {
     # NA means to run non-blocking
     run_now(0, all = FALSE)
-
   } else if (timeoutMs == 0 || timeoutMs == Inf) {
     .globals$paused <- FALSE
     # In interactive sessions, wait for a max of 0.1 seconds for better
@@ -657,7 +679,6 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
     while (!.globals$paused) {
       run_now(check_time, all = FALSE)
     }
-
   } else {
     # No need to check for .globals$paused because if run_now() executes
     # anything, it will return immediately.
@@ -762,4 +783,3 @@ rawToBase64 <- function(x) {
 #' @inheritParams startServer
 #' @export
 startDaemonizedServer <- startServer
-

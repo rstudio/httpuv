@@ -1,7 +1,9 @@
 context("basic")
 
 test_that("Basic functionality", {
-  s1 <- startServer("127.0.0.1", randomPort(),
+  s1 <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         list(
@@ -14,7 +16,9 @@ test_that("Basic functionality", {
   )
   expect_equal(length(listServers()), 1)
 
-  s2 <- startServer("127.0.0.1", randomPort(),
+  s2 <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         list(
@@ -47,7 +51,9 @@ test_that("Basic functionality", {
 
 
 test_that("Empty and NULL headers are OK", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         if (req$PATH_INFO == "/null") {
@@ -89,7 +95,9 @@ test_that("Empty and NULL headers are OK", {
 
 
 test_that("Content length depends on the presence of 'body'", {
-  s <- startServer("127.0.0.1", randomPort(),
+  s <- startServer(
+    "127.0.0.1",
+    randomPort(),
     list(
       call = function(req) {
         if (req$PATH_INFO == "/ok") {

@@ -10,7 +10,15 @@ built_path <- devtools:::build_cran(pkg, args = NULL)
 
 devtools::check_built(built_path)
 
-if (devtools:::yesno("Ready to submit ", pkg$package, " (", pkg$version, ") to CRAN?")) {
+if (
+  devtools:::yesno(
+    "Ready to submit ",
+    pkg$package,
+    " (",
+    pkg$version,
+    ") to CRAN?"
+  )
+) {
   return(invisible())
 }
 

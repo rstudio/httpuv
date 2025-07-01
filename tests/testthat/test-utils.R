@@ -4,33 +4,33 @@ test_that("encodeURI and encodeURIComponent", {
   # "abc \ue5 \u4e2d" is identical to "abc å 中" when the system's encoding is
   # UTF-8. However, the former is always encoded as UTF-8, while the latter will
   # be encoded using the system's native encoding.
-  utf8_str             <- "abc \ue5 \u4e2d\r\n"
-  utf8_str_encoded     <- "abc%20%C3%A5%20%E4%B8%AD%0D%0A"
-  reserved_str         <- ",/?:@"
+  utf8_str <- "abc \ue5 \u4e2d\r\n"
+  utf8_str_encoded <- "abc%20%C3%A5%20%E4%B8%AD%0D%0A"
+  reserved_str <- ",/?:@"
   reserved_str_encoded <- "%2C%2F%3F%3A%40"
 
   expect_true(Encoding(utf8_str) == "UTF-8")
 
-  expect_identical(encodeURI(utf8_str),                  utf8_str_encoded)
-  expect_identical(encodeURIComponent(utf8_str),         utf8_str_encoded)
-  expect_identical(decodeURI(utf8_str_encoded),          utf8_str)
+  expect_identical(encodeURI(utf8_str), utf8_str_encoded)
+  expect_identical(encodeURIComponent(utf8_str), utf8_str_encoded)
+  expect_identical(decodeURI(utf8_str_encoded), utf8_str)
   expect_identical(decodeURIComponent(utf8_str_encoded), utf8_str)
   expect_true(Encoding(decodeURI(utf8_str_encoded)) == "UTF-8")
   expect_true(Encoding(decodeURIComponent(utf8_str_encoded)) == "UTF-8")
 
   # Behavior with reserved characters differs between encodeURI and
   # encodeURIComponent.
-  expect_identical(encodeURI(reserved_str),                  reserved_str)
-  expect_identical(encodeURIComponent(reserved_str),         reserved_str_encoded)
-  expect_identical(decodeURI(reserved_str_encoded),          reserved_str_encoded)
+  expect_identical(encodeURI(reserved_str), reserved_str)
+  expect_identical(encodeURIComponent(reserved_str), reserved_str_encoded)
+  expect_identical(decodeURI(reserved_str_encoded), reserved_str_encoded)
   expect_identical(decodeURIComponent(reserved_str_encoded), reserved_str)
 
   # Decoding characters that aren't encoded should have no effect.
-  expect_identical(decodeURI(utf8_str),          utf8_str)
+  expect_identical(decodeURI(utf8_str), utf8_str)
   expect_identical(decodeURIComponent(utf8_str), utf8_str)
   expect_true(Encoding(decodeURI(utf8_str)) == "UTF-8")
   expect_true(Encoding(decodeURIComponent(utf8_str)) == "UTF-8")
-  expect_identical(decodeURI(reserved_str),          reserved_str)
+  expect_identical(decodeURI(reserved_str), reserved_str)
   expect_identical(decodeURIComponent(reserved_str), reserved_str)
 
   # Vector input
@@ -87,7 +87,6 @@ test_that("ipFamily works correctly", {
   expect_identical(ipFamily("::%1"), 6L)
   expect_identical(ipFamily("fe80::91:5800:400a:075c%en0"), 6L)
   expect_identical(ipFamily("fe80::1%abcd"), 6L)
-
 
   expect_identical(ipFamily("fe80::91:5800:400a:%075c"), -1L)
   expect_identical(ipFamily(":::1"), -1L)

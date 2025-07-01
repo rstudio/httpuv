@@ -11,22 +11,29 @@ test_that("a close message with no payload is processed", {
 
   random_port <- randomPort()
 
-  srv <- startServer("127.0.0.1", random_port, list(
-    onWSOpen = function(ws) {
-      open_time <- as.numeric(Sys.time())
-      ws$onClose(function(e) {
-        elapsed <<- as.numeric(Sys.time()) - open_time
-        stopServer(srv)
-      })
-    }
-  ))
+  srv <- startServer(
+    "127.0.0.1",
+    random_port,
+    list(
+      onWSOpen = function(ws) {
+        open_time <- as.numeric(Sys.time())
+        ws$onClose(function(e) {
+          elapsed <<- as.numeric(Sys.time()) - open_time
+          stopServer(srv)
+        })
+      }
+    )
+  )
 
   on.exit(srv$stop())
 
   # "Unnecessary" braces here to prevent `later` from attempting to
   # run callbacks if this test is pasted at the console
   {
-    ws_client <- websocket::WebSocket$new(sprintf("ws://127.0.0.1:%s", random_port))
+    ws_client <- websocket::WebSocket$new(sprintf(
+      "ws://127.0.0.1:%s",
+      random_port
+    ))
     ws_client$onOpen(function(event) {
       client_on_open_called <<- TRUE
       # NOTE: Depends on websocketpp internals.
@@ -39,7 +46,9 @@ test_that("a close message with no payload is processed", {
   loop_start <- as.numeric(Sys.time())
   while (!client_on_open_called) {
     loop_elapsed <- as.numeric(Sys.time()) - loop_start
-    if (loop_elapsed > 10) stop("run loop timed out")
+    if (loop_elapsed > 10) {
+      stop("run loop timed out")
+    }
     later::run_now(0.5)
   }
 
