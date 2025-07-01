@@ -60,6 +60,7 @@ Depends:
     R (>= 2.15.1)
 Imports:
     later (>= 0.8.0),
+    otel,
     promises,
     R6,
     Rcpp (>= 1.0.7),
@@ -73,6 +74,8 @@ Suggests:
 LinkingTo:
     later,
     Rcpp
+Remotes: 
+    r-lib/otel
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
@@ -80,6 +83,7 @@ SystemRequirements: GNU make, zlib
 Collate:
     'RcppExports.R'
     'httpuv.R'
+    'otel.R'
     'random_port.R'
     'server.R'
     'staticServer.R'
