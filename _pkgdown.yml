@@ -1,0 +1,8 @@
+url: https://rstudio.github.io/httpuv/
+destination: docs
+
+template:
+  bootstrap: 5
+
+development:
+  mode: auto

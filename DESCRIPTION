@@ -51,7 +51,7 @@ Description: Provides low-level socket and protocol support for handling
     libraries, both of which were developed by Joyent, Inc. (See LICENSE
     file for libuv and http-parser license information.)
 License: GPL (>= 2) | file LICENSE
-URL: https://github.com/rstudio/httpuv
+URL: https://rstudio.github.io/httpuv/, https://github.com/rstudio/httpuv
 BugReports: https://github.com/rstudio/httpuv/issues
 Depends:
     R (>= 2.15.1)
@@ -85,3 +85,4 @@ Collate:
     'utils.R'
 Config/usethis/last-upkeep: 2025-07-01
 Config/testthat/edition: 3
+Config/Needs/website: tidyverse/tidytemplate
