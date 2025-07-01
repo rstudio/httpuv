@@ -45,7 +45,6 @@ NULL
 #'
 #' @seealso \code{\link{WebServer}} and \code{\link{PipeServer}}.
 #' @keywords internal
-#' @importFrom R6 R6Class
 Server <- R6Class(
   "Server",
   cloneable = FALSE,

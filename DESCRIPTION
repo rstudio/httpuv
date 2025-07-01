@@ -76,6 +76,7 @@ RoxygenNote: 7.3.2
 SystemRequirements: GNU make, zlib
 Collate:
     'RcppExports.R'
+    'httpuv-package.R'
     'httpuv.R'
     'random_port.R'
     'server.R'

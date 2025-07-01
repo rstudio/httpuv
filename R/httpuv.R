@@ -1,31 +1,3 @@
-#' HTTP and WebSocket server
-#'
-#' Allows R code to listen for and interact with HTTP and WebSocket clients, so
-#' you can serve web traffic directly out of your R process. Implementation is
-#' based on \href{https://github.com/joyent/libuv}{libuv} and
-#' \href{https://github.com/nodejs/http-parser}{http-parser}.
-#'
-#' This is a low-level library that provides little more than network I/O and
-#' implementations of the HTTP and WebSocket protocols. For an easy way to
-#' create web applications, try \href{https://shiny.posit.co}{Shiny} instead.
-#'
-#' @examples
-#' \dontrun{
-#' demo("echo", package="httpuv")
-#' }
-#'
-#' @seealso \link{startServer}
-#'
-#' @name httpuv-package
-#' @aliases httpuv
-#' @docType package
-#' @title HTTP and WebSocket server
-#' @author Joe Cheng \email{joe@@rstudio.com}
-#' @keywords package
-#' @useDynLib httpuv
-#' @importFrom Rcpp evalCpp
-NULL
-
 # Implementation of Rook input stream
 InputStream <- R6Class(
   'InputStream',
@@ -92,7 +64,6 @@ ErrorStream <- R6Class(
 )
 stdErrStream <- ErrorStream$new()
 
-#' @importFrom promises promise then finally is.promise %...>% %...!%
 rookCall <- function(func, req, data = NULL, dataLength = -1) {
   # Break the processing into two parts: first, the computation with func();
   # second, the preparation of the response object.
@@ -661,7 +632,6 @@ startPipeServer <- function(name, mask, app, quiet = FALSE) {
 #' }
 #'
 #' @export
-#' @importFrom later run_now
 service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
   # In all cases, call `run_now` with `all = FALSE` so that if there is a lot of
   # incoming traffic (relative to the time it takes to process it) we give the
