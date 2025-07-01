@@ -5,7 +5,7 @@ Version: 1.6.16.9000
 Authors@R: c(
     person("Joe", "Cheng", , "joe@posit.co", role = "aut"),
     person("Winston", "Chang", , "winston@posit.co", role = c("aut", "cre")),
-    person("Posit, PBC", "fnd", role = "cph"),
+    person("Posit, PBC", role = c("cph", "fnd"), comment = c(ROR = "03wc8by49"))
     person("Hector", "Corrada Bravo", role = "ctb"),
     person("Jeroen", "Ooms", role = "ctb"),
     person("Andrzej", "Krzemienski", role = "cph",
