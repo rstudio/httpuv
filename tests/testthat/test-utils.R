@@ -1,5 +1,3 @@
-context("utils")
-
 test_that("encodeURI and encodeURIComponent", {
   # "abc \ue5 \u4e2d" is identical to "abc å 中" when the system's encoding is
   # UTF-8. However, the former is always encoded as UTF-8, while the latter will

@@ -65,7 +65,7 @@ Suggests:
     callr,
     curl,
     jsonlite,
-    testthat,
+    testthat (>= 3.0.0),
     websocket
 LinkingTo:
     later,
@@ -84,3 +84,4 @@ Collate:
     'static_paths.R'
     'utils.R'
 Config/usethis/last-upkeep: 2025-07-01
+Config/testthat/edition: 3

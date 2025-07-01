@@ -1,5 +1,3 @@
-context("basic")
-
 test_that("Basic functionality", {
   s1 <- startServer(
     "127.0.0.1",

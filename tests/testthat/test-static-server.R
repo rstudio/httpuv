@@ -1,5 +1,3 @@
-context("static-server")
-
 # These tests are time-sensitive, which makes CRAN unhappy.
 skip_on_cran()
 

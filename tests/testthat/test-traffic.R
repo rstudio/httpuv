@@ -1,5 +1,3 @@
-context("traffic")
-
 skip_if_not_possible <- function() {
   # Temporarily disable these tests because they may not run reliably on
   # some platforms.
