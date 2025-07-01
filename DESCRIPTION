@@ -4,8 +4,10 @@ Title: HTTP and WebSocket Server Library
 Version: 1.6.16.9002
 Authors@R: c(
     person("Joe", "Cheng", , "joe@posit.co", role = "aut"),
-    person("Winston", "Chang", , "winston@posit.co", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-1576-2126")),
-    person("Barret", "Schloerke", role = "aut", email = "barret@posit.co", comment = c(ORCID = "0000-0001-9986-114X")),
+    person("Winston", "Chang", , "winston@posit.co", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-1576-2126")),
+    person("Barret", "Schloerke", , "barret@posit.co", role = "aut",
+           comment = c(ORCID = "0000-0001-9986-114X")),
     person("Posit, PBC", "fnd", role = "cph"),
     person("Hector", "Corrada Bravo", role = "ctb"),
     person("Jeroen", "Ooms", role = "ctb"),
