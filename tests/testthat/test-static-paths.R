@@ -757,7 +757,7 @@ test_that("Last-Modified and If-Modified-Since headers", {
   r <- fetch(local_url("/mtcars.csv", s$getPort()))
   h <- parse_headers_list(r$headers)
   http_mtime <- r$modified
-  expect_equal(file_mtime, http_mtime)
+  expect_equal(as.character(file_mtime), as.character(http_mtime))
 
   # Use the Last-Modified value in the If-Modified-Since header.
   r1 <- fetch(
