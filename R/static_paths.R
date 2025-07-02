@@ -20,11 +20,11 @@
 #' @export
 staticPath <- function(
   path,
-  indexhtml    = NULL,
-  fallthrough  = NULL,
+  indexhtml = NULL,
+  fallthrough = NULL,
   html_charset = NULL,
-  headers      = NULL,
-  validation   = NULL
+  headers = NULL,
+  validation = NULL
 ) {
   if (!is.character(path) || length(path) != 1 || path == "") {
     stop("`path` must be a non-empty string.")
@@ -37,12 +37,12 @@ staticPath <- function(
     list(
       path = path,
       options = normalizeStaticPathOptions(staticPathOptions(
-        indexhtml    = indexhtml,
-        fallthrough  = fallthrough,
+        indexhtml = indexhtml,
+        fallthrough = fallthrough,
         html_charset = html_charset,
-        headers      = headers,
-        validation   = validation,
-        exclude      = FALSE
+        headers = headers,
+        validation = validation,
+        exclude = FALSE
       ))
     ),
     class = "staticPath"
@@ -56,12 +56,12 @@ excludeStaticPath <- function() {
     list(
       path = "",
       options = staticPathOptions(
-        indexhtml    = NULL,
-        fallthrough  = NULL,
+        indexhtml = NULL,
+        fallthrough = NULL,
         html_charset = NULL,
-        headers      = NULL,
-        validation   = NULL,
-        exclude      = TRUE
+        headers = NULL,
+        validation = NULL,
+        exclude = TRUE
       )
     ),
     class = "staticPath"
@@ -81,7 +81,11 @@ as.staticPath.character <- function(path) {
 }
 
 as.staticPath.default <- function(path) {
-  stop("Cannot convert object of class ", class(path), " to a staticPath object.")
+  stop(
+    "Cannot convert object of class ",
+    class(path),
+    " to a staticPath object."
+  )
 }
 
 #' @export
@@ -94,7 +98,9 @@ print.staticPath <- function(x, ...) {
 format.staticPath <- function(x, ...) {
   ret <- paste0(
     "<staticPath>\n",
-    "  Local path:        ", x$path, "\n",
+    "  Local path:        ",
+    x$path,
+    "\n",
     format_opts(x$options)
   )
 }
@@ -129,21 +135,21 @@ format.staticPath <- function(x, ...) {
 #'
 #' @export
 staticPathOptions <- function(
-  indexhtml    = TRUE,
-  fallthrough  = FALSE,
+  indexhtml = TRUE,
+  fallthrough = FALSE,
   html_charset = "utf-8",
-  headers      = list(),
-  validation   = character(0),
-  exclude      = FALSE
+  headers = list(),
+  validation = character(0),
+  exclude = FALSE
 ) {
   res <- structure(
     list(
-      indexhtml    = indexhtml,
-      fallthrough  = fallthrough,
+      indexhtml = indexhtml,
+      fallthrough = fallthrough,
       html_charset = html_charset,
-      headers      = headers,
-      validation   = validation,
-      exclude      = exclude
+      headers = headers,
+      validation = validation,
+      exclude = exclude
     ),
     class = "staticPathOptions"
   )
@@ -170,7 +176,6 @@ format_opts <- function(x, format_empty = "<inherit>") {
   format_option <- function(opt) {
     if (is.null(opt) || length(opt) == 0) {
       format_empty
-
     } else if (!is.null(names(opt))) {
       # Named character vector
       lines <- mapply(
@@ -184,18 +189,29 @@ format_opts <- function(x, format_empty = "<inherit>") {
       lines <- paste(as.character(lines), collapse = "\n")
       lines <- paste0("\n", lines)
       lines
-
     } else {
       paste(as.character(opt), collapse = " ")
     }
   }
   ret <- paste0(
-    "  Use index.html:    ", format_option(x$indexhtml),    "\n",
-    "  Fallthrough to R:  ", format_option(x$fallthrough),  "\n",
-    "  HTML charset:      ", format_option(x$html_charset), "\n",
-    "  Extra headers:     ", format_option(x$headers),      "\n",
-    "  Validation params: ", format_option(x$validation),   "\n",
-    "  Exclude path:      ", format_option(x$exclude),      "\n"
+    "  Use index.html:    ",
+    format_option(x$indexhtml),
+    "\n",
+    "  Fallthrough to R:  ",
+    format_option(x$fallthrough),
+    "\n",
+    "  HTML charset:      ",
+    format_option(x$html_charset),
+    "\n",
+    "  Extra headers:     ",
+    format_option(x$headers),
+    "\n",
+    "  Validation params: ",
+    format_option(x$validation),
+    "\n",
+    "  Exclude path:      ",
+    format_option(x$exclude),
+    "\n"
   )
 }
 
@@ -210,11 +226,15 @@ normalizeStaticPaths <- function(paths) {
   }
 
   if (any_unnamed(paths)) {
-    stop("paths must be a named character vector, a named list containing strings and staticPath objects, or NULL.")
+    stop(
+      "paths must be a named character vector, a named list containing strings and staticPath objects, or NULL."
+    )
   }
 
   if (!is.character(paths) && !is.list(paths)) {
-    stop("paths must be a named character vector, a named list containing strings and staticPath objects, or NULL.")
+    stop(
+      "paths must be a named character vector, a named list containing strings and staticPath objects, or NULL."
+    )
   }
 
   # Convert to list of staticPath objects. Need this verbose wrapping of
@@ -222,23 +242,27 @@ normalizeStaticPaths <- function(paths) {
   paths <- lapply(paths, function(path) as.staticPath(path))
 
   # Make sure URL paths have a leading '/' and no trailing '/'.
-  names(paths) <- vapply(names(paths), function(path) {
-    path <- enc2utf8(path)
+  names(paths) <- vapply(
+    names(paths),
+    function(path) {
+      path <- enc2utf8(path)
 
-    if (path == "") {
-      stop("All paths must be non-empty strings.")
-    }
-    # Ensure there's a leading / for every path
-    if (substr(path, 1, 1) != "/") {
-      path <- paste0("/", path)
-    }
-    # Strip trailing slashes, except when the path is just "/".
-    if (path != "/") {
-      path <- sub("/+$", "", path)
-    }
+      if (path == "") {
+        stop("All paths must be non-empty strings.")
+      }
+      # Ensure there's a leading / for every path
+      if (substr(path, 1, 1) != "/") {
+        path <- paste0("/", path)
+      }
+      # Strip trailing slashes, except when the path is just "/".
+      if (path != "/") {
+        path <- sub("/+$", "", path)
+      }
 
-    path
-  }, "")
+      path
+    },
+    ""
+  )
 
   paths
 }
@@ -275,7 +299,7 @@ normalizeStaticPathOptions <- function(opts) {
     # Special case: if opts$headers was an empty list before unlist(), it is
     # now NULL. Replace it with an empty named character vector.
     if (length(opts$headers) == 0) {
-      opts$headers <- c(a="a")[0]
+      opts$headers <- c(a = "a")[0]
     }
 
     if (!is.character(opts$headers) || any_unnamed(opts$headers)) {
@@ -285,7 +309,9 @@ normalizeStaticPathOptions <- function(opts) {
 
   if (!is.null(opts$validation)) {
     if (!is.character(opts$validation) || length(opts$validation) > 1) {
-      stop("`validation` option must be a character vector with zero or one element.")
+      stop(
+        "`validation` option must be a character vector with zero or one element."
+      )
     }
 
     # Both "" and character(0) result in character(0). Length-1 strings other
@@ -293,7 +319,6 @@ normalizeStaticPathOptions <- function(opts) {
     if (length(opts$validation) == 1) {
       if (opts$validation == "") {
         opts$validation <- character(0)
-
       } else {
         fail <- FALSE
         tryCatch(
@@ -301,18 +326,21 @@ normalizeStaticPathOptions <- function(opts) {
           error = function(e) fail <<- TRUE
         )
         if (!fail) {
-          if (length(p) != 3            ||
+          if (
+            length(p) != 3 ||
               p[[1]] != as.symbol("==") ||
-              !is.character(p[[2]])     ||
-              length(p[[2]]) != 1       ||
-              !is.character(p[[3]])     ||
-              length(p[[3]]) != 1)
-          {
+              !is.character(p[[2]]) ||
+              length(p[[2]]) != 1 ||
+              !is.character(p[[3]]) ||
+              length(p[[3]]) != 1
+          ) {
             fail <- TRUE
           }
         }
         if (fail) {
-          stop("`validation` must be a string of the form: '\"xxx\" == \"yyy\"'")
+          stop(
+            "`validation` must be a string of the form: '\"xxx\" == \"yyy\"'"
+          )
         }
 
         # Turn it into a char vector for easier processing in C++

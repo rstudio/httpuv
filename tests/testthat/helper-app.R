@@ -2,9 +2,21 @@ library(curl)
 library(promises)
 
 
-curl_fetch_async <- function(url, pool = NULL, data = NULL, handle = new_handle()) {
+curl_fetch_async <- function(
+  url,
+  pool = NULL,
+  data = NULL,
+  handle = new_handle()
+) {
   p <- promises::promise(function(resolve, reject) {
-    curl_fetch_multi(url, done = resolve, fail = reject, pool = pool, data = data, handle = handle)
+    curl_fetch_multi(
+      url,
+      done = resolve,
+      fail = reject,
+      pool = pool,
+      data = data,
+      handle = handle
+    )
   })
 
   finished <- FALSE
@@ -16,9 +28,10 @@ curl_fetch_async <- function(url, pool = NULL, data = NULL, handle = new_handle(
   }
   poll()
 
-  p %>% finally(function() {
-    finished <<- TRUE
-  })
+  p %>%
+    finally(function() {
+      finished <<- TRUE
+    })
 }
 
 
@@ -26,17 +39,17 @@ curl_fetch_async <- function(url, pool = NULL, data = NULL, handle = new_handle(
 # reliable as using curl, so we'll use it only when curl can't do what we want.
 http_request_con_async <- function(request, host, port) {
   resolve_fun <- NULL
-  reject_fun  <- NULL
-  con         <- NULL
+  reject_fun <- NULL
+  con <- NULL
 
   p <- promises::promise(function(resolve, reject) {
     resolve_fun <<- resolve
-    reject_fun  <<- reject
+    reject_fun <<- reject
     con <<- socketConnection(host, port)
     writeLines(c(request, ""), con)
   })
 
-  result   <- NULL
+  result <- NULL
   # finished <- FALSE
   poll <- function() {
     result <<- readLines(con)
@@ -48,9 +61,10 @@ http_request_con_async <- function(request, host, port) {
   }
   poll()
 
-  p %>% finally(function() {
-    close(con)
-  })
+  p %>%
+    finally(function() {
+      close(con)
+    })
 }
 
 
@@ -71,10 +85,11 @@ extract <- function(promise) {
     (function(reason) error <<- reason)
 
   wait_for_it()
-  if (!is.null(error))
+  if (!is.null(error)) {
     stop(error)
-  else
+  } else {
     promise_value
+  }
 }
 
 
@@ -119,12 +134,25 @@ http_date_string <- function(time) {
   weekday_num <- as.integer(strftime(time, format = "%w", tz = "GMT"))
   weekday_name <- weekday_names[weekday_num + 1]
 
-  month_names <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-  month_num   <- as.integer(strftime(time, format = "%m", tz = "GMT"))
+  month_names <- c(
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  )
+  month_num <- as.integer(strftime(time, format = "%m", tz = "GMT"))
   month_name <- month_names[month_num]
 
-  strftime(time,
+  strftime(
+    time,
     paste0(weekday_name, ", %d ", month_name, " %Y %H:%M:%S GMT"),
     tz = "GMT"
   )

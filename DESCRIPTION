@@ -8,7 +8,8 @@ Authors@R: c(
            comment = c(ORCID = "0000-0002-1576-2126")),
     person("Barret", "Schloerke", , "barret@posit.co", role = "aut",
            comment = c(ORCID = "0000-0001-9986-114X")),
-    person("Posit, PBC", "fnd", role = "cph"),
+    person("Posit, PBC", role = c("cph", "fnd"),
+           comment = c(ROR = "03wc8by49")),
     person("Hector", "Corrada Bravo", role = "ctb"),
     person("Jeroen", "Ooms", role = "ctb"),
     person("Andrzej", "Krzemienski", role = "cph",
@@ -54,7 +55,7 @@ Description: Provides low-level socket and protocol support for handling
     libraries, both of which were developed by Joyent, Inc. (See LICENSE
     file for libuv and http-parser license information.)
 License: GPL (>= 2) | file LICENSE
-URL: https://github.com/rstudio/httpuv
+URL: https://rstudio.github.io/httpuv/, https://github.com/rstudio/httpuv
 BugReports: https://github.com/rstudio/httpuv/issues
 Depends:
     R (>= 2.15.1)
@@ -69,19 +70,23 @@ Suggests:
     callr,
     curl,
     jsonlite,
-    testthat,
+    testthat (>= 3.0.0),
     websocket
 LinkingTo:
     later,
     Rcpp
-Remotes: 
+Remotes:
     r-lib/otel
+Config/Needs/website: tidyverse/tidytemplate
+Config/testthat/edition: 3
+Config/usethis/last-upkeep: 2025-07-01
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 SystemRequirements: GNU make, zlib
 Collate:
     'RcppExports.R'
+    'httpuv-package.R'
     'httpuv.R'
     'otel.R'
     'random_port.R'
