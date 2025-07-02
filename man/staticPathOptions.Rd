@@ -26,8 +26,7 @@ application's \code{call} function, and allow it to handle the request.}
 
 \item{html_charset}{When HTML files are served, the value that will be
 provided for \code{charset} in the Content-Type header. For example, with
-the default value, \code{"utf-8"}, the header is \code{Content-Type:
-  text/html; charset=utf-8}. If \code{""} is used, then no \code{charset}
+the default value, \code{"utf-8"}, the header is \verb{Content-Type: text/html; charset=utf-8}. If \code{""} is used, then no \code{charset}
 will be added in the Content-Type header.}
 
 \item{headers}{Additional headers and values that will be included in the
@@ -42,7 +41,7 @@ will give a 403 Forbidden response. If the \code{character(0)} (the
 default), then no validation check will be performed.}
 
 \item{exclude}{Should this path be excluded from static serving? (This is
-only to be used internally, for \code{\link{excludeStaticPath}}.)}
+only to be used internally, for \code{\link[=excludeStaticPath]{excludeStaticPath()}}.)}
 }
 \description{
 Create options for static paths

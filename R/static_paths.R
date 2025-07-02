@@ -1,21 +1,21 @@
 #' Create a staticPath object
 #'
-#' The \code{staticPath} function creates a \code{staticPath} object. Note that
-#' if any of the arguments (other than \code{path}) are \code{NULL}, then that
+#' The `staticPath` function creates a `staticPath` object. Note that
+#' if any of the arguments (other than `path`) are `NULL`, then that
 #' means that for this particular static path, it should inherit the behavior
 #' from the staticPathOptions set for the application as a whole.
 #'
-#' The \code{excludeStaticPath} function tells the application to ignore a
+#' The `excludeStaticPath` function tells the application to ignore a
 #' particular path for static serving. This is useful when you want to include a
-#' path for static serving (like \code{"/"}) but then exclude a subdirectory of
-#' it (like \code{"/dynamic"}) so that the subdirectory will always be passed to
-#' the R code for handling requests. \code{excludeStaticPath} can be used not
+#' path for static serving (like `"/"`) but then exclude a subdirectory of
+#' it (like `"/dynamic"`) so that the subdirectory will always be passed to
+#' the R code for handling requests. `excludeStaticPath` can be used not
 #' only for directories; it can also exclude specific files.
 #'
 #' @param path The local path.
 #' @inheritParams staticPathOptions
 #'
-#' @seealso \code{\link{staticPathOptions}}.
+#' @seealso [staticPathOptions()].
 #'
 #' @export
 staticPath <- function(
@@ -114,28 +114,28 @@ format.staticPath <- function(x, ...) {
 #'
 #' @param indexhtml If an index.html file is present, should it be served up
 #'   when the client requests the static path or any subdirectory?
-#' @param fallthrough With the default value, \code{FALSE}, if a request is made
+#' @param fallthrough With the default value, `FALSE`, if a request is made
 #'   for a file that doesn't exist, then httpuv will immediately send a 404
 #'   response from the background I/O thread, without needing to call back into
 #'   the main R thread. This offers the best performance. If the value is
-#'   \code{TRUE}, then instead of sending a 404 response, httpuv will call the
-#'   application's \code{call} function, and allow it to handle the request.
+#'   `TRUE`, then instead of sending a 404 response, httpuv will call the
+#'   application's `call` function, and allow it to handle the request.
 #' @param html_charset When HTML files are served, the value that will be
-#'   provided for \code{charset} in the Content-Type header. For example, with
-#'   the default value, \code{"utf-8"}, the header is \code{Content-Type:
-#'   text/html; charset=utf-8}. If \code{""} is used, then no \code{charset}
+#'   provided for `charset` in the Content-Type header. For example, with
+#'   the default value, `"utf-8"`, the header is `Content-Type:
+#'   text/html; charset=utf-8`. If `""` is used, then no `charset`
 #'   will be added in the Content-Type header.
 #' @param headers Additional headers and values that will be included in the
 #'   response.
 #' @param validation An optional validation pattern. Presently, the only type of
 #'   validation supported is an exact string match of a header. For example, if
-#'   \code{validation} is \code{'"abc" = "xyz"'}, then HTTP requests must have a
-#'   header named \code{abc} (case-insensitive) with the value \code{xyz}
+#'   `validation` is `'"abc" = "xyz"'`, then HTTP requests must have a
+#'   header named `abc` (case-insensitive) with the value `xyz`
 #'   (case-sensitive). If a request does not have a matching header, than httpuv
-#'   will give a 403 Forbidden response. If the \code{character(0)} (the
+#'   will give a 403 Forbidden response. If the `character(0)` (the
 #'   default), then no validation check will be performed.
 #' @param exclude Should this path be excluded from static serving? (This is
-#'   only to be used internally, for \code{\link{excludeStaticPath}}.)
+#'   only to be used internally, for [excludeStaticPath()].)
 #'
 #' @export
 staticPathOptions <- function(

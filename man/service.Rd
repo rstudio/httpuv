@@ -18,15 +18,15 @@ stack -- if R is sitting idle at the command prompt -- it is not necessary to
 call this function, because requests will be handled automatically. However,
 if R is executing code, then requests will not be handled until either the
 call stack is empty, or this function is called (or alternatively,
-\code{\link[later]{run_now}} is called).
+\code{\link[later:run_now]{later::run_now()}} is called).
 }
 \details{
 In previous versions of httpuv (1.3.5 and below), even if a server created by
-\code{\link{startServer}} exists, no requests were serviced unless and until
+\code{\link[=startServer]{startServer()}} exists, no requests were serviced unless and until
 \code{service} was called.
 
-This function simply calls \code{\link[later]{run_now}()}, so if your
-application schedules any \code{\link[later]{later}} callbacks, they will be
+This function simply calls \code{\link[later:run_now]{later::run_now()}}, so if your
+application schedules any \code{\link[later:later]{later::later()}} callbacks, they will be
 invoked.
 }
 \examples{

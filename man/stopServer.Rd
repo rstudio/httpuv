@@ -8,13 +8,13 @@ stopServer(server)
 }
 \arguments{
 \item{server}{A server object that was previously returned from
-\code{\link{startServer}} or \code{\link{startPipeServer}}.}
+\code{\link[=startServer]{startServer()}} or \code{\link[=startPipeServer]{startPipeServer()}}.}
 }
 \description{
 Given a server object that was returned from a previous invocation of
-\code{\link{startServer}} or \code{\link{startPipeServer}}, this closes all
+\code{\link[=startServer]{startServer()}} or \code{\link[=startPipeServer]{startPipeServer()}}, this closes all
 open connections for that server and unbinds the port.
 }
 \seealso{
-\code{\link{stopAllServers}} to stop all servers.
+\code{\link[=stopAllServers]{stopAllServers()}} to stop all servers.
 }

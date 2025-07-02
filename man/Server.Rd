@@ -4,8 +4,8 @@
 \alias{Server}
 \title{Server class}
 \description{
-The \code{Server} class is the parent class for \code{\link{WebServer}} and
-\code{\link{PipeServer}}. This class defines an interface and is not meant to
+The \code{Server} class is the parent class for \code{\link[=WebServer]{WebServer()}} and
+\code{\link[=PipeServer]{PipeServer()}}. This class defines an interface and is not meant to
 be instantiated.
 }
 \examples{
@@ -41,7 +41,7 @@ server$removeStaticPath("staticPath1")
 }
 }
 \seealso{
-\code{\link{WebServer}} and \code{\link{PipeServer}}.
+\code{\link[=WebServer]{WebServer()}} and \code{\link[=PipeServer]{PipeServer()}}.
 }
 \keyword{internal}
 \section{Methods}{
@@ -89,7 +89,7 @@ Get the static paths for the server
 }
 
 \subsection{Returns}{
-A list of \code{\link{staticPath}} objects.
+A list of \code{\link[=staticPath]{staticPath()}} objects.
 }
 }
 \if{html}{\out{<hr>}}

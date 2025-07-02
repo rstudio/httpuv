@@ -37,7 +37,7 @@ Intended as a faster replacement for \code{\link[utils:URLencode]{utils::URLenco
 \code{\link[utils:URLencode]{utils::URLdecode()}}.
 
 encodeURI differs from encodeURIComponent in that the former will not encode
-reserved characters: \code{;,/?:@&=+$}
+reserved characters: \verb{;,/?:@&=+$}
 
 decodeURI differs from decodeURIComponent in that it will refuse to decode
 encoded sequences that decode to a reserved character. (If in doubt, use

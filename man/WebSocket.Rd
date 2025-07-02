@@ -16,7 +16,7 @@ WebSocket class in httpuv has an older API than the one in the websocket
 package.
 
 WebSocket objects should never be created directly. They are obtained by
-passing an \code{onWSOpen} function to \code{\link{startServer}}.
+passing an \code{onWSOpen} function to \code{\link[=startServer]{startServer()}}.
 }
 \examples{
 

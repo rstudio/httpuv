@@ -8,11 +8,11 @@ NULL
 
 #' @title Server class
 #' @description
-#' The \code{Server} class is the parent class for \code{\link{WebServer}} and
-#' \code{\link{PipeServer}}. This class defines an interface and is not meant to
+#' The `Server` class is the parent class for [WebServer()] and
+#' [PipeServer()]. This class defines an interface and is not meant to
 #' be instantiated.
 #'
-#' @seealso \code{\link{WebServer}} and \code{\link{PipeServer}}.
+#' @seealso [WebServer()] and [PipeServer()].
 #' @keywords internal
 Server <- R6Class(
   "Server",
@@ -41,7 +41,7 @@ Server <- R6Class(
     },
     #' @description
     #' Get the static paths for the server
-    #' @return A list of \code{\link{staticPath}} objects.
+    #' @return A list of [staticPath()] objects.
     getStaticPaths = function() {
       if (!private$running) {
         return(NULL)
@@ -106,7 +106,7 @@ Server <- R6Class(
     #' @description
     #' Get the static path options for the server
     #'
-    #' @return A list of default \code{staticPathOptions} for the current server.
+    #' @return A list of default `staticPathOptions` for the current server.
     #'   Each static path will use these options by default, but they can be
     #'   overridden for each static path.
     getStaticPathOptions = function() {
@@ -155,7 +155,7 @@ Server <- R6Class(
 #' This class represents a web server running one application. Multiple servers
 #' can be running at the same time.
 #'
-#' @seealso \code{\link{Server}} and \code{\link{PipeServer}}.
+#' @seealso [Server()] and [PipeServer()].
 #' @keywords internal
 WebServer <- R6Class(
   "WebServer",
@@ -165,13 +165,13 @@ WebServer <- R6Class(
     #' @description
     #' Initialize a new WebServer object
     #'
-    #' Create a new \code{WebServer} object. \code{app} is an httpuv application
-    #' object as described in \code{\link{startServer}}.
+    #' Create a new `WebServer` object. `app` is an httpuv application
+    #' object as described in [startServer()].
     #' @param host The host name or IP address to bind the server to.
     #' @param port The port number to bind the server to.
-    #' @param app An httpuv application object as described in \code{\link{startServer}}.
+    #' @param app An httpuv application object as described in [startServer()].
     #' @param quiet If TRUE, suppresses output from the server.
-    #' @return A new \code{WebServer} object.
+    #' @return A new `WebServer` object.
     #' @examples
     #' \dontrun{
     #' # Create a simple app
@@ -238,7 +238,7 @@ WebServer <- R6Class(
 #' This class represents a server running one application that listens on a
 #' named pipe.
 #'
-#' @seealso \code{\link{Server}} and \code{\link{WebServer}}.
+#' @seealso [Server()] and [WebServer()].
 #' @keywords internal
 PipeServer <- R6Class(
   "PipeServer",
@@ -248,14 +248,14 @@ PipeServer <- R6Class(
     #' @description
     #' Initialize a new PipeServer object
     #'
-    #' Create a new \code{PipeServer} object. \code{app} is an httpuv application
-    #' object as described in \code{\link{startServer}}.
+    #' Create a new `PipeServer` object. `app` is an httpuv application
+    #' object as described in [startServer()].
     #' @param name The name of the named pipe to bind the server to.
     #' @param mask The mask for the named pipe. If NULL, it defaults to -1.
     #' @param app An httpuv application object as described in
-    #'   \code{\link{startServer}}.
+    #'   [startServer()].
     #' @param quiet If TRUE, suppresses output from the server.
-    #' @return A new \code{PipeServer} object.
+    #' @return A new `PipeServer` object.
     #' @examples
     #' \dontrun{
     #' # Create a simple app
@@ -322,13 +322,13 @@ PipeServer <- R6Class(
 #' Stop a server
 #'
 #' Given a server object that was returned from a previous invocation of
-#' \code{\link{startServer}} or \code{\link{startPipeServer}}, this closes all
+#' [startServer()] or [startPipeServer()], this closes all
 #' open connections for that server and unbinds the port.
 #'
 #' @param server A server object that was previously returned from
-#'   \code{\link{startServer}} or \code{\link{startPipeServer}}.
+#'   [startServer()] or [startPipeServer()].
 #'
-#' @seealso \code{\link{stopAllServers}} to stop all servers.
+#' @seealso [stopAllServers()] to stop all servers.
 #'
 #' @export
 stopServer <- function(server) {
@@ -342,9 +342,9 @@ stopServer <- function(server) {
 #' Stop all servers
 #'
 #' This will stop all applications which were created by
-#' \code{\link{startServer}} or \code{\link{startPipeServer}}.
+#' [startServer()] or [startPipeServer()].
 #'
-#' @seealso \code{\link{stopServer}} to stop a specific server.
+#' @seealso [stopServer()] to stop a specific server.
 #'
 #' @export
 stopAllServers <- function() {
@@ -387,7 +387,7 @@ deregisterServer <- function(server) {
 #' Stop a running daemonized server in Unix environments (deprecated)
 #'
 #' This function will be removed in a future release of httpuv. Instead, use
-#' \code{\link{stopServer}}.
+#' [stopServer()].
 #'
 #' @inheritParams stopServer
 #'

@@ -27,7 +27,7 @@ server <- WebServer$new("127.0.0.1", 8080, app)
 }
 }
 \seealso{
-\code{\link{Server}} and \code{\link{PipeServer}}.
+\code{\link[=Server]{Server()}} and \code{\link[=PipeServer]{PipeServer()}}.
 }
 \keyword{internal}
 \section{Super class}{
@@ -61,7 +61,7 @@ server <- WebServer$new("127.0.0.1", 8080, app)
 Initialize a new WebServer object
 
 Create a new \code{WebServer} object. \code{app} is an httpuv application
-object as described in \code{\link{startServer}}.
+object as described in \code{\link[=startServer]{startServer()}}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebServer$new(host, port, app, quiet = FALSE)}\if{html}{\out{</div>}}
 }
@@ -73,7 +73,7 @@ object as described in \code{\link{startServer}}.
 
 \item{\code{port}}{The port number to bind the server to.}
 
-\item{\code{app}}{An httpuv application object as described in \code{\link{startServer}}.}
+\item{\code{app}}{An httpuv application object as described in \code{\link[=startServer]{startServer()}}.}
 
 \item{\code{quiet}}{If TRUE, suppresses output from the server.}
 }
