@@ -31,7 +31,7 @@ server <- WebServer$new("127.0.0.1", 8080, app)
 }
 \keyword{internal}
 \section{Super class}{
-\code{httpuv::Server} -> \code{WebServer}
+\code{\link[httpuv:Server]{httpuv::Server}} -> \code{WebServer}
 }
 \section{Methods}{
 \subsection{Public methods}{
