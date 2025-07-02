@@ -18,43 +18,6 @@ package.
 WebSocket objects should never be created directly. They are obtained by
 passing an \code{onWSOpen} function to \code{\link{startServer}}.
 }
-\section{Fields}{
-
-
-\describe{
-\item{\code{request}}{
-The Rook request environment that opened the connection. This can be
-used to inspect HTTP headers, for example.
-}
-}
-}
-
-\section{Methods}{
-
-
-\describe{
-\item{\code{onMessage(func)}}{
-Registers a callback function that will be invoked whenever a message
-is received on this connection. The callback function will be invoked
-with two arguments. The first argument is \code{TRUE} if the message
-is binary and \code{FALSE} if it is text. The second argument is either
-a raw vector (if the message is binary) or a character vector.
-}
-\item{\code{onClose(func)}}{
-Registers a callback function that will be invoked when the connection
-is closed.
-}
-\item{\code{send(message)}}{
-Begins sending the given message over the websocket. The message must
-be either a raw vector, or a single-element character vector that is
-encoded in UTF-8.
-}
-\item{\code{close()}}{
-Closes the websocket connection.
-}
-}
-}
-
 \examples{
 
 \dontrun{
@@ -81,6 +44,22 @@ startServer("0.0.0.0", 8080,
 )
 }
 }
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{handle}}{The server handle}
+
+\item{\code{messageCallbacks}}{A list of callback functions that will be invoked
+when a message is received on this connection.}
+
+\item{\code{closeCallbacks}}{A list of callback functions that will be invoked
+when the connection is closed.}
+
+\item{\code{request}}{The Rook request environment that opened the connection.
+This can be used to inspect HTTP headers, for example.}
+}
+\if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
@@ -96,46 +75,96 @@ startServer("0.0.0.0", 8080,
 \if{html}{\out{<a id="method-WebSocket-new"></a>}}
 \if{latex}{\out{\hypertarget{method-WebSocket-new}{}}}
 \subsection{Method \code{new()}}{
+Initializes a new WebSocket object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebSocket$new(handle, req)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{handle}}{An C++ WebSocket handle.}
+
+\item{\code{req}}{The Rook request environment that opened the connection.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-WebSocket-onMessage"></a>}}
 \if{latex}{\out{\hypertarget{method-WebSocket-onMessage}{}}}
 \subsection{Method \code{onMessage()}}{
+Registers a callback function that will be invoked whenever a message is
+received on this connection.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebSocket$onMessage(func)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{func}}{The callback function to be registered. The callback function will be invoked with
+two arguments. The first argument is \code{TRUE} if the message is binary
+and \code{FALSE} if it is text. The second argument is either a raw
+vector (if the message is binary) or a character vector.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-WebSocket-onClose"></a>}}
 \if{latex}{\out{\hypertarget{method-WebSocket-onClose}{}}}
 \subsection{Method \code{onClose()}}{
+Registers a callback function that will be invoked when the connection is
+closed.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebSocket$onClose(func)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{func}}{The callback function to be registered.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-WebSocket-send"></a>}}
 \if{latex}{\out{\hypertarget{method-WebSocket-send}{}}}
 \subsection{Method \code{send()}}{
+Begins sending the given message over the websocket.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebSocket$send(message)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{message}}{Either a raw vector, or a single-element character
+vector that is encoded in UTF-8.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-WebSocket-close"></a>}}
 \if{latex}{\out{\hypertarget{method-WebSocket-close}{}}}
 \subsection{Method \code{close()}}{
+Closes the websocket connection
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebSocket$close(code = 1000L, reason = "")}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{code}}{An integer that indicates the \href{https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#code}{WebSocket close code}.}
+
+\item{\code{reason}}{A concise human-readable prose \href{https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#reason}{explanation for the closure}.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-WebSocket-clone"></a>}}

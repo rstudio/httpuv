@@ -298,12 +298,13 @@ AppWrapper <- R6Class(
   )
 )
 
-#' WebSocket class
-#'
+#' @title WebSocket class
+#' @description
 #' A \code{WebSocket} object represents a single WebSocket connection. The
 #' object can be used to send messages and close the connection, and to receive
 #' notifications when messages are received or the connection is closed.
 #'
+#' @details
 #' Note that this WebSocket class is different from the one provided by the
 #' package named websocket. This class is meant to be used on the server side,
 #' whereas the one in the websocket package is to be used as a client. The
@@ -313,44 +314,7 @@ AppWrapper <- R6Class(
 #' WebSocket objects should never be created directly. They are obtained by
 #' passing an \code{onWSOpen} function to \code{\link{startServer}}.
 #'
-#' @usage NULL
-#'
-#' @format NULL
-#'
-#' @section Fields:
-#'
-#'   \describe{
-#'     \item{\code{request}}{
-#'       The Rook request environment that opened the connection. This can be
-#'       used to inspect HTTP headers, for example.
-#'     }
-#'   }
-#'
-#'
-#' @section Methods:
-#'
-#'   \describe{
-#'     \item{\code{onMessage(func)}}{
-#'       Registers a callback function that will be invoked whenever a message
-#'       is received on this connection. The callback function will be invoked
-#'       with two arguments. The first argument is \code{TRUE} if the message
-#'       is binary and \code{FALSE} if it is text. The second argument is either
-#'       a raw vector (if the message is binary) or a character vector.
-#'     }
-#'     \item{\code{onClose(func)}}{
-#'       Registers a callback function that will be invoked when the connection
-#'       is closed.
-#'     }
-#'     \item{\code{send(message)}}{
-#'       Begins sending the given message over the websocket. The message must
-#'       be either a raw vector, or a single-element character vector that is
-#'       encoded in UTF-8.
-#'     }
-#'     \item{\code{close()}}{
-#'       Closes the websocket connection.
-#'     }
-#'   }
-#'
+#' @export
 #' @examples
 #'
 #' \dontrun{
@@ -376,20 +340,41 @@ AppWrapper <- R6Class(
 #'   )
 #' )
 #' }
-#' @export
+#' @param handle An C++ WebSocket handle.
 WebSocket <- R6Class(
   'WebSocket',
   public = list(
+    #' @description
+    #' Initializes a new WebSocket object.
+    #'
+    #' @param req The Rook request environment that opened the connection.
     initialize = function(handle, req) {
       self$handle <- handle
       self$request <- req
     },
+    #' @description
+    #' Registers a callback function that will be invoked whenever a message is
+    #' received on this connection.
+    #'
+    #' @param func The callback function to be registered. The callback function will be invoked with
+    #' two arguments. The first argument is \code{TRUE} if the message is binary
+    #' and \code{FALSE} if it is text. The second argument is either a raw
+    #' vector (if the message is binary) or a character vector.
     onMessage = function(func) {
       self$messageCallbacks <- c(self$messageCallbacks, func)
     },
+    #' @description
+    #' Registers a callback function that will be invoked when the connection is
+    #' closed.
+    #' @param func The callback function to be registered.
     onClose = function(func) {
       self$closeCallbacks <- c(self$closeCallbacks, func)
     },
+    #' @description
+    #' Begins sending the given message over the websocket.
+    #'
+    #' @param message Either a raw vector, or a single-element character
+    #' vector that is encoded in UTF-8.
     send = function(message) {
       if (is.null(self$handle)) {
         return()
@@ -402,6 +387,12 @@ WebSocket <- R6Class(
         sendWSMessage(self$handle, FALSE, as.character(message))
       }
     },
+    #' @description
+    #' Closes the websocket connection
+    #' @param code An integer that indicates the [WebSocket close
+    #'   code](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#code).
+    #' @param reason A concise human-readable prose [explanation for the
+    #'   closure](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#reason).
     close = function(code = 1000L, reason = "") {
       if (is.null(self$handle)) {
         return()
@@ -420,9 +411,19 @@ WebSocket <- R6Class(
       self$handle <- NULL
     },
 
+    #' @field handle The server handle
     handle = NULL,
+
+    #' @field messageCallbacks A list of callback functions that will be invoked
+    #'   when a message is received on this connection.
     messageCallbacks = list(),
+
+    #' @field closeCallbacks A list of callback functions that will be invoked
+    #'   when the connection is closed.
     closeCallbacks = list(),
+
+    #' @field request The Rook request environment that opened the connection.
+    #'   This can be used to inspect HTTP headers, for example.
     request = NULL
   )
 )

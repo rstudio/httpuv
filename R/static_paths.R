@@ -68,18 +68,22 @@ excludeStaticPath <- function() {
   )
 }
 
+#' @export
 as.staticPath <- function(path) {
   UseMethod("as.staticPath", path)
 }
 
+#' @export
 as.staticPath.staticPath <- function(path) {
   path
 }
 
+#' @export
 as.staticPath.character <- function(path) {
   staticPath(path)
 }
 
+#' @export
 as.staticPath.default <- function(path) {
   stop(
     "Cannot convert object of class ",
