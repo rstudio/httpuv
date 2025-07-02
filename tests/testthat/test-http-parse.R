@@ -1,10 +1,10 @@
-context("http-parse")
-
 test_that("Large HTTP header values are preserved", {
   # This is a test for https://github.com/rstudio/httpuv/issues/275
   # When there is a very large header, it may span multiple TCP messages.
   # Previously, these headers would get truncated.
-  s <- httpuv::startServer("0.0.0.0", randomPort(),
+  s <- httpuv::startServer(
+    "0.0.0.0",
+    randomPort(),
     list(
       call = function(req) {
         list(
@@ -28,10 +28,9 @@ test_that("Large HTTP header values are preserved", {
   h <- new_handle()
   handle_setheaders(h, `test-header` = long_string)
 
-  res <- fetch(local_url("/", s$getPort()),  h)
+  res <- fetch(local_url("/", s$getPort()), h)
   content <- rawToChar(res$content)
   expect_identical(content, long_string)
-
 
   # Similar to previous, but make sure there are two header entries with the
   # same field name, as in:
@@ -46,16 +45,24 @@ test_that("Large HTTP header values are preserved", {
   # The second test-header value is the long one, so it will be split across
   # multiple TCP messages.
   h <- new_handle()
-  handle_setheaders(h, `test-header` = long_string_a, `test-header` = long_string_b)
-  res <- fetch(local_url("/", s$getPort()),  h)
+  handle_setheaders(
+    h,
+    `test-header` = long_string_a,
+    `test-header` = long_string_b
+  )
+  res <- fetch(local_url("/", s$getPort()), h)
   content <- rawToChar(res$content)
   expect_identical(content, paste0(long_string_a, ",", long_string_b))
 
   # The first test-header value is the long one, so it will be split across
   # multiple TCP messages.
   h <- new_handle()
-  handle_setheaders(h, `test-header` = long_string_b, `test-header` = long_string_a)
-  res <- fetch(local_url("/", s$getPort()),  h)
+  handle_setheaders(
+    h,
+    `test-header` = long_string_b,
+    `test-header` = long_string_a
+  )
+  res <- fetch(local_url("/", s$getPort()), h)
   content <- rawToChar(res$content)
   expect_identical(content, paste0(long_string_b, ",", long_string_a))
 })
@@ -65,7 +72,9 @@ test_that("Large HTTP header field names are preserved", {
   # Also for https://github.com/rstudio/httpuv/issues/275
   # This tests for field names that are split across messages.
   headers_received <- NULL
-  s <- httpuv::startServer("0.0.0.0", randomPort(),
+  s <- httpuv::startServer(
+    "0.0.0.0",
+    randomPort(),
     list(
       call = function(req) {
         # Save the headers for examination later
@@ -88,11 +97,15 @@ test_that("Large HTTP header field names are preserved", {
   values <- as.list(LETTERS[1:8])
   # Use 9900-byte field names (instead of 10000) because the Rook object makes
   # them longer by prepending "HTTP_".
-  fields <- vapply(letters[1:8], function(x) paste0(rep(x, 9900), collapse = ""), "")
+  fields <- vapply(
+    letters[1:8],
+    function(x) paste0(rep(x, 9900), collapse = ""),
+    ""
+  )
   headers <- setNames(values, fields)
   do.call(handle_setheaders, c(list(h), headers))
 
-  res <- fetch(local_url("/", s$getPort()),  h)
+  res <- fetch(local_url("/", s$getPort()), h)
   expect_true(all(fields %in% names(headers_received)))
   expect_identical(as.list(headers_received[fields]), headers)
 })

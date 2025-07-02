@@ -11,15 +11,14 @@ It is primarily intended as a building block for other packages, rather than mak
 
 ## Installing
 
-You can install the stable version from CRAN, or the development version using **remotes**:
+You can install the stable version from CRAN, or the development version using **pak**:
 
 ```r
 # install from CRAN
 install.packages("httpuv")
 
 # or if you want to test the development version here
-if (!require("remotes")) install.packages("remotes")
-remotes::install_github("rstudio/httpuv")
+pak::pak("rstudio/httpuv")
 ```
 
 Since httpuv contains C code, you'll need to make sure you're set up to install packages with compiled code. Follow the instructions at http://www.rstudio.com/ide/docs/packages/prerequisites
