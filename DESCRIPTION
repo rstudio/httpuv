@@ -65,18 +65,21 @@ Imports:
     promises,
     R6,
     Rcpp (>= 1.0.7),
-    utils
+    utils,
+    withr
 Suggests:
     callr,
     curl,
     jsonlite,
+    otelsdk,
     testthat (>= 3.0.0),
     websocket
 LinkingTo:
     later,
     Rcpp
 Remotes:
-    r-lib/otel
+    r-lib/otel,
+    r-lib/otelsdk
 Config/Needs/website: tidyverse/tidytemplate
 Config/testthat/edition: 3
 Config/usethis/last-upkeep: 2025-07-01
