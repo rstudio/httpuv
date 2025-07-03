@@ -42,65 +42,15 @@ named pipe.</p>
 
 
     <div class="section level2">
-    <h2 id="methods">Methods<a class="anchor" aria-label="anchor" href="#methods"></a></h2>
-
-
-
-<dl><dt><code>initialize(name, mask, app)</code></dt>
-<dd><p>Create a new <code>PipeServer</code> object. <code>app</code> is an httpuv application
-object as described in <code><a href="startServer.html">startServer</a></code>.</p></dd>
-
-<dt><code>getName()</code></dt>
-<dd><p>Return the value of <code>name</code> that was passed to
-<code>initialize()</code>.</p></dd>
-
-<dt><code>getMask()</code></dt>
-<dd><p>Return the value of <code>mask</code> that was passed to
-<code>initialize()</code>.</p></dd>
-
-<dt><code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code></dt>
-<dd><p>Stops a running server.</p></dd>
-
-<dt><code>isRunning()</code></dt>
-<dd><p>Returns TRUE if the server is currently running.</p></dd>
-
-<dt><code>getStaticPaths()</code></dt>
-<dd><p>Returns a list of <code><a href="staticPath.html">staticPath</a></code>
-objects for the server.</p></dd>
-
-<dt><code>setStaticPath(..., .list = NULL)</code></dt>
-<dd><p>Sets a static path for the
-current server. Each static path can be given as a named argument, or as
-an named item in <code>.list</code>. If there already exists a static path with
-the same name, it will be replaced.</p></dd>
-
-<dt><code>removeStaticPath(path)</code></dt>
-<dd><p>Removes a static path with the given
-name.</p></dd>
-
-<dt><code>getStaticPathOptions()</code></dt>
-<dd><p>Returns a list of default
-<code>staticPathOptions</code> for the current server. Each static path will
-use these options by default, but they can be overridden for each static
-path.</p></dd>
-
-<dt><code>setStaticPathOption(..., .list = NULL)</code></dt>
-<dd><p>Sets one or more
-static path options. Each option can be given as a named argument, or as
-a named item in <code>.list</code>.</p></dd>
-
-
-</dl></div>
-    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="Server.html">Server</a></code> and <code><a href="WebServer.html">WebServer</a></code>.</p></div>
+    <div class="dont-index"><p><code><a href="Server.html">Server()</a></code> and <code><a href="WebServer.html">WebServer()</a></code>.</p></div>
     </div>
     <div class="section level2">
     <h2 id="super-class">Super class<a class="anchor" aria-label="anchor" href="#super-class"></a></h2>
     <p><code><a href="Server.html">httpuv::Server</a></code> -&gt; <code>PipeServer</code></p>
     </div>
     <div class="section level2">
-    <h2 id="methods-1">Methods<a class="anchor" aria-label="anchor" href="#methods-1"></a></h2>
+    <h2 id="methods">Methods<a class="anchor" aria-label="anchor" href="#methods"></a></h2>
 
 <div class="section">
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
@@ -117,35 +67,105 @@ a named item in <code>.list</code>.</p></dd>
 <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="stop"><a href="Server.html#method-stop"><code>httpuv::Server$stop()</code></a></span></li>
 </ul></details></p><hr><a id="method-PipeServer-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
-
-<div class="section">
+<p>Initialize a new PipeServer object</p>
+<p>Create a new <code>PipeServer</code> object. <code>app</code> is an httpuv application
+object as described in <code><a href="startServer.html">startServer()</a></code>.</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/PipeServer.html">PipeServer</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">name</span>, <span class="va">mask</span>, <span class="va">app</span>, quiet <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>name</code></dt>
+<dd><p>The name of the named pipe to bind the server to.</p></dd>
+
+
+<dt><code>mask</code></dt>
+<dd><p>The mask for the named pipe. If NULL, it defaults to -1.</p></dd>
+
+
+<dt><code>app</code></dt>
+<dd><p>An httpuv application object as described in
+<code><a href="startServer.html">startServer()</a></code>.</p></dd>
+
+
+<dt><code>quiet</code></dt>
+<dd><p>If TRUE, suppresses output from the server.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
+<p>A new <code>PipeServer</code> object.</p>
+</div>
+<div class="section">
+<h4 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a></h4>
+<p></p><div class="r example copy"><div class="sourceCode"><pre><code>\dontrun{
+# Create a simple app
+app &lt;- function(req) {
+  list(
+    status = 200L,
+    headers = list('Content-Type' = 'text/plain'),
+    body = "Hello, world!"
+  )
+}
+# Create a server
+server &lt;- PipeServer$new("my_pipe", -1, app)
+}
+</code></pre></div><p></p></div>
 </div>
 
 
 </div><p></p><hr><a id="method-PipeServer-getName"></a><div class="section">
 <h3 id="method-getname-">Method <code>getName()</code><a class="anchor" aria-label="anchor" href="#method-getname-"></a></h3>
-
-<div class="section">
+<p>Get the name of the named pipe</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PipeServer</span><span class="op">$</span><span class="fu">getName</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+<div class="section">
+<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
+<p>The name of the named pipe that the server is bound to.</p>
+</div>
 
 </div><p></p><hr><a id="method-PipeServer-getMask"></a><div class="section">
 <h3 id="method-getmask-">Method <code>getMask()</code><a class="anchor" aria-label="anchor" href="#method-getmask-"></a></h3>
-
-<div class="section">
+<p>Get the mask for the named pipe</p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PipeServer</span><span class="op">$</span><span class="fu">getMask</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
+<div class="section">
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<p>The mask for the named pipe that the server is bound to.</p>
+</div>
 
 </div>
 
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
+<span class="r-in"><span><span class="co">## Method `PipeServer$new`</span></span></span>
+<span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Create a simple app</span></span></span>
+<span class="r-in"><span><span class="va">app</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">req</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    status <span class="op">=</span> <span class="fl">200L</span>,</span></span>
+<span class="r-in"><span>    headers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">'Content-Type'</span> <span class="op">=</span> <span class="st">'text/plain'</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    body <span class="op">=</span> <span class="st">"Hello, world!"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="co"># Create a server</span></span></span>
+<span class="r-in"><span><span class="va">server</span> <span class="op">&lt;-</span> <span class="va">PipeServer</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="st">"my_pipe"</span>, <span class="op">-</span><span class="fl">1</span>, <span class="va">app</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
