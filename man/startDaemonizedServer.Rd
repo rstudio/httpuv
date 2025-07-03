@@ -21,7 +21,7 @@ Details.}
 }
 \description{
 This function will be removed in a future release of httpuv. It is simply a
-wrapper for \code{\link{startServer}}. In previous versions of httpuv (1.3.5
+wrapper for \code{\link[=startServer]{startServer()}}. In previous versions of httpuv (1.3.5
 and below), \code{startServer} ran applications in the foreground and
 \code{startDaemonizedServer} ran applications in the background, but now both
 of them run applications in the background.

@@ -17,14 +17,14 @@ listened on. Note that on most Unix-like systems including Linux and macOS,
 port numbers smaller than 1024 require root privileges.}
 
 \item{app}{A collection of functions that define your application. See
-\code{\link{startServer}}.}
+\code{\link[=startServer]{startServer()}}.}
 
 \item{interruptIntervalMs}{Deprecated (last used in httpuv 1.3.5).}
 }
 \description{
 This is a convenience function that provides a simple way to call
-\code{\link{startServer}}, \code{\link{service}}, and
-\code{\link{stopServer}} in the correct sequence. It does not return unless
+\code{\link[=startServer]{startServer()}}, \code{\link[=service]{service()}}, and
+\code{\link[=stopServer]{stopServer()}} in the correct sequence. It does not return unless
 interrupted or an error occurs.
 }
 \details{
@@ -50,6 +50,6 @@ runServer("0.0.0.0", 5000,
 }
 }
 \seealso{
-\code{\link{startServer}}, \code{\link{service}},
-\code{\link{stopServer}}
+\code{\link[=startServer]{startServer()}}, \code{\link[=service]{service()}},
+\code{\link[=stopServer]{stopServer()}}
 }

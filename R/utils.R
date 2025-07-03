@@ -45,16 +45,16 @@ drop_duplicate_names <- function(x) {
 #'
 #' The logging level for httpuv can be set to report differing levels of
 #' information. Possible logging levels (from least to most information
-#' reported) are: \code{"OFF"}, \code{"ERROR"}, \code{"WARN"}, \code{"INFO"}, or
-#' \code{"DEBUG"}. The default level is \code{ERROR}.
+#' reported) are: `"OFF"`, `"ERROR"`, `"WARN"`, `"INFO"`, or
+#' `"DEBUG"`. The default level is `ERROR`.
 #'
-#' @param level The logging level. Must be one of \code{NULL}, \code{"OFF"},
-#'   \code{"ERROR"}, \code{"WARN"}, \code{"INFO"}, or \code{"DEBUG"}. If
-#'   \code{NULL} (the default), then this function simply returns the current
+#' @param level The logging level. Must be one of `NULL`, `"OFF"`,
+#'   `"ERROR"`, `"WARN"`, `"INFO"`, or `"DEBUG"`. If
+#'   `NULL` (the default), then this function simply returns the current
 #'   logging level.
 #'
-#' @return If \code{level=NULL}, then this returns the current logging level. If
-#'   \code{level} is any other value, then this returns the previous logging
+#' @return If `level=NULL`, then this returns the current logging level. If
+#'   `level` is any other value, then this returns the previous logging
 #'   level, from before it is set to the new value.
 #'
 #' @keywords internal

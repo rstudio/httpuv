@@ -8,8 +8,8 @@ stopAllServers()
 }
 \description{
 This will stop all applications which were created by
-\code{\link{startServer}} or \code{\link{startPipeServer}}.
+\code{\link[=startServer]{startServer()}} or \code{\link[=startPipeServer]{startPipeServer()}}.
 }
 \seealso{
-\code{\link{stopServer}} to stop a specific server.
+\code{\link[=stopServer]{stopServer()}} to stop a specific server.
 }

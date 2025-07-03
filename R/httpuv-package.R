@@ -2,19 +2,19 @@
 #'
 #' Allows R code to listen for and interact with HTTP and WebSocket clients, so
 #' you can serve web traffic directly out of your R process. Implementation is
-#' based on \href{https://github.com/joyent/libuv}{libuv} and
-#' \href{https://github.com/nodejs/http-parser}{http-parser}.
+#' based on [libuv](https://github.com/joyent/libuv) and
+#' [http-parser](https://github.com/nodejs/http-parser).
 #'
 #' This is a low-level library that provides little more than network I/O and
 #' implementations of the HTTP and WebSocket protocols. For an easy way to
-#' create web applications, try \href{https://shiny.posit.co}{Shiny} instead.
+#' create web applications, try [Shiny](https://shiny.posit.co) instead.
 #'
 #' @examples
 #' \dontrun{
 #' demo("echo", package="httpuv")
 #' }
 #'
-#' @seealso \link{startServer}
+#' @seealso [startServer]
 #'
 #' @name httpuv-package
 #' @aliases httpuv

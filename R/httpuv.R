@@ -298,12 +298,13 @@ AppWrapper <- R6Class(
   )
 )
 
-#' WebSocket class
-#'
-#' A \code{WebSocket} object represents a single WebSocket connection. The
+#' @title WebSocket class
+#' @description
+#' A `WebSocket` object represents a single WebSocket connection. The
 #' object can be used to send messages and close the connection, and to receive
 #' notifications when messages are received or the connection is closed.
 #'
+#' @details
 #' Note that this WebSocket class is different from the one provided by the
 #' package named websocket. This class is meant to be used on the server side,
 #' whereas the one in the websocket package is to be used as a client. The
@@ -311,46 +312,9 @@ AppWrapper <- R6Class(
 #' package.
 #'
 #' WebSocket objects should never be created directly. They are obtained by
-#' passing an \code{onWSOpen} function to \code{\link{startServer}}.
+#' passing an `onWSOpen` function to [startServer()].
 #'
-#' @usage NULL
-#'
-#' @format NULL
-#'
-#' @section Fields:
-#'
-#'   \describe{
-#'     \item{\code{request}}{
-#'       The Rook request environment that opened the connection. This can be
-#'       used to inspect HTTP headers, for example.
-#'     }
-#'   }
-#'
-#'
-#' @section Methods:
-#'
-#'   \describe{
-#'     \item{\code{onMessage(func)}}{
-#'       Registers a callback function that will be invoked whenever a message
-#'       is received on this connection. The callback function will be invoked
-#'       with two arguments. The first argument is \code{TRUE} if the message
-#'       is binary and \code{FALSE} if it is text. The second argument is either
-#'       a raw vector (if the message is binary) or a character vector.
-#'     }
-#'     \item{\code{onClose(func)}}{
-#'       Registers a callback function that will be invoked when the connection
-#'       is closed.
-#'     }
-#'     \item{\code{send(message)}}{
-#'       Begins sending the given message over the websocket. The message must
-#'       be either a raw vector, or a single-element character vector that is
-#'       encoded in UTF-8.
-#'     }
-#'     \item{\code{close()}}{
-#'       Closes the websocket connection.
-#'     }
-#'   }
-#'
+#' @export
 #' @examples
 #'
 #' \dontrun{
@@ -376,20 +340,41 @@ AppWrapper <- R6Class(
 #'   )
 #' )
 #' }
-#' @export
+#' @param handle An C++ WebSocket handle.
 WebSocket <- R6Class(
   'WebSocket',
   public = list(
+    #' @description
+    #' Initializes a new WebSocket object.
+    #'
+    #' @param req The Rook request environment that opened the connection.
     initialize = function(handle, req) {
       self$handle <- handle
       self$request <- req
     },
+    #' @description
+    #' Registers a callback function that will be invoked whenever a message is
+    #' received on this connection.
+    #'
+    #' @param func The callback function to be registered. The callback function will be invoked with
+    #' two arguments. The first argument is `TRUE` if the message is binary
+    #' and `FALSE` if it is text. The second argument is either a raw
+    #' vector (if the message is binary) or a character vector.
     onMessage = function(func) {
       self$messageCallbacks <- c(self$messageCallbacks, func)
     },
+    #' @description
+    #' Registers a callback function that will be invoked when the connection is
+    #' closed.
+    #' @param func The callback function to be registered.
     onClose = function(func) {
       self$closeCallbacks <- c(self$closeCallbacks, func)
     },
+    #' @description
+    #' Begins sending the given message over the websocket.
+    #'
+    #' @param message Either a raw vector, or a single-element character
+    #' vector that is encoded in UTF-8.
     send = function(message) {
       if (is.null(self$handle)) {
         return()
@@ -402,6 +387,12 @@ WebSocket <- R6Class(
         sendWSMessage(self$handle, FALSE, as.character(message))
       }
     },
+    #' @description
+    #' Closes the websocket connection
+    #' @param code An integer that indicates the [WebSocket close
+    #'   code](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#code).
+    #' @param reason A concise human-readable prose [explanation for the
+    #'   closure](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#reason).
     close = function(code = 1000L, reason = "") {
       if (is.null(self$handle)) {
         return()
@@ -420,9 +411,19 @@ WebSocket <- R6Class(
       self$handle <- NULL
     },
 
+    #' @field handle The server handle
     handle = NULL,
+
+    #' @field messageCallbacks A list of callback functions that will be invoked
+    #'   when a message is received on this connection.
     messageCallbacks = list(),
+
+    #' @field closeCallbacks A list of callback functions that will be invoked
+    #'   when the connection is closed.
     closeCallbacks = list(),
+
+    #' @field request The Rook request environment that opened the connection.
+    #'   This can be used to inspect HTTP headers, for example.
     request = NULL
   )
 )
@@ -432,106 +433,106 @@ WebSocket <- R6Class(
 #' Creates an HTTP/WebSocket server on the specified host and port.
 #'
 #' @param host A string that is a valid IPv4 address that is owned by this
-#'   server, or \code{"0.0.0.0"} to listen on all IP addresses.
+#'   server, or `"0.0.0.0"` to listen on all IP addresses.
 #' @param port A number or integer that indicates the server port that should be
 #'   listened on. Note that on most Unix-like systems including Linux and macOS,
 #'   port numbers smaller than 1024 require root privileges.
 #' @param app A collection of functions that define your application. See
 #'   Details.
-#' @param quiet If \code{TRUE}, suppress error messages from starting app.
+#' @param quiet If `TRUE`, suppress error messages from starting app.
 #' @return A handle for this server that can be passed to
-#'   \code{\link{stopServer}} to shut the server down.
+#'   [stopServer()] to shut the server down.
 #'
-#' @details \code{startServer} binds the specified port and listens for
+#' @details `startServer` binds the specified port and listens for
 #'   connections on an thread running in the background. This background thread
 #'   handles the I/O, and when it receives a HTTP request, it will schedule a
-#'   call to the user-defined R functions in \code{app} to handle the request.
-#'   This scheduling is done with \code{\link[later]{later}()}. When the R call
+#'   call to the user-defined R functions in `app` to handle the request.
+#'   This scheduling is done with [later::later()]. When the R call
 #'   stack is empty -- in other words, when an interactive R session is sitting
 #'   idle at the command prompt -- R will automatically run the scheduled calls.
 #'   However, if the call stack is not empty -- if R is evaluating other R code
 #'   -- then the callbacks will not execute until either the call stack is
-#'   empty, or the \code{\link[later]{run_now}()} function is called. This
+#'   empty, or the [later::run_now()] function is called. This
 #'   function tells R to execute any callbacks that have been scheduled by
-#'   \code{\link[later]{later}()}. The \code{\link{service}()} function is
-#'   essentially a wrapper for \code{\link[later]{run_now}()}.
+#'   [later::later()]. The [service()] function is
+#'   essentially a wrapper for [later::run_now()].
 #'
 #'   In older versions of httpuv (1.3.5 and below), it did not use a background
 #'   thread for I/O, and when this function was called, it did not accept
-#'   connections immediately. It was necessary to call \code{\link{service}}
+#'   connections immediately. It was necessary to call [service()]
 #'   repeatedly in order to actually accept and handle connections.
 #'
 #'   If the port cannot be bound (most likely due to permissions or because it
 #'   is already bound), an error is raised.
 #'
 #'   The application can also specify paths on the filesystem which will be
-#'   served from the background thread, without invoking \code{$call()} or
-#'   \code{$onHeaders()}. Files served this way will be only use a C++ code,
+#'   served from the background thread, without invoking `$call()` or
+#'   `$onHeaders()`. Files served this way will be only use a C++ code,
 #'   which is faster than going through R, and will not be blocked when R code
 #'   is executing. This can greatly improve performance when serving static
 #'   assets.
 #'
-#'   The \code{app} parameter is where your application logic will be provided
+#'   The `app` parameter is where your application logic will be provided
 #'   to the server. This can be a list, environment, or reference class that
 #'   contains the following methods and fields:
 #'
 #'   \describe{
-#'     \item{\code{call(req)}}{Process the given HTTP request, and return an
+#'     \item{`call(req)`}{Process the given HTTP request, and return an
 #'     HTTP response (see Response Values). This method should be implemented in
 #'     accordance with the
-#'     \href{https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md}{Rook}
-#'     specification. Note that httpuv augments \code{req} with an additional
-#'     item, \code{req$HEADERS}, which is a named character vector of request
+#'     [Rook](https://github.com/jeffreyhorner/Rook/blob/a5e45f751/README.md)
+#'     specification. Note that httpuv augments `req` with an additional
+#'     item, `req$HEADERS`, which is a named character vector of request
 #'     headers.}
-#'     \item{\code{onHeaders(req)}}{Optional. Similar to \code{call}, but occurs
-#'     when headers are received. Return \code{NULL} to continue normal
+#'     \item{`onHeaders(req)`}{Optional. Similar to `call`, but occurs
+#'     when headers are received. Return `NULL` to continue normal
 #'     processing of the request, or a Rook response to send that response,
 #'     stop processing the request, and ask the client to close the connection.
 #'     (This can be used to implement upload size limits, for example.)}
-#'     \item{\code{onWSOpen(ws)}}{Called back when a WebSocket connection is established.
+#'     \item{`onWSOpen(ws)`}{Called back when a WebSocket connection is established.
 #'     The given object can be used to be notified when a message is received from
-#'     the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}
-#'     \item{\code{staticPaths}}{
+#'     the client, to send messages to the client, etc. See [WebSocket()].}
+#'     \item{`staticPaths`}{
 #'       A named list of paths that will be served without invoking
-#'       \code{call()} or \code{onHeaders}. The name of each one is the URL
+#'       `call()` or `onHeaders`. The name of each one is the URL
 #'       path, and the value is either a string referring to a local path, or an
-#'       object created by the \code{\link{staticPath}} function.
+#'       object created by the [staticPath()] function.
 #'     }
-#'     \item{\code{staticPathOptions}}{
+#'     \item{`staticPathOptions`}{
 #'       A set of default options to use when serving static paths. If
-#'       not set or \code{NULL}, then it will use the result from calling
-#'       \code{\link{staticPathOptions}()} with no arguments.
+#'       not set or `NULL`, then it will use the result from calling
+#'       [staticPathOptions()] with no arguments.
 #'     }
 #'   }
 #'
-#'   The \code{startPipeServer} variant can be used instead of
-#'   \code{startServer} to listen on a Unix domain socket or named pipe rather
+#'   The `startPipeServer` variant can be used instead of
+#'   `startServer` to listen on a Unix domain socket or named pipe rather
 #'   than a TCP socket (this is not common).
 #'
 #' @section Response Values:
 #'
-#' The \code{call} function is expected to return a list containing the
+#' The `call` function is expected to return a list containing the
 #' following, which are converted to an HTTP response and sent to the client:
 #'
 #' \describe{
-#'   \item{\code{status}}{A numeric HTTP status code, e.g. \code{200} or
-#'     \code{404L}.}
+#'   \item{`status`}{A numeric HTTP status code, e.g. `200` or
+#'     `404L`.}
 #'
-#'   \item{\code{headers}}{A named list of HTTP headers and their values, as
+#'   \item{`headers`}{A named list of HTTP headers and their values, as
 #'     strings. This can also be missing, an empty list, or `NULL`, in which
-#'     case no headers (other than the \code{Date} and \code{Content-Length}
+#'     case no headers (other than the `Date` and `Content-Length`
 #'     headers, as required) will be added.}
 #'
-#'   \item{\code{body}}{A string (or \code{raw} vector) to be sent as the body
-#'     of the HTTP response. This can also be omitted or set to \code{NULL} to
-#'     avoid sending any body, which is useful for HTTP \code{1xx}, \code{204},
-#'     and \code{304} responses, as well as responses to \code{HEAD} requests.}
+#'   \item{`body`}{A string (or `raw` vector) to be sent as the body
+#'     of the HTTP response. This can also be omitted or set to `NULL` to
+#'     avoid sending any body, which is useful for HTTP `1xx`, `204`,
+#'     and `304` responses, as well as responses to `HEAD` requests.}
 #' }
 #'
-#' @return A \code{\link{WebServer}} or \code{\link{PipeServer}} object.
+#' @return A [WebServer()] or [PipeServer()] object.
 #'
-#' @seealso \code{\link{stopServer}}, \code{\link{runServer}},
-#'   \code{\link{listServers}}, \code{\link{stopAllServers}}.
+#' @seealso [stopServer()], [runServer()],
+#'   [listServers()], [stopAllServers()].
 #' @aliases startPipeServer
 #'
 #' @examples
@@ -590,11 +591,11 @@ startServer <- function(host, port, app, quiet = FALSE) {
 
 #' @param name A string that indicates the path for the domain socket (on
 #'   Unix-like systems) or the name of the named pipe (on Windows).
-#' @param mask If non-\code{NULL} and non-negative, this numeric value is used
+#' @param mask If non-`NULL` and non-negative, this numeric value is used
 #'   to temporarily modify the process's umask while the domain socket is being
 #'   created. To ensure that only root can access the domain socket, use
-#'   \code{strtoi("777", 8)}; or to allow owner and group read/write access, use
-#'   \code{strtoi("117", 8)}. If the value is \code{NULL} then the process's
+#'   `strtoi("777", 8)`; or to allow owner and group read/write access, use
+#'   `strtoi("117", 8)`. If the value is `NULL` then the process's
 #'   umask is left unchanged. (This parameter has no effect on Windows.)
 #' @rdname startServer
 #' @export
@@ -609,14 +610,14 @@ startPipeServer <- function(name, mask, app, quiet = FALSE) {
 #' call this function, because requests will be handled automatically. However,
 #' if R is executing code, then requests will not be handled until either the
 #' call stack is empty, or this function is called (or alternatively,
-#' \code{\link[later]{run_now}} is called).
+#' [later::run_now()] is called).
 #'
 #' In previous versions of httpuv (1.3.5 and below), even if a server created by
-#' \code{\link{startServer}} exists, no requests were serviced unless and until
-#' \code{service} was called.
+#' [startServer()] exists, no requests were serviced unless and until
+#' `service` was called.
 #'
-#' This function simply calls \code{\link[later]{run_now}()}, so if your
-#' application schedules any \code{\link[later]{later}} callbacks, they will be
+#' This function simply calls [later::run_now()], so if your
+#' application schedules any [later::later()] callbacks, they will be
 #' invoked.
 #'
 #' @param timeoutMs Approximate number of milliseconds to run before returning.
@@ -662,26 +663,26 @@ service <- function(timeoutMs = ifelse(interactive(), 100, 1000)) {
 #' Run a server
 #'
 #' This is a convenience function that provides a simple way to call
-#' \code{\link{startServer}}, \code{\link{service}}, and
-#' \code{\link{stopServer}} in the correct sequence. It does not return unless
+#' [startServer()], [service()], and
+#' [stopServer()] in the correct sequence. It does not return unless
 #' interrupted or an error occurs.
 #'
 #' If you have multiple hosts and/or ports to listen on, call the individual
-#' functions instead of \code{runServer}.
+#' functions instead of `runServer`.
 #'
 #' @param host A string that is a valid IPv4 or IPv6 address that is owned by
-#'   this server, which the application will listen on. \code{"0.0.0.0"}
-#'   represents all IPv4 addresses and \code{"::/0"} represents all IPv6
+#'   this server, which the application will listen on. `"0.0.0.0"`
+#'   represents all IPv4 addresses and `"::/0"` represents all IPv6
 #'   addresses.
 #' @param port A number or integer that indicates the server port that should be
 #'   listened on. Note that on most Unix-like systems including Linux and macOS,
 #'   port numbers smaller than 1024 require root privileges.
 #' @param app A collection of functions that define your application. See
-#'   \code{\link{startServer}}.
+#'   [startServer()].
 #' @param interruptIntervalMs Deprecated (last used in httpuv 1.3.5).
 #'
-#' @seealso \code{\link{startServer}}, \code{\link{service}},
-#'   \code{\link{stopServer}}
+#' @seealso [startServer()], [service()],
+#'   [stopServer()]
 #'
 #' @examples
 #' \dontrun{
@@ -712,7 +713,7 @@ runServer <- function(host, port, app, interruptIntervalMs = NULL) {
 #' Interrupt httpuv runloop
 #'
 #' Interrupts the currently running httpuv runloop, meaning
-#' \code{\link{runServer}} or \code{\link{service}} will return control back to
+#' [runServer()] or [service()] will return control back to
 #' the caller and no further tasks will be processed until those methods are
 #' called again. Note that this may cause in-process uploads or downloads to be
 #' interrupted in mid-request.
@@ -745,9 +746,9 @@ rawToBase64 <- function(x) {
 #' Create an HTTP/WebSocket daemonized server (deprecated)
 #'
 #' This function will be removed in a future release of httpuv. It is simply a
-#' wrapper for \code{\link{startServer}}. In previous versions of httpuv (1.3.5
-#' and below), \code{startServer} ran applications in the foreground and
-#' \code{startDaemonizedServer} ran applications in the background, but now both
+#' wrapper for [startServer()]. In previous versions of httpuv (1.3.5
+#' and below), `startServer` ran applications in the foreground and
+#' `startDaemonizedServer` ran applications in the background, but now both
 #' of them run applications in the background.
 #'
 #' @inheritParams startServer

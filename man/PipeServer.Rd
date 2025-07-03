@@ -7,47 +7,27 @@
 This class represents a server running one application that listens on a
 named pipe.
 }
-\section{Methods}{
+\examples{
 
+## ------------------------------------------------
+## Method `PipeServer$new`
+## ------------------------------------------------
 
-\describe{
-\item{\code{initialize(name, mask, app)}}{
-Create a new \code{PipeServer} object. \code{app} is an httpuv application
-object as described in \code{\link{startServer}}.
+\dontrun{
+# Create a simple app
+app <- function(req) {
+  list(
+    status = 200L,
+    headers = list('Content-Type' = 'text/plain'),
+    body = "Hello, world!"
+  )
 }
-\item{\code{getName()}}{Return the value of \code{name} that was passed to
-\code{initialize()}.
-}
-\item{\code{getMask()}}{Return the value of \code{mask} that was passed to
-\code{initialize()}.
-}
-\item{\code{stop()}}{Stops a running server.}
-\item{\code{isRunning()}}{Returns TRUE if the server is currently running.}
-\item{\code{getStaticPaths()}}{Returns a list of \code{\link{staticPath}}
-objects for the server.
-}
-\item{\code{setStaticPath(..., .list = NULL)}}{Sets a static path for the
-current server. Each static path can be given as a named argument, or as
-an named item in \code{.list}. If there already exists a static path with
-the same name, it will be replaced.
-}
-\item{\code{removeStaticPath(path)}}{Removes a static path with the given
-name.
-}
-\item{\code{getStaticPathOptions()}}{Returns a list of default
-\code{staticPathOptions} for the current server. Each static path will
-use these options by default, but they can be overridden for each static
-path.
-}
-\item{\code{setStaticPathOption(..., .list = NULL)}}{Sets one or more
-static path options. Each option can be given as a named argument, or as
-a named item in \code{.list}.
+# Create a server
+server <- PipeServer$new("my_pipe", -1, app)
 }
 }
-}
-
 \seealso{
-\code{\link{Server}} and \code{\link{WebServer}}.
+\code{\link[=Server]{Server()}} and \code{\link[=WebServer]{WebServer()}}.
 }
 \keyword{internal}
 \section{Super class}{
@@ -78,8 +58,48 @@ a named item in \code{.list}.
 \if{html}{\out{<a id="method-PipeServer-new"></a>}}
 \if{latex}{\out{\hypertarget{method-PipeServer-new}{}}}
 \subsection{Method \code{new()}}{
+Initialize a new PipeServer object
+
+Create a new \code{PipeServer} object. \code{app} is an httpuv application
+object as described in \code{\link[=startServer]{startServer()}}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PipeServer$new(name, mask, app, quiet = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{The name of the named pipe to bind the server to.}
+
+\item{\code{mask}}{The mask for the named pipe. If NULL, it defaults to -1.}
+
+\item{\code{app}}{An httpuv application object as described in
+\code{\link[=startServer]{startServer()}}.}
+
+\item{\code{quiet}}{If TRUE, suppresses output from the server.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A new \code{PipeServer} object.
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+# Create a simple app
+app <- function(req) {
+  list(
+    status = 200L,
+    headers = list('Content-Type' = 'text/plain'),
+    body = "Hello, world!"
+  )
+}
+# Create a server
+server <- PipeServer$new("my_pipe", -1, app)
+}
+}
+\if{html}{\out{</div>}}
+
 }
 
 }
@@ -87,18 +107,26 @@ a named item in \code{.list}.
 \if{html}{\out{<a id="method-PipeServer-getName"></a>}}
 \if{latex}{\out{\hypertarget{method-PipeServer-getName}{}}}
 \subsection{Method \code{getName()}}{
+Get the name of the named pipe
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PipeServer$getName()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+The name of the named pipe that the server is bound to.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-PipeServer-getMask"></a>}}
 \if{latex}{\out{\hypertarget{method-PipeServer-getMask}{}}}
 \subsection{Method \code{getMask()}}{
+Get the mask for the named pipe
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PipeServer$getMask()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+The mask for the named pipe that the server is bound to.
+}
 }
 }

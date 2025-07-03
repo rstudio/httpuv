@@ -50,27 +50,27 @@ base64encode <- function(x) {
 #' Encodes/decodes strings using URI encoding/decoding in the same way that web
 #' browsers do. The precise behaviors of these functions can be found at
 #' developer.mozilla.org:
-#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI}{encodeURI},
-#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent}{encodeURIComponent},
-#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI}{decodeURI},
-#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent}{decodeURIComponent}
+#' [encodeURI](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI),
+#' [encodeURIComponent](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent),
+#' [decodeURI](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI),
+#' [decodeURIComponent](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent)
 #'
 #' Intended as a faster replacement for [utils::URLencode()] and
 #' [utils::URLdecode()].
 #'
 #' encodeURI differs from encodeURIComponent in that the former will not encode
-#' reserved characters: \code{;,/?:@@&=+$}
+#' reserved characters: `;,/?:@@&=+$`
 #'
 #' decodeURI differs from decodeURIComponent in that it will refuse to decode
 #' encoded sequences that decode to a reserved character. (If in doubt, use
 #' decodeURIComponent.)
 #'
-#' For \code{encodeURI} and \code{encodeURIComponent}, input strings will be
+#' For `encodeURI` and `encodeURIComponent`, input strings will be
 #' converted to UTF-8 before URL-encoding.
 #'
 #' @param value Character vector to be encoded or decoded.
 #' @return Encoded or decoded character vector of the same length as the
-#'   input value. \code{decodeURI} and \code{decodeURIComponent} will return
+#'   input value. `decodeURI` and `decodeURIComponent` will return
 #'   strings that are UTF-8 encoded.
 #'
 #' @export
@@ -103,8 +103,8 @@ decodeURIComponent <- function(value) {
 #' @param ip A single string representing an IP address.
 #'
 #' @return
-#' For IPv4 addresses, \code{4}; for IPv6 addresses, \code{6}. If the address is
-#' neither, \code{-1}.
+#' For IPv4 addresses, `4`; for IPv6 addresses, `6`. If the address is
+#' neither, `-1`.
 #'
 #' @examples
 #' ipFamily("127.0.0.1")   # 4
@@ -126,9 +126,9 @@ invokeCppCallback <- function(data, callback_xptr) {
 #' Apply the value of .Random.seed to R's internal RNG state
 #'
 #' This function is needed in unusual cases where a C++ function calls
-#' an R function which sets the value of \code{.Random.seed}. This function
+#' an R function which sets the value of `.Random.seed`. This function
 #' should be called at the end of the R function to ensure that the new value
-#' \code{.Random.seed} is preserved. Otherwise, Rcpp may overwrite it with a
+#' `.Random.seed` is preserved. Otherwise, Rcpp may overwrite it with a
 #' previous value.
 #'
 #' @keywords internal
