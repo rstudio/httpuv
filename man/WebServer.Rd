@@ -7,47 +7,27 @@
 This class represents a web server running one application. Multiple servers
 can be running at the same time.
 }
-\section{Methods}{
+\examples{
 
+## ------------------------------------------------
+## Method `WebServer$new`
+## ------------------------------------------------
 
-\describe{
-\item{\code{initialize(host, port, app)}}{
-Create a new \code{WebServer} object. \code{app} is an httpuv application
-object as described in \code{\link{startServer}}.
+\dontrun{
+# Create a simple app
+app <- function(req) {
+  list(
+    status = 200L,
+    headers = list('Content-Type' = 'text/plain'),
+    body = "Hello, world!"
+  )
 }
-\item{\code{getHost()}}{Return the value of \code{host} that was passed to
-\code{initialize()}.
-}
-\item{\code{getPort()}}{Return the value of \code{port} that was passed to
-\code{initialize()}.
-}
-\item{\code{stop()}}{Stops a running server.}
-\item{\code{isRunning()}}{Returns TRUE if the server is currently running.}
-\item{\code{getStaticPaths()}}{Returns a list of \code{\link{staticPath}}
-objects for the server.
-}
-\item{\code{setStaticPath(..., .list = NULL)}}{Sets a static path for the
-current server. Each static path can be given as a named argument, or as
-an named item in \code{.list}. If there already exists a static path with
-the same name, it will be replaced.
-}
-\item{\code{removeStaticPath(path)}}{Removes a static path with the given
-name.
-}
-\item{\code{getStaticPathOptions()}}{Returns a list of default
-\code{staticPathOptions} for the current server. Each static path will
-use these options by default, but they can be overridden for each static
-path.
-}
-\item{\code{setStaticPathOption(..., .list = NULL)}}{Sets one or more
-static path options. Each option can be given as a named argument, or as
-a named item in \code{.list}.
+# Create a server
+server <- WebServer$new("127.0.0.1", 8080, app)
 }
 }
-}
-
 \seealso{
-\code{\link{Server}} and \code{\link{PipeServer}}.
+\code{\link[=Server]{Server()}} and \code{\link[=PipeServer]{PipeServer()}}.
 }
 \keyword{internal}
 \section{Super class}{
@@ -78,8 +58,47 @@ a named item in \code{.list}.
 \if{html}{\out{<a id="method-WebServer-new"></a>}}
 \if{latex}{\out{\hypertarget{method-WebServer-new}{}}}
 \subsection{Method \code{new()}}{
+Initialize a new WebServer object
+
+Create a new \code{WebServer} object. \code{app} is an httpuv application
+object as described in \code{\link[=startServer]{startServer()}}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebServer$new(host, port, app, quiet = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{host}}{The host name or IP address to bind the server to.}
+
+\item{\code{port}}{The port number to bind the server to.}
+
+\item{\code{app}}{An httpuv application object as described in \code{\link[=startServer]{startServer()}}.}
+
+\item{\code{quiet}}{If TRUE, suppresses output from the server.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A new \code{WebServer} object.
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+# Create a simple app
+app <- function(req) {
+  list(
+    status = 200L,
+    headers = list('Content-Type' = 'text/plain'),
+    body = "Hello, world!"
+  )
+}
+# Create a server
+server <- WebServer$new("127.0.0.1", 8080, app)
+}
+}
+\if{html}{\out{</div>}}
+
 }
 
 }
@@ -87,18 +106,26 @@ a named item in \code{.list}.
 \if{html}{\out{<a id="method-WebServer-getHost"></a>}}
 \if{latex}{\out{\hypertarget{method-WebServer-getHost}{}}}
 \subsection{Method \code{getHost()}}{
+Get the host name or IP address of the server
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebServer$getHost()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+The host name or IP address that the server is bound to.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-WebServer-getPort"></a>}}
 \if{latex}{\out{\hypertarget{method-WebServer-getPort}{}}}
 \subsection{Method \code{getPort()}}{
+Get the port number of the server
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{WebServer$getPort()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+The port number that the server is bound to.
+}
 }
 }

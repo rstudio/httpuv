@@ -34,9 +34,9 @@ umask is left unchanged. (This parameter has no effect on Windows.)}
 }
 \value{
 A handle for this server that can be passed to
-\code{\link{stopServer}} to shut the server down.
+\code{\link[=stopServer]{stopServer()}} to shut the server down.
 
-A \code{\link{WebServer}} or \code{\link{PipeServer}} object.
+A \code{\link[=WebServer]{WebServer()}} or \code{\link[=PipeServer]{PipeServer()}} object.
 }
 \description{
 Creates an HTTP/WebSocket server on the specified host and port.
@@ -46,27 +46,27 @@ Creates an HTTP/WebSocket server on the specified host and port.
 connections on an thread running in the background. This background thread
 handles the I/O, and when it receives a HTTP request, it will schedule a
 call to the user-defined R functions in \code{app} to handle the request.
-This scheduling is done with \code{\link[later]{later}()}. When the R call
+This scheduling is done with \code{\link[later:later]{later::later()}}. When the R call
 stack is empty -- in other words, when an interactive R session is sitting
 idle at the command prompt -- R will automatically run the scheduled calls.
 However, if the call stack is not empty -- if R is evaluating other R code
 -- then the callbacks will not execute until either the call stack is
-empty, or the \code{\link[later]{run_now}()} function is called. This
+empty, or the \code{\link[later:run_now]{later::run_now()}} function is called. This
 function tells R to execute any callbacks that have been scheduled by
-\code{\link[later]{later}()}. The \code{\link{service}()} function is
-essentially a wrapper for \code{\link[later]{run_now}()}.
+\code{\link[later:later]{later::later()}}. The \code{\link[=service]{service()}} function is
+essentially a wrapper for \code{\link[later:run_now]{later::run_now()}}.
 
 In older versions of httpuv (1.3.5 and below), it did not use a background
 thread for I/O, and when this function was called, it did not accept
-connections immediately. It was necessary to call \code{\link{service}}
+connections immediately. It was necessary to call \code{\link[=service]{service()}}
 repeatedly in order to actually accept and handle connections.
 
 If the port cannot be bound (most likely due to permissions or because it
 is already bound), an error is raised.
 
 The application can also specify paths on the filesystem which will be
-served from the background thread, without invoking \code{$call()} or
-\code{$onHeaders()}. Files served this way will be only use a C++ code,
+served from the background thread, without invoking \verb{$call()} or
+\verb{$onHeaders()}. Files served this way will be only use a C++ code,
 which is faster than going through R, and will not be blocked when R code
 is executing. This can greatly improve performance when serving static
 assets.
@@ -90,17 +90,17 @@ stop processing the request, and ask the client to close the connection.
 (This can be used to implement upload size limits, for example.)}
 \item{\code{onWSOpen(ws)}}{Called back when a WebSocket connection is established.
 The given object can be used to be notified when a message is received from
-the client, to send messages to the client, etc. See \code{\link{WebSocket}}.}
+the client, to send messages to the client, etc. See \code{\link[=WebSocket]{WebSocket()}}.}
 \item{\code{staticPaths}}{
 A named list of paths that will be served without invoking
 \code{call()} or \code{onHeaders}. The name of each one is the URL
 path, and the value is either a string referring to a local path, or an
-object created by the \code{\link{staticPath}} function.
+object created by the \code{\link[=staticPath]{staticPath()}} function.
 }
 \item{\code{staticPathOptions}}{
 A set of default options to use when serving static paths. If
 not set or \code{NULL}, then it will use the result from calling
-\code{\link{staticPathOptions}()} with no arguments.
+\code{\link[=staticPathOptions]{staticPathOptions()}} with no arguments.
 }
 }
 
@@ -125,7 +125,7 @@ headers, as required) will be added.}
 
 \item{\code{body}}{A string (or \code{raw} vector) to be sent as the body
 of the HTTP response. This can also be omitted or set to \code{NULL} to
-avoid sending any body, which is useful for HTTP \code{1xx}, \code{204},
+avoid sending any body, which is useful for HTTP \verb{1xx}, \code{204},
 and \code{304} responses, as well as responses to \code{HEAD} requests.}
 }
 }
@@ -181,6 +181,6 @@ s$stop()
 }
 }
 \seealso{
-\code{\link{stopServer}}, \code{\link{runServer}},
-\code{\link{listServers}}, \code{\link{stopAllServers}}.
+\code{\link[=stopServer]{stopServer()}}, \code{\link[=runServer]{runServer()}},
+\code{\link[=listServers]{listServers()}}, \code{\link[=stopAllServers]{stopAllServers()}}.
 }
