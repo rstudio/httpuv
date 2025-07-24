@@ -225,11 +225,13 @@ AppWrapper <- R6Class(
       # The cpp_callback is an external pointer to a C++ function that writes
       # the response.
 
-      str(req)
+      otel_is_tracing <- otel::is_tracing()
 
-      if (otel::is_tracing()) {
-        call_span <- otel_start_active_call_span(req)
-        local_active_span_promise_domain(call_span)
+      if (otel_is_tracing) {
+        otel_active_span_for_call <- otel_start_active_call_span(req)
+        local_otel_active_span_promise_domain(otel_active_span_for_call)
+
+        # promises:::local_otel_active_span_promise_domain(otel_active_span_for_call)
       }
 
       resp <- if (is.null(private$app$call)) {
@@ -249,6 +251,9 @@ AppWrapper <- R6Class(
       clean_up <- function() {
         if (!is.null(req$.bodyData)) {
           close(req$.bodyData)
+        }
+        if (otel_is_tracing) {
+          otel_span_for_call$end()
         }
         req$.bodyData <- NULL
       }
