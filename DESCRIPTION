@@ -65,8 +65,7 @@ Imports:
     promises,
     R6,
     Rcpp (>= 1.0.7),
-    utils,
-    withr
+    utils
 Suggests:
     callr,
     curl,
@@ -91,6 +90,7 @@ Collate:
     'RcppExports.R'
     'httpuv-package.R'
     'httpuv.R'
+    'import-standalone-defer.R'
     'otel.R'
     'random_port.R'
     'server.R'
