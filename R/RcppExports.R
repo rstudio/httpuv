@@ -2,47 +2,47 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 sendWSMessage <- function(conn, binary, message) {
-    invisible(.Call('_httpuv_sendWSMessage', PACKAGE = 'httpuv', conn, binary, message))
+    invisible(.Call(`_httpuv_sendWSMessage`, conn, binary, message))
 }
 
 closeWS <- function(conn, code, reason) {
-    invisible(.Call('_httpuv_closeWS', PACKAGE = 'httpuv', conn, code, reason))
+    invisible(.Call(`_httpuv_closeWS`, conn, code, reason))
 }
 
 makeTcpServer <- function(host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose, staticPaths, staticPathOptions, quiet) {
-    .Call('_httpuv_makeTcpServer', PACKAGE = 'httpuv', host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose, staticPaths, staticPathOptions, quiet)
+    .Call(`_httpuv_makeTcpServer`, host, port, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose, staticPaths, staticPathOptions, quiet)
 }
 
 makePipeServer <- function(name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose, staticPaths, staticPathOptions, quiet) {
-    .Call('_httpuv_makePipeServer', PACKAGE = 'httpuv', name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose, staticPaths, staticPathOptions, quiet)
+    .Call(`_httpuv_makePipeServer`, name, mask, onHeaders, onBodyData, onRequest, onWSOpen, onWSMessage, onWSClose, staticPaths, staticPathOptions, quiet)
 }
 
 stopServer_ <- function(handle) {
-    invisible(.Call('_httpuv_stopServer_', PACKAGE = 'httpuv', handle))
+    invisible(.Call(`_httpuv_stopServer_`, handle))
 }
 
 getStaticPaths_ <- function(handle) {
-    .Call('_httpuv_getStaticPaths_', PACKAGE = 'httpuv', handle)
+    .Call(`_httpuv_getStaticPaths_`, handle)
 }
 
 setStaticPaths_ <- function(handle, sp) {
-    .Call('_httpuv_setStaticPaths_', PACKAGE = 'httpuv', handle, sp)
+    .Call(`_httpuv_setStaticPaths_`, handle, sp)
 }
 
 removeStaticPaths_ <- function(handle, paths) {
-    .Call('_httpuv_removeStaticPaths_', PACKAGE = 'httpuv', handle, paths)
+    .Call(`_httpuv_removeStaticPaths_`, handle, paths)
 }
 
 getStaticPathOptions_ <- function(handle) {
-    .Call('_httpuv_getStaticPathOptions_', PACKAGE = 'httpuv', handle)
+    .Call(`_httpuv_getStaticPathOptions_`, handle)
 }
 
 setStaticPathOptions_ <- function(handle, opts) {
-    .Call('_httpuv_setStaticPathOptions_', PACKAGE = 'httpuv', handle, opts)
+    .Call(`_httpuv_setStaticPathOptions_`, handle, opts)
 }
 
 base64encode <- function(x) {
-    .Call('_httpuv_base64encode', PACKAGE = 'httpuv', x)
+    .Call(`_httpuv_base64encode`, x)
 }
 
 #' URI encoding/decoding
@@ -50,50 +50,50 @@ base64encode <- function(x) {
 #' Encodes/decodes strings using URI encoding/decoding in the same way that web
 #' browsers do. The precise behaviors of these functions can be found at
 #' developer.mozilla.org:
-#' [encodeURI](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI),
-#' [encodeURIComponent](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent),
-#' [decodeURI](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI),
-#' [decodeURIComponent](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent)
+#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI}{encodeURI},
+#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent}{encodeURIComponent},
+#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI}{decodeURI},
+#' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent}{decodeURIComponent}
 #'
 #' Intended as a faster replacement for [utils::URLencode()] and
 #' [utils::URLdecode()].
 #'
 #' encodeURI differs from encodeURIComponent in that the former will not encode
-#' reserved characters: `;,/?:@@&=+$`
+#' reserved characters: \code{;,/?:@@&=+$}
 #'
 #' decodeURI differs from decodeURIComponent in that it will refuse to decode
 #' encoded sequences that decode to a reserved character. (If in doubt, use
 #' decodeURIComponent.)
 #'
-#' For `encodeURI` and `encodeURIComponent`, input strings will be
+#' For \code{encodeURI} and \code{encodeURIComponent}, input strings will be
 #' converted to UTF-8 before URL-encoding.
 #'
 #' @param value Character vector to be encoded or decoded.
 #' @return Encoded or decoded character vector of the same length as the
-#'   input value. `decodeURI` and `decodeURIComponent` will return
+#'   input value. \code{decodeURI} and \code{decodeURIComponent} will return
 #'   strings that are UTF-8 encoded.
 #'
 #' @export
 encodeURI <- function(value) {
-    .Call('_httpuv_encodeURI', PACKAGE = 'httpuv', value)
+    .Call(`_httpuv_encodeURI`, value)
 }
 
 #' @rdname encodeURI
 #' @export
 encodeURIComponent <- function(value) {
-    .Call('_httpuv_encodeURIComponent', PACKAGE = 'httpuv', value)
+    .Call(`_httpuv_encodeURIComponent`, value)
 }
 
 #' @rdname encodeURI
 #' @export
 decodeURI <- function(value) {
-    .Call('_httpuv_decodeURI', PACKAGE = 'httpuv', value)
+    .Call(`_httpuv_decodeURI`, value)
 }
 
 #' @rdname encodeURI
 #' @export
 decodeURIComponent <- function(value) {
-    .Call('_httpuv_decodeURIComponent', PACKAGE = 'httpuv', value)
+    .Call(`_httpuv_decodeURIComponent`, value)
 }
 
 #' Check whether an address is IPv4 or IPv6
@@ -103,8 +103,8 @@ decodeURIComponent <- function(value) {
 #' @param ip A single string representing an IP address.
 #'
 #' @return
-#' For IPv4 addresses, `4`; for IPv6 addresses, `6`. If the address is
-#' neither, `-1`.
+#' For IPv4 addresses, \code{4}; for IPv6 addresses, \code{6}. If the address is
+#' neither, \code{-1}.
 #'
 #' @examples
 #' ipFamily("127.0.0.1")   # 4
@@ -116,32 +116,32 @@ decodeURIComponent <- function(value) {
 #' ipFamily("fe80::1ff:fe23:4567:890a") # 6
 #' @export
 ipFamily <- function(ip) {
-    .Call('_httpuv_ipFamily', PACKAGE = 'httpuv', ip)
+    .Call(`_httpuv_ipFamily`, ip)
 }
 
 invokeCppCallback <- function(data, callback_xptr) {
-    invisible(.Call('_httpuv_invokeCppCallback', PACKAGE = 'httpuv', data, callback_xptr))
+    invisible(.Call(`_httpuv_invokeCppCallback`, data, callback_xptr))
 }
 
 #' Apply the value of .Random.seed to R's internal RNG state
 #'
 #' This function is needed in unusual cases where a C++ function calls
-#' an R function which sets the value of `.Random.seed`. This function
+#' an R function which sets the value of \code{.Random.seed}. This function
 #' should be called at the end of the R function to ensure that the new value
-#' `.Random.seed` is preserved. Otherwise, Rcpp may overwrite it with a
+#' \code{.Random.seed} is preserved. Otherwise, Rcpp may overwrite it with a
 #' previous value.
 #'
 #' @keywords internal
 #' @export
 getRNGState <- function() {
-    invisible(.Call('_httpuv_getRNGState', PACKAGE = 'httpuv'))
+    invisible(.Call(`_httpuv_getRNGState`))
 }
 
 wsconn_address <- function(external_ptr) {
-    .Call('_httpuv_wsconn_address', PACKAGE = 'httpuv', external_ptr)
+    .Call(`_httpuv_wsconn_address`, external_ptr)
 }
 
 log_level <- function(level) {
-    .Call('_httpuv_log_level', PACKAGE = 'httpuv', level)
+    .Call(`_httpuv_log_level`, level)
 }
 

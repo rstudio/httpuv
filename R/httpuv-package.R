@@ -22,7 +22,7 @@
 #' @title HTTP and WebSocket server
 #' @author Joe Cheng \email{joe@@rstudio.com}
 #' @keywords package
-#' @useDynLib httpuv
+#' @useDynLib httpuv, .registration = TRUE
 "_PACKAGE"
 
 ## usethis namespace: start
