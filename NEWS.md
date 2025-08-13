@@ -1,5 +1,7 @@
 # httpuv (development version)
 
+* Closed #426: Uses native symbol registration for calls into compiled code, resulting in performance gains from not having to perform a lookup on each call. (#427)
+
 # httpuv 1.6.16
 
 * Added a mime type entry for `.wasm` files, which should be served as `application/wasm`. (#407)
