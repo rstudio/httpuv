@@ -47,22 +47,32 @@ libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
 
 # Run ./configure to create the Makefile.
 #
-# We need to make sure that configure does not try to run automake, because it
-# may not be present (or may be incomplete/mismatched). To do that, we touch
-# various autotools-related files so it doesn't try to run autotools programs
-# again. We also need to make sure configure is executable, because on some
-# platforms, calling unzip() in R does not preserve the executable bit.
+# The bundled libuv ships pre-generated autotools output files (configure,
+# Makefile.in, aclocal.m4), so we do NOT need to run autogen.sh or automake.
+# However, we must ensure that make doesn't try to regenerate these files
+# either. The generated Makefile contains rules like:
 #
-# It's VERY IMPORTANT that mtime(aclocal.m4) <= mtime(configure), and also
-# mtime(aclocal.m4) <= mtime(Makefile.in). On some platforms, passing multiple
-# files to a single touch command gives them all the same time, but on others
-# (Solaris and possibly some Fedoras) the timestamps are slightly increasing
-# from one to the next, i.e. the order matters. To remove this fragility, we
-# use "-r aclocal.m4" to ensure that all three files are guaranteed to have
-# precisely the same timestamp value.
+#   Makefile.in: Makefile.am $(am__configure_deps)
+#       $(AUTOMAKE) --foreign
+#
+# If any input file (Makefile.am, configure.ac, m4/*.m4) has a newer timestamp
+# than the output files (configure, Makefile.in), make will fire these rules
+# and try to run automake/autoconf — which may not be installed, or may be a
+# mismatched version (see #280, #319).
+#
+# To prevent this, we touch ALL autotools-related files so that inputs and
+# outputs share the same timestamp. We touch inputs first, then set outputs
+# to match, ensuring mtime(inputs) <= mtime(outputs).
+#
+# On some platforms (Solaris, some Fedoras), passing multiple files to touch
+# gives slightly increasing timestamps, so order matters. We use
+# "-r aclocal.m4" to copy the exact timestamp to the output files.
+#
+# We also need to make sure configure is executable, because on some platforms,
+# calling unzip() in R does not preserve the executable bit.
 libuv/Makefile: libuv/m4/lt~obsolete.m4
 	cd libuv; \
-	touch aclocal.m4; \
+	touch aclocal.m4 configure.ac Makefile.am m4/*.m4; \
 	touch -r aclocal.m4 configure Makefile.in; \
 	chmod +x configure; \
 	CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS) $(C_VISIBILITY) -DNDEBUG" CPPFLAGS="$(CPPFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)" LDFLAGS="$(LDFLAGS)" ./configure $(CONFIGURE_FLAGS)
