@@ -72,7 +72,7 @@ When \code{background = TRUE}, the \code{server} object is returned invisibly.
 a single static directory, either in the foreground or the background.
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 website_dir <- system.file("example-static-site", package = "httpuv")
 runStaticServer(dir = website_dir)
 \dontshow{\}) # examplesIf}
