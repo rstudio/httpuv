@@ -49,24 +49,14 @@ libuv/m4/lt~obsolete.m4: libuv/m4/lt_obsolete.m4
 #
 # The bundled libuv ships pre-generated autotools output files (configure,
 # Makefile.in, aclocal.m4), so we do NOT need to run autogen.sh or automake.
-# However, we must ensure that make doesn't try to regenerate these files
-# either. The generated Makefile contains rules like:
 #
-#   Makefile.in: Makefile.am $(am__configure_deps)
-#       $(AUTOMAKE) --foreign
+# To prevent make from trying to regenerate these files, libuv's configure.ac
+# uses AM_MAINTAINER_MODE, which wraps all regeneration rules behind a
+# conditional that is disabled by default (see #280, #319, #429).
 #
-# If any input file (Makefile.am, configure.ac, m4/*.m4) has a newer timestamp
-# than the output files (configure, Makefile.in), make will fire these rules
-# and try to run automake/autoconf — which may not be installed, or may be a
-# mismatched version (see #280, #319).
-#
-# To prevent this, we touch ALL autotools-related files so that inputs and
-# outputs share the same timestamp. We touch inputs first, then set outputs
-# to match, ensuring mtime(inputs) <= mtime(outputs).
-#
-# On some platforms (Solaris, some Fedoras), passing multiple files to touch
-# gives slightly increasing timestamps, so order matters. We use
-# "-r aclocal.m4" to copy the exact timestamp to the output files.
+# As belt-and-suspenders, we also touch autotools files so that
+# mtime(inputs) <= mtime(outputs), preventing regeneration rules from firing
+# even if AM_MAINTAINER_MODE were somehow bypassed.
 #
 # We also need to make sure configure is executable, because on some platforms,
 # calling unzip() in R does not preserve the executable bit.
