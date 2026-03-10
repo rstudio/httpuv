@@ -1,6 +1,3 @@
-if (requireNamespace("curl", quietly = TRUE)) {
-  library(curl)
-}
 library(promises)
 
 
@@ -8,10 +5,10 @@ curl_fetch_async <- function(
   url,
   pool = NULL,
   data = NULL,
-  handle = new_handle()
+  handle = curl::new_handle()
 ) {
   p <- promises::promise(function(resolve, reject) {
-    curl_fetch_multi(
+    curl::curl_fetch_multi(
       url,
       done = resolve,
       fail = reject,
@@ -24,7 +21,7 @@ curl_fetch_async <- function(
   finished <- FALSE
   poll <- function() {
     if (!finished) {
-      multi_run(timeout = 0, poll = TRUE, pool = pool)
+      curl::multi_run(timeout = 0, poll = TRUE, pool = pool)
       later::later(poll, 0.01)
     }
   }
@@ -100,7 +97,7 @@ fetch <- function(url, handle = curl::new_handle(), gzip = TRUE) {
   if (!gzip) {
     # Disable gzip; this is often needed only because the unit tests predate
     # gzip support in httpuv
-    handle_setopt(handle, accept_encoding = NULL)
+    curl::handle_setopt(handle, accept_encoding = NULL)
   }
 
   p <- curl_fetch_async(url, handle = handle)

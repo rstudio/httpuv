@@ -1,4 +1,5 @@
 skip_if_not_installed("curl")
+library(curl)
 
 test_that("Large HTTP header values are preserved", {
   # This is a test for https://github.com/rstudio/httpuv/issues/275
