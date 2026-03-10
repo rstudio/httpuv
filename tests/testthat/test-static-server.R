@@ -1,5 +1,6 @@
 # These tests are time-sensitive, which makes CRAN unhappy.
 skip_on_cran()
+skip_if_not_installed("curl")
 
 path_example_site <- function(...) {
   system.file("example-static-site", ..., package = "httpuv")

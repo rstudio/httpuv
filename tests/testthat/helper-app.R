@@ -1,4 +1,6 @@
-library(curl)
+if (requireNamespace("curl", quietly = TRUE)) {
+  library(curl)
+}
 library(promises)
 
 
