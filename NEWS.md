@@ -2,6 +2,12 @@
 
 * Closed #426: Uses native symbol registration for calls into compiled code, resulting in performance gains from not having to perform a lookup on each call. (#427)
 
+* Fixed installation failures on macOS caused by the bundled libuv build trying to regenerate autotools files when only some tools (e.g., automake) are present. (#430)
+
+* Fixed a `-single_module is obsolete` linker warning on macOS with newer Apple toolchains that could surface as a significant warning in `R CMD check`. (#433)
+
+* Tests now gracefully skip when suggested packages (`curl`, `websocket`) are not installed, rather than failing the entire test suite. (#432)
+
 # httpuv 1.6.16
 
 * Added a mime type entry for `.wasm` files, which should be served as `application/wasm`. (#407)
