@@ -7,6 +7,19 @@
   performance gains from not having to perform a lookup on each call.
   ([\#427](https://github.com/rstudio/httpuv/issues/427))
 
+- Fixed installation failures on macOS caused by the bundled libuv build
+  trying to regenerate autotools files when only some tools (e.g.,
+  automake) are present.
+  ([\#430](https://github.com/rstudio/httpuv/issues/430))
+
+- Fixed a `-single_module is obsolete` linker warning on macOS with
+  newer Apple toolchains that could surface as a significant warning in
+  `R CMD check`. ([\#433](https://github.com/rstudio/httpuv/issues/433))
+
+- Tests now gracefully skip when suggested packages (`curl`,
+  `websocket`) are not installed, rather than failing the entire test
+  suite. ([\#432](https://github.com/rstudio/httpuv/issues/432))
+
 ## httpuv 1.6.16
 
 CRAN release: 2025-04-16

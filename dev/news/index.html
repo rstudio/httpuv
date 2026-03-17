@@ -34,7 +34,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="httpuv-development-version">httpuv (development version)<a class="anchor" aria-label="anchor" href="#httpuv-development-version"></a></h2>
-<ul><li>Closed <a href="https://github.com/rstudio/httpuv/issues/426" class="external-link">#426</a>: Uses native symbol registration for calls into compiled code, resulting in performance gains from not having to perform a lookup on each call. (<a href="https://github.com/rstudio/httpuv/issues/427" class="external-link">#427</a>)</li>
+<ul><li><p>Closed <a href="https://github.com/rstudio/httpuv/issues/426" class="external-link">#426</a>: Uses native symbol registration for calls into compiled code, resulting in performance gains from not having to perform a lookup on each call. (<a href="https://github.com/rstudio/httpuv/issues/427" class="external-link">#427</a>)</p></li>
+<li><p>Fixed installation failures on macOS caused by the bundled libuv build trying to regenerate autotools files when only some tools (e.g., automake) are present. (<a href="https://github.com/rstudio/httpuv/issues/430" class="external-link">#430</a>)</p></li>
+<li><p>Fixed a <code>-single_module is obsolete</code> linker warning on macOS with newer Apple toolchains that could surface as a significant warning in <code>R CMD check</code>. (<a href="https://github.com/rstudio/httpuv/issues/433" class="external-link">#433</a>)</p></li>
+<li><p>Tests now gracefully skip when suggested packages (<code>curl</code>, <code>websocket</code>) are not installed, rather than failing the entire test suite. (<a href="https://github.com/rstudio/httpuv/issues/432" class="external-link">#432</a>)</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.6.16" id="httpuv-1616">httpuv 1.6.16<a class="anchor" aria-label="anchor" href="#httpuv-1616"></a></h2><p class="text-muted">CRAN release: 2025-04-16</p>
