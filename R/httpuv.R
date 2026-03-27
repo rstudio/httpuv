@@ -213,7 +213,6 @@ AppWrapper <- R6Class(
       if (!private$supportsOnHeaders) {
         return(NULL)
       }
-
       rookCall(private$app$onHeaders, req)
     },
     onBodyData = function(req, bytes) {
@@ -225,6 +224,15 @@ AppWrapper <- R6Class(
     call = function(req, cpp_callback) {
       # The cpp_callback is an external pointer to a C++ function that writes
       # the response.
+
+      otel_is_tracing <- otel::is_tracing()
+
+      if (otel_is_tracing) {
+        otel_active_span_for_call <- otel_start_active_call_span(req)
+        local_otel_active_span_promise_domain(otel_active_span_for_call)
+
+        # promises:::local_otel_active_span_promise_domain(otel_active_span_for_call)
+      }
 
       resp <- if (is.null(private$app$call)) {
         list(
@@ -243,6 +251,9 @@ AppWrapper <- R6Class(
       clean_up <- function() {
         if (!is.null(req$.bodyData)) {
           close(req$.bodyData)
+        }
+        if (otel_is_tracing) {
+          otel_span_for_call$end()
         }
         req$.bodyData <- NULL
       }

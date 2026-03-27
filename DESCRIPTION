@@ -1,10 +1,13 @@
 Type: Package
 Package: httpuv
 Title: HTTP and WebSocket Server Library
-Version: 1.6.16.9000
+Version: 1.6.16.9002
 Authors@R: c(
     person("Joe", "Cheng", , "joe@posit.co", role = "aut"),
-    person("Winston", "Chang", , "winston@posit.co", role = c("aut", "cre")),
+    person("Winston", "Chang", , "winston@posit.co", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-1576-2126")),
+    person("Barret", "Schloerke", , "barret@posit.co", role = "aut",
+           comment = c(ORCID = "0000-0001-9986-114X")),
     person("Posit, PBC", role = c("cph", "fnd"),
            comment = c(ROR = "03wc8by49")),
     person("Hector", "Corrada Bravo", role = "ctb"),
@@ -58,6 +61,7 @@ Depends:
     R (>= 2.15.1)
 Imports:
     later (>= 0.8.0),
+    otel,
     promises,
     R6,
     Rcpp (>= 1.0.7),
@@ -66,11 +70,15 @@ Suggests:
     callr,
     curl,
     jsonlite,
+    otelsdk,
     testthat (>= 3.0.0),
     websocket
 LinkingTo:
     later,
     Rcpp
+Remotes:
+    r-lib/otel,
+    r-lib/otelsdk
 Config/Needs/website: tidyverse/tidytemplate
 Config/testthat/edition: 3
 Config/usethis/last-upkeep: 2025-07-01
@@ -82,6 +90,8 @@ Collate:
     'RcppExports.R'
     'httpuv-package.R'
     'httpuv.R'
+    'import-standalone-defer.R'
+    'otel.R'
     'random_port.R'
     'server.R'
     'staticServer.R'
