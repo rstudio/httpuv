@@ -8,7 +8,7 @@
 // StaticPathOptions
 // ============================================================================
 
-StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
+StaticPathOptions::StaticPathOptions(SEXP options) :
   indexhtml(std::experimental::nullopt),
   fallthrough(std::experimental::nullopt),
   html_charset(std::experimental::nullopt),
@@ -18,87 +18,114 @@ StaticPathOptions::StaticPathOptions(const Rcpp::List& options) :
 {
   ASSERT_MAIN_THREAD()
 
-  std::string obj_class = options.attr("class");
+  SEXP class_attr = Rf_getAttrib(options, R_ClassSymbol);
+  std::string obj_class = "";
+  if (class_attr != R_NilValue) {
+    obj_class = CHAR(STRING_ELT(class_attr, 0));
+  }
   if (obj_class != "staticPathOptions") {
-    throw Rcpp::exception("staticPath options object must have class 'staticPathOptions'.");
+    throw std::runtime_error("staticPath options object must have class 'staticPathOptions'.");
   }
 
   // This seems to be a necessary intermediary for passing objects to
   // `optional_as()`.
-  Rcpp::RObject temp;
+  SEXP temp;
 
-  temp = options.attr("normalized");
+  temp = Rf_getAttrib(options, Rf_install("normalized"));
   std::experimental::optional<bool> normalized = optional_as<bool>(temp);
   if (!normalized || !*normalized) {
-    throw Rcpp::exception("staticPathOptions object must be normalized.");
+    throw std::runtime_error("staticPathOptions object must be normalized.");
   }
 
   // There's probably a more concise way to do this assignment than by using temp.
-  temp = options["indexhtml"];    indexhtml    = optional_as<bool>(temp);
-  temp = options["fallthrough"];  fallthrough  = optional_as<bool>(temp);
-  temp = options["html_charset"]; html_charset = optional_as<std::string>(temp);
-  temp = options["headers"];      headers      = optional_as<ResponseHeaders>(temp);
-  temp = options["validation"];   validation   = optional_as<std::vector<std::string> >(temp);
-  temp = options["exclude"];      exclude      = optional_as<bool>(temp);
+  temp = VECTOR_ELT(options, 0);  // indexhtml
+  indexhtml = optional_as<bool>(temp);
+  temp = VECTOR_ELT(options, 1);  // fallthrough
+  fallthrough = optional_as<bool>(temp);
+  temp = VECTOR_ELT(options, 2);  // html_charset
+  html_charset = optional_as<std::string>(temp);
+  temp = VECTOR_ELT(options, 3);  // headers
+  if (temp != R_NilValue) {
+    headers = response_headers_from_sexp(temp);
+  }
+  temp = VECTOR_ELT(options, 4);  // validation
+  if (temp != R_NilValue) {
+    validation = as_cpp<std::vector<std::string>>(temp);
+  }
+  temp = VECTOR_ELT(options, 5);  // exclude
+  exclude = optional_as<bool>(temp);
 }
 
-
-void StaticPathOptions::setOptions(const Rcpp::List& options) {
+void StaticPathOptions::setOptions(SEXP options) {
   ASSERT_MAIN_THREAD()
-  Rcpp::RObject temp;
-  if (options.containsElementNamed("indexhtml")) {
-    temp = options["indexhtml"];
-    if (!temp.isNULL()) {
+  SEXP temp;
+  SEXP opts = options;
+  if (list_contains_element(opts, "indexhtml")) {
+    temp = get_list_element(opts, "indexhtml");
+    if (temp != R_NilValue) {
       indexhtml = optional_as<bool>(temp);
     }
   }
-  if (options.containsElementNamed("fallthrough")) {
-    temp = options["fallthrough"];
-    if (!temp.isNULL()) {
+  if (list_contains_element(opts, "fallthrough")) {
+    temp = get_list_element(opts, "fallthrough");
+    if (temp != R_NilValue) {
       fallthrough = optional_as<bool>(temp);
     }
   }
-  if (options.containsElementNamed("html_charset")) {
-    temp = options["html_charset"];
-    if (!temp.isNULL()) {
+  if (list_contains_element(opts, "html_charset")) {
+    temp = get_list_element(opts, "html_charset");
+    if (temp != R_NilValue) {
       html_charset = optional_as<std::string>(temp);
     }
   }
-  if (options.containsElementNamed("headers")) {
-    temp = options["headers"];
-    if (!temp.isNULL()) {
-      headers = optional_as<ResponseHeaders>(temp);
+  if (list_contains_element(opts, "headers")) {
+    temp = get_list_element(opts, "headers");
+    if (temp != R_NilValue) {
+      headers = response_headers_from_sexp(temp);
     }
   }
-  if (options.containsElementNamed("validation")) {
-    temp = options["validation"];
-    if (!temp.isNULL()) {
-      validation = optional_as<std::vector<std::string> >(temp);
+  if (list_contains_element(opts, "validation")) {
+    temp = get_list_element(opts, "validation");
+    if (temp != R_NilValue) {
+      validation = as_cpp<std::vector<std::string>>(temp);
     }
   }
-  if (options.containsElementNamed("exclude")) {
-    temp = options["exclude"];
-    if (!temp.isNULL()) {
+  if (list_contains_element(opts, "exclude")) {
+    temp = get_list_element(opts, "exclude");
+    if (temp != R_NilValue) {
       exclude = optional_as<bool>(temp);
     }
   }
 }
 
-Rcpp::List StaticPathOptions::asRObject() const {
+SEXP StaticPathOptions::asRObject() const {
   ASSERT_MAIN_THREAD()
-  using namespace Rcpp;
 
-  List obj = List::create(
-    _["indexhtml"]    = optional_wrap(indexhtml),
-    _["fallthrough"]  = optional_wrap(fallthrough),
-    _["html_charset"] = optional_wrap(html_charset),
-    _["headers"]      = optional_wrap(headers),
-    _["validation"]   = optional_wrap(validation),
-    _["exclude"]      = optional_wrap(exclude)
-  );
+  SEXP obj   = PROTECT(Rf_allocVector(VECSXP, 6));
+  SEXP names = PROTECT(Rf_allocVector(STRSXP, 6));
 
-  obj.attr("class") = "staticPathOptions";
+  SET_STRING_ELT(names, 0, Rf_mkChar("indexhtml"));
+  SET_STRING_ELT(names, 1, Rf_mkChar("fallthrough"));
+  SET_STRING_ELT(names, 2, Rf_mkChar("html_charset"));
+  SET_STRING_ELT(names, 3, Rf_mkChar("headers"));
+  SET_STRING_ELT(names, 4, Rf_mkChar("validation"));
+  SET_STRING_ELT(names, 5, Rf_mkChar("exclude"));
 
+  SET_VECTOR_ELT(obj, 0, optional_wrap(indexhtml));
+  SET_VECTOR_ELT(obj, 1, optional_wrap(fallthrough));
+  SET_VECTOR_ELT(obj, 2, optional_wrap(html_charset));
+  if (headers.has_value()) {
+    SET_VECTOR_ELT(obj, 3, response_headers_to_sexp(*headers));
+  } else {
+    SET_VECTOR_ELT(obj, 3, R_NilValue);
+  }
+  SET_VECTOR_ELT(obj, 4, optional_wrap(validation));
+  SET_VECTOR_ELT(obj, 5, optional_wrap(exclude));
+
+  Rf_setAttrib(obj, R_NamesSymbol, names);
+  Rf_setAttrib(obj, R_ClassSymbol, Rf_mkString("staticPathOptions"));
+
+  UNPROTECT(2);
   return obj;
 }
 
@@ -149,11 +176,11 @@ bool StaticPathOptions::validateRequestHeaders(const RequestHeaders& headers) co
 // StaticPath
 // ============================================================================
 
-StaticPath::StaticPath(const Rcpp::List& sp) {
+StaticPath::StaticPath(SEXP sp) {
   ASSERT_MAIN_THREAD()
-  path = Rcpp::as<std::string>(sp["path"]);
+  path = as_cpp<std::string>(get_list_element(sp, "path"));
 
-  Rcpp::List options_list = sp["options"];
+  SEXP options_list = get_list_element(sp, "options");
   options = StaticPathOptions(options_list);
 
   if (path.length() == 0) {
@@ -167,17 +194,22 @@ StaticPath::StaticPath(const Rcpp::List& sp) {
   }
 }
 
-Rcpp::List StaticPath::asRObject() const {
+SEXP StaticPath::asRObject() const {
   ASSERT_MAIN_THREAD()
-  using namespace Rcpp;
 
-  List obj = List::create(
-    _["path"]    = path,
-    _["options"] = options.asRObject()
-  );
+  SEXP obj   = PROTECT(Rf_allocVector(VECSXP, 2));
+  SEXP names = PROTECT(Rf_allocVector(STRSXP, 2));
 
-  obj.attr("class") = "staticPath";
+  SET_STRING_ELT(names, 0, Rf_mkChar("path"));
+  SET_STRING_ELT(names, 1, Rf_mkChar("options"));
 
+  SET_VECTOR_ELT(obj, 0, Rf_mkString(path.c_str()));
+  SET_VECTOR_ELT(obj, 1, options.asRObject());
+
+  Rf_setAttrib(obj, R_NamesSymbol, names);
+  Rf_setAttrib(obj, R_ClassSymbol, Rf_mkString("staticPath"));
+
+  UNPROTECT(2);
   return obj;
 }
 
@@ -189,29 +221,28 @@ StaticPathManager::StaticPathManager() {
   uv_mutex_init(&mutex);
 }
 
-StaticPathManager::StaticPathManager(const Rcpp::List& path_list, const Rcpp::List& options_list) {
+StaticPathManager::StaticPathManager(SEXP path_list, SEXP options_list) {
   ASSERT_MAIN_THREAD()
   uv_mutex_init(&mutex);
 
   this->options = StaticPathOptions(options_list);
 
-  if (path_list.size() == 0) {
+  if (Rf_xlength(path_list) == 0) {
     return;
   }
 
-  Rcpp::CharacterVector names = path_list.names();
-  if (names.isNULL()) {
-    throw Rcpp::exception("Error processing static paths: all static paths must be named.");
+  SEXP names_sexp = Rf_getAttrib(path_list, R_NamesSymbol);
+  if (names_sexp == R_NilValue) {
+    throw std::runtime_error("Error processing static paths: all static paths must be named.");
   }
 
-  for (int i=0; i<path_list.size(); i++) {
-    std::string name = Rcpp::as<std::string>(names[i]);
+  for (R_xlen_t i = 0; i < Rf_xlength(path_list); i++) {
+    std::string name = std::string(CHAR(STRING_ELT(names_sexp, i)));
     if (name == "") {
-      throw Rcpp::exception("Error processing static paths.");
+      throw std::runtime_error("Error processing static paths.");
     }
 
-    Rcpp::List sp(path_list[i]);
-    StaticPath staticpath(sp);
+    StaticPath staticpath(VECTOR_ELT(path_list, i));
 
     this->path_map.insert(
       std::pair<std::string, StaticPath>(name, staticpath)
@@ -235,12 +266,12 @@ std::experimental::optional<StaticPath> StaticPathManager::get(const std::string
   return sp;
 }
 
-std::experimental::optional<StaticPath> StaticPathManager::get(const Rcpp::CharacterVector& path) const {
+std::experimental::optional<StaticPath> StaticPathManager::get(SEXP path) const {
   ASSERT_MAIN_THREAD()
-  if (path.size() != 1) {
-    throw Rcpp::exception("Can only get a single StaticPath object.");
+  if (Rf_xlength(path) != 1) {
+    throw std::runtime_error("Can only get a single StaticPath object.");
   }
-  return get(Rcpp::as<std::string>(path));
+  return get(std::string(CHAR(STRING_ELT(path, 0))));
 }
 
 
@@ -265,10 +296,14 @@ void StaticPathManager::set(const std::map<std::string, StaticPath>& pmap) {
   }
 }
 
-void StaticPathManager::set(const Rcpp::List& pmap) {
+void StaticPathManager::set(SEXP pmap) {
   ASSERT_MAIN_THREAD()
-  std::map<std::string, StaticPath> pmap2 = toMap<StaticPath, Rcpp::List>(pmap);
-  set(pmap2);
+  SEXP names_sexp = Rf_getAttrib(pmap, R_NamesSymbol);
+  for (R_xlen_t i = 0; i < Rf_xlength(pmap); i++) {
+    std::string name = std::string(CHAR(STRING_ELT(names_sexp, i)));
+    StaticPath sp(VECTOR_ELT(pmap, i));
+    set(name, sp);
+  }
 }
 
 
@@ -287,9 +322,9 @@ void StaticPathManager::remove(const std::vector<std::string>& paths) {
   }
 }
 
-void StaticPathManager::remove(const Rcpp::CharacterVector& paths) {
+void StaticPathManager::remove(SEXP paths) {
   ASSERT_MAIN_THREAD()
-  std::vector<std::string> paths_vec = Rcpp::as<std::vector<std::string> >(paths);
+  std::vector<std::string> paths_vec = as_cpp<std::vector<std::string>>(paths);
   remove(paths_vec);
 }
 
@@ -384,21 +419,29 @@ const StaticPathOptions& StaticPathManager::getOptions() const {
   return options;
 }
 
-void StaticPathManager::setOptions(const Rcpp::List& opts) {
+void StaticPathManager::setOptions(SEXP opts) {
   options.setOptions(opts);
 }
 
 // Returns a list of R objects that reflect the StaticPaths, without merging
 // the overall options.
-Rcpp::List StaticPathManager::pathsAsRObject() const {
+SEXP StaticPathManager::pathsAsRObject() const {
   ASSERT_MAIN_THREAD()
   guard guard(mutex);
-  Rcpp::List obj;
 
+  R_xlen_t n = (R_xlen_t)path_map.size();
+  SEXP obj   = PROTECT(Rf_allocVector(VECSXP, n));
+  SEXP names = PROTECT(Rf_allocVector(STRSXP, n));
+
+  R_xlen_t i = 0;
   std::map<std::string, StaticPath>::const_iterator it;
-  for (it = path_map.begin(); it != path_map.end(); it++) {
-    obj[it->first] = it->second.asRObject();
+  for (it = path_map.begin(); it != path_map.end(); it++, i++) {
+    SET_STRING_ELT(names, i, Rf_mkChar(it->first.c_str()));
+    SET_VECTOR_ELT(obj, i, it->second.asRObject());
   }
 
+  Rf_setAttrib(obj, R_NamesSymbol, names);
+
+  UNPROTECT(2);
   return obj;
 }

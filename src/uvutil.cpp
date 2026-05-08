@@ -1,5 +1,6 @@
 #include "uvutil.h"
 #include "thread.h"
+#include <sstream>
 #include <string.h>
 
 

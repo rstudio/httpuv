@@ -148,24 +148,35 @@ void HttpRequest::_newRequest() {
 
 void HttpRequest::_initializeEnv() {
   ASSERT_MAIN_THREAD()
-  using namespace Rcpp;
 
-  Environment base(R_BaseEnv);
-  Function new_env = Rcpp::as<Function>(base["new.env"]);
+  // Get new.env function from base
+  SEXP base = R_BaseEnv;
+  SEXP new_env_sym = Rf_install("new.env");
+  SEXP new_env_fn = PROTECT(Rf_findFun(new_env_sym, base));
+
+  // Build the call: new.env(parent = emptyenv())
+  SEXP parent_sym = Rf_install("parent");
+  SEXP call = PROTECT(Rf_lang2(new_env_fn, R_EmptyEnv));
+  SET_TAG(CDR(call), parent_sym);
+
+  // Evaluate the call
+  SEXP new_env_result = PROTECT(Rf_eval(call, R_GlobalEnv));
 
   // The deleter is called either when this function is called again, or when
   // the HttpRequest object is deleted. The deletion will happen on the
   // background thread; auto_deleter_main() schedules the deletion of the
-  // Rcpp::Environment object on the main thread.
-  _env = std::shared_ptr<Environment>(
-    new Environment(new_env(_["parent"] = R_EmptyEnv)),
-    auto_deleter_main<Environment>
+  // RProtectedSEXP object on the main thread.
+  _env = std::shared_ptr<RProtectedSEXP>(
+    new RProtectedSEXP(new_env_result),
+    auto_deleter_main<RProtectedSEXP>
   );
+
+  UNPROTECT(3);
 }
 
-Rcpp::Environment& HttpRequest::env() {
+SEXP HttpRequest::env() {
   ASSERT_MAIN_THREAD()
-  return *_env;
+  return _env->sexp;
 }
 
 std::string HttpRequest::method() const {

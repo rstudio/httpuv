@@ -56,47 +56,38 @@ bool runNonBlocking(uv_loop_t* loop);
 // This was due to a bug in gcc which was fixed in later versions.
 //   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=38600
 
+// Finalizer for WebSocketConnection external pointers.  Schedules deletion
+// on the background thread so that R's GC (which runs on the main thread)
+// does not directly delete an object that must be destroyed on the bg thread.
+inline void ws_conn_xptr_finalizer(SEXP xptr) {
+  std::shared_ptr<WebSocketConnection>* obj =
+    (std::shared_ptr<WebSocketConnection>*)R_ExternalPtrAddr(xptr);
+  if (obj) {
+    auto_deleter_background(obj);
+    R_ClearExternalPtr(xptr);
+  }
+}
+
 // externalize_shared_ptr is used to pass a shared_ptr to R, and have its
-// lifetime be tied to the R external pointer object. This function creates a
-// copy of the shared_ptr (incrementing the shared_ptr's target's refcount)
-// using `new`, and puts it inside of the XPtr. When the XPtr is garbage
-// collected, the shared_ptr is deleted, which decrements the refcount.
-//
-// As long as R has the XPtr object, the shared_ptr's target won't be deleted.
-// Also, when the XPtr gets GC'd, the shared_ptr will get deleted, and if the
-// refcount goes to 0, then the target object will be deleted (or, if it has a
-// deleter, that will be called). This means that the target object could be
-// deleted from the main thread due to a GC event in R.
-//
-// The reason we need the explicit Xptr type is because we want to set the last
-// argument (finalizeOnExit) to true.
-inline Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
-                  Rcpp::PreserveStorage,
-                  auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
-                  true> externalize_shared_ptr(std::shared_ptr<WebSocketConnection> obj)
+// lifetime be tied to the R external pointer object.  This function allocates
+// a copy of the shared_ptr on the heap and wraps it in an R external pointer
+// with a finalizer that schedules deletion on the background thread.
+inline SEXP externalize_shared_ptr(std::shared_ptr<WebSocketConnection> obj)
 {
   ASSERT_MAIN_THREAD()
   std::shared_ptr<WebSocketConnection>* obj_copy = new std::shared_ptr<WebSocketConnection>(obj);
-
-  Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
-             Rcpp::PreserveStorage,
-             auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
-             true> obj_xptr(obj_copy, true);
-
-  return obj_xptr;
+  SEXP xptr = R_MakeExternalPtr(obj_copy, R_NilValue, R_NilValue);
+  R_RegisterCFinalizer(xptr, ws_conn_xptr_finalizer);
+  return xptr;
 }
 
-// Given an XPtr to a shared_ptr, return a copy of the shared_ptr. This
-// increases the shared_ptr's ref count by one.
-inline std::shared_ptr<WebSocketConnection> internalize_shared_ptr(
-  Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
-             Rcpp::PreserveStorage,
-             auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
-             true> obj_xptr)
+// Given an R external pointer wrapping a shared_ptr, return a copy of the
+// shared_ptr (incrementing the ref count by one).
+inline std::shared_ptr<WebSocketConnection> internalize_shared_ptr(SEXP xptr)
 {
   ASSERT_MAIN_THREAD()
-  std::shared_ptr<WebSocketConnection>* obj_copy = obj_xptr.get();
-  // Return a copy of the shared pointer.
+  std::shared_ptr<WebSocketConnection>* obj_copy =
+    (std::shared_ptr<WebSocketConnection>*)R_ExternalPtrAddr(xptr);
   return *obj_copy;
 }
 

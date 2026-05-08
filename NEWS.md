@@ -1,5 +1,9 @@
 # httpuv (development version)
 
+# httpuv 1.6.16.9000
+
+* @pachadotdev: Changed all the code to rely 100% on R's C API.
+
 * Closed #426: Uses native symbol registration for calls into compiled code, resulting in performance gains from not having to perform a lookup on each call. (#427)
 
 * Fixed installation failures on macOS caused by the bundled libuv build trying to regenerate autotools files when only some tools (e.g., automake) are present. (#430)

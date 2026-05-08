@@ -5,9 +5,13 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <cstring>
 #include <uv.h>
 
-#include <Rcpp.h>
+#include <Rinternals.h>
+#ifdef length
+# undef length
+#endif
 
 inline uv_handle_t* toHandle(uv_timer_t* timer) {
   return (uv_handle_t*)timer;
@@ -46,11 +50,12 @@ public:
   explicit InMemoryDataSource(const std::vector<uint8_t>& buffer = std::vector<uint8_t>())
     : _buffer(buffer), _pos(0) {}
 
-  explicit InMemoryDataSource(const Rcpp::RawVector& rawVector)
-    : _buffer(rawVector.size()), _pos(0)
+  explicit InMemoryDataSource(SEXP rawVector)
+    : _buffer(Rf_xlength(rawVector)), _pos(0)
   {
     ASSERT_MAIN_THREAD()
-    std::copy(rawVector.begin(), rawVector.end(), _buffer.begin());
+    if (Rf_xlength(rawVector) > 0)
+      memcpy(_buffer.data(), RAW(rawVector), Rf_xlength(rawVector));
   }
 
   virtual ~InMemoryDataSource() {

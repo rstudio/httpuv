@@ -22,11 +22,10 @@
 #' @title HTTP and WebSocket server
 #' @author Joe Cheng \email{joe@@rstudio.com}
 #' @keywords package
-#' @useDynLib httpuv, .registration = TRUE
+#' @useDynLib httpuv, .registration = TRUE, .fixes = "C_"
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @importFrom Rcpp evalCpp
 #' @importFrom promises promise then finally is.promise %...>% %...!%
 #' @importFrom later run_now
 #' @importFrom R6 R6Class

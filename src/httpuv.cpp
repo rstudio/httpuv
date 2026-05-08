@@ -19,6 +19,12 @@
 #include "auto_deleter.h"
 #include "socket.h"
 #include <Rinternals.h>
+#ifdef length
+# undef length
+#endif
+#include <R_ext/Random.h>
+#include <R_ext/Rdynload.h>
+#include <R_ext/Visibility.h>
 
 
 void throwError(int err,
@@ -27,7 +33,7 @@ void throwError(int err,
 {
   ASSERT_MAIN_THREAD()
   std::string msg = prefix + uv_strerror(err) + suffix;
-  throw Rcpp::exception(msg.c_str());
+  throw std::runtime_error(msg.c_str());
 }
 
 // For keeping track of all running server apps.
@@ -166,7 +172,7 @@ void ensure_io_thread() {
   blocker->wait();
 
   if (ret != 0) {
-    Rcpp::stop(std::string("Error: ") + uv_strerror(ret));
+    Rf_error("Error: %s", uv_strerror(ret));
   }
 }
 
@@ -175,27 +181,19 @@ void ensure_io_thread() {
 // Outgoing websocket messages
 // ============================================================================
 
-// [[Rcpp::export]]
-void sendWSMessage(SEXP conn,
-                   bool binary,
-                   Rcpp::RObject message)
+SEXP sendWSMessage(SEXP conn, SEXP binary, SEXP message)
 {
   ASSERT_MAIN_THREAD()
-  Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
-             Rcpp::PreserveStorage,
-             auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
-             true> conn_xptr(conn);
-  std::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
+  std::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn);
 
   Opcode mode;
   SEXP msg_sexp;
   std::vector<char>* str;
 
-  // Efficiently copy message into a new vector<char>. There's probably a
-  // cleaner way to do this.
-   if (binary) {
+  // Efficiently copy message into a new vector<char>.
+  if (LOGICAL(binary)[0]) {
     mode = Binary;
-    msg_sexp = PROTECT(Rcpp::as<SEXP>(message));
+    msg_sexp = PROTECT(message);
     str = new std::vector<char>(RAW(msg_sexp), RAW(msg_sexp) + Rf_length(msg_sexp));
     UNPROTECT(1);
 
@@ -206,7 +204,6 @@ void sendWSMessage(SEXP conn,
     UNPROTECT(1);
   }
 
-
   std::function<void (void)> cb(
     std::bind(&WebSocketConnection::sendWSMessage, wsc,
       mode,
@@ -216,29 +213,23 @@ void sendWSMessage(SEXP conn,
   );
 
   background_queue->push(cb);
-  // Free str after data is written
-  // deleter_background<std::vector<char>>(str)
   background_queue->push(std::bind(deleter_background<std::vector<char> >, str));
+  return R_NilValue;
 }
 
-// [[Rcpp::export]]
-void closeWS(SEXP conn,
-             uint16_t code,
-             std::string reason)
+SEXP closeWS(SEXP conn, SEXP code, SEXP reason)
 {
   ASSERT_MAIN_THREAD()
   debug_log("closeWS", LOG_DEBUG);
-  Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
-             Rcpp::PreserveStorage,
-             auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
-             true> conn_xptr(conn);
-  std::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
+  std::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn);
 
-  // Schedule on background thread:
-  // wsc->closeWS(code, reason);
+  uint16_t code_val = (uint16_t)INTEGER(code)[0];
+  std::string reason_str = std::string(CHAR(STRING_ELT(reason, 0)));
+
   background_queue->push(
-    std::bind(&WebSocketConnection::closeWS, wsc, code, reason)
+    std::bind(&WebSocketConnection::closeWS, wsc, code_val, reason_str)
   );
+  return R_NilValue;
 }
 
 
@@ -246,21 +237,22 @@ void closeWS(SEXP conn,
 // Create/stop servers
 // ============================================================================
 
-// [[Rcpp::export]]
-Rcpp::RObject makeTcpServer(const std::string& host, int port,
-                            Rcpp::Function onHeaders,
-                            Rcpp::Function onBodyData,
-                            Rcpp::Function onRequest,
-                            Rcpp::Function onWSOpen,
-                            Rcpp::Function onWSMessage,
-                            Rcpp::Function onWSClose,
-                            Rcpp::List     staticPaths,
-                            Rcpp::List     staticPathOptions,
-                            bool           quiet
-) {
-
-  using namespace Rcpp;
+SEXP makeTcpServer(SEXP host, SEXP port,
+                   SEXP onHeaders,
+                   SEXP onBodyData,
+                   SEXP onRequest,
+                   SEXP onWSOpen,
+                   SEXP onWSMessage,
+                   SEXP onWSClose,
+                   SEXP staticPaths,
+                   SEXP staticPathOptions,
+                   SEXP quiet)
+{
   register_main_thread();
+
+  std::string host_str = std::string(CHAR(STRING_ELT(host, 0)));
+  int port_int = INTEGER(port)[0];
+  bool quiet_bool = LOGICAL(quiet)[0] != 0;
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // this should be deleted when it goes out of scope.
@@ -273,23 +265,15 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   ensure_io_thread();
 
-  // Use a shared_ptr because the lifetime of this object might be longer than
-  // this function, since it is passed to the background thread.
   std::shared_ptr<Barrier> blocker = std::make_shared<Barrier>(2);
 
   uv_stream_t* pServer;
 
-  // Run on background thread:
-  // createTcpServerSync(
-  //   io_loop.get(), host.c_str(), port,
-  //   std::static_pointer_cast<WebApplication>(pHandler),
-  //   background_queue, &pServer, blocker
-  // );
   background_queue->push(
     std::bind(createTcpServerSync,
-      io_loop.get(), host.c_str(), port,
+      io_loop.get(), host_str.c_str(), port_int,
       std::static_pointer_cast<WebApplication>(pHandler),
-      quiet, background_queue, &pServer, blocker
+      quiet_bool, background_queue, &pServer, blocker
     )
   );
 
@@ -302,25 +286,25 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   pServers.push_back(pServer);
 
-  return Rcpp::wrap(externalize_str<uv_stream_t>(pServer));
+  return Rf_mkString(externalize_str<uv_stream_t>(pServer).c_str());
 }
 
-// [[Rcpp::export]]
-Rcpp::RObject makePipeServer(const std::string& name,
-                             int mask,
-                             Rcpp::Function onHeaders,
-                             Rcpp::Function onBodyData,
-                             Rcpp::Function onRequest,
-                             Rcpp::Function onWSOpen,
-                             Rcpp::Function onWSMessage,
-                             Rcpp::Function onWSClose,
-                             Rcpp::List     staticPaths,
-                             Rcpp::List     staticPathOptions,
-                             bool           quiet
-) {
-
-  using namespace Rcpp;
+SEXP makePipeServer(SEXP name, SEXP mask,
+                    SEXP onHeaders,
+                    SEXP onBodyData,
+                    SEXP onRequest,
+                    SEXP onWSOpen,
+                    SEXP onWSMessage,
+                    SEXP onWSClose,
+                    SEXP staticPaths,
+                    SEXP staticPathOptions,
+                    SEXP quiet)
+{
   register_main_thread();
+
+  std::string name_str = std::string(CHAR(STRING_ELT(name, 0)));
+  int mask_int = INTEGER(mask)[0];
+  bool quiet_bool = LOGICAL(quiet)[0] != 0;
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
   // this should be deleted when it goes out of scope.
@@ -337,17 +321,11 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   uv_stream_t* pServer;
 
-  // Run on background thread:
-  // createPipeServerSync(
-  //   io_loop.get(), name.c_str(), mask,
-  //   std::static_pointer_cast<WebApplication>(pHandler),
-  //   background_queue, &pServer, blocker
-  // );
   background_queue->push(
     std::bind(createPipeServerSync,
-      io_loop.get(), name.c_str(), mask,
+      io_loop.get(), name_str.c_str(), mask_int,
       std::static_pointer_cast<WebApplication>(pHandler),
-      quiet, background_queue, &pServer, blocker
+      quiet_bool, background_queue, &pServer, blocker
     )
   );
 
@@ -360,7 +338,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   pServers.push_back(pServer);
 
-  return Rcpp::wrap(externalize_str<uv_stream_t>(pServer));
+  return Rf_mkString(externalize_str<uv_stream_t>(pServer).c_str());
 }
 
 
@@ -374,7 +352,7 @@ void stopServer_(uv_stream_t* pServer) {
   if (pos != pServers.end()) {
     pServers.erase(pos);
   } else {
-    throw Rcpp::exception("pServer handle not found in list of running servers.");
+    throw std::runtime_error("pServer handle not found in list of running servers.");
   }
 
   // Run on background thread:
@@ -384,11 +362,12 @@ void stopServer_(uv_stream_t* pServer) {
   );
 }
 
-// [[Rcpp::export]]
-void stopServer_(std::string handle) {
+SEXP stopServer_sexp(SEXP handle) {
   ASSERT_MAIN_THREAD()
-  uv_stream_t* pServer = internalize_str<uv_stream_t>(handle);
+  std::string handle_str = std::string(CHAR(STRING_ELT(handle, 0)));
+  uv_stream_t* pServer = internalize_str<uv_stream_t>(handle_str);
   stopServer_(pServer);
+  return R_NilValue;
 }
 
 void stop_loop_timer_cb(uv_timer_t* handle) {
@@ -411,38 +390,37 @@ std::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
   return get_pWebApplication(pServer);
 }
 
-// [[Rcpp::export]]
-Rcpp::List getStaticPaths_(std::string handle) {
+SEXP getStaticPaths_(SEXP handle) {
   ASSERT_MAIN_THREAD()
-  return get_pWebApplication(handle)->getStaticPathManager().pathsAsRObject();
+  std::string h = std::string(CHAR(STRING_ELT(handle, 0)));
+  return get_pWebApplication(h)->getStaticPathManager().pathsAsRObject();
 }
 
-// [[Rcpp::export]]
-Rcpp::List setStaticPaths_(std::string handle, Rcpp::List sp) {
+SEXP setStaticPaths_(SEXP handle, SEXP sp) {
   ASSERT_MAIN_THREAD()
-  get_pWebApplication(handle)->getStaticPathManager().set(sp);
-  return getStaticPaths_(handle);
+  std::string h = std::string(CHAR(STRING_ELT(handle, 0)));
+  get_pWebApplication(h)->getStaticPathManager().set(sp);
+  return get_pWebApplication(h)->getStaticPathManager().pathsAsRObject();
 }
 
-// [[Rcpp::export]]
-Rcpp::List removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths) {
+SEXP removeStaticPaths_(SEXP handle, SEXP paths) {
   ASSERT_MAIN_THREAD()
-  get_pWebApplication(handle)->getStaticPathManager().remove(paths);
-  return getStaticPaths_(handle);
+  std::string h = std::string(CHAR(STRING_ELT(handle, 0)));
+  get_pWebApplication(h)->getStaticPathManager().remove(paths);
+  return get_pWebApplication(h)->getStaticPathManager().pathsAsRObject();
 }
 
-// [[Rcpp::export]]
-Rcpp::List getStaticPathOptions_(std::string handle) {
+SEXP getStaticPathOptions_(SEXP handle) {
   ASSERT_MAIN_THREAD()
-  return get_pWebApplication(handle)->getStaticPathManager().getOptions().asRObject();
+  std::string h = std::string(CHAR(STRING_ELT(handle, 0)));
+  return get_pWebApplication(h)->getStaticPathManager().getOptions().asRObject();
 }
 
-
-// [[Rcpp::export]]
-Rcpp::List setStaticPathOptions_(std::string handle, Rcpp::List opts) {
+SEXP setStaticPathOptions_(SEXP handle, SEXP opts) {
   ASSERT_MAIN_THREAD()
-  get_pWebApplication(handle)->getStaticPathManager().setOptions(opts);
-  return getStaticPathOptions_(handle);
+  std::string h = std::string(CHAR(STRING_ELT(handle, 0)));
+  get_pWebApplication(h)->getStaticPathManager().setOptions(opts);
+  return get_pWebApplication(h)->getStaticPathManager().getOptions().asRObject();
 }
 
 
@@ -450,9 +428,11 @@ Rcpp::List setStaticPathOptions_(std::string handle, Rcpp::List opts) {
 // Miscellaneous utility functions
 // ============================================================================
 
-// [[Rcpp::export]]
-std::string base64encode(const Rcpp::RawVector& x) {
-  return b64encode(x.begin(), x.end());
+SEXP base64encode(SEXP x) {
+  const uint8_t* begin = RAW(x);
+  const uint8_t* end = begin + Rf_xlength(x);
+  std::string result = b64encode(begin, end);
+  return Rf_mkString(result.c_str());
 }
 
 static std::string allowed = ";,/?:@&=+$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_.!~*'()";
@@ -544,31 +524,39 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
 //'   strings that are UTF-8 encoded.
 //'
 //' @export
-// [[Rcpp::export]]
-Rcpp::CharacterVector encodeURI(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size(), NA_STRING);
+SEXP encodeURI(SEXP value) {
+  R_xlen_t n = Rf_xlength(value);
+  SEXP out = PROTECT(Rf_allocVector(STRSXP, n));
+  for (R_xlen_t i = 0; i < n; i++) {
+    SET_STRING_ELT(out, i, NA_STRING);
+  }
 
-  for (int i = 0; i < value.size(); i++) {
-    if (value[i] != NA_STRING) {
-      std::string encoded = doEncodeURI(Rf_translateCharUTF8(value[i]), false);
-      out[i] = Rf_mkCharCE(encoded.c_str(), CE_UTF8);
+  for (R_xlen_t i = 0; i < n; i++) {
+    if (STRING_ELT(value, i) != NA_STRING) {
+      std::string encoded = doEncodeURI(Rf_translateCharUTF8(STRING_ELT(value, i)), false);
+      SET_STRING_ELT(out, i, Rf_mkCharCE(encoded.c_str(), CE_UTF8));
     }
   }
+  UNPROTECT(1);
   return out;
 }
 
 //' @rdname encodeURI
 //' @export
-// [[Rcpp::export]]
-Rcpp::CharacterVector encodeURIComponent(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size(), NA_STRING);
+SEXP encodeURIComponent(SEXP value) {
+  R_xlen_t n = Rf_xlength(value);
+  SEXP out = PROTECT(Rf_allocVector(STRSXP, n));
+  for (R_xlen_t i = 0; i < n; i++) {
+    SET_STRING_ELT(out, i, NA_STRING);
+  }
 
-  for (int i = 0; i < value.size(); i++) {
-    if (value[i] != NA_STRING) {
-      std::string encoded = doEncodeURI(Rf_translateCharUTF8(value[i]), true);
-      out[i] = Rf_mkCharCE(encoded.c_str(), CE_UTF8);
+  for (R_xlen_t i = 0; i < n; i++) {
+    if (STRING_ELT(value, i) != NA_STRING) {
+      std::string encoded = doEncodeURI(Rf_translateCharUTF8(STRING_ELT(value, i)), true);
+      SET_STRING_ELT(out, i, Rf_mkCharCE(encoded.c_str(), CE_UTF8));
     }
   }
+  UNPROTECT(1);
   return out;
 }
 
@@ -634,33 +622,41 @@ std::string doDecodeURI(std::string value, bool component) {
 
 //' @rdname encodeURI
 //' @export
-// [[Rcpp::export]]
-Rcpp::CharacterVector decodeURI(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size(), NA_STRING);
+SEXP decodeURI(SEXP value) {
+  R_xlen_t n = Rf_xlength(value);
+  SEXP out = PROTECT(Rf_allocVector(STRSXP, n));
+  for (R_xlen_t i = 0; i < n; i++) {
+    SET_STRING_ELT(out, i, NA_STRING);
+  }
 
-  for (int i = 0; i < value.size(); i++) {
-    if (value[i] != NA_STRING) {
-      std::string decoded = doDecodeURI(Rcpp::as<std::string>(value[i]), false);
-      out[i] = Rf_mkCharLenCE(decoded.c_str(), decoded.length(), CE_UTF8);
+  for (R_xlen_t i = 0; i < n; i++) {
+    if (STRING_ELT(value, i) != NA_STRING) {
+      std::string decoded = doDecodeURI(std::string(CHAR(STRING_ELT(value, i))), false);
+      SET_STRING_ELT(out, i, Rf_mkCharLenCE(decoded.c_str(), (int)decoded.size(), CE_UTF8));
     }
   }
 
+  UNPROTECT(1);
   return out;
 }
 
 //' @rdname encodeURI
 //' @export
-// [[Rcpp::export]]
-Rcpp::CharacterVector decodeURIComponent(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size(), NA_STRING);
+SEXP decodeURIComponent(SEXP value) {
+  R_xlen_t n = Rf_xlength(value);
+  SEXP out = PROTECT(Rf_allocVector(STRSXP, n));
+  for (R_xlen_t i = 0; i < n; i++) {
+    SET_STRING_ELT(out, i, NA_STRING);
+  }
 
-  for (int i = 0; i < value.size(); i++) {
-    if (value[i] != NA_STRING) {
-      std::string decoded = doDecodeURI(Rcpp::as<std::string>(value[i]), true);
-      out[i] = Rf_mkCharLenCE(decoded.c_str(), decoded.length(), CE_UTF8);
+  for (R_xlen_t i = 0; i < n; i++) {
+    if (STRING_ELT(value, i) != NA_STRING) {
+      std::string decoded = doDecodeURI(std::string(CHAR(STRING_ELT(value, i))), true);
+      SET_STRING_ELT(out, i, Rf_mkCharLenCE(decoded.c_str(), (int)decoded.size(), CE_UTF8));
     }
   }
 
+  UNPROTECT(1);
   return out;
 }
 
@@ -683,30 +679,29 @@ Rcpp::CharacterVector decodeURIComponent(Rcpp::CharacterVector value) {
 //' ipFamily("::1")         # 6
 //' ipFamily("fe80::1ff:fe23:4567:890a") # 6
 //' @export
-// [[Rcpp::export]]
-int ipFamily(const std::string& ip) {
-  int family = ip_family(ip);
+SEXP ipFamily(SEXP ip) {
+  std::string ip_str = std::string(CHAR(STRING_ELT(ip, 0)));
+  int family = ip_family(ip_str);
   if (family == AF_INET6)
-    return 6;
+    return Rf_ScalarInteger(6);
   else if (family == AF_INET)
-    return 4;
+    return Rf_ScalarInteger(4);
   else
-    return -1;
+    return Rf_ScalarInteger(-1);
 }
 
 
 // Given a List and an external pointer to a C++ function that takes a List,
 // invoke the function with the List as the single argument. This also clears
 // the external pointer so that the C++ function can't be called again.
-// [[Rcpp::export]]
-void invokeCppCallback(Rcpp::List data, SEXP callback_xptr) {
+SEXP invokeCppCallback(SEXP data, SEXP callback_xptr) {
   ASSERT_MAIN_THREAD()
 
   if (TYPEOF(callback_xptr) != EXTPTRSXP) {
-     throw Rcpp::exception("Expected external pointer.");
+     Rf_error("Expected external pointer.");
   }
-  std::function<void(Rcpp::List)>* callback_wrapper =
-    (std::function<void(Rcpp::List)>*)(R_ExternalPtrAddr(callback_xptr));
+  std::function<void(SEXP)>* callback_wrapper =
+    (std::function<void(SEXP)>*)(R_ExternalPtrAddr(callback_xptr));
 
   (*callback_wrapper)(data);
 
@@ -715,6 +710,7 @@ void invokeCppCallback(Rcpp::List data, SEXP callback_xptr) {
   // std::function.
   delete callback_wrapper;
   R_ClearExternalPtr(callback_xptr);
+  return R_NilValue;
 }
 
 //' Apply the value of .Random.seed to R's internal RNG state
@@ -722,25 +718,61 @@ void invokeCppCallback(Rcpp::List data, SEXP callback_xptr) {
 //' This function is needed in unusual cases where a C++ function calls
 //' an R function which sets the value of \code{.Random.seed}. This function
 //' should be called at the end of the R function to ensure that the new value
-//' \code{.Random.seed} is preserved. Otherwise, Rcpp may overwrite it with a
-//' previous value.
+//' \code{.Random.seed} is preserved. Otherwise, the C++ code may overwrite it
+//' with a previous value.
 //'
 //' @keywords internal
 //' @export
-// [[Rcpp::export]]
-void getRNGState() {
+SEXP getRNGState(void) {
   GetRNGstate();
+  return R_NilValue;
 }
 
 // We are given an external pointer to a
 // std::shared_ptr<WebSocketConnection>. This returns a hexadecimal string
 // representing the address of the WebSocketConnection (not the shared_ptr to
 // it!).
-//
-//[[Rcpp::export]]
-std::string wsconn_address(SEXP external_ptr) {
-  Rcpp::XPtr<std::shared_ptr<WebSocketConnection> > xptr(external_ptr);
+SEXP wsconn_address(SEXP external_ptr) {
+  std::shared_ptr<WebSocketConnection>* xptr =
+    (std::shared_ptr<WebSocketConnection>*)R_ExternalPtrAddr(external_ptr);
   std::ostringstream os;
-  os << std::hex << reinterpret_cast<uintptr_t>(xptr.get()->get());
-  return os.str();
+  os << std::hex << reinterpret_cast<uintptr_t>(xptr->get());
+  return Rf_mkString(os.str().c_str());
 }
+
+// ============================================================================
+// R function registration
+// ============================================================================
+
+extern "C" {
+
+static const R_CallMethodDef callMethods[] = {
+  {"sendWSMessage",         (DL_FUNC)&sendWSMessage,         3},
+  {"closeWS",               (DL_FUNC)&closeWS,               3},
+  {"makeTcpServer",         (DL_FUNC)&makeTcpServer,        11},
+  {"makePipeServer",        (DL_FUNC)&makePipeServer,       11},
+  {"stopServer_",           (DL_FUNC)&stopServer_sexp,       1},
+  {"getStaticPaths_",       (DL_FUNC)&getStaticPaths_,       1},
+  {"setStaticPaths_",       (DL_FUNC)&setStaticPaths_,       2},
+  {"removeStaticPaths_",    (DL_FUNC)&removeStaticPaths_,    2},
+  {"getStaticPathOptions_", (DL_FUNC)&getStaticPathOptions_, 1},
+  {"setStaticPathOptions_", (DL_FUNC)&setStaticPathOptions_, 2},
+  {"base64encode",          (DL_FUNC)&base64encode,          1},
+  {"encodeURI",             (DL_FUNC)&encodeURI,             1},
+  {"encodeURIComponent",    (DL_FUNC)&encodeURIComponent,    1},
+  {"decodeURI",             (DL_FUNC)&decodeURI,             1},
+  {"decodeURIComponent",    (DL_FUNC)&decodeURIComponent,    1},
+  {"ipFamily",              (DL_FUNC)&ipFamily,              1},
+  {"invokeCppCallback",     (DL_FUNC)&invokeCppCallback,     2},
+  {"getRNGState",           (DL_FUNC)&getRNGState,           0},
+  {"wsconn_address",        (DL_FUNC)&wsconn_address,        1},
+  {"log_level",             (DL_FUNC)&log_level,             1},
+  {NULL, NULL, 0}
+};
+
+void attribute_visible R_init_httpuv(DllInfo *dll) {
+  R_registerRoutines(dll, NULL, callMethods, NULL, NULL);
+  R_useDynamicSymbols(dll, FALSE);
+}
+
+} // extern "C"

@@ -3,7 +3,10 @@
 
 #include <functional>
 #include <uv.h>
-#include <Rcpp.h>
+#include <Rinternals.h>
+#ifdef length
+# undef length
+#endif
 #include "websockets.h"
 #include "thread.h"
 #include "staticpath.h"
@@ -37,27 +40,33 @@ public:
 
 class RWebApplication : public WebApplication {
 private:
-  Rcpp::Function _onHeaders;
-  Rcpp::Function _onBodyData;
-  Rcpp::Function _onRequest;
-  Rcpp::Function _onWSOpen;
-  Rcpp::Function _onWSMessage;
-  Rcpp::Function _onWSClose;
+  SEXP _onHeaders;
+  SEXP _onBodyData;
+  SEXP _onRequest;
+  SEXP _onWSOpen;
+  SEXP _onWSMessage;
+  SEXP _onWSClose;
 
   StaticPathManager _staticPathManager;
 
 public:
-  RWebApplication(Rcpp::Function onHeaders,
-                  Rcpp::Function onBodyData,
-                  Rcpp::Function onRequest,
-                  Rcpp::Function onWSOpen,
-                  Rcpp::Function onWSMessage,
-                  Rcpp::Function onWSClose,
-                  Rcpp::List     staticPaths,
-                  Rcpp::List     staticPathOptions);
+  RWebApplication(SEXP onHeaders,
+                  SEXP onBodyData,
+                  SEXP onRequest,
+                  SEXP onWSOpen,
+                  SEXP onWSMessage,
+                  SEXP onWSClose,
+                  SEXP staticPaths,
+                  SEXP staticPathOptions);
 
   virtual ~RWebApplication() {
     ASSERT_MAIN_THREAD()
+    R_ReleaseObject(_onHeaders);
+    R_ReleaseObject(_onBodyData);
+    R_ReleaseObject(_onRequest);
+    R_ReleaseObject(_onWSOpen);
+    R_ReleaseObject(_onWSMessage);
+    R_ReleaseObject(_onWSClose);
   }
 
   virtual void onHeaders(std::shared_ptr<HttpRequest> pRequest,

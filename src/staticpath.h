@@ -3,7 +3,10 @@
 
 #include <string>
 #include <map>
-#include <Rcpp.h>
+#include <Rinternals.h>
+#ifdef length
+# undef length
+#endif
 #include "optional.h"
 #include "thread.h"
 #include "constants.h"
@@ -24,11 +27,11 @@ public:
     validation(std::experimental::nullopt),
     exclude(std::experimental::nullopt)
   { };
-  StaticPathOptions(const Rcpp::List& options);
+  StaticPathOptions(SEXP options);
 
-  void setOptions(const Rcpp::List& options);
+  void setOptions(SEXP options);
 
-  Rcpp::List asRObject() const;
+  SEXP asRObject() const;
 
   static StaticPathOptions merge(const StaticPathOptions& a, const StaticPathOptions& b);
 
@@ -41,9 +44,9 @@ public:
   std::string path;
   StaticPathOptions options;
 
-  StaticPath(const Rcpp::List& sp);
+  StaticPath(SEXP sp);
 
-  Rcpp::List asRObject() const;
+  SEXP asRObject() const;
 };
 
 
@@ -56,27 +59,27 @@ class StaticPathManager {
 
 public:
   StaticPathManager();
-  StaticPathManager(const Rcpp::List& path_list, const Rcpp::List& options_list);
+  StaticPathManager(SEXP path_list, SEXP options_list);
 
   std::experimental::optional<StaticPath> get(const std::string& path) const;
-  std::experimental::optional<StaticPath> get(const Rcpp::CharacterVector& path) const;
+  std::experimental::optional<StaticPath> get(SEXP path) const;
 
   void set(const std::string& path, const StaticPath& sp);
   void set(const std::map<std::string, StaticPath>& pmap);
-  void set(const Rcpp::List& pmap);
+  void set(SEXP pmap);
 
   void remove(const std::string& path);
   void remove(const std::vector<std::string>& paths);
-  void remove(const Rcpp::CharacterVector& paths);
+  void remove(SEXP paths);
 
   std::experimental::optional<std::pair<StaticPath, std::string> > matchStaticPath(
     const std::string& url_path) const;
 
 
   const StaticPathOptions& getOptions() const;
-  void setOptions(const Rcpp::List& opts);
+  void setOptions(SEXP opts);
 
-  Rcpp::List pathsAsRObject() const;
+  SEXP pathsAsRObject() const;
 };
 
 #endif

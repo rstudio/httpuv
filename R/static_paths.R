@@ -307,12 +307,15 @@ normalizeStaticPathOptions <- function(opts) {
   # side, we want a named character vector.
   if (is.list(opts$headers)) {
     # Convert list to named character vector
-    opts$headers <- unlist(opts$headers, recursive = FALSE)
+    new_headers <- unlist(opts$headers, recursive = FALSE)
     # Special case: if opts$headers was an empty list before unlist(), it is
     # now NULL. Replace it with an empty named character vector.
-    if (length(opts$headers) == 0) {
-      opts$headers <- c(a = "a")[0]
+    if (length(new_headers) == 0) {
+      new_headers <- c(a = "a")[0]
     }
+    # Assign in place to preserve list element order (assigning NULL would
+    # remove the element).
+    opts$headers <- new_headers
 
     if (!is.character(opts$headers) || any_unnamed(opts$headers)) {
       stop("`headers` option must be a named list or character vector.")

@@ -11,33 +11,33 @@ void debug_log(const std::string& msg, LogLevel level) {
 
 
 // Sets the current log level and returns previous value.
-// [[Rcpp::export]]
-std::string log_level(const std::string& level) {
+SEXP log_level(SEXP level_sxp) {
+  const char* level = CHAR(STRING_ELT(level_sxp, 0));
   LogLevel old_level = log_level_;
 
-  if (level == "") {
+  if (level[0] == '\0') {
     // Do nothing
-  } else if (level == "OFF") {
+  } else if (strcmp(level, "OFF") == 0) {
     log_level_ = LOG_OFF;
-  } else if (level == "ERROR") {
+  } else if (strcmp(level, "ERROR") == 0) {
     log_level_ = LOG_ERROR;
-  } else if (level == "WARN") {
+  } else if (strcmp(level, "WARN") == 0) {
     log_level_ = LOG_WARN;
-  } else if (level == "INFO") {
+  } else if (strcmp(level, "INFO") == 0) {
     log_level_ = LOG_INFO;
-  } else if (level == "DEBUG") {
+  } else if (strcmp(level, "DEBUG") == 0) {
     log_level_ = LOG_DEBUG;
   } else {
-    Rcpp::stop("Unknown value for `level`");
+    Rf_error("Unknown value for `level`");
   }
 
   switch(old_level) {
-    case LOG_OFF:   return "OFF";
-    case LOG_ERROR: return "ERROR";
-    case LOG_WARN:  return "WARN";
-    case LOG_INFO:  return "INFO";
-    case LOG_DEBUG: return "DEBUG";
-    default:        return "";
+    case LOG_OFF:   return Rf_mkString("OFF");
+    case LOG_ERROR: return Rf_mkString("ERROR");
+    case LOG_WARN:  return Rf_mkString("WARN");
+    case LOG_INFO:  return Rf_mkString("INFO");
+    case LOG_DEBUG: return Rf_mkString("DEBUG");
+    default:        return Rf_mkString("");
   }
 }
 

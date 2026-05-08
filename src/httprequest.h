@@ -38,13 +38,13 @@ private:
   std::string _lastHeaderField;
   std::shared_ptr<WebSocketConnection> _pWebSocketConnection;
 
-  // `_env` is an shared_ptr<Environment> instead of an Environment because it
+  // `_env` is a shared_ptr<RProtectedSEXP> instead of a plain SEXP because it
   // must be created and deleted on the main thread. However, the creation and
   // deletion of HttpRequest objects happens on the background thread, and so
-  // the lifetime of the Environment can't be strictly tied to the lifetime of
+  // the lifetime of the environment can't be strictly tied to the lifetime of
   // the HttpRequest. It is instantiated with a deleter function that ensures
   // deletion happens on the main thread.
-  std::shared_ptr<Rcpp::Environment> _env;
+  std::shared_ptr<RProtectedSEXP> _env;
   void _newRequest();
   void _initializeEnv();
 
@@ -133,7 +133,7 @@ public:
   }
   Address clientAddress();
   Address serverAddress();
-  Rcpp::Environment& env();
+  SEXP env();
 
   void handleRequest();
 

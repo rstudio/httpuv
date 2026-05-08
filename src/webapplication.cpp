@@ -11,6 +11,9 @@
 #include "staticpath.h"
 #include "fs.h"
 #include <Rinternals.h>
+#ifdef length
+# undef length
+#endif
 
 // ============================================================================
 // Utility functions
@@ -83,16 +86,29 @@ const std::string& getStatusDescription(int code) {
 
 // A generic HTTP response to send when an error (uncaught in the R code)
 // happens during processing a request.
-Rcpp::List errorResponse() {
+SEXP errorResponse() {
   ASSERT_MAIN_THREAD()
-  using namespace Rcpp;
-  return List::create(
-    _["status"] = 500L,
-    _["headers"] = List::create(
-      _["Content-Type"] = "text/plain; charset=UTF-8"
-    ),
-    _["body"] = "An exception occurred."
-  );
+
+  // Create headers list using R C API
+  SEXP headers = PROTECT(Rf_allocVector(VECSXP, 1));
+  SET_VECTOR_ELT(headers, 0, Rf_mkString("text/plain; charset=UTF-8"));
+  SEXP headers_names = PROTECT(Rf_allocVector(STRSXP, 1));
+  SET_STRING_ELT(headers_names, 0, Rf_mkChar("Content-Type"));
+  Rf_setAttrib(headers, R_NamesSymbol, headers_names);
+
+  // Create response list using R C API
+  SEXP response = PROTECT(Rf_allocVector(VECSXP, 3));
+  SET_VECTOR_ELT(response, 0, Rf_ScalarInteger(500));
+  SET_VECTOR_ELT(response, 1, headers);
+  SET_VECTOR_ELT(response, 2, Rf_mkString("An exception occurred."));
+  SEXP response_names = PROTECT(Rf_allocVector(STRSXP, 3));
+  SET_STRING_ELT(response_names, 0, Rf_mkChar("status"));
+  SET_STRING_ELT(response_names, 1, Rf_mkChar("headers"));
+  SET_STRING_ELT(response_names, 2, Rf_mkChar("body"));
+  Rf_setAttrib(response, R_NamesSymbol, response_names);
+
+  UNPROTECT(4);
+  return response;
 }
 
 // An analog to errorResponse, but this returns an shared_ptr<HttpResponse>
@@ -128,76 +144,72 @@ std::pair<std::string, std::string> splitQueryString(const std::string& url) {
 }
 
 
-void requestToEnv(std::shared_ptr<HttpRequest> pRequest, Rcpp::Environment* pEnv) {
+void requestToEnv(std::shared_ptr<HttpRequest> pRequest, SEXP env) {
   ASSERT_MAIN_THREAD()
-  using namespace Rcpp;
-
-  Environment& env = *pEnv;
 
   std::pair<std::string, std::string> url_query = splitQueryString(pRequest->url());
   std::string& path        = url_query.first;
   std::string& queryString = url_query.second;
 
-  // When making assignments into the Environment, the value must be wrapped
-  // in a Rcpp object -- letting Rcpp automatically do the wrapping can result
-  // in an object being GC'd too early.
-  // https://github.com/RcppCore/Rcpp/issues/780
-  env["REQUEST_METHOD"] = CharacterVector(pRequest->method());
-  env["SCRIPT_NAME"] = CharacterVector(std::string(""));
-  env["PATH_INFO"] = CharacterVector(path);
-  env["QUERY_STRING"] = CharacterVector(queryString);
+  // Make assignments into the Environment using Rf_defineVar
+  Rf_defineVar(Rf_install("REQUEST_METHOD"), Rf_mkString(pRequest->method().c_str()), env);
+  Rf_defineVar(Rf_install("SCRIPT_NAME"), Rf_mkString(""), env);
+  Rf_defineVar(Rf_install("PATH_INFO"), Rf_mkString(path.c_str()), env);
+  Rf_defineVar(Rf_install("QUERY_STRING"), Rf_mkString(queryString.c_str()), env);
 
-  env["rook.version"] = CharacterVector("1.1-0");
-  env["rook.url_scheme"] = CharacterVector("http");
+  Rf_defineVar(Rf_install("rook.version"), Rf_mkString("1.1-0"), env);
+  Rf_defineVar(Rf_install("rook.url_scheme"), Rf_mkString("http"), env);
 
   Address addr = pRequest->serverAddress();
-  env["SERVER_NAME"] = CharacterVector(addr.host);
+  Rf_defineVar(Rf_install("SERVER_NAME"), Rf_mkString(addr.host.c_str()), env);
   std::ostringstream portstr;
   portstr << addr.port;
-  env["SERVER_PORT"] = CharacterVector(portstr.str());
+  Rf_defineVar(Rf_install("SERVER_PORT"), Rf_mkString(portstr.str().c_str()), env);
 
   Address raddr = pRequest->clientAddress();
-  env["REMOTE_ADDR"] = CharacterVector(raddr.host);
+  Rf_defineVar(Rf_install("REMOTE_ADDR"), Rf_mkString(raddr.host.c_str()), env);
   std::ostringstream rportstr;
   rportstr << raddr.port;
-  env["REMOTE_PORT"] = CharacterVector(rportstr.str());
+  Rf_defineVar(Rf_install("REMOTE_PORT"), Rf_mkString(rportstr.str().c_str()), env);
 
   const RequestHeaders& headers = pRequest->headers();
-  Rcpp::CharacterVector raw_headers(headers.size());
-  Rcpp::CharacterVector raw_header_names(headers.size());
+  SEXP raw_headers = PROTECT(Rf_allocVector(STRSXP, headers.size()));
+  SEXP raw_header_names = PROTECT(Rf_allocVector(STRSXP, headers.size()));
 
+  int idx = 0;
   for (RequestHeaders::const_iterator it = headers.begin();
     it != headers.end();
     it++) {
-    int idx = std::distance(headers.begin(), it);
-    env["HTTP_" + normalizeHeaderName(it->first)] = CharacterVector(it->second);
-    raw_header_names[idx] = to_lower(it->first);
-    raw_headers[idx] = it->second;
+    std::string var_name = "HTTP_" + normalizeHeaderName(it->first);
+    Rf_defineVar(Rf_install(var_name.c_str()), Rf_mkString(it->second.c_str()), env);
+    SET_STRING_ELT(raw_header_names, idx, Rf_mkChar(to_lower(it->first).c_str()));
+    SET_STRING_ELT(raw_headers, idx, Rf_mkChar(it->second.c_str()));
+    idx++;
   }
-  raw_headers.attr("names") = raw_header_names;
+  Rf_setAttrib(raw_headers, R_NamesSymbol, raw_header_names);
 
-  env["HEADERS"] = raw_headers;
-
+  Rf_defineVar(Rf_install("HEADERS"), raw_headers, env);
+  UNPROTECT(2);
 }
 
 
 std::shared_ptr<HttpResponse> listToResponse(
   std::shared_ptr<HttpRequest> pRequest,
-  const Rcpp::List& response)
+  SEXP response)
 {
   ASSERT_MAIN_THREAD()
-  using namespace Rcpp;
 
-  if (response.isNULL() || response.size() == 0) {
+  SEXP response_sexp = response;
+  if (Rf_isNull(response_sexp) || Rf_length(response_sexp) == 0) {
     return std::shared_ptr<HttpResponse>();
   }
 
-  CharacterVector names = response.names();
+  SEXP names = Rf_getAttrib(response_sexp, R_NamesSymbol);
 
-  int status = Rcpp::as<int>(response["status"]);
+  int status = as_cpp<int>(get_list_element(response_sexp, "status"));
   std::string statusDesc = getStatusDescription(status);
 
-  List responseHeaders = response["headers"];
+  SEXP responseHeaders = get_list_element(response_sexp, "headers");
 
   // Self-frees when response is written
   std::shared_ptr<DataSource> pDataSource;
@@ -208,16 +220,26 @@ std::shared_ptr<HttpResponse> listToResponse(
   //
   // See https://tools.ietf.org/html/rfc7231#section-6.3.5 and
   //     https://tools.ietf.org/html/rfc7232#section-4.1
-  bool hasBody = response.containsElementNamed("body") && !Rf_isNull(response["body"]);
+  bool hasBody = list_contains_element(response_sexp, "body") && !Rf_isNull(get_list_element(response_sexp, "body"));
+
+  // Check for bodyFile
+  bool hasBodyFile = false;
+  R_xlen_t n = Rf_length(response_sexp);
+  for (R_xlen_t i = 0; i < n; i++) {
+    if (strcmp(CHAR(STRING_ELT(names, i)), "bodyFile") == 0) {
+      hasBodyFile = true;
+      break;
+    }
+  }
 
   // The response can either contain:
   // - bodyFile: String value that names the file that should be streamed
   // - body: Character vector (which is charToRaw-ed) or raw vector, or NULL
-  if (std::find(names.begin(), names.end(), "bodyFile") != names.end()) {
+  if (hasBodyFile) {
     std::shared_ptr<FileDataSource> pFDS = std::make_shared<FileDataSource>();
     FileDataSourceResult ret = pFDS->initialize(
-      Rcpp::as<std::string>(response["bodyFile"]),
-      Rcpp::as<bool>(response["bodyFileOwned"])
+      as_cpp<std::string>(get_list_element(response_sexp, "bodyFile")),
+      as_cpp<bool>(get_list_element(response_sexp, "bodyFileOwned"))
     );
     if (ret != FDS_OK) {
       REprintf("%s", pFDS->lastErrorMessage().c_str());
@@ -225,12 +247,16 @@ std::shared_ptr<HttpResponse> listToResponse(
     }
     pDataSource = pFDS;
   }
-  else if (hasBody && Rf_isString(response["body"])) {
-    RawVector responseBytes = Function("charToRaw")(response["body"]);
+  else if (hasBody && Rf_isString(get_list_element(response_sexp, "body"))) {
+    // Call charToRaw function
+    SEXP charToRawFn = PROTECT(Rf_findFun(Rf_install("charToRaw"), R_BaseEnv));
+    SEXP call = PROTECT(Rf_lang2(charToRawFn, get_list_element(response_sexp, "body")));
+    SEXP responseBytes = PROTECT(Rf_eval(call, R_GlobalEnv));
     pDataSource = std::make_shared<InMemoryDataSource>(responseBytes);
+    UNPROTECT(3);
   }
   else if (hasBody) {
-    RawVector responseBytes = response["body"];
+    SEXP responseBytes = get_list_element(response_sexp, "body");
     pDataSource = std::make_shared<InMemoryDataSource>(responseBytes);
   }
 
@@ -238,11 +264,12 @@ std::shared_ptr<HttpResponse> listToResponse(
     new HttpResponse(pRequest, status, statusDesc, pDataSource),
     auto_deleter_background<HttpResponse>
   );
-  CharacterVector headerNames = responseHeaders.names();
-  for (R_len_t i = 0; i < responseHeaders.size(); i++) {
+  SEXP headerNames = Rf_getAttrib(responseHeaders, R_NamesSymbol);
+  R_xlen_t nHeaders = Rf_length(responseHeaders);
+  for (R_xlen_t i = 0; i < nHeaders; i++) {
     pResp->addHeader(
-      std::string((char*)headerNames[i], headerNames[i].size()),
-      Rcpp::as<std::string>(responseHeaders[i]));
+      std::string(CHAR(STRING_ELT(headerNames, i))),
+      std::string(CHAR(STRING_ELT(VECTOR_ELT(responseHeaders, i), 0))));
   }
 
   return pResp;
@@ -250,7 +277,7 @@ std::shared_ptr<HttpResponse> listToResponse(
 
 void invokeResponseFun(std::function<void(std::shared_ptr<HttpResponse>)> fun,
                        std::shared_ptr<HttpRequest> pRequest,
-                       Rcpp::List response)
+                       SEXP response)
 {
   ASSERT_MAIN_THREAD()
   // new HttpResponse object. The callback will invoke
@@ -265,18 +292,30 @@ void invokeResponseFun(std::function<void(std::shared_ptr<HttpResponse>)> fun,
 // ============================================================================
 
 RWebApplication::RWebApplication(
-    Rcpp::Function onHeaders,
-    Rcpp::Function onBodyData,
-    Rcpp::Function onRequest,
-    Rcpp::Function onWSOpen,
-    Rcpp::Function onWSMessage,
-    Rcpp::Function onWSClose,
-    Rcpp::List     staticPaths,
-    Rcpp::List     staticPathOptions) :
+    SEXP onHeaders,
+    SEXP onBodyData,
+    SEXP onRequest,
+    SEXP onWSOpen,
+    SEXP onWSMessage,
+    SEXP onWSClose,
+    SEXP staticPaths,
+    SEXP staticPathOptions) :
     _onHeaders(onHeaders), _onBodyData(onBodyData), _onRequest(onRequest),
     _onWSOpen(onWSOpen), _onWSMessage(onWSMessage), _onWSClose(onWSClose)
 {
   ASSERT_MAIN_THREAD()
+
+  // The R function objects passed in here are stored as bare SEXPs and may be
+  // GC'd at any time unless we tell R to preserve them. Without this, R can
+  // collect the closures while the server is still running, leading to
+  // segfaults or hangs (e.g. when invoking the user's `call` function after
+  // a fallthrough from the static-path handler).
+  R_PreserveObject(_onHeaders);
+  R_PreserveObject(_onBodyData);
+  R_PreserveObject(_onRequest);
+  R_PreserveObject(_onWSOpen);
+  R_PreserveObject(_onWSMessage);
+  R_PreserveObject(_onWSClose);
 
   _staticPathManager = StaticPathManager(staticPaths, staticPathOptions);
 }
@@ -286,30 +325,29 @@ void RWebApplication::onHeaders(std::shared_ptr<HttpRequest> pRequest,
                                 std::function<void(std::shared_ptr<HttpResponse>)> callback)
 {
   ASSERT_MAIN_THREAD()
-  if (_onHeaders.isNULL()) {
-    std::shared_ptr<HttpResponse> null_ptr;
-    callback(null_ptr);
-  }
 
-  requestToEnv(pRequest, &pRequest->env());
+  requestToEnv(pRequest, pRequest->env());
 
   // Call the R onHeaders function. If an exception occurs during processing,
   // catch it and then send a generic error response.
-  Rcpp::List response;
+  SEXP response = R_NilValue;
   try {
-    response = _onHeaders(pRequest->env());
-  } catch (Rcpp::internal::InterruptedException &e) {
-    debug_log("Interrupt occurred in _onHeaders", LOG_INFO);
-    response = errorResponse();
+    SEXP call = PROTECT(Rf_lang2(_onHeaders, pRequest->env()));
+    response = PROTECT(Rf_eval(call, R_GlobalEnv));
+    UNPROTECT(1); // unprotect call; response stays protected
+  } catch (std::exception &e) {
+    debug_log("Exception occurred in _onHeaders", LOG_INFO);
+    response = PROTECT(errorResponse());
   } catch (...) {
     debug_log("Exception occurred in _onHeaders", LOG_INFO);
-    response = errorResponse();
+    response = PROTECT(errorResponse());
   }
 
   // new HttpResponse object. The callback will invoke
   // HttpResponse->writeResponse(), which adds a callback to destroy(), which
   // deletes the object.
   std::shared_ptr<HttpResponse> pResponse = listToResponse(pRequest, response);
+  UNPROTECT(1); // unprotect response
   callback(pResponse);
 }
 
@@ -325,10 +363,12 @@ void RWebApplication::onBodyData(std::shared_ptr<HttpRequest> pRequest,
   if (pRequest->isResponseScheduled())
     return;
 
-  Rcpp::RawVector rawVector(data->size());
-  std::copy(data->begin(), data->end(), rawVector.begin());
+  SEXP rawVector = PROTECT(Rf_allocVector(RAWSXP, data->size()));
+  std::copy(data->begin(), data->end(), RAW(rawVector));
   try {
-    _onBodyData(pRequest->env(), rawVector);
+    SEXP call = PROTECT(Rf_lang3(_onBodyData, pRequest->env(), rawVector));
+    Rf_eval(call, R_GlobalEnv);
+    UNPROTECT(1);
   } catch (...) {
     debug_log("Exception occurred in _onBodyData", LOG_INFO);
     // Send an error message to the client. It's very possible that getResponse() or more
@@ -340,17 +380,17 @@ void RWebApplication::onBodyData(std::shared_ptr<HttpRequest> pRequest,
     // https://stackoverflow.com/a/18370751/412655
     errorCallback(listToResponse(pRequest, errorResponse()));
   }
+  UNPROTECT(1);
 }
 
 void RWebApplication::getResponse(std::shared_ptr<HttpRequest> pRequest,
                                   std::function<void(std::shared_ptr<HttpResponse>)> callback) {
   ASSERT_MAIN_THREAD()
   debug_log("RWebApplication::getResponse", LOG_DEBUG);
-  using namespace Rcpp;
 
   // Pass callback to R:
   // invokeResponseFun(callback, pRequest, _1)
-  std::function<void(List)>* callback_wrapper = new std::function<void(List)>(
+  std::function<void(SEXP)>* callback_wrapper = new std::function<void(SEXP)>(
     std::bind(invokeResponseFun, callback, pRequest, std::placeholders::_1)
   );
 
@@ -360,14 +400,17 @@ void RWebApplication::getResponse(std::shared_ptr<HttpRequest> pRequest,
   // the R call/_onRequest() function. We need to signal the HttpRequest
   // object to let it know that we had an error.
   if (pRequest->isResponseScheduled()) {
-    invokeCppCallback(Rcpp::List(), callback_xptr);
+    invokeCppCallback(PROTECT(Rf_allocVector(VECSXP, 0)), callback_xptr);
+    UNPROTECT(1);
   }
   else {
 
     // Call the R call() function, and pass it the callback xptr so it can
     // asynchronously pass data back to C++.
     try {
-      _onRequest(pRequest->env(), callback_xptr);
+      SEXP call = PROTECT(Rf_lang3(_onRequest, pRequest->env(), callback_xptr));
+      Rf_eval(call, R_GlobalEnv);
+      UNPROTECT(1);
 
       // On the R side, httpuv's call() function will catch errors that happen
       // in the user-defined call() function, but if an error happens outside of
@@ -375,12 +418,14 @@ void RWebApplication::getResponse(std::shared_ptr<HttpRequest> pRequest,
       // if Ctrl-C is pressed), then it will bubble up to here, where we'll catch
       // it and deal with it.
 
-    } catch (Rcpp::internal::InterruptedException &e) {
-      debug_log("Interrupt occurred in _onRequest", LOG_INFO);
-      invokeCppCallback(errorResponse(), callback_xptr);
+    } catch (std::exception &e) {
+      debug_log("Exception occurred in _onRequest", LOG_INFO);
+      invokeCppCallback(PROTECT(errorResponse()), callback_xptr);
+      UNPROTECT(1);
     } catch (...) {
       debug_log("Exception occurred in _onRequest", LOG_INFO);
-      invokeCppCallback(errorResponse(), callback_xptr);
+      invokeCppCallback(PROTECT(errorResponse()), callback_xptr);
+      UNPROTECT(1);
     }
   }
 
@@ -395,12 +440,13 @@ void RWebApplication::onWSOpen(std::shared_ptr<HttpRequest> pRequest,
     return;
   }
 
-  requestToEnv(pRequest, &pRequest->env());
+  requestToEnv(pRequest, pRequest->env());
   try {
-    _onWSOpen(
+    SEXP call = PROTECT(Rf_lang3(_onWSOpen,
       externalize_shared_ptr(pConn),
-      pRequest->env()
-    );
+      pRequest->env()));
+    Rf_eval(call, R_GlobalEnv);
+    UNPROTECT(1);
   } catch(...) {
     error_callback();
   }
@@ -413,18 +459,17 @@ void RWebApplication::onWSMessage(std::shared_ptr<WebSocketConnection> pConn,
 {
   ASSERT_MAIN_THREAD()
   try {
-    if (binary)
-      _onWSMessage(
-        externalize_shared_ptr(pConn),
-        binary,
-        std::vector<uint8_t>(data->begin(), data->end())
-      );
-    else
-      _onWSMessage(
-        externalize_shared_ptr(pConn),
-        binary,
-        std::string(data->begin(), data->end())
-      );
+    SEXP conn_xptr = PROTECT(externalize_shared_ptr(pConn));
+    SEXP binary_sxp = PROTECT(Rf_ScalarLogical(binary ? TRUE : FALSE));
+    SEXP msg_sxp;
+    if (binary) {
+      msg_sxp = PROTECT(as_sexp(std::vector<uint8_t>(data->begin(), data->end())));
+    } else {
+      msg_sxp = PROTECT(Rf_mkString(std::string(data->begin(), data->end()).c_str()));
+    }
+    SEXP call = PROTECT(Rf_lang4(_onWSMessage, conn_xptr, binary_sxp, msg_sxp));
+    Rf_eval(call, R_GlobalEnv);
+    UNPROTECT(5);
   } catch(...) {
     error_callback();
   }
@@ -432,7 +477,10 @@ void RWebApplication::onWSMessage(std::shared_ptr<WebSocketConnection> pConn,
 
 void RWebApplication::onWSClose(std::shared_ptr<WebSocketConnection> pConn) {
   ASSERT_MAIN_THREAD()
-  _onWSClose(externalize_shared_ptr(pConn));
+  SEXP conn_xptr = PROTECT(externalize_shared_ptr(pConn));
+  SEXP call = PROTECT(Rf_lang2(_onWSClose, conn_xptr));
+  Rf_eval(call, R_GlobalEnv);
+  UNPROTECT(2);
 }
 
 
