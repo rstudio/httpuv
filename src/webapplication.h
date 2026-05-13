@@ -3,10 +3,13 @@
 
 #include <functional>
 #include <uv.h>
-#include <Rcpp.h>
 #include "websockets.h"
 #include "thread.h"
 #include "staticpath.h"
+
+#include "cpp4r.hpp"
+
+using namespace cpp4r;
 
 class HttpRequest;
 class HttpResponse;
@@ -37,24 +40,24 @@ public:
 
 class RWebApplication : public WebApplication {
 private:
-  Rcpp::Function _onHeaders;
-  Rcpp::Function _onBodyData;
-  Rcpp::Function _onRequest;
-  Rcpp::Function _onWSOpen;
-  Rcpp::Function _onWSMessage;
-  Rcpp::Function _onWSClose;
+  function _onHeaders;
+  function _onBodyData;
+  function _onRequest;
+  function _onWSOpen;
+  function _onWSMessage;
+  function _onWSClose;
 
   StaticPathManager _staticPathManager;
 
 public:
-  RWebApplication(Rcpp::Function onHeaders,
-                  Rcpp::Function onBodyData,
-                  Rcpp::Function onRequest,
-                  Rcpp::Function onWSOpen,
-                  Rcpp::Function onWSMessage,
-                  Rcpp::Function onWSClose,
-                  Rcpp::List     staticPaths,
-                  Rcpp::List     staticPathOptions);
+  RWebApplication(function onHeaders,
+                  function onBodyData,
+                  function onRequest,
+                  function onWSOpen,
+                  function onWSMessage,
+                  function onWSClose,
+                  list     staticPaths,
+                  list     staticPathOptions);
 
   virtual ~RWebApplication() {
     ASSERT_MAIN_THREAD()
