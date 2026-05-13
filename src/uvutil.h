@@ -2,28 +2,25 @@
 #define UVUTIL_HPP
 
 #include "thread.h"
-#include <string>
-#include <vector>
 #include <memory>
+#include <sstream>
+#include <string>
 #include <uv.h>
+#include <vector>
 
-#include <Rcpp.h>
+#include "cpp11.hpp"
 
-inline uv_handle_t* toHandle(uv_timer_t* timer) {
-  return (uv_handle_t*)timer;
-}
-inline uv_handle_t* toHandle(uv_tcp_t* tcp) {
-  return (uv_handle_t*)tcp;
-}
-inline uv_handle_t* toHandle(uv_stream_t* stream) {
-  return (uv_handle_t*)stream;
-}
+using namespace cpp11;
 
-inline uv_stream_t* toStream(uv_tcp_t* tcp) {
-  return (uv_stream_t*)tcp;
+inline uv_handle_t *toHandle(uv_timer_t *timer) { return (uv_handle_t *)timer; }
+inline uv_handle_t *toHandle(uv_tcp_t *tcp) { return (uv_handle_t *)tcp; }
+inline uv_handle_t *toHandle(uv_stream_t *stream) {
+  return (uv_handle_t *)stream;
 }
 
-void freeAfterClose(uv_handle_t* handle);
+inline uv_stream_t *toStream(uv_tcp_t *tcp) { return (uv_stream_t *)tcp; }
+
+void freeAfterClose(uv_handle_t *handle);
 
 class WriteOp;
 
@@ -42,27 +39,26 @@ class InMemoryDataSource : public DataSource {
 private:
   std::vector<uint8_t> _buffer;
   size_t _pos;
-public:
-  explicit InMemoryDataSource(const std::vector<uint8_t>& buffer = std::vector<uint8_t>())
-    : _buffer(buffer), _pos(0) {}
 
-  explicit InMemoryDataSource(const Rcpp::RawVector& rawVector)
-    : _buffer(rawVector.size()), _pos(0)
-  {
+public:
+  explicit InMemoryDataSource(
+      const std::vector<uint8_t> &buffer = std::vector<uint8_t>())
+      : _buffer(buffer), _pos(0) {}
+
+  explicit InMemoryDataSource(const raws &rawVector)
+      : _buffer(rawVector.size()), _pos(0) {
     ASSERT_MAIN_THREAD()
     std::copy(rawVector.begin(), rawVector.end(), _buffer.begin());
   }
 
-  virtual ~InMemoryDataSource() {
-    close();
-  }
+  virtual ~InMemoryDataSource() { close(); }
 
   uint64_t size() const;
   uv_buf_t getData(size_t bytesDesired);
   void freeData(uv_buf_t buffer);
   void close();
 
-  void add(const std::vector<uint8_t>& moreData);
+  void add(const std::vector<uint8_t> &moreData);
 };
 
 // Class for writing a DataSource to a uv_stream_t. Takes care
@@ -73,13 +69,14 @@ class ExtendedWrite {
   int _activeWrites;
   bool _errored;
   bool _completed;
-  uv_stream_t* _pHandle;
+  uv_stream_t *_pHandle;
   std::shared_ptr<DataSource> _pDataSource;
 
 public:
-  ExtendedWrite(uv_stream_t* pHandle, std::shared_ptr<DataSource> pDataSource, bool chunked)
-      : _chunked(chunked), _activeWrites(0), _errored(false), _completed(false), _pHandle(pHandle),
-        _pDataSource(pDataSource) {}
+  ExtendedWrite(uv_stream_t *pHandle, std::shared_ptr<DataSource> pDataSource,
+                bool chunked)
+      : _chunked(chunked), _activeWrites(0), _errored(false), _completed(false),
+        _pHandle(pHandle), _pDataSource(pDataSource) {}
   virtual ~ExtendedWrite() {}
 
   virtual void onWriteComplete(int status) = 0;
@@ -89,11 +86,9 @@ public:
 
 protected:
   void next();
-
 };
 
-
-inline int ip_family(const std::string& ip) {
+inline int ip_family(const std::string &ip) {
   // A buffer big enough for an IPv6 address
   unsigned char addr[16];
 
