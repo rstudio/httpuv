@@ -26,3 +26,4 @@
 ^docs$
 ^pkgdown$
 scripts
+^Makefile$

@@ -38,6 +38,4 @@ check-devel:
 	./scripts/check_r_devel.sh cxx23 gcc
 
 $(foreach std,$(STANDARDS),$(foreach comp,$(COMPILERS),$(eval $(call run-check,$(std),$(comp)))))
-$(foreach std,$(STANDARDS),$(foreach comp,$(COMPILERS),$(eval $(call run-bench,$(std),$(comp)))))
 $(foreach std,$(STANDARDS),$(eval check-$(std)-glang: check-$(std)-clang))
-$(foreach std,$(STANDARDS),$(eval bench-$(std)-glang: bench-$(std)-clang))

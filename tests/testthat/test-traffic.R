@@ -1,8 +1,10 @@
 skip_if_not_possible <- function() {
+  # @pachadotdev: run sudo pacman -S apache
+  # this is to run all tests for the WebTechnologies view
+
   # Temporarily disable these tests because they may not run reliably on
-  # some platforms.
-  skip("")
-  # skip_on_cran()
+  # some platforms (comment this to run)
+  # skip("")
 
   if (Sys.which("ab")[[1]] == "") {
     skip("ab (Apache bench) not available for running traffic tests")
