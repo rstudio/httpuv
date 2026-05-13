@@ -498,37 +498,7 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
   return os.str();
 }
 
-/* roxygen
-@title URI encoding/decoding
-
-@description Encodes/decodes strings using URI encoding/decoding in the same way that web
-  browsers do. The precise behaviors of these functions can be found at
-  developer.mozilla.org:
-  \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI}{encodeURI},
-  \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent}{encodeURIComponent},
-  \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI}{decodeURI},
-  \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent}{decodeURIComponent}
-  
-  Intended as a faster replacement for [utils::URLencode()] and [utils::URLdecode()].
-  encodeURI differs from encodeURIComponent in that the former will not encode
-  reserved characters: \code{;,/?:@@&=+$}
-  
-  decodeURI differs from decodeURIComponent in that it will refuse to decode
-  encoded sequences that decode to a reserved character. (If in doubt, use
-  decodeURIComponent.)
-
-  For \code{encodeURI} and \code{encodeURIComponent}, input strings will be
-  converted to UTF-8 before URL-encoding.
-
-@param value Character vector to be encoded or decoded.
-
-@return Encoded or decoded character vector of the same length as the
-  input value. \code{decodeURI} and \code{decodeURIComponent} will return
-  strings that are UTF-8 encoded.
-
-@export
-*/
-[[cpp11::register]] strings encodeURI(strings value) {
+[[cpp11::register]] strings encodeURI_(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -542,11 +512,7 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
   return out;
 }
 
-/* roxygen
-@rdname encodeURI
-@export
-*/
-[[cpp11::register]] strings encodeURIComponent(strings value) {
+[[cpp11::register]] strings encodeURIComponent_(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -620,11 +586,7 @@ std::string doDecodeURI(std::string value, bool component) {
 }
 
 
-/* roxygen
-@rdname encodeURI
-@export
-*/
-[[cpp11::register]] strings decodeURI(strings value) {
+[[cpp11::register]] strings decodeURI_(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -639,11 +601,7 @@ std::string doDecodeURI(std::string value, bool component) {
   return out;
 }
 
-/* roxygen
-@rdname encodeURI
-@export
-*/
-[[cpp11::register]] strings decodeURIComponent(strings value) {
+[[cpp11::register]] strings decodeURIComponent_(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -658,27 +616,7 @@ std::string doDecodeURI(std::string value, bool component) {
   return out;
 }
 
-/* roxygen
-@title Check whether an address is IPv4 or IPv6
-
-@description Given an IP address, this checks whether it is an IPv4 or IPv6 address.
-
-@param ip A single string representing an IP address.
-
-@return For IPv4 addresses, \code{4}; for IPv6 addresses, \code{6}. If the address is
-  neither, \code{-1}.
-
-@examples
-  ipFamily("127.0.0.1")   # 4
-  ipFamily("500.0.0.500") # -1
-  ipFamily("500.0.0.500") # -1
-
-  ipFamily("::")          # 6
-  ipFamily("::1")         # 6
-  ipFamily("fe80::1ff:fe23:4567:890a") # 6
-@export
-*/
-[[cpp11::register]] int ipFamily(const std::string& ip) {
+[[cpp11::register]] int ipFamily_(const std::string& ip) {
   int family = ip_family(ip);
   if (family == AF_INET6)
     return 6;
@@ -710,16 +648,7 @@ std::string doDecodeURI(std::string value, bool component) {
   R_ClearExternalPtr(callback_xptr);
 }
 
-/* roxygen
-@title Apply the value of .Random.seed to R's internal RNG state
-@description This function is needed in unusual cases where a C++ function calls
-  an R function which sets the value of \code{.Random.seed}. This function
-  should be called at the end of the R function to ensure that the new value
-  \code{.Random.seed} is preserved.
-@keywords internal
-@export
-*/
-[[cpp11::register]] void getRNGState() {
+[[cpp11::register]] void getRNGState_() {
   GetRNGstate();
 }
 
