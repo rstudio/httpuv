@@ -34,6 +34,6 @@
  *
  * See https://www.kernel.org/doc/htmldocs/kernel-api/API-strscpy.html
  */
-ssize_t uv__strscpy(char* d, const char* s, size_t n);
+ssize_t uv__strscpy(char *d, const char *s, size_t n);
 
-#endif  /* UV_STRSCPY_H_ */
+#endif /* UV_STRSCPY_H_ */

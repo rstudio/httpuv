@@ -1,21 +1,20 @@
 #include "staticpath.h"
-#include "thread.h"
-#include "utils.h"
 #include "constants.h"
 #include "optional.h"
+#include "thread.h"
+#include "utils.h"
 
 // ============================================================================
 // StaticPathOptions
 // ============================================================================
 
-StaticPathOptions::StaticPathOptions(const list& options) :
-  indexhtml(std::experimental::nullopt),
-  fallthrough(std::experimental::nullopt),
-  html_charset(std::experimental::nullopt),
-  headers(std::experimental::nullopt),
-  validation(std::experimental::nullopt),
-  exclude(std::experimental::nullopt)
-{
+StaticPathOptions::StaticPathOptions(const list &options)
+    : indexhtml(std::experimental::nullopt),
+      fallthrough(std::experimental::nullopt),
+      html_charset(std::experimental::nullopt),
+      headers(std::experimental::nullopt),
+      validation(std::experimental::nullopt),
+      exclude(std::experimental::nullopt) {
   ASSERT_MAIN_THREAD()
 
   std::string obj_class = std::string(strings(SEXP(options.attr("class")))[0]);
@@ -31,17 +30,23 @@ StaticPathOptions::StaticPathOptions(const list& options) :
     stop("staticPathOptions object must be normalized.");
   }
 
-  // There's probably a more concise way to do this assignment than by using temp.
-  temp = options["indexhtml"];    indexhtml    = optional_as<bool>(temp);
-  temp = options["fallthrough"];  fallthrough  = optional_as<bool>(temp);
-  temp = options["html_charset"]; html_charset = optional_as<std::string>(temp);
-  temp = options["headers"];      headers      = optional_as<ResponseHeaders>(temp);
-  temp = options["validation"];   validation   = optional_as<std::vector<std::string> >(temp);
-  temp = options["exclude"];      exclude      = optional_as<bool>(temp);
+  // There's probably a more concise way to do this assignment than by using
+  // temp.
+  temp = options["indexhtml"];
+  indexhtml = optional_as<bool>(temp);
+  temp = options["fallthrough"];
+  fallthrough = optional_as<bool>(temp);
+  temp = options["html_charset"];
+  html_charset = optional_as<std::string>(temp);
+  temp = options["headers"];
+  headers = optional_as<ResponseHeaders>(temp);
+  temp = options["validation"];
+  validation = optional_as<std::vector<std::string>>(temp);
+  temp = options["exclude"];
+  exclude = optional_as<bool>(temp);
 }
 
-
-void StaticPathOptions::setOptions(const list& options) {
+void StaticPathOptions::setOptions(const list &options) {
   ASSERT_MAIN_THREAD()
   SEXP temp;
   if (options.contains("indexhtml")) {
@@ -71,7 +76,7 @@ void StaticPathOptions::setOptions(const list& options) {
   if (options.contains("validation")) {
     temp = options["validation"];
     if (!Rf_isNull(temp)) {
-      validation = optional_as<std::vector<std::string> >(temp);
+      validation = optional_as<std::vector<std::string>>(temp);
     }
   }
   if (options.contains("exclude")) {
@@ -84,43 +89,47 @@ void StaticPathOptions::setOptions(const list& options) {
 
 list StaticPathOptions::asRObject() const {
   ASSERT_MAIN_THREAD()
-  writable::list obj = {
-    "indexhtml"_nm    = optional_wrap(indexhtml),
-    "fallthrough"_nm  = optional_wrap(fallthrough),
-    "html_charset"_nm = optional_wrap(html_charset),
-    "headers"_nm      = optional_wrap(headers),
-    "validation"_nm   = optional_wrap(validation),
-    "exclude"_nm      = optional_wrap(exclude)
-  };
+  writable::list obj = {"indexhtml"_nm = optional_wrap(indexhtml),
+                        "fallthrough"_nm = optional_wrap(fallthrough),
+                        "html_charset"_nm = optional_wrap(html_charset),
+                        "headers"_nm = optional_wrap(headers),
+                        "validation"_nm = optional_wrap(validation),
+                        "exclude"_nm = optional_wrap(exclude)};
   obj.attr("class") = "staticPathOptions";
   return obj;
 }
 
 // Merge StaticPathOptions object `a` with `b`. Values in `a` take precedence.
-StaticPathOptions StaticPathOptions::merge(
-  const StaticPathOptions& a,
-  const StaticPathOptions& b)
-{
+StaticPathOptions StaticPathOptions::merge(const StaticPathOptions &a,
+                                           const StaticPathOptions &b) {
   StaticPathOptions new_sp = a;
-  if (new_sp.indexhtml    == std::experimental::nullopt) new_sp.indexhtml    = b.indexhtml;
-  if (new_sp.fallthrough  == std::experimental::nullopt) new_sp.fallthrough  = b.fallthrough;
-  if (new_sp.html_charset == std::experimental::nullopt) new_sp.html_charset = b.html_charset;
-  if (new_sp.headers      == std::experimental::nullopt) new_sp.headers      = b.headers;
-  if (new_sp.validation   == std::experimental::nullopt) new_sp.validation   = b.validation;
-  if (new_sp.exclude      == std::experimental::nullopt) new_sp.exclude      = b.exclude;
+  if (new_sp.indexhtml == std::experimental::nullopt)
+    new_sp.indexhtml = b.indexhtml;
+  if (new_sp.fallthrough == std::experimental::nullopt)
+    new_sp.fallthrough = b.fallthrough;
+  if (new_sp.html_charset == std::experimental::nullopt)
+    new_sp.html_charset = b.html_charset;
+  if (new_sp.headers == std::experimental::nullopt)
+    new_sp.headers = b.headers;
+  if (new_sp.validation == std::experimental::nullopt)
+    new_sp.validation = b.validation;
+  if (new_sp.exclude == std::experimental::nullopt)
+    new_sp.exclude = b.exclude;
   return new_sp;
 }
 
 // Check if a set of request headers satisfies the condition specified by
 // `validation`.
-bool StaticPathOptions::validateRequestHeaders(const RequestHeaders& headers) const {
+bool StaticPathOptions::validateRequestHeaders(
+    const RequestHeaders &headers) const {
   if (validation == std::experimental::nullopt) {
-    throw std::runtime_error("Cannot validate request headers because validation pattern is not set.");
+    throw std::runtime_error("Cannot validate request headers because "
+                             "validation pattern is not set.");
   }
 
   // Should have the format {"==", "aaa", "bbb"}, or {} if there's no
   // validation pattern.
-  const std::vector<std::string>& pattern = *validation;
+  const std::vector<std::string> &pattern = *validation;
 
   if (pattern.size() == 0) {
     return true;
@@ -138,12 +147,11 @@ bool StaticPathOptions::validateRequestHeaders(const RequestHeaders& headers) co
   return false;
 }
 
-
 // ============================================================================
 // StaticPath
 // ============================================================================
 
-StaticPath::StaticPath(const list& sp) {
+StaticPath::StaticPath(const list &sp) {
   ASSERT_MAIN_THREAD()
   path = as_cpp<std::string>(sp["path"]);
 
@@ -163,23 +171,18 @@ StaticPath::StaticPath(const list& sp) {
 
 list StaticPath::asRObject() const {
   ASSERT_MAIN_THREAD()
-  writable::list obj = {
-    "path"_nm    = path,
-    "options"_nm = options.asRObject()
-  };
+  writable::list obj = {"path"_nm = path, "options"_nm = options.asRObject()};
   obj.attr("class") = "staticPath";
   return obj;
 }
 
-
 // ============================================================================
 // StaticPathManager
 // ============================================================================
-StaticPathManager::StaticPathManager() {
-  uv_mutex_init(&mutex);
-}
+StaticPathManager::StaticPathManager() { uv_mutex_init(&mutex); }
 
-StaticPathManager::StaticPathManager(const list& path_list, const list& options_list) {
+StaticPathManager::StaticPathManager(const list &path_list,
+                                     const list &options_list) {
   ASSERT_MAIN_THREAD()
   uv_mutex_init(&mutex);
 
@@ -203,15 +206,14 @@ StaticPathManager::StaticPathManager(const list& path_list, const list& options_
     list sp(path_list[i]);
     StaticPath staticpath(sp);
 
-    this->path_map.insert(
-      std::pair<std::string, StaticPath>(name, staticpath)
-    );
+    this->path_map.insert(std::pair<std::string, StaticPath>(name, staticpath));
   }
 }
 
-
-// Returns a StaticPath object, which has its options merged with the overall ones.
-std::experimental::optional<StaticPath> StaticPathManager::get(const std::string& path) const {
+// Returns a StaticPath object, which has its options merged with the overall
+// ones.
+std::experimental::optional<StaticPath>
+StaticPathManager::get(const std::string &path) const {
   guard guard(mutex);
   std::map<std::string, StaticPath>::const_iterator it = path_map.find(path);
   if (it == path_map.end()) {
@@ -225,7 +227,8 @@ std::experimental::optional<StaticPath> StaticPathManager::get(const std::string
   return sp;
 }
 
-std::experimental::optional<StaticPath> StaticPathManager::get(const strings& path) const {
+std::experimental::optional<StaticPath>
+StaticPathManager::get(const strings &path) const {
   ASSERT_MAIN_THREAD()
   if (path.size() != 1) {
     stop("Can only get a single StaticPath object.");
@@ -233,8 +236,7 @@ std::experimental::optional<StaticPath> StaticPathManager::get(const strings& pa
   return get(std::string(path[0]));
 }
 
-
-void StaticPathManager::set(const std::string& path, const StaticPath& sp) {
+void StaticPathManager::set(const std::string &path, const StaticPath &sp) {
   guard guard(mutex);
   // If the key already exists, replace the value.
   std::map<std::string, StaticPath>::iterator it = path_map.find(path);
@@ -243,26 +245,23 @@ void StaticPathManager::set(const std::string& path, const StaticPath& sp) {
   }
 
   // Otherwise, insert the pair.
-  path_map.insert(
-    std::pair<std::string, StaticPath>(path, sp)
-  );
+  path_map.insert(std::pair<std::string, StaticPath>(path, sp));
 }
 
-void StaticPathManager::set(const std::map<std::string, StaticPath>& pmap) {
+void StaticPathManager::set(const std::map<std::string, StaticPath> &pmap) {
   std::map<std::string, StaticPath>::const_iterator it;
   for (it = pmap.begin(); it != pmap.end(); it++) {
     set(it->first, it->second);
   }
 }
 
-void StaticPathManager::set(const list& pmap) {
+void StaticPathManager::set(const list &pmap) {
   ASSERT_MAIN_THREAD()
   std::map<std::string, StaticPath> pmap2 = toMap<StaticPath, list>(pmap);
   set(pmap2);
 }
 
-
-void StaticPathManager::remove(const std::string& path) {
+void StaticPathManager::remove(const std::string &path) {
   guard guard(mutex);
   std::map<std::string, StaticPath>::iterator it = path_map.find(path);
   if (it != path_map.end()) {
@@ -270,20 +269,19 @@ void StaticPathManager::remove(const std::string& path) {
   }
 }
 
-void StaticPathManager::remove(const std::vector<std::string>& paths) {
+void StaticPathManager::remove(const std::vector<std::string> &paths) {
   std::vector<std::string>::const_iterator it;
   for (it = paths.begin(); it != paths.end(); it++) {
     remove(*it);
   }
 }
 
-void StaticPathManager::remove(const strings& paths) {
+void StaticPathManager::remove(const strings &paths) {
   ASSERT_MAIN_THREAD()
   for (R_xlen_t i = 0; i < paths.size(); i++) {
     remove(std::string(paths[i]));
   }
 }
-
 
 // Given a URL path, this returns a pair where the first element is a matching
 // StaticPath object, and the second element is the portion of the url_path that
@@ -303,11 +301,11 @@ void StaticPathManager::remove(const strings& paths) {
 // there is a static path "/foo"), then the returned pair consists of the
 // matching StaticPath object and an empty string "".
 //
-// If no matching static path is found, then it returns std::experimental::nullopt.
+// If no matching static path is found, then it returns
+// std::experimental::nullopt.
 //
-std::experimental::optional<std::pair<StaticPath, std::string> > StaticPathManager::matchStaticPath(
-  const std::string& url_path) const
-{
+std::experimental::optional<std::pair<StaticPath, std::string>>
+StaticPathManager::matchStaticPath(const std::string &url_path) const {
 
   if (url_path.empty()) {
     return std::experimental::nullopt;
@@ -328,7 +326,7 @@ std::experimental::optional<std::pair<StaticPath, std::string> > StaticPathManag
     path = path.substr(0, path.length() - 1);
   }
 
-  pre_slash  = path;
+  pre_slash = path;
   post_slash = "";
 
   size_t found_idx = path.length() + 1;
@@ -371,11 +369,11 @@ std::experimental::optional<std::pair<StaticPath, std::string> > StaticPathManag
   }
 }
 
-const StaticPathOptions& StaticPathManager::getOptions() const {
+const StaticPathOptions &StaticPathManager::getOptions() const {
   return options;
 }
 
-void StaticPathManager::setOptions(const list& opts) {
+void StaticPathManager::setOptions(const list &opts) {
   options.setOptions(opts);
 }
 

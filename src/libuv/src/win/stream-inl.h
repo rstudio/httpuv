@@ -24,16 +24,14 @@
 
 #include <assert.h>
 
-#include "uv.h"
-#include "internal.h"
 #include "handle-inl.h"
+#include "internal.h"
 #include "req-inl.h"
+#include "uv.h"
 
-
-INLINE static void uv_stream_init(uv_loop_t* loop,
-                                  uv_stream_t* handle,
+INLINE static void uv_stream_init(uv_loop_t *loop, uv_stream_t *handle,
                                   uv_handle_type type) {
-  uv__handle_init(loop, (uv_handle_t*) handle, type);
+  uv__handle_init(loop, (uv_handle_t *)handle, type);
   handle->write_queue_size = 0;
   handle->activecnt = 0;
   handle->stream.conn.shutdown_req = NULL;
@@ -45,10 +43,8 @@ INLINE static void uv_stream_init(uv_loop_t* loop,
   handle->read_req.data = handle;
 }
 
-
-INLINE static void uv_connection_init(uv_stream_t* handle) {
+INLINE static void uv_connection_init(uv_stream_t *handle) {
   handle->flags |= UV_HANDLE_CONNECTION;
 }
-
 
 #endif /* UV_WIN_STREAM_INL_H_ */

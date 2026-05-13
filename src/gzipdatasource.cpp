@@ -1,12 +1,13 @@
 #include "gzipdatasource.h"
 #include "utils.h"
 
-GZipDataSource::GZipDataSource(std::shared_ptr<DataSource> pData) :
-  _pData(pData), _state(Streaming) {
+GZipDataSource::GZipDataSource(std::shared_ptr<DataSource> pData)
+    : _pData(pData), _state(Streaming) {
 
   _zstrm = {0};
   _inputBuf = {0};
-  int res = deflateInit2(&_zstrm, 6, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY);
+  int res =
+      deflateInit2(&_zstrm, 6, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY);
   if (res != Z_OK) {
     if (_zstrm.msg) {
       throw std::runtime_error(_zstrm.msg);
@@ -23,7 +24,8 @@ GZipDataSource::~GZipDataSource() {
 }
 
 uint64_t GZipDataSource::size() const {
-  debug_log("GZipDataSource::size() was called, this should never happen\n", LOG_WARN);
+  debug_log("GZipDataSource::size() was called, this should never happen\n",
+            LOG_WARN);
   return 0;
 }
 
@@ -34,7 +36,7 @@ uv_buf_t GZipDataSource::getData(size_t bytesDesired) {
   }
 
   // Prepare the output area to be written to
-  Bytef* outputBuf = (Bytef*)malloc(bytesDesired);
+  Bytef *outputBuf = (Bytef *)malloc(bytesDesired);
   _zstrm.next_out = outputBuf;
   _zstrm.avail_out = bytesDesired;
 
@@ -46,7 +48,7 @@ uv_buf_t GZipDataSource::getData(size_t bytesDesired) {
       freeInputBuffer();
 
       _inputBuf = _pData->getData(bytesDesired);
-      _zstrm.next_in = (Bytef*)_inputBuf.base;
+      _zstrm.next_in = (Bytef *)_inputBuf.base;
       _zstrm.avail_in = _inputBuf.len;
 
       if (_inputBuf.len == 0) {
@@ -60,18 +62,14 @@ uv_buf_t GZipDataSource::getData(size_t bytesDesired) {
   freeInputBuffer();
 
   uv_buf_t ret = {0};
-  ret.base = (char*)outputBuf;
+  ret.base = (char *)outputBuf;
   ret.len = bytesDesired - _zstrm.avail_out;
   return ret;
 }
 
-void GZipDataSource::freeData(uv_buf_t buffer) {
-  free(buffer.base);
-}
+void GZipDataSource::freeData(uv_buf_t buffer) { free(buffer.base); }
 
-void GZipDataSource::close() {
-  _pData->close();
-}
+void GZipDataSource::close() { _pData->close(); }
 
 // Attempt to deflate more data, reading from _zstrm.next_in and writing to
 // _zstrm.next_out. Both reads and (potentially) writes _state.

@@ -9,14 +9,12 @@ public:
   WebSocketProto_IETF() {}
   virtual ~WebSocketProto_IETF() {}
 
-  bool canHandle(const RequestHeaders& requestHeaders,
-                 const char* pData, size_t len) const;
+  bool canHandle(const RequestHeaders &requestHeaders, const char *pData,
+                 size_t len) const;
 
-  void handshake(const std::string& url,
-                 const RequestHeaders& requestHeaders,
-                 char** ppData, size_t* pLen,
-                 ResponseHeaders* responseHeaders,
-                 std::vector<uint8_t>* pResponse) const;
+  void handshake(const std::string &url, const RequestHeaders &requestHeaders,
+                 char **ppData, size_t *pLen, ResponseHeaders *responseHeaders,
+                 std::vector<uint8_t> *pResponse) const;
 
   bool isFin(uint8_t firstBit) const;
   uint8_t toFin(bool isFin) const;

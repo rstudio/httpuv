@@ -1,9 +1,8 @@
 #ifndef GZIPDATASOURCE_H
 #define GZIPDATASOURCE_H
 
-#include <zlib.h>
 #include "uvutil.h"
-
+#include <zlib.h>
 
 enum GDState { Streaming, Finishing, Done };
 

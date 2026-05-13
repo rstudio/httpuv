@@ -1,20 +1,19 @@
 #include "websockets-hixie76.h"
 #include <assert.h>
 
-void WSHixie76Parser::handshake(const std::string& url,
-                                const RequestHeaders& requestHeaders,
-                                char** ppData, size_t* pLen,
-                                ResponseHeaders* responseHeaders,
-                                std::vector<uint8_t>* pResponse) const {
+void WSHixie76Parser::handshake(const std::string &url,
+                                const RequestHeaders &requestHeaders,
+                                char **ppData, size_t *pLen,
+                                ResponseHeaders *responseHeaders,
+                                std::vector<uint8_t> *pResponse) const {
   _hybi03.handshake(url, requestHeaders, ppData, pLen, responseHeaders,
                     pResponse);
 }
 
 void WSHixie76Parser::createFrameHeaderFooter(
-                       Opcode opcode, bool mask, size_t payloadSize,
-                       int32_t maskingKey,
-                       char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
-                       char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen) const {
+    Opcode opcode, bool mask, size_t payloadSize, int32_t maskingKey,
+    char pHeaderData[MAX_HEADER_BYTES], size_t *pHeaderLen,
+    char pFooterData[MAX_FOOTER_BYTES], size_t *pFooterLen) const {
   pHeaderData[0] = 0;
   *pHeaderLen = 1;
 
@@ -23,10 +22,10 @@ void WSHixie76Parser::createFrameHeaderFooter(
 }
 
 #include <iostream>
-void WSHixie76Parser::read(const char* data, size_t len) {
+void WSHixie76Parser::read(const char *data, size_t len) {
   if (len == 0)
     return;
-  for (const char* pos = data; pos < data + len; pos++) {
+  for (const char *pos = data; pos < data + len; pos++) {
     uint8_t b = *pos;
 
     if (_state == H76_START) {
@@ -51,7 +50,7 @@ void WSHixie76Parser::read(const char* data, size_t len) {
 
     } else if (_state == H76_IN_TEXT_FRAME) {
 
-      const char* endMarker = pos;
+      const char *endMarker = pos;
       while (endMarker < (data + len) && *endMarker != (char)0xFF) {
         endMarker++;
       }

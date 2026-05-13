@@ -2,14 +2,13 @@
 #include "utils.h"
 
 #ifdef _WIN32
-#include <windows.h>
 #include "winutils.h"
+#include <windows.h>
 #else
 #include <sys/stat.h>
 #endif
 
 #include <iostream>
-
 
 // Given a filename, return the extension.
 std::string find_extension(const std::string &filename) {
@@ -33,7 +32,6 @@ std::string basename(const std::string &path) {
     return path.substr(found_idx + 1);
   }
 }
-
 
 // filename is assumed to be UTF-8.
 bool is_directory(const std::string &filename) {

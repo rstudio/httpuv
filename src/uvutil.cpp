@@ -2,14 +2,11 @@
 #include "thread.h"
 #include <string.h>
 
-
-void freeAfterClose(uv_handle_t* handle) {
-  free(handle);
-}
+void freeAfterClose(uv_handle_t *handle) { free(handle); }
 
 class WriteOp {
 private:
-  ExtendedWrite* pParent;
+  ExtendedWrite *pParent;
 
   // Bytes to write before writing the buffer
   std::vector<char> prefix;
@@ -23,9 +20,10 @@ private:
 public:
   uv_write_t handle;
 
-  WriteOp(ExtendedWrite* parent, std::string prefix, uv_buf_t data, std::string suffix)
-        : pParent(parent), prefix(prefix.begin(), prefix.end()), buffer(data),
-          suffix(suffix.begin(), suffix.end()) {
+  WriteOp(ExtendedWrite *parent, std::string prefix, uv_buf_t data,
+          std::string suffix)
+      : pParent(parent), prefix(prefix.begin(), prefix.end()), buffer(data),
+        suffix(suffix.begin(), suffix.end()) {
     memset(&handle, 0, sizeof(uv_write_t));
     handle.data = this;
   }
@@ -60,9 +58,7 @@ public:
   }
 };
 
-uint64_t InMemoryDataSource::size() const {
-  return _buffer.size();
-}
+uint64_t InMemoryDataSource::size() const { return _buffer.size(); }
 uv_buf_t InMemoryDataSource::getData(size_t bytesDesired) {
   ASSERT_BACKGROUND_THREAD()
   size_t bytes = _buffer.size() - _pos;
@@ -70,29 +66,28 @@ uv_buf_t InMemoryDataSource::getData(size_t bytesDesired) {
     bytes = bytesDesired;
 
   uv_buf_t mem;
-  mem.base = bytes > 0 ? reinterpret_cast<char*>(&_buffer[_pos]) : 0;
+  mem.base = bytes > 0 ? reinterpret_cast<char *>(&_buffer[_pos]) : 0;
   mem.len = bytes;
 
   _pos += bytes;
   return mem;
 }
-void InMemoryDataSource::freeData(uv_buf_t buffer) {
-}
+void InMemoryDataSource::freeData(uv_buf_t buffer) {}
 void InMemoryDataSource::close() {
   ASSERT_BACKGROUND_THREAD()
   _buffer.clear();
 }
 
-void InMemoryDataSource::add(const std::vector<uint8_t>& moreData) {
+void InMemoryDataSource::add(const std::vector<uint8_t> &moreData) {
   ASSERT_BACKGROUND_THREAD()
   if (_buffer.capacity() < _buffer.size() + moreData.size())
     _buffer.reserve(_buffer.size() + moreData.size());
   _buffer.insert(_buffer.end(), moreData.begin(), moreData.end());
 }
 
-static void writecb(uv_write_t* handle, int status) {
+static void writecb(uv_write_t *handle, int status) {
   ASSERT_BACKGROUND_THREAD()
-  WriteOp* pWriteOp = (WriteOp*)handle->data;
+  WriteOp *pWriteOp = (WriteOp *)handle->data;
   pWriteOp->end();
 }
 
@@ -117,7 +112,7 @@ void ExtendedWrite::next() {
   uv_buf_t buf;
   try {
     buf = _pDataSource->getData(65536);
-  } catch (std::exception& e) {
+  } catch (std::exception &e) {
     _errored = true;
     if (_activeWrites == 0) {
       _pDataSource->close();
@@ -167,7 +162,7 @@ void ExtendedWrite::next() {
     return;
   }
 
-  WriteOp* pWriteOp = new WriteOp(this, prefix, buf, suffix);
+  WriteOp *pWriteOp = new WriteOp(this, prefix, buf, suffix);
   _activeWrites++;
   auto op_bufs = pWriteOp->bufs();
   uv_write(&pWriteOp->handle, _pHandle, &op_bufs[0], op_bufs.size(), &writecb);

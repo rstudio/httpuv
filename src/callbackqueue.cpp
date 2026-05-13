@@ -1,33 +1,30 @@
-#include <functional>
 #include "callbackqueue.h"
-#include "tqueue.h"
 #include "thread.h"
+#include "tqueue.h"
+#include <functional>
 #include <uv.h>
-
 
 // This non-class function is a plain C wrapper for CallbackQueue::flush(), and
 // is needed as a callback to pass to uv_async_send.
 void flush_callback_queue(uv_async_t *handle) {
-  CallbackQueue* wq = reinterpret_cast<CallbackQueue*>(handle->data);
+  CallbackQueue *wq = reinterpret_cast<CallbackQueue *>(handle->data);
   wq->flush();
 }
 
-
-CallbackQueue::CallbackQueue(uv_loop_t* loop) {
+CallbackQueue::CallbackQueue(uv_loop_t *loop) {
   ASSERT_BACKGROUND_THREAD()
   uv_async_init(loop, &flush_handle, flush_callback_queue);
-  flush_handle.data = reinterpret_cast<void*>(this);
+  flush_handle.data = reinterpret_cast<void *>(this);
 }
 
-
-void CallbackQueue::push(std::function<void (void)> cb) {
+void CallbackQueue::push(std::function<void(void)> cb) {
   q.push(cb);
   uv_async_send(&flush_handle);
 }
 
 void CallbackQueue::flush() {
   ASSERT_BACKGROUND_THREAD()
-  std::function<void (void)> cb;
+  std::function<void(void)> cb;
 
   while (1) {
     // Do queue operations inside this guarded scope, but we'll execute the

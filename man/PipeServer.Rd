@@ -10,7 +10,7 @@ named pipe.
 \examples{
 
 ## ------------------------------------------------
-## Method `PipeServer$new`
+## Method `PipeServer$new()`
 ## ------------------------------------------------
 
 \dontrun{
@@ -31,62 +31,57 @@ server <- PipeServer$new("my_pipe", -1, app)
 }
 \keyword{internal}
 \section{Super class}{
-\code{\link[httpuv:Server]{httpuv::Server}} -> \code{PipeServer}
+\code{\link[httpuv:Server]{Server}} -> \code{PipeServer}
 }
 \section{Methods}{
 \subsection{Public methods}{
-\itemize{
-\item \href{#method-PipeServer-new}{\code{PipeServer$new()}}
-\item \href{#method-PipeServer-getName}{\code{PipeServer$getName()}}
-\item \href{#method-PipeServer-getMask}{\code{PipeServer$getMask()}}
+  \itemize{
+    \item \href{#method-PipeServer-initialize}{\code{PipeServer$new()}}
+    \item \href{#method-PipeServer-getName}{\code{PipeServer$getName()}}
+    \item \href{#method-PipeServer-getMask}{\code{PipeServer$getMask()}}
+  }
 }
-}
-\if{html}{\out{
-<details><summary>Inherited methods</summary>
+\if{html}{\out{<details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPathOptions"><a href='../../httpuv/html/Server.html#method-Server-getStaticPathOptions'><code>httpuv::Server$getStaticPathOptions()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPaths"><a href='../../httpuv/html/Server.html#method-Server-getStaticPaths'><code>httpuv::Server$getStaticPaths()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="isRunning"><a href='../../httpuv/html/Server.html#method-Server-isRunning'><code>httpuv::Server$isRunning()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="removeStaticPath"><a href='../../httpuv/html/Server.html#method-Server-removeStaticPath'><code>httpuv::Server$removeStaticPath()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPath"><a href='../../httpuv/html/Server.html#method-Server-setStaticPath'><code>httpuv::Server$setStaticPath()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPathOption"><a href='../../httpuv/html/Server.html#method-Server-setStaticPathOption'><code>httpuv::Server$setStaticPathOption()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="stop"><a href='../../httpuv/html/Server.html#method-Server-stop'><code>httpuv::Server$stop()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPathOptions"><a href='../../httpuv/html/Server.html#method-Server-getStaticPathOptions'><code>Server$getStaticPathOptions()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPaths"><a href='../../httpuv/html/Server.html#method-Server-getStaticPaths'><code>Server$getStaticPaths()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="isRunning"><a href='../../httpuv/html/Server.html#method-Server-isRunning'><code>Server$isRunning()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="removeStaticPath"><a href='../../httpuv/html/Server.html#method-Server-removeStaticPath'><code>Server$removeStaticPath()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPath"><a href='../../httpuv/html/Server.html#method-Server-setStaticPath'><code>Server$setStaticPath()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPathOption"><a href='../../httpuv/html/Server.html#method-Server-setStaticPathOption'><code>Server$setStaticPathOption()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="stop"><a href='../../httpuv/html/Server.html#method-Server-stop'><code>Server$stop()</code></a></span></li>
 </ul>
-</details>
-}}
+</details>}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-PipeServer-new"></a>}}
-\if{latex}{\out{\hypertarget{method-PipeServer-new}{}}}
-\subsection{Method \code{new()}}{
-Initialize a new PipeServer object
+\if{html}{\out{<a id="method-PipeServer-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-PipeServer-initialize}{}}}
+\subsection{\code{PipeServer$new()}}{
+  Initialize a new PipeServer object
 
 Create a new \code{PipeServer} object. \code{app} is an httpuv application
 object as described in \code{\link[=startServer]{startServer()}}.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PipeServer$new(name, mask, app, quiet = FALSE)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{name}}{The name of the named pipe to bind the server to.}
-
-\item{\code{mask}}{The mask for the named pipe. If NULL, it defaults to -1.}
-
-\item{\code{app}}{An httpuv application object as described in
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{PipeServer$new(name, mask, app, quiet = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{The name of the named pipe to bind the server to.}
+      \item{\code{mask}}{The mask for the named pipe. If NULL, it defaults to -1.}
+      \item{\code{app}}{An httpuv application object as described in
 \code{\link[=startServer]{startServer()}}.}
-
-\item{\code{quiet}}{If TRUE, suppresses output from the server.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A new \code{PipeServer} object.
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-# Create a simple app
+      \item{\code{quiet}}{If TRUE, suppresses output from the server.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A new \code{PipeServer} object.
+  }
+  \subsection{Examples}{
+    \if{html}{\out{<div class="r example copy">}}
+    \preformatted{# Create a simple app
 app <- function(req) {
   list(
     status = 200L,
@@ -97,36 +92,38 @@ app <- function(req) {
 # Create a server
 server <- PipeServer$new("my_pipe", -1, app)
 }
+    \if{html}{\out{</div>}}
+  }
 }
-\if{html}{\out{</div>}}
 
-}
-
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-PipeServer-getName"></a>}}
 \if{latex}{\out{\hypertarget{method-PipeServer-getName}{}}}
-\subsection{Method \code{getName()}}{
-Get the name of the named pipe
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PipeServer$getName()}\if{html}{\out{</div>}}
+\subsection{\code{PipeServer$getName()}}{
+  Get the name of the named pipe
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{PipeServer$getName()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The name of the named pipe that the server is bound to.
+  }
 }
 
-\subsection{Returns}{
-The name of the named pipe that the server is bound to.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-PipeServer-getMask"></a>}}
 \if{latex}{\out{\hypertarget{method-PipeServer-getMask}{}}}
-\subsection{Method \code{getMask()}}{
-Get the mask for the named pipe
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PipeServer$getMask()}\if{html}{\out{</div>}}
+\subsection{\code{PipeServer$getMask()}}{
+  Get the mask for the named pipe
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{PipeServer$getMask()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The mask for the named pipe that the server is bound to.
+  }
 }
 
-\subsection{Returns}{
-The mask for the named pipe that the server is bound to.
-}
-}
 }

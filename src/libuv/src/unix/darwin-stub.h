@@ -40,18 +40,18 @@ typedef struct FSEventStreamContext FSEventStreamContext;
 typedef uint32_t FSEventStreamCreateFlags;
 typedef uint64_t FSEventStreamEventId;
 typedef unsigned CFStringEncoding;
-typedef void* CFAllocatorRef;
-typedef void* CFArrayRef;
-typedef void* CFBundleRef;
-typedef void* CFDataRef;
-typedef void* CFDictionaryRef;
-typedef void* CFMutableDictionaryRef;
+typedef void *CFAllocatorRef;
+typedef void *CFArrayRef;
+typedef void *CFBundleRef;
+typedef void *CFDataRef;
+typedef void *CFDictionaryRef;
+typedef void *CFMutableDictionaryRef;
 typedef struct CFRange CFRange;
-typedef void* CFRunLoopRef;
-typedef void* CFRunLoopSourceRef;
-typedef void* CFStringRef;
-typedef void* CFTypeRef;
-typedef void* FSEventStreamRef;
+typedef void *CFRunLoopRef;
+typedef void *CFRunLoopSourceRef;
+typedef void *CFStringRef;
+typedef void *CFTypeRef;
+typedef void *FSEventStreamRef;
 
 typedef uint32_t IOOptionBits;
 typedef unsigned int io_iterator_t;
@@ -59,25 +59,21 @@ typedef unsigned int io_object_t;
 typedef unsigned int io_service_t;
 typedef unsigned int io_registry_entry_t;
 
-
-typedef void (*FSEventStreamCallback)(const FSEventStreamRef,
-                                      void*,
-                                      size_t,
-                                      void*,
-                                      const FSEventStreamEventFlags*,
-                                      const FSEventStreamEventId*);
+typedef void (*FSEventStreamCallback)(const FSEventStreamRef, void *, size_t,
+                                      void *, const FSEventStreamEventFlags *,
+                                      const FSEventStreamEventId *);
 
 struct CFRunLoopSourceContext {
   CFIndex version;
-  void* info;
-  void* pad[7];
-  void (*perform)(void*);
+  void *info;
+  void *pad[7];
+  void (*perform)(void *);
 };
 
 struct FSEventStreamContext {
   CFIndex version;
-  void* info;
-  void* pad[3];
+  void *info;
+  void *pad[3];
 };
 
 struct CFRange {
@@ -110,4 +106,4 @@ static const int kFSEventStreamEventFlagRootChanged = 32;
 static const int kFSEventStreamEventFlagUnmount = 128;
 static const int kFSEventStreamEventFlagUserDropped = 2;
 
-#endif  /* UV_DARWIN_STUB_H_ */
+#endif /* UV_DARWIN_STUB_H_ */

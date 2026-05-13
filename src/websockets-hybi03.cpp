@@ -9,15 +9,14 @@ extern "C" {
 
 #include "utils.h"
 
-bool calculateKeyValue(const std::string& key, uint32_t* pResult = NULL) {
+bool calculateKeyValue(const std::string &key, uint32_t *pResult = NULL) {
   std::string trimmed = trim(key);
   uint32_t value = 0;
   uint32_t spaces = 0;
-  for (std::string::const_iterator it = trimmed.begin();
-       it != trimmed.end();
+  for (std::string::const_iterator it = trimmed.begin(); it != trimmed.end();
        it++) {
     if (*it == ' ')
-      spaces ++;
+      spaces++;
     else if (*it >= '0' && *it <= '9') {
       value *= 10;
       value += *it - '0';
@@ -30,8 +29,8 @@ bool calculateKeyValue(const std::string& key, uint32_t* pResult = NULL) {
   return true;
 }
 
-bool WebSocketProto_HyBi03::canHandle(const RequestHeaders& requestHeaders,
-                                      const char* pData, size_t len) const {
+bool WebSocketProto_HyBi03::canHandle(const RequestHeaders &requestHeaders,
+                                      const char *pData, size_t len) const {
 
   if (len != 8)
     return false;
@@ -50,11 +49,11 @@ bool WebSocketProto_HyBi03::canHandle(const RequestHeaders& requestHeaders,
          strcasecmp(requestHeaders.at("upgrade").c_str(), "websocket") == 0;
 }
 
-void WebSocketProto_HyBi03::handshake(const std::string& url,
-                                      const RequestHeaders& requestHeaders,
-                                      char** ppData, size_t* pLen,
-                                      ResponseHeaders* pResponseHeaders,
-                                      std::vector<uint8_t>* pResponse) const {
+void WebSocketProto_HyBi03::handshake(const std::string &url,
+                                      const RequestHeaders &requestHeaders,
+                                      char **ppData, size_t *pLen,
+                                      ResponseHeaders *pResponseHeaders,
+                                      std::vector<uint8_t> *pResponse) const {
 
   assert(*pLen >= 8);
 
@@ -63,8 +62,8 @@ void WebSocketProto_HyBi03::handshake(const std::string& url,
   calculateKeyValue(requestHeaders.at("sec-websocket-key2"), &key2);
 
   uint8_t handshake[16];
-  *reinterpret_cast<uint32_t*>(handshake) = key1;
-  *reinterpret_cast<uint32_t*>(handshake + 4) = key2;
+  *reinterpret_cast<uint32_t *>(handshake) = key1;
+  *reinterpret_cast<uint32_t *>(handshake + 4) = key2;
   if (!isBigEndian()) {
     swapByteOrder(handshake, handshake + 4);
     swapByteOrder(handshake + 4, handshake + 8);
@@ -94,38 +93,51 @@ void WebSocketProto_HyBi03::handshake(const std::string& url,
   pResponseHeaders->push_back(std::make_pair("Connection", "Upgrade"));
   pResponseHeaders->push_back(std::make_pair("Upgrade", "WebSocket"));
   pResponseHeaders->push_back(std::make_pair("Sec-WebSocket-Origin", origin));
-  pResponseHeaders->push_back(std::make_pair("Sec-WebSocket-Location", location));
+  pResponseHeaders->push_back(
+      std::make_pair("Sec-WebSocket-Location", location));
 }
 
 bool WebSocketProto_HyBi03::isFin(uint8_t firstBit) const {
   return firstBit == 0;
 }
 
-uint8_t WebSocketProto_HyBi03::toFin(bool isFin) const {
-  return isFin ? 0 : 1;
-}
+uint8_t WebSocketProto_HyBi03::toFin(bool isFin) const { return isFin ? 0 : 1; }
 
 Opcode WebSocketProto_HyBi03::decodeOpcode(uint8_t rawCode) const {
   switch (rawCode) {
-  case 0:   return Continuation;
-  case 1:   return Close;
-  case 2:   return Ping;
-  case 3:   return Pong;
-  case 4:   return Text;
-  case 5:   return Binary;
-  default:  return Reserved;
+  case 0:
+    return Continuation;
+  case 1:
+    return Close;
+  case 2:
+    return Ping;
+  case 3:
+    return Pong;
+  case 4:
+    return Text;
+  case 5:
+    return Binary;
+  default:
+    return Reserved;
   }
 }
 
 uint8_t WebSocketProto_HyBi03::encodeOpcode(Opcode opcode) const {
   switch (opcode) {
-  case Continuation: return 0;
-  case Close:        return 1;
-  case Ping:         return 2;
-  case Pong:         return 3;
-  case Text:         return 4;
-  case Binary:       return 5;
+  case Continuation:
+    return 0;
+  case Close:
+    return 1;
+  case Ping:
+    return 2;
+  case Pong:
+    return 3;
+  case Text:
+    return 4;
+  case Binary:
+    return 5;
   case Reserved:
-  default:           return 6; // not expected
+  default:
+    return 6; // not expected
   }
 }

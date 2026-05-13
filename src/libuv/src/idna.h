@@ -20,12 +20,12 @@
  * |p| is updated on success _and_ error, i.e., bad multi-byte sequences are
  * skipped in their entirety, not just the first bad byte.
  */
-unsigned uv__utf8_decode1(const char** p, const char* pe);
+unsigned uv__utf8_decode1(const char **p, const char *pe);
 
 /* Convert a UTF-8 domain name to IDNA 2008 / Punycode. A return value >= 0
  * is the number of bytes written to |d|, including the trailing nul byte.
  * A return value < 0 is a libuv error code. |s| and |d| can not overlap.
  */
-long uv__idna_toascii(const char* s, const char* se, char* d, char* de);
+long uv__idna_toascii(const char *s, const char *se, char *d, char *de);
 
-#endif  /* UV_SRC_IDNA_H_ */
+#endif /* UV_SRC_IDNA_H_ */

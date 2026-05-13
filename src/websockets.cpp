@@ -1,26 +1,23 @@
 #include "websockets.h"
-#include "utils.h"
 #include "thread.h"
+#include "utils.h"
 #include <assert.h>
 
 #include <algorithm>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <memory>
 
-#include "sha1/sha1.h"
 #include "base64/base64.hpp"
+#include "sha1/sha1.h"
 
-#include "websockets-ietf.h"
-#include "websockets-hybi03.h"
 #include "websockets-hixie76.h"
+#include "websockets-hybi03.h"
+#include "websockets-ietf.h"
 
-template <typename T>
-T min(T a, T b) {
-  return (a > b) ? b : a;
-}
+template <typename T> T min(T a, T b) { return (a > b) ? b : a; }
 
-std::string dumpbin(const char* data, size_t len) {
+std::string dumpbin(const char *data, size_t len) {
   std::string output;
   for (size_t i = 0; i < len; i++) {
     char byte = data[i];
@@ -56,25 +53,21 @@ WSFrameHeaderInfo WSHyBiFrameHeader::info() const {
   return inf;
 }
 
-bool WSHyBiFrameHeader::fin() const {
-  return _pProto->isFin(read(0, 1));
-}
+bool WSHyBiFrameHeader::fin() const { return _pProto->isFin(read(0, 1)); }
 Opcode WSHyBiFrameHeader::opcode() const {
   uint8_t oc = read(4, 4);
   return _pProto->decodeOpcode(oc);
 }
-bool WSHyBiFrameHeader::masked() const {
-  return read(8, 1) != 0;
-}
+bool WSHyBiFrameHeader::masked() const { return read(8, 1) != 0; }
 uint64_t WSHyBiFrameHeader::payloadLength() const {
   uint8_t pl = read(9, 7);
   switch (pl) {
-    case 126:
-      return read64(16, 16);
-    case 127:
-      return read64(16, 64);
-    default:
-      return pl;
+  case 126:
+    return read64(16, 16);
+  case 127:
+    return read64(16, 64);
+  default:
+    return pl;
   }
 }
 void WSHyBiFrameHeader::maskingKey(uint8_t key[4]) const {
@@ -124,39 +117,37 @@ uint64_t WSHyBiFrameHeader::read64(size_t bitOffset, size_t bitWidth) const {
 uint8_t WSHyBiFrameHeader::payloadLengthLength() const {
   uint8_t pll = read(9, 7);
   switch (pll) {
-    case 126:
-      return 7 + 16;
-    case 127:
-      return 7 + 64;
-    default:
-      return 7;
+  case 126:
+    return 7 + 16;
+  case 127:
+    return 7 + 64;
+  default:
+    return 7;
   }
 }
 uint8_t WSHyBiFrameHeader::maskingKeyLength() const {
   return masked() ? 32 : 0;
 }
 
-void WSHyBiParser::handshake(const std::string& url,
-                             const RequestHeaders& requestHeaders,
-                             char** ppData, size_t* pLen,
-                             ResponseHeaders* pResponseHeaders,
-                             std::vector<uint8_t>* pResponse) const {
+void WSHyBiParser::handshake(const std::string &url,
+                             const RequestHeaders &requestHeaders,
+                             char **ppData, size_t *pLen,
+                             ResponseHeaders *pResponseHeaders,
+                             std::vector<uint8_t> *pResponse) const {
   ASSERT_BACKGROUND_THREAD()
   _pProto->handshake(url, requestHeaders, ppData, pLen, pResponseHeaders,
                      pResponse);
 }
 
 void WSHyBiParser::createFrameHeaderFooter(
-                     Opcode opcode, bool mask, size_t payloadSize,
-                     int32_t maskingKey,
-                     char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
-                     char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen
-                     ) const {
-  _pProto->createFrameHeader(opcode, mask, payloadSize, maskingKey,
-                             pHeaderData, pHeaderLen);
+    Opcode opcode, bool mask, size_t payloadSize, int32_t maskingKey,
+    char pHeaderData[MAX_HEADER_BYTES], size_t *pHeaderLen,
+    char pFooterData[MAX_FOOTER_BYTES], size_t *pFooterLen) const {
+  _pProto->createFrameHeader(opcode, mask, payloadSize, maskingKey, pHeaderData,
+                             pHeaderLen);
 }
 
-void WSHyBiParser::read(const char* data, size_t len) {
+void WSHyBiParser::read(const char *data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
   bool recur = false;
   while (len > 0 || recur) {
@@ -164,58 +155,58 @@ void WSHyBiParser::read(const char* data, size_t len) {
     assert(len < 1000000000000000000);
 
     switch (_state) {
-      case InHeader: {
-        // The _header vector<char> accumulates header data until
-        // the complete header is read. It's possible/likely it also
-        // holds part of the payload.
-        size_t startingSize = _header.size();
-        std::copy(data, data + min(len, MAX_HEADER_BYTES - startingSize),
-          std::back_inserter(_header));
+    case InHeader: {
+      // The _header vector<char> accumulates header data until
+      // the complete header is read. It's possible/likely it also
+      // holds part of the payload.
+      size_t startingSize = _header.size();
+      std::copy(data, data + min(len, MAX_HEADER_BYTES - startingSize),
+                std::back_inserter(_header));
 
-        WSHyBiFrameHeader frame(_pProto, safe_vec_addr(_header), _header.size());
+      WSHyBiFrameHeader frame(_pProto, safe_vec_addr(_header), _header.size());
 
-        if (frame.isHeaderComplete()) {
-          _pCallbacks->onHeaderComplete(frame.info());
+      if (frame.isHeaderComplete()) {
+        _pCallbacks->onHeaderComplete(frame.info());
 
-          size_t payloadOffset = frame.headerLength() - startingSize;
-          _bytesLeft = frame.payloadLength();
+        size_t payloadOffset = frame.headerLength() - startingSize;
+        _bytesLeft = frame.payloadLength();
 
-          // Header was consumed, but no payload
-          if (_bytesLeft == 0) recur = true;
+        // Header was consumed, but no payload
+        if (_bytesLeft == 0)
+          recur = true;
 
-          _state = InPayload;
-          _header.clear();
+        _state = InPayload;
+        _header.clear();
 
-          data += payloadOffset;
-          len -= payloadOffset;
-        }
-        else {
-          // All of the data was consumed, but no header
-          data += len;
-          len = 0;
-        }
-        break;
+        data += payloadOffset;
+        len -= payloadOffset;
+      } else {
+        // All of the data was consumed, but no header
+        data += len;
+        len = 0;
       }
-      case InPayload: {
-        recur = false;
+      break;
+    }
+    case InPayload: {
+      recur = false;
 
-        size_t bytesToConsume = min((uint64_t)len, _bytesLeft);
-        _bytesLeft -= bytesToConsume;
-        _pCallbacks->onPayload(data, bytesToConsume);
+      size_t bytesToConsume = min((uint64_t)len, _bytesLeft);
+      _bytesLeft -= bytesToConsume;
+      _pCallbacks->onPayload(data, bytesToConsume);
 
-        data += bytesToConsume;
-        len -= bytesToConsume;
+      data += bytesToConsume;
+      len -= bytesToConsume;
 
-        if (_bytesLeft == 0) {
-          _pCallbacks->onFrameComplete();
+      if (_bytesLeft == 0) {
+        _pCallbacks->onFrameComplete();
 
-          _state = InHeader;
-        }
-        break;
+        _state = InHeader;
       }
-      default:
-        assert(false);
-        break;
+      break;
+    }
+    default:
+      assert(false);
+      break;
     }
   }
 }
@@ -226,11 +217,12 @@ void WebSocketConnection::startPingTimer() {
   uv_timer_start(_pPingTimer, pingTimerCallback, 20000, 20000);
 }
 
-bool WebSocketConnection::accept(const RequestHeaders& requestHeaders,
-                                 const char* pData, size_t len) {
+bool WebSocketConnection::accept(const RequestHeaders &requestHeaders,
+                                 const char *pData, size_t len) {
   ASSERT_BACKGROUND_THREAD()
   assert(!_pParser);
-  if (_connState == WS_CLOSED) return false;
+  if (_connState == WS_CLOSED)
+    return false;
 
   WebSocketProto_IETF ietf;
   if (ietf.canHandle(requestHeaders, pData, len)) {
@@ -248,22 +240,25 @@ bool WebSocketConnection::accept(const RequestHeaders& requestHeaders,
   return false;
 }
 
-void WebSocketConnection::handshake(const std::string& url,
-                                    const RequestHeaders& requestHeaders,
-                                    char** ppData, size_t* pLen,
-                                    ResponseHeaders* pResponseHeaders,
-                                    std::vector<uint8_t>* pResponse) {
+void WebSocketConnection::handshake(const std::string &url,
+                                    const RequestHeaders &requestHeaders,
+                                    char **ppData, size_t *pLen,
+                                    ResponseHeaders *pResponseHeaders,
+                                    std::vector<uint8_t> *pResponse) {
   ASSERT_BACKGROUND_THREAD()
   assert(_pParser);
-  if (_connState == WS_CLOSED) return;
+  if (_connState == WS_CLOSED)
+    return;
 
   _pParser->handshake(url, requestHeaders, ppData, pLen, pResponseHeaders,
                       pResponse);
 }
 
-void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t length) {
+void WebSocketConnection::sendWSMessage(Opcode opcode, const char *pData,
+                                        size_t length) {
   ASSERT_BACKGROUND_THREAD()
-  if (_connState == WS_CLOSED) return;
+  if (_connState == WS_CLOSED)
+    return;
 
   std::vector<char> header(MAX_HEADER_BYTES);
   std::vector<char> footer(MAX_FOOTER_BYTES);
@@ -272,13 +267,12 @@ void WebSocketConnection::sendWSMessage(Opcode opcode, const char* pData, size_t
   size_t footerLength = 0;
 
   _pParser->createFrameHeaderFooter(opcode, false, length, 0,
-    safe_vec_addr(header), &headerLength,
-    safe_vec_addr(footer), &footerLength);
+                                    safe_vec_addr(header), &headerLength,
+                                    safe_vec_addr(footer), &footerLength);
   header.resize(headerLength);
   footer.resize(footerLength);
 
-  _pCallbacks->sendWSFrame(safe_vec_addr(header), header.size(),
-                           pData, length,
+  _pCallbacks->sendWSFrame(safe_vec_addr(header), header.size(), pData, length,
                            safe_vec_addr(footer), footer.size());
 }
 
@@ -307,11 +301,12 @@ void WebSocketConnection::closeWS(uint16_t code, std::string reason) {
   }
 
   // Make sure code has right endian-ness
-  unsigned char* code_p = (unsigned char*)&code;
+  unsigned char *code_p = (unsigned char *)&code;
   if (!isBigEndian())
     swapByteOrder(code_p, code_p + 2);
 
-  std::string message = std::string(reinterpret_cast<char*>(code_p), 2) + reason;
+  std::string message =
+      std::string(reinterpret_cast<char *>(code_p), 2) + reason;
 
   sendWSMessage(Close, message.c_str(), message.length());
 
@@ -320,9 +315,10 @@ void WebSocketConnection::closeWS(uint16_t code, std::string reason) {
     _pCallbacks->closeWSSocket();
 }
 
-void WebSocketConnection::read(const char* data, size_t len) {
+void WebSocketConnection::read(const char *data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
-  if (_connState == WS_CLOSED) return;
+  if (_connState == WS_CLOSED)
+    return;
   assert(_pParser);
   _pParser->read(data, len);
 }
@@ -332,17 +328,19 @@ void WebSocketConnection::markClosed() {
   _connState = WS_CLOSED;
 }
 
-void WebSocketConnection::onHeaderComplete(const WSFrameHeaderInfo& header) {
+void WebSocketConnection::onHeaderComplete(const WSFrameHeaderInfo &header) {
   ASSERT_BACKGROUND_THREAD()
-  if (_connState == WS_CLOSED) return;
+  if (_connState == WS_CLOSED)
+    return;
 
   _header = header;
   if (!header.fin && header.opcode != Continuation)
     _incompleteContentHeader = header;
 }
-void WebSocketConnection::onPayload(const char* data, size_t len) {
+void WebSocketConnection::onPayload(const char *data, size_t len) {
   ASSERT_BACKGROUND_THREAD()
-  if (_connState == WS_CLOSED) return;
+  if (_connState == WS_CLOSED)
+    return;
 
   size_t origSize = _payload.size();
   std::copy(data, data + len, std::back_inserter(_payload));
@@ -357,72 +355,76 @@ void WebSocketConnection::onPayload(const char* data, size_t len) {
 void WebSocketConnection::onFrameComplete() {
   ASSERT_BACKGROUND_THREAD()
   debug_log("WebSocketConnection::onFrameComplete", LOG_DEBUG);
-  if (_connState == WS_CLOSED) return;
+  if (_connState == WS_CLOSED)
+    return;
 
   if (!_header.fin) {
     std::copy(_payload.begin(), _payload.end(),
-      std::back_inserter(_incompleteContentPayload));
+              std::back_inserter(_incompleteContentPayload));
   } else {
     switch (_header.opcode) {
-      case Continuation: {
-        std::copy(_payload.begin(), _payload.end(),
-          std::back_inserter(_incompleteContentPayload));
-        _pCallbacks->onWSMessage(_incompleteContentHeader.opcode == Binary,
-          safe_vec_addr(_incompleteContentPayload), _incompleteContentPayload.size());
+    case Continuation: {
+      std::copy(_payload.begin(), _payload.end(),
+                std::back_inserter(_incompleteContentPayload));
+      _pCallbacks->onWSMessage(_incompleteContentHeader.opcode == Binary,
+                               safe_vec_addr(_incompleteContentPayload),
+                               _incompleteContentPayload.size());
 
-        _incompleteContentPayload.clear();
-        break;
-      }
-      case Text:
-      case Binary: {
-        _pCallbacks->onWSMessage(_header.opcode == Binary, safe_vec_addr(_payload), _payload.size());
-        break;
-      }
-      case Close: {
+      _incompleteContentPayload.clear();
+      break;
+    }
+    case Text:
+    case Binary: {
+      _pCallbacks->onWSMessage(_header.opcode == Binary,
+                               safe_vec_addr(_payload), _payload.size());
+      break;
+    }
+    case Close: {
 
-        if (_connState == WS_OPEN) {
-          _connState = WS_CLOSE_RECEIVED;
-        } else if (_connState == WS_CLOSE_SENT) {
-          _connState = WS_CLOSED;
-        }
-
-        // If we haven't sent a Close frame before, send one now, echoing
-        // the callback
-        if (_connState != WS_CLOSE_SENT && _connState != WS_CLOSED) {
-          _connState = WS_CLOSED;
-          sendWSMessage(Close, safe_vec_addr(_payload), _payload.size());
-        }
-
-        // TODO: Delay closeWSSocket call until close message is actually sent
-        _pCallbacks->closeWSSocket();
-
-        // TODO: Use code and status
-        _pCallbacks->onWSClose(0);
-
-        break;
+      if (_connState == WS_OPEN) {
+        _connState = WS_CLOSE_RECEIVED;
+      } else if (_connState == WS_CLOSE_SENT) {
+        _connState = WS_CLOSED;
       }
-      case Ping: {
-        // Send back a pong
-        sendWSMessage(Pong, safe_vec_addr(_payload), _payload.size());
-        break;
+
+      // If we haven't sent a Close frame before, send one now, echoing
+      // the callback
+      if (_connState != WS_CLOSE_SENT && _connState != WS_CLOSED) {
+        _connState = WS_CLOSED;
+        sendWSMessage(Close, safe_vec_addr(_payload), _payload.size());
       }
-      case Pong: {
-        // No action needed
-        break;
-      }
-      case Reserved: {
-        // TODO: Warn and close connection?
-        break;
-      }
+
+      // TODO: Delay closeWSSocket call until close message is actually sent
+      _pCallbacks->closeWSSocket();
+
+      // TODO: Use code and status
+      _pCallbacks->onWSClose(0);
+
+      break;
+    }
+    case Ping: {
+      // Send back a pong
+      sendWSMessage(Pong, safe_vec_addr(_payload), _payload.size());
+      break;
+    }
+    case Pong: {
+      // No action needed
+      break;
+    }
+    case Reserved: {
+      // TODO: Warn and close connection?
+      break;
+    }
     }
   }
 
   _payload.clear();
 }
 
-void pingTimerCallback(uv_timer_t* pHandle) {
+void pingTimerCallback(uv_timer_t *pHandle) {
   ASSERT_BACKGROUND_THREAD()
 
-  WebSocketConnection* c = reinterpret_cast<WebSocketConnection*>(pHandle->data);
+  WebSocketConnection *c =
+      reinterpret_cast<WebSocketConnection *>(pHandle->data);
   c->sendPing();
 }

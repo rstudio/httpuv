@@ -19,3 +19,4 @@ configure.log
 .vscode
 *.orig
 docs
+scripts/R-devel

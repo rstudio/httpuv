@@ -1,27 +1,26 @@
 #ifndef AUTO_DELETER_HPP
 #define AUTO_DELETER_HPP
 
-#include <functional>
 #include "callbackqueue.h"
 #include "thread.h"
+#include "utils.h"
+#include <functional>
 #include <later_api.h>
 
-
-extern CallbackQueue* background_queue;
-
+extern CallbackQueue *background_queue;
 
 // A deleter function, which, if called on the main thread, will delete the
 // object immediately. If called on the background thread, it will schedule
 // deletion to happen on the main thread. This is useful in cases where we
 // don't know ahead of time which thread will be triggering the deletion.
-template <typename T>
-void auto_deleter_main(void* obj) {
+template <typename T> void auto_deleter_main(void *obj) {
   // Unlike auto_deleter_background, this function takes a void* argument.
   // This is because later() can only pass a void* to the callback.
   if (is_main_thread()) {
     try {
-      delete reinterpret_cast<T*>(obj);
-    } catch (...) {}
+      delete reinterpret_cast<T *>(obj);
+    } catch (...) {
+    }
 
   } else if (is_background_thread()) {
     later::later(auto_deleter_main<T>, obj, 0);
@@ -35,20 +34,20 @@ void auto_deleter_main(void* obj) {
 // the object immediately. If called on the main thread, it will schedule
 // deletion to happen on the background thread. This is useful in cases where
 // we don't know ahead of time which thread will be triggering the deletion.
-template <typename T>
-void auto_deleter_background(T* obj) {
+template <typename T> void auto_deleter_background(T *obj) {
   if (is_main_thread()) {
     background_queue->push(std::bind(auto_deleter_background<T>, obj));
 
   } else if (is_background_thread()) {
     try {
       delete obj;
-    } catch (...) {}
+    } catch (...) {
+    }
 
   } else {
-    debug_log("Can't detect correct thread for auto_deleter_background.", LOG_ERROR);
+    debug_log("Can't detect correct thread for auto_deleter_background.",
+              LOG_ERROR);
   }
 }
-
 
 #endif

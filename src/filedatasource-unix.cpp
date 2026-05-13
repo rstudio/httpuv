@@ -2,13 +2,14 @@
 
 #include "filedatasource.h"
 #include "utils.h"
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-FileDataSourceResult FileDataSource::initialize(const std::string& path, bool owned) {
+FileDataSourceResult FileDataSource::initialize(const std::string &path,
+                                                bool owned) {
   // This can be called from either the main thread or background thread.
 
   _fd = open(path.c_str(), O_RDONLY);
@@ -17,14 +18,15 @@ FileDataSourceResult FileDataSource::initialize(const std::string& path, bool ow
       _lastErrorMessage = "File does not exist: " + path + "\n";
       return FDS_NOT_EXIST;
     } else {
-      _lastErrorMessage = "Error opening file " + path + ": " + toString(errno) + "\n";
+      _lastErrorMessage =
+          "Error opening file " + path + ": " + toString(errno) + "\n";
       return FDS_ERROR;
     }
-  }
-  else {
+  } else {
     struct stat info = {0};
     if (fstat(_fd, &info)) {
-      _lastErrorMessage = "Error opening path " + path + ": " + toString(errno) + "\n";
+      _lastErrorMessage =
+          "Error opening path " + path + ": " + toString(errno) + "\n";
       ::close(_fd);
       return FDS_ERROR;
     }
@@ -48,16 +50,14 @@ FileDataSourceResult FileDataSource::initialize(const std::string& path, bool ow
   }
 }
 
-uint64_t FileDataSource::size() const {
-  return _length;
-}
+uint64_t FileDataSource::size() const { return _length; }
 
 uv_buf_t FileDataSource::getData(size_t bytesDesired) {
   ASSERT_BACKGROUND_THREAD()
   if (bytesDesired == 0)
     return uv_buf_init(NULL, 0);
 
-  char* buffer = (char*)malloc(bytesDesired);
+  char *buffer = (char *)malloc(bytesDesired);
   if (!buffer) {
     throw std::runtime_error("Couldn't allocate buffer");
   }
@@ -72,9 +72,7 @@ uv_buf_t FileDataSource::getData(size_t bytesDesired) {
   return uv_buf_init(buffer, bytesRead);
 }
 
-void FileDataSource::freeData(uv_buf_t buffer) {
-  free(buffer.base);
-}
+void FileDataSource::freeData(uv_buf_t buffer) { free(buffer.base); }
 
 time_t FileDataSource::getMtime() {
   struct stat res;
@@ -94,6 +92,5 @@ void FileDataSource::close() {
 std::string FileDataSource::lastErrorMessage() const {
   return _lastErrorMessage;
 }
-
 
 #endif // #ifndef _WIN32

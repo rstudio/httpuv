@@ -1,8 +1,8 @@
 #ifndef WEBSOCKETS_HIXIE76_H
 #define WEBSOCKETS_HIXIE76_H
 
-#include "websockets.h"
 #include "websockets-hybi03.h"
+#include "websockets.h"
 
 enum Hixie76State {
   // Starting state, also what we return to after finishing a frame
@@ -23,31 +23,28 @@ enum Hixie76State {
 
 class WSHixie76Parser : public WSParser {
 private:
-  WSParserCallbacks* _pCallbacks;
+  WSParserCallbacks *_pCallbacks;
   WebSocketProto_HyBi03 _hybi03;
   int _state;
   size_t _bytesLeft;
 
 public:
-  WSHixie76Parser(WSParserCallbacks* pCallbacks) :
-    _pCallbacks(pCallbacks), _state(H76_START) {
-  }
+  WSHixie76Parser(WSParserCallbacks *pCallbacks)
+      : _pCallbacks(pCallbacks), _state(H76_START) {}
   ~WSHixie76Parser() {}
 
-  void handshake(const std::string& url,
-                 const RequestHeaders& requestHeaders,
-                 char** ppData, size_t* pLen,
-                 ResponseHeaders* responseHeaders,
-                 std::vector<uint8_t>* pResponse) const;
+  void handshake(const std::string &url, const RequestHeaders &requestHeaders,
+                 char **ppData, size_t *pLen, ResponseHeaders *responseHeaders,
+                 std::vector<uint8_t> *pResponse) const;
 
-  void createFrameHeaderFooter(
-                 Opcode opcode, bool mask, size_t payloadSize,
-                 int32_t maskingKey,
-                 char pHeaderData[MAX_HEADER_BYTES], size_t* pHeaderLen,
-                 char pFooterData[MAX_FOOTER_BYTES], size_t* pFooterLen
-                 ) const;
+  void createFrameHeaderFooter(Opcode opcode, bool mask, size_t payloadSize,
+                               int32_t maskingKey,
+                               char pHeaderData[MAX_HEADER_BYTES],
+                               size_t *pHeaderLen,
+                               char pFooterData[MAX_FOOTER_BYTES],
+                               size_t *pFooterLen) const;
 
-  void read(const char* data, size_t len);
+  void read(const char *data, size_t len);
 };
 
 #endif // WEBSOCKETS_HIXIE76_H

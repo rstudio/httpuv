@@ -16,18 +16,18 @@
 #ifndef UV_SRC_HEAP_H_
 #define UV_SRC_HEAP_H_
 
-#include <stddef.h>  /* NULL */
+#include <stddef.h> /* NULL */
 
 #if defined(__GNUC__)
-# define HEAP_EXPORT(declaration) __attribute__((unused)) static declaration
+#define HEAP_EXPORT(declaration) __attribute__((unused)) static declaration
 #else
-# define HEAP_EXPORT(declaration) static declaration
+#define HEAP_EXPORT(declaration) static declaration
 #endif
 
 struct heap_node {
-  struct heap_node* left;
-  struct heap_node* right;
-  struct heap_node* parent;
+  struct heap_node *left;
+  struct heap_node *right;
+  struct heap_node *parent;
 };
 
 /* A binary min heap.  The usual properties hold: the root is the lowest
@@ -38,41 +38,38 @@ struct heap_node {
  * of a minor reduction in performance.  Compile with -DNDEBUG to disable.
  */
 struct heap {
-  struct heap_node* min;
+  struct heap_node *min;
   unsigned int nelts;
 };
 
 /* Return non-zero if a < b. */
-typedef int (*heap_compare_fn)(const struct heap_node* a,
-                               const struct heap_node* b);
+typedef int (*heap_compare_fn)(const struct heap_node *a,
+                               const struct heap_node *b);
 
 /* Public functions. */
-HEAP_EXPORT(void heap_init(struct heap* heap));
-HEAP_EXPORT(struct heap_node* heap_min(const struct heap* heap));
-HEAP_EXPORT(void heap_insert(struct heap* heap,
-                             struct heap_node* newnode,
+HEAP_EXPORT(void heap_init(struct heap *heap));
+HEAP_EXPORT(struct heap_node *heap_min(const struct heap *heap));
+HEAP_EXPORT(void heap_insert(struct heap *heap, struct heap_node *newnode,
                              heap_compare_fn less_than));
-HEAP_EXPORT(void heap_remove(struct heap* heap,
-                             struct heap_node* node,
+HEAP_EXPORT(void heap_remove(struct heap *heap, struct heap_node *node,
                              heap_compare_fn less_than));
-HEAP_EXPORT(void heap_dequeue(struct heap* heap, heap_compare_fn less_than));
+HEAP_EXPORT(void heap_dequeue(struct heap *heap, heap_compare_fn less_than));
 
 /* Implementation follows. */
 
-HEAP_EXPORT(void heap_init(struct heap* heap)) {
+HEAP_EXPORT(void heap_init(struct heap *heap)) {
   heap->min = NULL;
   heap->nelts = 0;
 }
 
-HEAP_EXPORT(struct heap_node* heap_min(const struct heap* heap)) {
+HEAP_EXPORT(struct heap_node *heap_min(const struct heap *heap)) {
   return heap->min;
 }
 
 /* Swap parent with child. Child moves closer to the root, parent moves away. */
-static void heap_node_swap(struct heap* heap,
-                           struct heap_node* parent,
-                           struct heap_node* child) {
-  struct heap_node* sibling;
+static void heap_node_swap(struct heap *heap, struct heap_node *parent,
+                           struct heap_node *child) {
+  struct heap_node *sibling;
   struct heap_node t;
 
   t = *parent;
@@ -103,11 +100,10 @@ static void heap_node_swap(struct heap* heap,
     child->parent->right = child;
 }
 
-HEAP_EXPORT(void heap_insert(struct heap* heap,
-                             struct heap_node* newnode,
+HEAP_EXPORT(void heap_insert(struct heap *heap, struct heap_node *newnode,
                              heap_compare_fn less_than)) {
-  struct heap_node** parent;
-  struct heap_node** child;
+  struct heap_node **parent;
+  struct heap_node **child;
   unsigned int path;
   unsigned int n;
   unsigned int k;
@@ -147,12 +143,11 @@ HEAP_EXPORT(void heap_insert(struct heap* heap,
     heap_node_swap(heap, newnode->parent, newnode);
 }
 
-HEAP_EXPORT(void heap_remove(struct heap* heap,
-                             struct heap_node* node,
+HEAP_EXPORT(void heap_remove(struct heap *heap, struct heap_node *node,
                              heap_compare_fn less_than)) {
-  struct heap_node* smallest;
-  struct heap_node** max;
-  struct heap_node* child;
+  struct heap_node *smallest;
+  struct heap_node **max;
+  struct heap_node *child;
   unsigned int path;
   unsigned int k;
   unsigned int n;
@@ -236,10 +231,10 @@ HEAP_EXPORT(void heap_remove(struct heap* heap,
     heap_node_swap(heap, child->parent, child);
 }
 
-HEAP_EXPORT(void heap_dequeue(struct heap* heap, heap_compare_fn less_than)) {
+HEAP_EXPORT(void heap_dequeue(struct heap *heap, heap_compare_fn less_than)) {
   heap_remove(heap, heap->min, less_than);
 }
 
 #undef HEAP_EXPORT
 
-#endif  /* UV_SRC_HEAP_H_ */
+#endif /* UV_SRC_HEAP_H_ */

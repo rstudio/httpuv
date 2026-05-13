@@ -3,7 +3,7 @@
 #include <later_api.h>
 #include <uv.h>
 
-void on_Socket_close(uv_handle_t* pHandle);
+void on_Socket_close(uv_handle_t *pHandle);
 
 void Socket::addConnection(std::shared_ptr<HttpRequest> request) {
   connections.push_back(request);
@@ -11,8 +11,8 @@ void Socket::addConnection(std::shared_ptr<HttpRequest> request) {
 
 void Socket::removeConnection(std::shared_ptr<HttpRequest> request) {
   connections.erase(
-    std::remove(connections.begin(), connections.end(), request),
-    connections.end());
+      std::remove(connections.begin(), connections.end(), request),
+      connections.end());
 }
 
 Socket::~Socket() {
@@ -21,8 +21,8 @@ Socket::~Socket() {
 }
 
 // A deleter callback for the shared_ptr<Socket>.
-void delete_ppsocket(uv_handle_t* pHandle) {
-  std::shared_ptr<Socket>* ppSocket = (std::shared_ptr<Socket>*)pHandle->data;
+void delete_ppsocket(uv_handle_t *pHandle) {
+  std::shared_ptr<Socket> *ppSocket = (std::shared_ptr<Socket> *)pHandle->data;
   delete ppSocket;
 }
 
@@ -34,15 +34,15 @@ void delete_ppsocket(uv_handle_t* pHandle) {
 void Socket::close() {
   ASSERT_BACKGROUND_THREAD()
   debug_log("Socket::close", LOG_DEBUG);
-  for (std::vector<std::shared_ptr<HttpRequest> >::reverse_iterator it = connections.rbegin();
-    it != connections.rend();
-    it++) {
+  for (std::vector<std::shared_ptr<HttpRequest>>::reverse_iterator it =
+           connections.rbegin();
+       it != connections.rend(); it++) {
 
     // std::cerr << "Request close on " << *it << std::endl;
     (*it)->close();
   }
 
-  uv_handle_t* pHandle = toHandle(&handle.stream);
+  uv_handle_t *pHandle = toHandle(&handle.stream);
 
   // Delete the shared_ptr<Socket> only after uv_close() does its work. This
   // will decrease the refcount and should trigger deletion of the Socket.
