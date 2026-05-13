@@ -42,7 +42,10 @@ Authors@R: c(
     person("Trantor Standard Systems", role = "cph",
            comment = "base64 implementation"),
     person("Igor", "Sysoev", role = "cph",
-           comment = "http-parser")
+           comment = "http-parser"),
+    person(given = "Mauricio", family = "Vargas Sepulveda", role = "aut",
+        email = "m.vargas.sepulveda@gmail.com",
+        comment = c(ORCID = "0000-0003-1017-7574"))
   )
 Description: Provides low-level socket and protocol support for handling
     HTTP and WebSocket requests directly from within R. It is primarily
@@ -60,7 +63,6 @@ Imports:
     later (>= 0.8.0),
     promises,
     R6,
-    Rcpp (>= 1.0.7),
     utils
 Suggests:
     callr,
@@ -70,7 +72,7 @@ Suggests:
     websocket
 LinkingTo:
     later,
-    Rcpp
+    cpp4r
 Config/Needs/website: tidyverse/tidytemplate
 Config/testthat/edition: 3
 Config/usethis/last-upkeep: 2025-07-01
@@ -79,7 +81,6 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 SystemRequirements: GNU make, zlib
 Collate:
-    'RcppExports.R'
     'httpuv-package.R'
     'httpuv.R'
     'random_port.R'
