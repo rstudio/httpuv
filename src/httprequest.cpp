@@ -148,22 +148,20 @@ void HttpRequest::_newRequest() {
 
 void HttpRequest::_initializeEnv() {
   ASSERT_MAIN_THREAD()
-  using namespace Rcpp;
-
-  Environment base(R_BaseEnv);
-  Function new_env = Rcpp::as<Function>(base["new.env"]);
+  environment base(R_BaseEnv);
+  function new_env(base["new.env"]);
 
   // The deleter is called either when this function is called again, or when
   // the HttpRequest object is deleted. The deletion will happen on the
   // background thread; auto_deleter_main() schedules the deletion of the
-  // Rcpp::Environment object on the main thread.
-  _env = std::shared_ptr<Environment>(
-    new Environment(new_env(_["parent"] = R_EmptyEnv)),
-    auto_deleter_main<Environment>
+  // environment object on the main thread.
+  _env = std::shared_ptr<environment>(
+    new environment(new_env("parent"_nm = R_EmptyEnv)),
+    auto_deleter_main<environment>
   );
 }
 
-Rcpp::Environment& HttpRequest::env() {
+environment& HttpRequest::env() {
   ASSERT_MAIN_THREAD()
   return *_env;
 }
