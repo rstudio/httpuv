@@ -234,7 +234,7 @@ void ensure_io_thread() {
 // ============================================================================
 
 [[cpp11::register]] SEXP makeTcpServer(const std::string &host, int port,
-                                       function onHeaders, function onBodyData,
+                                       sexp onHeaders, function onBodyData,
                                        function onRequest, function onWSOpen,
                                        function onWSMessage, function onWSClose,
                                        list staticPaths, list staticPathOptions,
@@ -282,7 +282,7 @@ void ensure_io_thread() {
 }
 
 [[cpp11::register]] SEXP makePipeServer(const std::string &name, int mask,
-                                        function onHeaders, function onBodyData,
+                                        sexp onHeaders, function onBodyData,
                                         function onRequest, function onWSOpen,
                                         function onWSMessage,
                                         function onWSClose, list staticPaths,
