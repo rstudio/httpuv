@@ -180,8 +180,6 @@ listToResponse(std::shared_ptr<HttpRequest> pRequest, const list &response) {
   int status = as_cpp<int>(response["status"]);
   std::string statusDesc = getStatusDescription(status);
 
-  list responseHeaders(response["headers"]);
-
   // Self-frees when response is written
   std::shared_ptr<DataSource> pDataSource;
 
@@ -220,10 +218,13 @@ listToResponse(std::shared_ptr<HttpRequest> pRequest, const list &response) {
   std::shared_ptr<HttpResponse> pResp(
       new HttpResponse(pRequest, status, statusDesc, pDataSource),
       auto_deleter_background<HttpResponse>);
-  strings headerNames = responseHeaders.names();
-  for (R_len_t i = 0; i < responseHeaders.size(); i++) {
-    pResp->addHeader(std::string(headerNames[i]),
-                     as_cpp<std::string>(responseHeaders[i]));
+  if (response.contains("headers") && !Rf_isNull(response["headers"])) {
+    list responseHeaders(response["headers"]);
+    strings headerNames = responseHeaders.names();
+    for (R_len_t i = 0; i < responseHeaders.size(); i++) {
+      pResp->addHeader(std::string(headerNames[i]),
+                       as_cpp<std::string>(responseHeaders[i]));
+    }
   }
 
   return pResp;
@@ -257,10 +258,6 @@ void RWebApplication::onHeaders(
     std::shared_ptr<HttpRequest> pRequest,
     std::function<void(std::shared_ptr<HttpResponse>)> callback) {
   ASSERT_MAIN_THREAD()
-  if (Rf_isNull(_onHeaders)) {
-    std::shared_ptr<HttpResponse> null_ptr;
-    callback(null_ptr);
-  }
 
   requestToEnv(pRequest, &pRequest->env());
 
@@ -268,7 +265,13 @@ void RWebApplication::onHeaders(
   // catch it and then send a generic error response.
   list response;
   try {
-    response = list(function(_onHeaders)(pRequest->env()));
+    sexp result(function(_onHeaders)(pRequest->env()));
+    if (Rf_isNull(result)) {
+      std::shared_ptr<HttpResponse> null_ptr;
+      callback(null_ptr);
+      return;
+    }
+    response = list(result);
   } catch (unwind_exception &e) {
     debug_log("Interrupt occurred in _onHeaders", LOG_INFO);
     response = errorResponse();
