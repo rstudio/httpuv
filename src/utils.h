@@ -8,10 +8,13 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include <Rcpp.h>
 #include "optional.h"
 #include "thread.h"
 #include "timegm.h"
+
+#include "cpp4r.hpp"
+
+using namespace cpp4r;
 
 // A callback for deleting objects on the main thread using later(). This is
 // needed when the object is an Rcpp object or contains one, because deleting
@@ -104,7 +107,7 @@ std::string toString(T x) {
   return ss.str();
 }
 
-// This is used for converting an Rcpp named vector (T2) to a std::map.
+// This is used for converting a named R vector (T2) to a std::map.
 template <typename T1, typename T2>
 std::map<std::string, T1> toMap(T2 x) {
   ASSERT_MAIN_THREAD()
@@ -115,16 +118,16 @@ std::map<std::string, T1> toMap(T2 x) {
     return strmap;
   }
 
-  Rcpp::CharacterVector names = x.names();
-  if (names.isNULL()) {
-    throw Rcpp::exception("Error converting R object to map<string, T>: vector does not have names.");
+  strings names = x.names();
+  if (Rf_isNull(SEXP(names))) {
+    stop("Error converting R object to map<string, T>: vector does not have names.");
   }
 
-  for (int i=0; i<x.size(); i++) {
-    std::string name  = Rcpp::as<std::string>(names[i]);
-    T1          value = Rcpp::as<T1>         (x[i]);
+  for (R_xlen_t i = 0; i < x.size(); i++) {
+    std::string name  = std::string(names[i]);
+    T1          value = as_cpp<T1>(SEXP(x[i]));
     if (name == "") {
-      throw Rcpp::exception("Error converting R object to map<string, T>: element has empty name.");
+      stop("Error converting R object to map<string, T>: element has empty name.");
     }
 
     strmap.insert(
@@ -135,76 +138,79 @@ std::map<std::string, T1> toMap(T2 x) {
   return strmap;
 }
 
-// A wrapper for Rcpp::as. If the R value is NULL, this returns nullopt;
-// otherwise it returns the usual value that Rcpp::as returns, wrapped in
-// std::experimental::optional<T2>.
-template <typename T1, typename T2>
-std::experimental::optional<T1> optional_as(T2 value) {
-  if (value.isNULL()) {
+// A wrapper for as_cpp. If the R value is NULL, this returns nullopt;
+// otherwise it returns the usual value that as_cpp returns, wrapped in
+// std::experimental::optional<T1>.
+template <typename T1>
+std::experimental::optional<T1> optional_as(SEXP value) {
+  if (Rf_isNull(value)) {
     return std::experimental::nullopt;
   }
-  return std::experimental::optional<T1>( Rcpp::as<T1>(value) );
+  return std::experimental::optional<T1>(as_cpp<T1>(value));
 }
 
-// A wrapper for Rcpp::wrap. If the C++ value is missing, this returns the
-// R value NULL; otherwise it returns the usual value that Rcpp::wrap returns, after
-// unwrapping from the std::experimental::optional<T>.
+// If the C++ value is missing, this returns R NULL; otherwise converts to SEXP.
 template <typename T>
-Rcpp::RObject optional_wrap(std::experimental::optional<T> value) {
+SEXP optional_wrap(std::experimental::optional<T> value) {
   if (!value.has_value()) {
     return R_NilValue;
   }
-  return Rcpp::wrap(*value);
+  return as_sexp(*value);
 }
 
 
-// as() and wrap() for ResponseHeaders. Since the ResponseHeaders typedef is
-// in constants.h and this file doesn't include constants.h, we'll define them
+// as_cpp and as_sexp for ResponseHeaders. Since the ResponseHeaders typedef is
+// in constants.h and this file doesn't include constants.h, we define them
 // using the actual vector type instead of the ResponseHeaders typedef.
-// (constants.h doesn't include Rcpp.h so we can't define these functions
-// there.)
-namespace Rcpp {
-  template <> inline std::vector<std::pair<std::string, std::string> > as(SEXP x) {
-    ASSERT_MAIN_THREAD()
-    Rcpp::CharacterVector headers(x);
-    Rcpp::CharacterVector names = headers.names();
+inline std::vector<std::pair<std::string, std::string>> as_response_headers(SEXP x) {
+  ASSERT_MAIN_THREAD()
+  strings hdrs(x);
+  strings nms = hdrs.names();
 
-    if (names.isNULL()) {
-      throw Rcpp::exception("All values must be named.");
-    }
-
-    std::vector<std::pair<std::string, std::string> > result;
-
-    for (int i=0; i<headers.size(); i++) {
-      std::string name = Rcpp::as<std::string>(names[i]);
-      if (name == "") {
-        throw Rcpp::exception("All values must be named.");
-      }
-
-      std::string value = Rcpp::as<std::string>(headers[i]);
-
-      result.push_back(std::make_pair(name, value));
-    }
-
-    return result;
+  if (Rf_isNull(SEXP(nms))) {
+    stop("All values must be named.");
   }
 
-  template <> inline SEXP wrap(const std::vector<std::pair<std::string, std::string> > &x) {
-    ASSERT_MAIN_THREAD()
-
-    std::vector<std::string> values(x.size());
-    std::vector<std::string> names(x.size());
-
-    for (unsigned int i=0; i<x.size(); i++) {
-      names[i]  = x[i].first;
-      values[i] = x[i].second;
+  std::vector<std::pair<std::string, std::string>> result;
+  for (R_xlen_t i = 0; i < hdrs.size(); i++) {
+    std::string name = std::string(nms[i]);
+    if (name.empty()) {
+      stop("All values must be named.");
     }
-
-    Rcpp::CharacterVector result = Rcpp::wrap(values);
-    result.attr("names") = Rcpp::wrap(names);
-
-    return result;
+    result.push_back({name, std::string(hdrs[i])});
   }
+  return result;
+}
+
+inline SEXP response_headers_to_sexp(const std::vector<std::pair<std::string, std::string>>& x) {
+  ASSERT_MAIN_THREAD()
+  R_xlen_t n = static_cast<R_xlen_t>(x.size());
+  writable::strings values(n);
+  writable::strings nms(n);
+  for (R_xlen_t i = 0; i < n; i++) {
+    nms[i]    = x[i].first;
+    values[i] = x[i].second;
+  }
+  values.attr("names") = nms;
+  return values;
+}
+
+// optional_as / optional_wrap specializations for ResponseHeaders.
+template <>
+inline std::experimental::optional<std::vector<std::pair<std::string, std::string>>>
+optional_as<std::vector<std::pair<std::string, std::string>>>(SEXP value) {
+  if (Rf_isNull(value)) {
+    return std::experimental::nullopt;
+  }
+  return as_response_headers(value);
+}
+
+template <>
+inline SEXP optional_wrap(std::experimental::optional<std::vector<std::pair<std::string, std::string>>> value) {
+  if (!value.has_value()) {
+    return R_NilValue;
+  }
+  return response_headers_to_sexp(*value);
 }
 
 
