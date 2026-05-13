@@ -699,14 +699,14 @@ int ipFamily(const std::string& ip) {
 // invoke the function with the List as the single argument. This also clears
 // the external pointer so that the C++ function can't be called again.
 // [[Rcpp::export]]
-void invokeCppCallback(Rcpp::List data, SEXP callback_xptr) {
+void invokeCppCallback(SEXP data, SEXP callback_xptr) {
   ASSERT_MAIN_THREAD()
 
   if (TYPEOF(callback_xptr) != EXTPTRSXP) {
      throw Rcpp::exception("Expected external pointer.");
   }
-  std::function<void(Rcpp::List)>* callback_wrapper =
-    (std::function<void(Rcpp::List)>*)(R_ExternalPtrAddr(callback_xptr));
+  std::function<void(list)>* callback_wrapper =
+    (std::function<void(list)>*)(R_ExternalPtrAddr(callback_xptr));
 
   (*callback_wrapper)(data);
 
