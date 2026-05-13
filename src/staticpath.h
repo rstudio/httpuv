@@ -3,10 +3,13 @@
 
 #include <string>
 #include <map>
-#include <Rcpp.h>
 #include "optional.h"
 #include "thread.h"
 #include "constants.h"
+
+#include "cpp4r.hpp"
+
+using namespace cpp4r;
 
 class StaticPathOptions {
 public:
@@ -24,11 +27,11 @@ public:
     validation(std::experimental::nullopt),
     exclude(std::experimental::nullopt)
   { };
-  StaticPathOptions(const Rcpp::List& options);
+  StaticPathOptions(const list& options);
 
-  void setOptions(const Rcpp::List& options);
+  void setOptions(const list& options);
 
-  Rcpp::List asRObject() const;
+  list asRObject() const;
 
   static StaticPathOptions merge(const StaticPathOptions& a, const StaticPathOptions& b);
 
@@ -41,9 +44,9 @@ public:
   std::string path;
   StaticPathOptions options;
 
-  StaticPath(const Rcpp::List& sp);
+  StaticPath(const list& sp);
 
-  Rcpp::List asRObject() const;
+  list asRObject() const;
 };
 
 
@@ -56,27 +59,27 @@ class StaticPathManager {
 
 public:
   StaticPathManager();
-  StaticPathManager(const Rcpp::List& path_list, const Rcpp::List& options_list);
+  StaticPathManager(const list& path_list, const list& options_list);
 
   std::experimental::optional<StaticPath> get(const std::string& path) const;
-  std::experimental::optional<StaticPath> get(const Rcpp::CharacterVector& path) const;
+  std::experimental::optional<StaticPath> get(const strings& path) const;
 
   void set(const std::string& path, const StaticPath& sp);
   void set(const std::map<std::string, StaticPath>& pmap);
-  void set(const Rcpp::List& pmap);
+  void set(const list& pmap);
 
   void remove(const std::string& path);
   void remove(const std::vector<std::string>& paths);
-  void remove(const Rcpp::CharacterVector& paths);
+  void remove(const strings& paths);
 
   std::experimental::optional<std::pair<StaticPath, std::string> > matchStaticPath(
     const std::string& url_path) const;
 
 
   const StaticPathOptions& getOptions() const;
-  void setOptions(const Rcpp::List& opts);
+  void setOptions(const list& opts);
 
-  Rcpp::List pathsAsRObject() const;
+  list pathsAsRObject() const;
 };
 
 #endif

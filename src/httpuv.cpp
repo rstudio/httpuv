@@ -27,7 +27,7 @@ void throwError(int err,
 {
   ASSERT_MAIN_THREAD()
   std::string msg = prefix + uv_strerror(err) + suffix;
-  throw Rcpp::exception(msg.c_str());
+  stop(msg);
 }
 
 // For keeping track of all running server apps.
@@ -166,7 +166,7 @@ void ensure_io_thread() {
   blocker->wait();
 
   if (ret != 0) {
-    Rcpp::stop(std::string("Error: ") + uv_strerror(ret));
+    stop(std::string("Error: ") + uv_strerror(ret));
   }
 }
 
@@ -178,14 +178,12 @@ void ensure_io_thread() {
 // [[Rcpp::export]]
 void sendWSMessage(SEXP conn,
                    bool binary,
-                   Rcpp::RObject message)
+                   SEXP message)
 {
   ASSERT_MAIN_THREAD()
-  Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
-             Rcpp::PreserveStorage,
-             auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
-             true> conn_xptr(conn);
-  std::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
+  external_pointer<std::shared_ptr<WebSocketConnection>,
+                   auto_deleter_background<std::shared_ptr<WebSocketConnection>>> conn_xptr(conn);
+  std::shared_ptr<WebSocketConnection> wsc = *conn_xptr;
 
   Opcode mode;
   SEXP msg_sexp;
@@ -195,7 +193,7 @@ void sendWSMessage(SEXP conn,
   // cleaner way to do this.
    if (binary) {
     mode = Binary;
-    msg_sexp = PROTECT(Rcpp::as<SEXP>(message));
+    msg_sexp = PROTECT(message);
     str = new std::vector<char>(RAW(msg_sexp), RAW(msg_sexp) + Rf_length(msg_sexp));
     UNPROTECT(1);
 
@@ -228,11 +226,9 @@ void closeWS(SEXP conn,
 {
   ASSERT_MAIN_THREAD()
   debug_log("closeWS", LOG_DEBUG);
-  Rcpp::XPtr<std::shared_ptr<WebSocketConnection>,
-             Rcpp::PreserveStorage,
-             auto_deleter_background<std::shared_ptr<WebSocketConnection> >,
-             true> conn_xptr(conn);
-  std::shared_ptr<WebSocketConnection> wsc = internalize_shared_ptr(conn_xptr);
+  external_pointer<std::shared_ptr<WebSocketConnection>,
+                   auto_deleter_background<std::shared_ptr<WebSocketConnection>>> conn_xptr(conn);
+  std::shared_ptr<WebSocketConnection> wsc = *conn_xptr;
 
   // Schedule on background thread:
   // wsc->closeWS(code, reason);
@@ -247,19 +243,18 @@ void closeWS(SEXP conn,
 // ============================================================================
 
 // [[Rcpp::export]]
-Rcpp::RObject makeTcpServer(const std::string& host, int port,
-                            Rcpp::Function onHeaders,
-                            Rcpp::Function onBodyData,
-                            Rcpp::Function onRequest,
-                            Rcpp::Function onWSOpen,
-                            Rcpp::Function onWSMessage,
-                            Rcpp::Function onWSClose,
-                            Rcpp::List     staticPaths,
-                            Rcpp::List     staticPathOptions,
-                            bool           quiet
+SEXP makeTcpServer(const std::string& host, int port,
+                   function onHeaders,
+                   function onBodyData,
+                   function onRequest,
+                   function onWSOpen,
+                   function onWSMessage,
+                   function onWSClose,
+                   list     staticPaths,
+                   list     staticPathOptions,
+                   bool     quiet
 ) {
 
-  using namespace Rcpp;
   register_main_thread();
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
@@ -302,24 +297,23 @@ Rcpp::RObject makeTcpServer(const std::string& host, int port,
 
   pServers.push_back(pServer);
 
-  return Rcpp::wrap(externalize_str<uv_stream_t>(pServer));
+  return as_sexp(externalize_str<uv_stream_t>(pServer));
 }
 
 // [[Rcpp::export]]
-Rcpp::RObject makePipeServer(const std::string& name,
-                             int mask,
-                             Rcpp::Function onHeaders,
-                             Rcpp::Function onBodyData,
-                             Rcpp::Function onRequest,
-                             Rcpp::Function onWSOpen,
-                             Rcpp::Function onWSMessage,
-                             Rcpp::Function onWSClose,
-                             Rcpp::List     staticPaths,
-                             Rcpp::List     staticPathOptions,
-                             bool           quiet
+SEXP makePipeServer(const std::string& name,
+                    int mask,
+                    function onHeaders,
+                    function onBodyData,
+                    function onRequest,
+                    function onWSOpen,
+                    function onWSMessage,
+                    function onWSClose,
+                    list     staticPaths,
+                    list     staticPathOptions,
+                    bool     quiet
 ) {
 
-  using namespace Rcpp;
   register_main_thread();
 
   // Deleted when owning pServer is deleted. If pServer creation fails,
@@ -360,7 +354,7 @@ Rcpp::RObject makePipeServer(const std::string& name,
 
   pServers.push_back(pServer);
 
-  return Rcpp::wrap(externalize_str<uv_stream_t>(pServer));
+  return as_sexp(externalize_str<uv_stream_t>(pServer));
 }
 
 
@@ -374,7 +368,7 @@ void stopServer_(uv_stream_t* pServer) {
   if (pos != pServers.end()) {
     pServers.erase(pos);
   } else {
-    throw Rcpp::exception("pServer handle not found in list of running servers.");
+    stop("pServer handle not found in list of running servers.");
   }
 
   // Run on background thread:
@@ -412,34 +406,34 @@ std::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
 }
 
 // [[Rcpp::export]]
-Rcpp::List getStaticPaths_(std::string handle) {
+list getStaticPaths_(std::string handle) {
   ASSERT_MAIN_THREAD()
   return get_pWebApplication(handle)->getStaticPathManager().pathsAsRObject();
 }
 
 // [[Rcpp::export]]
-Rcpp::List setStaticPaths_(std::string handle, Rcpp::List sp) {
+list setStaticPaths_(std::string handle, list sp) {
   ASSERT_MAIN_THREAD()
   get_pWebApplication(handle)->getStaticPathManager().set(sp);
   return getStaticPaths_(handle);
 }
 
 // [[Rcpp::export]]
-Rcpp::List removeStaticPaths_(std::string handle, Rcpp::CharacterVector paths) {
+list removeStaticPaths_(std::string handle, strings paths) {
   ASSERT_MAIN_THREAD()
   get_pWebApplication(handle)->getStaticPathManager().remove(paths);
   return getStaticPaths_(handle);
 }
 
 // [[Rcpp::export]]
-Rcpp::List getStaticPathOptions_(std::string handle) {
+list getStaticPathOptions_(std::string handle) {
   ASSERT_MAIN_THREAD()
   return get_pWebApplication(handle)->getStaticPathManager().getOptions().asRObject();
 }
 
 
 // [[Rcpp::export]]
-Rcpp::List setStaticPathOptions_(std::string handle, Rcpp::List opts) {
+list setStaticPathOptions_(std::string handle, list opts) {
   ASSERT_MAIN_THREAD()
   get_pWebApplication(handle)->getStaticPathManager().setOptions(opts);
   return getStaticPathOptions_(handle);
@@ -451,7 +445,7 @@ Rcpp::List setStaticPathOptions_(std::string handle, Rcpp::List opts) {
 // ============================================================================
 
 // [[Rcpp::export]]
-std::string base64encode(const Rcpp::RawVector& x) {
+std::string base64encode(const raws& x) {
   return b64encode(x.begin(), x.end());
 }
 
@@ -545,13 +539,15 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
 //'
 //' @export
 // [[Rcpp::export]]
-Rcpp::CharacterVector encodeURI(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size(), NA_STRING);
+strings encodeURI(strings value) {
+  writable::strings out(value.size());
 
-  for (int i = 0; i < value.size(); i++) {
-    if (value[i] != NA_STRING) {
-      std::string encoded = doEncodeURI(Rf_translateCharUTF8(value[i]), false);
-      out[i] = Rf_mkCharCE(encoded.c_str(), CE_UTF8);
+  for (R_xlen_t i = 0; i < value.size(); i++) {
+    if (value[i] == NA_STRING) {
+      out[i] = r_string(NA_STRING);
+    } else {
+      std::string encoded = doEncodeURI(Rf_translateCharUTF8(SEXP(value[i])), false);
+      out[i] = r_string(Rf_mkCharCE(encoded.c_str(), CE_UTF8));
     }
   }
   return out;
@@ -560,13 +556,15 @@ Rcpp::CharacterVector encodeURI(Rcpp::CharacterVector value) {
 //' @rdname encodeURI
 //' @export
 // [[Rcpp::export]]
-Rcpp::CharacterVector encodeURIComponent(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size(), NA_STRING);
+strings encodeURIComponent(strings value) {
+  writable::strings out(value.size());
 
-  for (int i = 0; i < value.size(); i++) {
-    if (value[i] != NA_STRING) {
-      std::string encoded = doEncodeURI(Rf_translateCharUTF8(value[i]), true);
-      out[i] = Rf_mkCharCE(encoded.c_str(), CE_UTF8);
+  for (R_xlen_t i = 0; i < value.size(); i++) {
+    if (value[i] == NA_STRING) {
+      out[i] = r_string(NA_STRING);
+    } else {
+      std::string encoded = doEncodeURI(Rf_translateCharUTF8(SEXP(value[i])), true);
+      out[i] = r_string(Rf_mkCharCE(encoded.c_str(), CE_UTF8));
     }
   }
   return out;
@@ -635,13 +633,15 @@ std::string doDecodeURI(std::string value, bool component) {
 //' @rdname encodeURI
 //' @export
 // [[Rcpp::export]]
-Rcpp::CharacterVector decodeURI(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size(), NA_STRING);
+strings decodeURI(strings value) {
+  writable::strings out(value.size());
 
-  for (int i = 0; i < value.size(); i++) {
-    if (value[i] != NA_STRING) {
-      std::string decoded = doDecodeURI(Rcpp::as<std::string>(value[i]), false);
-      out[i] = Rf_mkCharLenCE(decoded.c_str(), decoded.length(), CE_UTF8);
+  for (R_xlen_t i = 0; i < value.size(); i++) {
+    if (value[i] == NA_STRING) {
+      out[i] = r_string(NA_STRING);
+    } else {
+      std::string decoded = doDecodeURI(std::string(value[i]), false);
+      out[i] = r_string(Rf_mkCharLenCE(decoded.c_str(), decoded.length(), CE_UTF8));
     }
   }
 
@@ -651,13 +651,15 @@ Rcpp::CharacterVector decodeURI(Rcpp::CharacterVector value) {
 //' @rdname encodeURI
 //' @export
 // [[Rcpp::export]]
-Rcpp::CharacterVector decodeURIComponent(Rcpp::CharacterVector value) {
-  Rcpp::CharacterVector out(value.size(), NA_STRING);
+strings decodeURIComponent(strings value) {
+  writable::strings out(value.size());
 
-  for (int i = 0; i < value.size(); i++) {
-    if (value[i] != NA_STRING) {
-      std::string decoded = doDecodeURI(Rcpp::as<std::string>(value[i]), true);
-      out[i] = Rf_mkCharLenCE(decoded.c_str(), decoded.length(), CE_UTF8);
+  for (R_xlen_t i = 0; i < value.size(); i++) {
+    if (value[i] == NA_STRING) {
+      out[i] = r_string(NA_STRING);
+    } else {
+      std::string decoded = doDecodeURI(std::string(value[i]), true);
+      out[i] = r_string(Rf_mkCharLenCE(decoded.c_str(), decoded.length(), CE_UTF8));
     }
   }
 
@@ -703,7 +705,7 @@ void invokeCppCallback(SEXP data, SEXP callback_xptr) {
   ASSERT_MAIN_THREAD()
 
   if (TYPEOF(callback_xptr) != EXTPTRSXP) {
-     throw Rcpp::exception("Expected external pointer.");
+    stop("Expected external pointer.");
   }
   std::function<void(list)>* callback_wrapper =
     (std::function<void(list)>*)(R_ExternalPtrAddr(callback_xptr));
@@ -739,8 +741,8 @@ void getRNGState() {
 //
 //[[Rcpp::export]]
 std::string wsconn_address(SEXP external_ptr) {
-  Rcpp::XPtr<std::shared_ptr<WebSocketConnection> > xptr(external_ptr);
+  external_pointer<std::shared_ptr<WebSocketConnection>> xptr(external_ptr);
   std::ostringstream os;
-  os << std::hex << reinterpret_cast<uintptr_t>(xptr.get()->get());
+  os << std::hex << reinterpret_cast<uintptr_t>((*xptr).get());
   return os.str();
 }
