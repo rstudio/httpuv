@@ -175,8 +175,7 @@ void ensure_io_thread() {
 // Outgoing websocket messages
 // ============================================================================
 
-// [[Rcpp::export]]
-void sendWSMessage(SEXP conn,
+[[cpp4r::register]] void sendWSMessage(SEXP conn,
                    bool binary,
                    SEXP message)
 {
@@ -219,8 +218,7 @@ void sendWSMessage(SEXP conn,
   background_queue->push(std::bind(deleter_background<std::vector<char> >, str));
 }
 
-// [[Rcpp::export]]
-void closeWS(SEXP conn,
+[[cpp4r::register]] void closeWS(SEXP conn,
              uint16_t code,
              std::string reason)
 {
@@ -242,8 +240,7 @@ void closeWS(SEXP conn,
 // Create/stop servers
 // ============================================================================
 
-// [[Rcpp::export]]
-SEXP makeTcpServer(const std::string& host, int port,
+[[cpp4r::register]] SEXP makeTcpServer(const std::string& host, int port,
                    function onHeaders,
                    function onBodyData,
                    function onRequest,
@@ -300,8 +297,7 @@ SEXP makeTcpServer(const std::string& host, int port,
   return as_sexp(externalize_str<uv_stream_t>(pServer));
 }
 
-// [[Rcpp::export]]
-SEXP makePipeServer(const std::string& name,
+[[cpp4r::register]] SEXP makePipeServer(const std::string& name,
                     int mask,
                     function onHeaders,
                     function onBodyData,
@@ -378,8 +374,7 @@ void stopServer_(uv_stream_t* pServer) {
   );
 }
 
-// [[Rcpp::export]]
-void stopServer_(std::string handle) {
+[[cpp4r::register]] void stopServer_(std::string handle) {
   ASSERT_MAIN_THREAD()
   uv_stream_t* pServer = internalize_str<uv_stream_t>(handle);
   stopServer_(pServer);
@@ -405,35 +400,30 @@ std::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
   return get_pWebApplication(pServer);
 }
 
-// [[Rcpp::export]]
-list getStaticPaths_(std::string handle) {
+[[cpp4r::register]] list getStaticPaths_(std::string handle) {
   ASSERT_MAIN_THREAD()
   return get_pWebApplication(handle)->getStaticPathManager().pathsAsRObject();
 }
 
-// [[Rcpp::export]]
-list setStaticPaths_(std::string handle, list sp) {
+[[cpp4r::register]] list setStaticPaths_(std::string handle, list sp) {
   ASSERT_MAIN_THREAD()
   get_pWebApplication(handle)->getStaticPathManager().set(sp);
   return getStaticPaths_(handle);
 }
 
-// [[Rcpp::export]]
-list removeStaticPaths_(std::string handle, strings paths) {
+[[cpp4r::register]] list removeStaticPaths_(std::string handle, strings paths) {
   ASSERT_MAIN_THREAD()
   get_pWebApplication(handle)->getStaticPathManager().remove(paths);
   return getStaticPaths_(handle);
 }
 
-// [[Rcpp::export]]
-list getStaticPathOptions_(std::string handle) {
+[[cpp4r::register]] list getStaticPathOptions_(std::string handle) {
   ASSERT_MAIN_THREAD()
   return get_pWebApplication(handle)->getStaticPathManager().getOptions().asRObject();
 }
 
 
-// [[Rcpp::export]]
-list setStaticPathOptions_(std::string handle, list opts) {
+[[cpp4r::register]] list setStaticPathOptions_(std::string handle, list opts) {
   ASSERT_MAIN_THREAD()
   get_pWebApplication(handle)->getStaticPathManager().setOptions(opts);
   return getStaticPathOptions_(handle);
@@ -444,8 +434,7 @@ list setStaticPathOptions_(std::string handle, list opts) {
 // Miscellaneous utility functions
 // ============================================================================
 
-// [[Rcpp::export]]
-std::string base64encode(const raws& x) {
+[[cpp4r::register]] std::string base64encode(const raws& x) {
   return b64encode(x.begin(), x.end());
 }
 
@@ -509,37 +498,37 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
   return os.str();
 }
 
-//' URI encoding/decoding
-//'
-//' Encodes/decodes strings using URI encoding/decoding in the same way that web
-//' browsers do. The precise behaviors of these functions can be found at
-//' developer.mozilla.org:
-//' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI}{encodeURI},
-//' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent}{encodeURIComponent},
-//' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI}{decodeURI},
-//' \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent}{decodeURIComponent}
-//'
-//' Intended as a faster replacement for [utils::URLencode()] and
-//' [utils::URLdecode()].
-//'
-//' encodeURI differs from encodeURIComponent in that the former will not encode
-//' reserved characters: \code{;,/?:@@&=+$}
-//'
-//' decodeURI differs from decodeURIComponent in that it will refuse to decode
-//' encoded sequences that decode to a reserved character. (If in doubt, use
-//' decodeURIComponent.)
-//'
-//' For \code{encodeURI} and \code{encodeURIComponent}, input strings will be
-//' converted to UTF-8 before URL-encoding.
-//'
-//' @param value Character vector to be encoded or decoded.
-//' @return Encoded or decoded character vector of the same length as the
-//'   input value. \code{decodeURI} and \code{decodeURIComponent} will return
-//'   strings that are UTF-8 encoded.
-//'
-//' @export
-// [[Rcpp::export]]
-strings encodeURI(strings value) {
+/* roxygen
+@title URI encoding/decoding
+
+@description Encodes/decodes strings using URI encoding/decoding in the same way that web
+  browsers do. The precise behaviors of these functions can be found at
+  developer.mozilla.org:
+  \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI}{encodeURI},
+  \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent}{encodeURIComponent},
+  \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI}{decodeURI},
+  \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent}{decodeURIComponent}
+  
+  Intended as a faster replacement for [utils::URLencode()] and [utils::URLdecode()].
+  encodeURI differs from encodeURIComponent in that the former will not encode
+  reserved characters: \code{;,/?:@@&=+$}
+  
+  decodeURI differs from decodeURIComponent in that it will refuse to decode
+  encoded sequences that decode to a reserved character. (If in doubt, use
+  decodeURIComponent.)
+
+  For \code{encodeURI} and \code{encodeURIComponent}, input strings will be
+  converted to UTF-8 before URL-encoding.
+
+@param value Character vector to be encoded or decoded.
+
+@return Encoded or decoded character vector of the same length as the
+  input value. \code{decodeURI} and \code{decodeURIComponent} will return
+  strings that are UTF-8 encoded.
+
+@export
+*/
+[[cpp4r::register]] strings encodeURI(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -553,10 +542,11 @@ strings encodeURI(strings value) {
   return out;
 }
 
-//' @rdname encodeURI
-//' @export
-// [[Rcpp::export]]
-strings encodeURIComponent(strings value) {
+/* roxygen
+@rdname encodeURI
+@export
+*/
+[[cpp4r::register]] strings encodeURIComponent(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -630,10 +620,11 @@ std::string doDecodeURI(std::string value, bool component) {
 }
 
 
-//' @rdname encodeURI
-//' @export
-// [[Rcpp::export]]
-strings decodeURI(strings value) {
+/* roxygen
+@rdname encodeURI
+@export
+*/
+[[cpp4r::register]] strings decodeURI(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -648,10 +639,11 @@ strings decodeURI(strings value) {
   return out;
 }
 
-//' @rdname encodeURI
-//' @export
-// [[Rcpp::export]]
-strings decodeURIComponent(strings value) {
+/* roxygen
+@rdname encodeURI
+@export
+*/
+[[cpp4r::register]] strings decodeURIComponent(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -666,27 +658,27 @@ strings decodeURIComponent(strings value) {
   return out;
 }
 
-//' Check whether an address is IPv4 or IPv6
-//'
-//' Given an IP address, this checks whether it is an IPv4 or IPv6 address.
-//'
-//' @param ip A single string representing an IP address.
-//'
-//' @return
-//' For IPv4 addresses, \code{4}; for IPv6 addresses, \code{6}. If the address is
-//' neither, \code{-1}.
-//'
-//' @examples
-//' ipFamily("127.0.0.1")   # 4
-//' ipFamily("500.0.0.500") # -1
-//' ipFamily("500.0.0.500") # -1
-//'
-//' ipFamily("::")          # 6
-//' ipFamily("::1")         # 6
-//' ipFamily("fe80::1ff:fe23:4567:890a") # 6
-//' @export
-// [[Rcpp::export]]
-int ipFamily(const std::string& ip) {
+/* roxygen
+@title Check whether an address is IPv4 or IPv6
+
+@description Given an IP address, this checks whether it is an IPv4 or IPv6 address.
+
+@param ip A single string representing an IP address.
+
+@return For IPv4 addresses, \code{4}; for IPv6 addresses, \code{6}. If the address is
+  neither, \code{-1}.
+
+@examples
+  ipFamily("127.0.0.1")   # 4
+  ipFamily("500.0.0.500") # -1
+  ipFamily("500.0.0.500") # -1
+
+  ipFamily("::")          # 6
+  ipFamily("::1")         # 6
+  ipFamily("fe80::1ff:fe23:4567:890a") # 6
+@export
+*/
+[[cpp4r::register]] int ipFamily(const std::string& ip) {
   int family = ip_family(ip);
   if (family == AF_INET6)
     return 6;
@@ -700,8 +692,7 @@ int ipFamily(const std::string& ip) {
 // Given a List and an external pointer to a C++ function that takes a List,
 // invoke the function with the List as the single argument. This also clears
 // the external pointer so that the C++ function can't be called again.
-// [[Rcpp::export]]
-void invokeCppCallback(SEXP data, SEXP callback_xptr) {
+[[cpp4r::register]] void invokeCppCallback(SEXP data, SEXP callback_xptr) {
   ASSERT_MAIN_THREAD()
 
   if (TYPEOF(callback_xptr) != EXTPTRSXP) {
@@ -719,18 +710,16 @@ void invokeCppCallback(SEXP data, SEXP callback_xptr) {
   R_ClearExternalPtr(callback_xptr);
 }
 
-//' Apply the value of .Random.seed to R's internal RNG state
-//'
-//' This function is needed in unusual cases where a C++ function calls
-//' an R function which sets the value of \code{.Random.seed}. This function
-//' should be called at the end of the R function to ensure that the new value
-//' \code{.Random.seed} is preserved. Otherwise, Rcpp may overwrite it with a
-//' previous value.
-//'
-//' @keywords internal
-//' @export
-// [[Rcpp::export]]
-void getRNGState() {
+/* roxygen
+@title Apply the value of .Random.seed to R's internal RNG state
+@description This function is needed in unusual cases where a C++ function calls
+  an R function which sets the value of \code{.Random.seed}. This function
+  should be called at the end of the R function to ensure that the new value
+  \code{.Random.seed} is preserved.
+@keywords internal
+@export
+*/
+[[cpp4r::register]] void getRNGState() {
   GetRNGstate();
 }
 
@@ -738,9 +727,7 @@ void getRNGState() {
 // std::shared_ptr<WebSocketConnection>. This returns a hexadecimal string
 // representing the address of the WebSocketConnection (not the shared_ptr to
 // it!).
-//
-//[[Rcpp::export]]
-std::string wsconn_address(SEXP external_ptr) {
+[[cpp4r::register]] std::string wsconn_address(SEXP external_ptr) {
   external_pointer<std::shared_ptr<WebSocketConnection>> xptr(external_ptr);
   std::ostringstream os;
   os << std::hex << reinterpret_cast<uintptr_t>((*xptr).get());
