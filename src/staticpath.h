@@ -7,9 +7,9 @@
 #include "thread.h"
 #include "constants.h"
 
-#include "cpp4r.hpp"
+#include "cpp11.hpp"
 
-using namespace cpp4r;
+using namespace cpp11;
 
 class StaticPathOptions {
 public:

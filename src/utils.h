@@ -12,9 +12,9 @@
 #include "thread.h"
 #include "timegm.h"
 
-#include "cpp4r.hpp"
+#include "cpp11.hpp"
 
-using namespace cpp4r;
+using namespace cpp11;
 
 // A callback for deleting objects on the main thread using later(). This is
 // needed when the object is an Rcpp object or contains one, because deleting

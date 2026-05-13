@@ -11,7 +11,7 @@ void debug_log(const std::string& msg, LogLevel level) {
 
 
 // Sets the current log level and returns previous value.
-[[cpp4r::register]] std::string log_level(const std::string& level) {
+[[cpp11::register]] std::string log_level(const std::string& level) {
   LogLevel old_level = log_level_;
 
   if (level == "") {

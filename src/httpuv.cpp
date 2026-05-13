@@ -175,7 +175,7 @@ void ensure_io_thread() {
 // Outgoing websocket messages
 // ============================================================================
 
-[[cpp4r::register]] void sendWSMessage(SEXP conn,
+[[cpp11::register]] void sendWSMessage(SEXP conn,
                    bool binary,
                    SEXP message)
 {
@@ -218,7 +218,7 @@ void ensure_io_thread() {
   background_queue->push(std::bind(deleter_background<std::vector<char> >, str));
 }
 
-[[cpp4r::register]] void closeWS(SEXP conn,
+[[cpp11::register]] void closeWS(SEXP conn,
              uint16_t code,
              std::string reason)
 {
@@ -240,7 +240,7 @@ void ensure_io_thread() {
 // Create/stop servers
 // ============================================================================
 
-[[cpp4r::register]] SEXP makeTcpServer(const std::string& host, int port,
+[[cpp11::register]] SEXP makeTcpServer(const std::string& host, int port,
                    function onHeaders,
                    function onBodyData,
                    function onRequest,
@@ -297,7 +297,7 @@ void ensure_io_thread() {
   return as_sexp(externalize_str<uv_stream_t>(pServer));
 }
 
-[[cpp4r::register]] SEXP makePipeServer(const std::string& name,
+[[cpp11::register]] SEXP makePipeServer(const std::string& name,
                     int mask,
                     function onHeaders,
                     function onBodyData,
@@ -374,7 +374,7 @@ void stopServer_(uv_stream_t* pServer) {
   );
 }
 
-[[cpp4r::register]] void stopServer_(std::string handle) {
+[[cpp11::register]] void stopServer_(std::string handle) {
   ASSERT_MAIN_THREAD()
   uv_stream_t* pServer = internalize_str<uv_stream_t>(handle);
   stopServer_(pServer);
@@ -400,30 +400,30 @@ std::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
   return get_pWebApplication(pServer);
 }
 
-[[cpp4r::register]] list getStaticPaths_(std::string handle) {
+[[cpp11::register]] list getStaticPaths_(std::string handle) {
   ASSERT_MAIN_THREAD()
   return get_pWebApplication(handle)->getStaticPathManager().pathsAsRObject();
 }
 
-[[cpp4r::register]] list setStaticPaths_(std::string handle, list sp) {
+[[cpp11::register]] list setStaticPaths_(std::string handle, list sp) {
   ASSERT_MAIN_THREAD()
   get_pWebApplication(handle)->getStaticPathManager().set(sp);
   return getStaticPaths_(handle);
 }
 
-[[cpp4r::register]] list removeStaticPaths_(std::string handle, strings paths) {
+[[cpp11::register]] list removeStaticPaths_(std::string handle, strings paths) {
   ASSERT_MAIN_THREAD()
   get_pWebApplication(handle)->getStaticPathManager().remove(paths);
   return getStaticPaths_(handle);
 }
 
-[[cpp4r::register]] list getStaticPathOptions_(std::string handle) {
+[[cpp11::register]] list getStaticPathOptions_(std::string handle) {
   ASSERT_MAIN_THREAD()
   return get_pWebApplication(handle)->getStaticPathManager().getOptions().asRObject();
 }
 
 
-[[cpp4r::register]] list setStaticPathOptions_(std::string handle, list opts) {
+[[cpp11::register]] list setStaticPathOptions_(std::string handle, list opts) {
   ASSERT_MAIN_THREAD()
   get_pWebApplication(handle)->getStaticPathManager().setOptions(opts);
   return getStaticPathOptions_(handle);
@@ -434,7 +434,7 @@ std::shared_ptr<WebApplication> get_pWebApplication(std::string handle) {
 // Miscellaneous utility functions
 // ============================================================================
 
-[[cpp4r::register]] std::string base64encode(const raws& x) {
+[[cpp11::register]] std::string base64encode(const raws& x) {
   return b64encode(x.begin(), x.end());
 }
 
@@ -528,7 +528,7 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
 
 @export
 */
-[[cpp4r::register]] strings encodeURI(strings value) {
+[[cpp11::register]] strings encodeURI(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -546,7 +546,7 @@ std::string doEncodeURI(std::string value, bool encodeReserved) {
 @rdname encodeURI
 @export
 */
-[[cpp4r::register]] strings encodeURIComponent(strings value) {
+[[cpp11::register]] strings encodeURIComponent(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -624,7 +624,7 @@ std::string doDecodeURI(std::string value, bool component) {
 @rdname encodeURI
 @export
 */
-[[cpp4r::register]] strings decodeURI(strings value) {
+[[cpp11::register]] strings decodeURI(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -643,7 +643,7 @@ std::string doDecodeURI(std::string value, bool component) {
 @rdname encodeURI
 @export
 */
-[[cpp4r::register]] strings decodeURIComponent(strings value) {
+[[cpp11::register]] strings decodeURIComponent(strings value) {
   writable::strings out(value.size());
 
   for (R_xlen_t i = 0; i < value.size(); i++) {
@@ -678,7 +678,7 @@ std::string doDecodeURI(std::string value, bool component) {
   ipFamily("fe80::1ff:fe23:4567:890a") # 6
 @export
 */
-[[cpp4r::register]] int ipFamily(const std::string& ip) {
+[[cpp11::register]] int ipFamily(const std::string& ip) {
   int family = ip_family(ip);
   if (family == AF_INET6)
     return 6;
@@ -692,7 +692,7 @@ std::string doDecodeURI(std::string value, bool component) {
 // Given a List and an external pointer to a C++ function that takes a List,
 // invoke the function with the List as the single argument. This also clears
 // the external pointer so that the C++ function can't be called again.
-[[cpp4r::register]] void invokeCppCallback(SEXP data, SEXP callback_xptr) {
+[[cpp11::register]] void invokeCppCallback(SEXP data, SEXP callback_xptr) {
   ASSERT_MAIN_THREAD()
 
   if (TYPEOF(callback_xptr) != EXTPTRSXP) {
@@ -719,7 +719,7 @@ std::string doDecodeURI(std::string value, bool component) {
 @keywords internal
 @export
 */
-[[cpp4r::register]] void getRNGState() {
+[[cpp11::register]] void getRNGState() {
   GetRNGstate();
 }
 
@@ -727,7 +727,7 @@ std::string doDecodeURI(std::string value, bool component) {
 // std::shared_ptr<WebSocketConnection>. This returns a hexadecimal string
 // representing the address of the WebSocketConnection (not the shared_ptr to
 // it!).
-[[cpp4r::register]] std::string wsconn_address(SEXP external_ptr) {
+[[cpp11::register]] std::string wsconn_address(SEXP external_ptr) {
   external_pointer<std::shared_ptr<WebSocketConnection>> xptr(external_ptr);
   std::ostringstream os;
   os << std::hex << reinterpret_cast<uintptr_t>((*xptr).get());

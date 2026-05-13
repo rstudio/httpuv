@@ -2,9 +2,9 @@
 #define HTTPUV_HPP
 
 #include <Rinternals.h>
-#include "cpp4r.hpp"
+#include "cpp11.hpp"
 
-using namespace cpp4r;
+using namespace cpp11;
 
 
 void invokeCppCallback(SEXP data, SEXP callback_xptr);
