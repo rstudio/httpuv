@@ -1,17 +1,17 @@
 #include "utils.h"
+#include <ctime>
 
 // Set the default log level
 LogLevel log_level_ = LOG_ERROR;
 
-void debug_log(const std::string& msg, LogLevel level) {
+void debug_log(const std::string &msg, LogLevel level) {
   if (log_level_ >= level) {
     err_printf("%s\n", msg.c_str());
   };
 }
 
-
 // Sets the current log level and returns previous value.
-[[cpp11::register]] std::string log_level(const std::string& level) {
+[[cpp11::register]] std::string log_level(const std::string &level) {
   LogLevel old_level = log_level_;
 
   if (level == "") {
@@ -30,13 +30,19 @@ void debug_log(const std::string& msg, LogLevel level) {
     stop("Unknown value for `level`");
   }
 
-  switch(old_level) {
-    case LOG_OFF:   return "OFF";
-    case LOG_ERROR: return "ERROR";
-    case LOG_WARN:  return "WARN";
-    case LOG_INFO:  return "INFO";
-    case LOG_DEBUG: return "DEBUG";
-    default:        return "";
+  switch (old_level) {
+  case LOG_OFF:
+    return "OFF";
+  case LOG_ERROR:
+    return "ERROR";
+  case LOG_WARN:
+    return "WARN";
+  case LOG_INFO:
+    return "INFO";
+  case LOG_DEBUG:
+    return "DEBUG";
+  default:
+    return "";
   }
 }
 
@@ -46,7 +52,7 @@ void debug_log(const std::string& msg, LogLevel level) {
 // @param pOut If true is returned, the integer value of the parsed value. If
 //   false returned, pOut is untouched.
 // @return true if successful, false if parsing fails for any reason
-bool str_read_int(std::istream* input, size_t digits, int* pOut) {
+bool str_read_int(std::istream *input, size_t digits, int *pOut) {
   if (digits <= 0) {
     return false;
   }
@@ -78,7 +84,8 @@ bool str_read_int(std::istream* input, size_t digits, int* pOut) {
 //   element in `values` that matched the input. If false is returned, then res
 //   will be untouched.
 // @return true if successful, false if reading failed or no match found
-bool str_read_lookup(std::istream* input, size_t bytes, const std::vector<std::string>& values, int* pRes) {
+bool str_read_lookup(std::istream *input, size_t bytes,
+                     const std::vector<std::string> &values, int *pRes) {
   std::vector<char> buf;
   buf.resize(bytes + 1);
 
@@ -95,12 +102,14 @@ bool str_read_lookup(std::istream* input, size_t bytes, const std::vector<std::s
   return true;
 }
 
-const std::vector<std::string> months {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-const std::vector<std::string> days_of_week {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+const std::vector<std::string> months{"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+const std::vector<std::string> days_of_week{"Sun", "Mon", "Tue", "Wed",
+                                            "Thu", "Fri", "Sat"};
 
 // Given a date string of format "Wed, 21 Oct 2015 07:28:00 GMT", return a
 // time_t representing that time. If the date is malformed, then return 0.
-time_t parse_http_date_string(const std::string& date) {
+time_t parse_http_date_string(const std::string &date) {
   // This is because the static std::locale may not be thread-safe. If in the
   // future we need to call this from multiple threads, we can remove this and
   // make the std::locale non-static.
@@ -125,28 +134,47 @@ time_t parse_http_date_string(const std::string& date) {
     //   return 0;
     // }
 
-    if (!str_read_lookup(&date_ss, 3, days_of_week, &t.tm_wday)) return 0;
-    if (date_ss.get() != ',') return 0;
-    if (date_ss.get() != ' ') return 0;
-    if (!str_read_int(&date_ss, 2, &t.tm_mday)) return 0;
-    if (date_ss.get() != ' ') return 0;
-    if (!str_read_lookup(&date_ss, 3, months, &t.tm_mon)) return 0;
-    if (date_ss.get() != ' ') return 0;
+    if (!str_read_lookup(&date_ss, 3, days_of_week, &t.tm_wday))
+      return 0;
+    if (date_ss.get() != ',')
+      return 0;
+    if (date_ss.get() != ' ')
+      return 0;
+    if (!str_read_int(&date_ss, 2, &t.tm_mday))
+      return 0;
+    if (date_ss.get() != ' ')
+      return 0;
+    if (!str_read_lookup(&date_ss, 3, months, &t.tm_mon))
+      return 0;
+    if (date_ss.get() != ' ')
+      return 0;
     int year = 0;
-    if (!str_read_int(&date_ss, 4, &year)) return 0;
+    if (!str_read_int(&date_ss, 4, &year))
+      return 0;
     t.tm_year = year - 1900;
-    if (date_ss.get() != ' ') return 0;
-    if (!str_read_int(&date_ss, 2, &t.tm_hour)) return 0;
-    if (date_ss.get() != ':') return 0;
-    if (!str_read_int(&date_ss, 2, &t.tm_min)) return 0;
-    if (date_ss.get() != ':') return 0;
-    if (!str_read_int(&date_ss, 2, &t.tm_sec)) return 0;
-    if (date_ss.get() != ' ') return 0;
-    if (date_ss.get() != 'G') return 0;
-    if (date_ss.get() != 'M') return 0;
-    if (date_ss.get() != 'T') return 0;
-    if (date_ss.get() != EOF) return 0;
-  } catch(...) {
+    if (date_ss.get() != ' ')
+      return 0;
+    if (!str_read_int(&date_ss, 2, &t.tm_hour))
+      return 0;
+    if (date_ss.get() != ':')
+      return 0;
+    if (!str_read_int(&date_ss, 2, &t.tm_min))
+      return 0;
+    if (date_ss.get() != ':')
+      return 0;
+    if (!str_read_int(&date_ss, 2, &t.tm_sec))
+      return 0;
+    if (date_ss.get() != ' ')
+      return 0;
+    if (date_ss.get() != 'G')
+      return 0;
+    if (date_ss.get() != 'M')
+      return 0;
+    if (date_ss.get() != 'T')
+      return 0;
+    if (date_ss.get() != EOF)
+      return 0;
+  } catch (...) {
     return 0;
   }
 
