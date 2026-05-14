@@ -37,7 +37,8 @@ LOG="./check-gcc-clang/check-${std}-${compiler}.log"
 rm -f "${LOG}"
 
 # Capture everything (stdout+stderr) from this point into the per-iteration log
-# while still printing to the console via tee.
+# while still printing to the console via tee. This ensures all printed lines
+# (from Rscript, R CMD check and this script) are saved.
 exec > >(tee -a "${LOG}") 2>&1
 
 # Build httpuv tarball
@@ -47,7 +48,7 @@ if [ -z "${TARBALL}" ]; then
 	exit 1
 fi
 
-# Run R CMD check on the tarball. Skip PDF/manual to avoid TeX font issues.
+# Run R CMD check on the tarball and capture output. Skip PDF/manual to avoid TeX font issues.
 R CMD check --as-cran --no-manual "${TARBALL}" || true
 
 # If there was an error, copy the install log to the results directory for inspection

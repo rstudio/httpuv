@@ -6,8 +6,10 @@ Loading required package: usethis
 ** PKG_CFLAGS=
 ** PKG_LIBS=-luv
 ** libs
+specified C++20
 using C compiler: ‘gcc (GCC) 15.2.1 20260209’
 using C++ compiler: ‘g++ (GCC) 15.2.1 20260209’
+using C++20
 make[1]: Entering directory '/home/pacha/Documents/httpuv/httpuv.Rcheck/00_pkg_src/httpuv/src'
 g++ -std=gnu++20 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp11/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c callback.cpp -o callback.o
 g++ -std=gnu++20 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp11/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c callbackqueue.cpp -o callbackqueue.o

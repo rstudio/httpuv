@@ -8,7 +8,7 @@ compiler=${2:-gcc}
 echo "Restoring files for $std and $compiler"
 
 # Remove the CXX_STD line added by check_prepare.sh
-sed -i '/^CXX_STD = /d' ./src/Makevars
+sed -i '/^CXX_STD = /d' ./src/Makevars.in
 
 # Clear check files
 rm -rf ./httpuv.Rcheck || true

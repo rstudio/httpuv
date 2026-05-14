@@ -8,13 +8,13 @@ Loading required package: usethis
     GNU Fortran (GCC) 15.2.1 20260209
 * running under: Manjaro Linux
 * using session charset: UTF-8
-* current time: 2026-05-13 23:39:51 UTC
+* current time: 2026-05-14 00:34:43 UTC
 * using options ‘--no-manual --as-cran’
 * checking for file ‘httpuv/DESCRIPTION’ ... OK
 * checking extension type ... Package
 * this is package ‘httpuv’ version ‘1.6.16.9000’
 * package encoding: UTF-8
-* checking CRAN incoming feasibility ... [9s/17s] WARNING
+* checking CRAN incoming feasibility ... [9s/23s] WARNING
 Maintainer: ‘Winston Chang <winston@posit.co>’
 
 Insufficient package version (submitted: 1.6.16.9000, existing: 1.6.17)
@@ -28,9 +28,11 @@ Version contains large components (1.6.16.9000)
 * checking for portable file names ... OK
 * checking for sufficient/correct file permissions ... OK
 * checking serialization versions ... OK
-* checking whether package ‘httpuv’ can be installed ... [127s/103s] OK
+* checking whether package ‘httpuv’ can be installed ... [130s/105s] OK
 * used C compiler: ‘gcc (GCC) 15.2.1 20260209’
 * used C++ compiler: ‘g++ (GCC) 15.2.1 20260209’
+* checking C++ specification ... INFO
+  specified C++20
 * checking installed package size ... INFO
   installed size is  7.3Mb
   sub-directories of 1Mb or more:
@@ -110,8 +112,10 @@ Loading required package: usethis
 ** PKG_CFLAGS=
 ** PKG_LIBS=-luv
 ** libs
+specified C++20
 using C compiler: ‘gcc (GCC) 15.2.1 20260209’
 using C++ compiler: ‘g++ (GCC) 15.2.1 20260209’
+using C++20
 make[1]: Entering directory '/home/pacha/Documents/httpuv/httpuv.Rcheck/00_pkg_src/httpuv/src'
 g++ -std=gnu++20 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp11/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c callback.cpp -o callback.o
 g++ -std=gnu++20 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp11/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c callbackqueue.cpp -o callbackqueue.o
