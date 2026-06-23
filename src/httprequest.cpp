@@ -253,8 +253,15 @@ int HttpRequest::_on_header_value(http_parser* pParser, const char* pAt, size_t 
         // ...and is already non-empty...
 
         if (value.size() > 0) {
-          // ...and this value is also non-empty, then combine using comma...
-          value = _headers[_lastHeaderField] + "," + value;
+          // ...and if this value is also non-empty, then combine.
+          // Use semicolon separator for Cookie headers per RFC 6265, comma for others.
+          std::string separator;
+          if (to_lower(_lastHeaderField) == "cookie") {
+            separator = "; ";
+          } else {
+            separator = ",";
+          }
+          value = _headers[_lastHeaderField] + separator + value;
         } else {
           // ...but if this value is empty, then use previous value (no-op).
           value = _headers[_lastHeaderField];
