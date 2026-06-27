@@ -367,6 +367,7 @@ endif
 if SUNOS
 test_run_tests_CFLAGS += -D__EXTENSIONS__ \
                          -D_XOPEN_SOURCE=500 \
+                   -DSUNOS_NO_IFADDRS \
                          -D_REENTRANT
 endif
 

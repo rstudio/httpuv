@@ -27,3 +27,6 @@
 ^pkgdown$
 scripts
 ^Makefile$
+^dev$
+^src/libuv/\.clang-tidy$
+^check-gcc-clang$
