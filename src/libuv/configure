@@ -5812,6 +5812,61 @@ fi
   done
 
 
+  for flag in -Wno-declaration-after-statement; do
+
+  { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking if $CC supports $flag flag" >&5
+printf %s "checking if $CC supports $flag flag... " >&6; }
+if { as_var=`printf '%s\n' "cc_cv_cflags_werror_$flag" | sed "$as_sed_sh"`; eval test \${$as_var+y}; }
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e)
+
+  if { as_var=`printf '%s\n' "cc_cv_cflags_werror_$flag" | sed "$as_sed_sh"`; eval test \${$as_var+y}; }
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_save_CFLAGS="$CFLAGS"
+     CFLAGS="$CFLAGS $cc_cv_werror $flag"
+     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int a;
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  eval "`printf '%s\n' "cc_cv_cflags_werror_$flag" | sed "$as_sed_sh"`='yes'"
+else case e in #(
+  e) eval "`printf '%s\n' "cc_cv_cflags_werror_$flag" | sed "$as_sed_sh"`='no'" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+     CFLAGS="$ac_save_CFLAGS"
+     ;;
+esac
+fi
+
+
+  if eval test x$`printf '%s\n' "cc_cv_cflags_werror_$flag" | sed "$as_sed_sh"` = xyes
+then :
+
+fi
+    ;;
+esac
+fi
+eval ac_res=\$`printf '%s\n' "cc_cv_cflags_werror_$flag" | sed "$as_sed_sh"`
+	       { printf '%s\n' "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf '%s\n' "$ac_res" >&6; }
+
+  if eval test x$`printf '%s\n' "cc_cv_cflags_werror_$flag" | sed "$as_sed_sh"` = xyes
+then :
+  AM_CFLAGS="$AM_CFLAGS $flag"; DEBUG_CFLAGS="$DEBUG_CFLAGS $flag";
+fi
+
+
+
+  done
+
+
   for flag in -Wstrict-prototypes; do
 
   { printf '%s\n' "$as_me:${as_lineno-$LINENO}: checking if $CC supports $flag flag" >&5
