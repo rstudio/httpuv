@@ -11,4 +11,4 @@ echo "Restoring files for $std and $compiler"
 sed -i '/^CXX_STD = /d' ./src/Makevars.in
 
 # Clear check files
-rm -rf ./httpuv.Rcheck || true
+rm -rf ./httpuv2.Rcheck || true

@@ -69,7 +69,7 @@ Suggests:
     curl,
     jsonlite,
     testthat (>= 3.0.0),
-    websocket, tinytest
+    tinytest
 LinkingTo: cpp4r, later2
 Config/Needs/website: tidyverse/tidytemplate
 Config/testthat/edition: 3

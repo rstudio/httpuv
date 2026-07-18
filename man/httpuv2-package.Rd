@@ -18,17 +18,17 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Winston Chang \email{winston@posit.co}
+\strong{Maintainer}: Mauricio Vargas Sepulveda \email{m.vargas.sepulveda@gmail.com} (\href{https://orcid.org/0000-0003-1017-7574}{ORCID})
 
 Authors:
 \itemize{
-  \item Winston Chang \email{winston@posit.co}
+  \item Mauricio Vargas Sepulveda \email{m.vargas.sepulveda@gmail.com} (\href{https://orcid.org/0000-0003-1017-7574}{ORCID})
   \item Joe Cheng \email{joe@posit.co}
+  \item Winston Chang \email{winston@posit.co}
   \item Steve Reid (SHA-1 implementation)
   \item James Brown (SHA-1 implementation)
   \item Bob Trower (base64 implementation)
   \item Alexander Peslyak (MD5 implementation)
-  \item Mauricio Vargas Sepulveda \email{m.vargas.sepulveda@gmail.com} (\href{https://orcid.org/0000-0003-1017-7574}{ORCID})
 }
 
 Other contributors:

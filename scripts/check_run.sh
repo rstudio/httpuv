@@ -41,10 +41,10 @@ rm -f "${LOG}"
 # (from Rscript, R CMD check and this script) are saved.
 exec > >(tee -a "${LOG}") 2>&1
 
-# Build httpuv tarball
+# Build httpuv2 tarball
 TARBALL=$(Rscript -e 'cat(devtools::build(".", quiet = TRUE))')
 if [ -z "${TARBALL}" ]; then
-	echo "Failed to build tarball for httpuv."
+	echo "Failed to build tarball for httpuv2."
 	exit 1
 fi
 
@@ -52,10 +52,10 @@ fi
 R CMD check --as-cran --no-manual "${TARBALL}" || true
 
 # If there was an error, copy the install log to the results directory for inspection
-if [ -f "./httpuv.Rcheck/00install.out" ]; then
-	cp "./httpuv.Rcheck/00install.out" "./check-gcc-clang/install-${std}-${compiler}.log"
+if [ -f "./httpuv2.Rcheck/00install.out" ]; then
+	cp "./httpuv2.Rcheck/00install.out" "./check-gcc-clang/install-${std}-${compiler}.log"
 	echo "=== BEGIN 00install.out ==="
-	cat "./httpuv.Rcheck/00install.out"
+	cat "./httpuv2.Rcheck/00install.out"
 	echo "=== END 00install.out ==="
 fi
 

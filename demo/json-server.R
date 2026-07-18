@@ -2,7 +2,7 @@
 # Client sends to server in the format of {"data":[1,2,3]}
 # The websocket server returns the standard deviation of the sent array
 library(jsonlite)
-library(httpuv)
+library(httpuv2)
 
 # Server
 app <- list(

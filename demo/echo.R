@@ -1,4 +1,4 @@
-library(httpuv)
+library(httpuv2)
 
 app <- list(
   call = function(req) {

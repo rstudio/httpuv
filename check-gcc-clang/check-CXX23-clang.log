@@ -1,0 +1,162 @@
+* using log directory ‘/home/pacha/Documents/httpuv/httpuv2.Rcheck’
+* using R version 4.6.0 (2026-04-24)
+* using platform: x86_64-pc-linux-gnu
+* R was compiled by
+    gcc (GCC) 15.2.1 20260209
+    GNU Fortran (GCC) 15.2.1 20260209
+* running under: Manjaro Linux
+* using session charset: UTF-8
+* current time: 2026-07-18 15:28:18 UTC
+* using options ‘--no-manual --as-cran’
+* checking for file ‘httpuv2/DESCRIPTION’ ... OK
+* checking extension type ... Package
+* this is package ‘httpuv2’ version ‘0.1’
+* package encoding: UTF-8
+* checking CRAN incoming feasibility ... [6s/13s] WARNING
+Maintainer: ‘Mauricio Vargas Sepulveda <m.vargas.sepulveda@gmail.com>’
+
+New submission
+
+Strong dependencies not in the CRAN or BioC software repositories:
+  later2
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking serialization versions ... OK
+* checking whether package ‘httpuv2’ can be installed ... [118s/127s] OK
+* used C compiler: ‘clang version 22.1.5’
+* used C++ compiler: ‘clang version 22.1.5’
+* checking C++ specification ... OK
+  Not all R platforms support C++23
+* checking installed package size ... OK
+* checking package directory ... OK
+* checking for future file timestamps ... OK
+* checking DESCRIPTION meta-information ... OK
+* checking top-level files ... OK
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking code files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking loading without being on the library search path ... OK
+* checking use of S3 registration ... OK
+* checking dependencies in R code ... OK
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... OK
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd line widths ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... OK
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking line endings in shell scripts ... OK
+* checking line endings in C/C++/Fortran sources/headers ... OK
+* checking line endings in Makefiles ... OK
+* checking compilation flags in Makevars ... OK
+* checking for GNU extensions in Makefiles ... INFO
+GNU make is a SystemRequirements.
+* checking for portable use of $(BLAS_LIBS) and $(LAPACK_LIBS) ... OK
+* checking use of PKG_*FLAGS in Makefiles ... OK
+* checking use of SHLIB_OPENMP_*FLAGS in Makefiles ... OK
+* checking include directives in Makefiles ... OK
+* checking pragmas in C/C++ headers and code ... OK
+* checking compilation flags used ... NOTE
+Compilation used the following non-portable flag(s):
+  ‘-Werror=format-security’ ‘-Wformat’ ‘-Wp,-D_FORTIFY_SOURCE=3’
+  ‘-Wp,-D_GLIBCXX_ASSERTIONS’ ‘-march=x86-64’
+  ‘-mno-omit-leaf-frame-pointer’
+* checking compiled code ... OK
+* checking examples ... OK
+* checking for unstated dependencies in ‘demo’ ... OK
+* checking for unstated dependencies in ‘tests’ ... OK
+* checking tests ...
+  Running ‘tinytest.R’ [16s/19s]
+ [16s/19s] OK
+* checking for non-standard things in the check directory ... OK
+* checking for detritus in the temp directory ... OK
+* DONE
+
+Status: 1 WARNING, 1 NOTE
+See
+  ‘/home/pacha/Documents/httpuv/httpuv2.Rcheck/00check.log’
+for details.
+
+=== BEGIN 00install.out ===
+* installing *source* package ‘httpuv2’ ...
+** this is package ‘httpuv2’ version ‘0.1’
+** using staged installation
+** Using libuv found by pkg-config in /usr
+** PKG_CFLAGS=
+** PKG_LIBS=-luv
+** libs
+specified C++23
+using C compiler: ‘clang version 22.1.5’
+using C++ compiler: ‘clang version 22.1.5’
+using C++23
+make[1]: Entering directory '/home/pacha/Documents/httpuv/httpuv2.Rcheck/00_pkg_src/httpuv2/src'
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c callback.cpp -o callback.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c callbackqueue.cpp -o callbackqueue.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c cpp4r.cpp -o cpp4r.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c filedatasource-unix.cpp -o filedatasource-unix.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c filedatasource-win.cpp -o filedatasource-win.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c fs.cpp -o fs.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c gzipdatasource.cpp -o gzipdatasource.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c http.cpp -o http.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c httprequest.cpp -o httprequest.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c httpresponse.cpp -o httpresponse.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c httpuv.cpp -o httpuv.o
+clang -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects  -c md5.c -o md5.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c mime.cpp -o mime.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c socket.cpp -o socket.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c staticpath.cpp -o staticpath.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c thread.cpp -o thread.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c timegm.cpp -o timegm.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c utils.cpp -o utils.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c uvutil.cpp -o uvutil.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c webapplication.cpp -o webapplication.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c websockets-base.cpp -o websockets-base.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c websockets-hixie76.cpp -o websockets-hixie76.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c websockets-hybi03.cpp -o websockets-hybi03.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c websockets-ietf.cpp -o websockets-ietf.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c websockets.cpp -o websockets.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c winutils.cpp -o winutils.o
+clang -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects  -c http-parser/http_parser.c -o http-parser/http_parser.o
+clang -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects  -c sha1/sha1.c -o sha1/sha1.o
+clang++ -std=gnu++23 -I"/usr/include/R/" -DNDEBUG -pthread -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/cpp4r/include' -I'/home/pacha/R/x86_64-pc-linux-gnu-library/4.6/later2/include' -I/usr/local/include   -fvisibility=hidden -DSTRICT_R_HEADERS -fpic  -march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions         -Wp,-D_FORTIFY_SOURCE=3 -Wformat -Werror=format-security         -fstack-clash-protection -fcf-protection         -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -Wp,-D_GLIBCXX_ASSERTIONS -g -ffile-prefix-map=/build/r/src=/usr/src/debug/r -flto=auto -ffat-lto-objects   -c base64/base64.cpp -o base64/base64.o
+clang++ -std=gnu++23 -shared -L/usr/lib64/R/lib -Wl,-O1 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,-z,pack-relative-relocs -flto=auto -o httpuv2.so callback.o callbackqueue.o cpp4r.o filedatasource-unix.o filedatasource-win.o fs.o gzipdatasource.o http.o httprequest.o httpresponse.o httpuv.o md5.o mime.o socket.o staticpath.o thread.o timegm.o utils.o uvutil.o webapplication.o websockets-base.o websockets-hixie76.o websockets-hybi03.o websockets-ietf.o websockets.o winutils.o -luv ./http-parser/http_parser.o ./sha1/sha1.o ./base64/base64.o -pthread -L/usr/lib64/R/lib -lR
+make[1]: Leaving directory '/home/pacha/Documents/httpuv/httpuv2.Rcheck/00_pkg_src/httpuv2/src'
+make[1]: Entering directory '/home/pacha/Documents/httpuv/httpuv2.Rcheck/00_pkg_src/httpuv2/src'
+/usr/bin/nm: /home/pacha/Documents/httpuv/httpuv2.Rcheck/00_pkg_src/httpuv2/src/filedatasource-win.o: no symbols
+/usr/bin/nm: /home/pacha/Documents/httpuv/httpuv2.Rcheck/00_pkg_src/httpuv2/src/winutils.o: no symbols
+make[1]: Leaving directory '/home/pacha/Documents/httpuv/httpuv2.Rcheck/00_pkg_src/httpuv2/src'
+installing to /home/pacha/Documents/httpuv/httpuv2.Rcheck/00LOCK-httpuv2/00new/httpuv2/libs
+** R
+** demo
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (httpuv2)
+=== END 00install.out ===
+R CMD check completed with no ERRORs. Warnings/Notes (if any) are allowed. See ./check-gcc-clang/check-CXX23-clang.log for full output.
+Run complete.

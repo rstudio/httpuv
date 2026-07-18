@@ -84,11 +84,11 @@ rm -f "${LOG}"
 # Capture everything (stdout+stderr) into the log while printing to console
 exec > >(tee -a "${LOG}") 2>&1
 
-# Build httpuv tarball using R-devel
+# Build httpuv2 tarball using R-devel
 echo "Building tarball with R-devel..."
 TARBALL=$("${RSCRIPT_DEVEL}" --vanilla -e 'cat(devtools::build(".", quiet = TRUE))')
 if [ -z "${TARBALL}" ]; then
-  echo "Failed to build httpuv tarball."
+  echo "Failed to build httpuv2 tarball."
   exit 1
 fi
 
@@ -99,10 +99,10 @@ echo "Running R CMD check with R-devel..."
 "${R_DEVEL}" CMD check --as-cran --no-manual "${TARBALL}" || true
 
 # If there was an error, copy the install log for inspection
-if [ -f "./httpuv.Rcheck/00install.out" ]; then
-  cp "./httpuv.Rcheck/00install.out" "./check-r-devel/install-${std}-${compiler}-devel.log"
+if [ -f "./httpuv2.Rcheck/00install.out" ]; then
+  cp "./httpuv2.Rcheck/00install.out" "./check-r-devel/install-${std}-${compiler}-devel.log"
   echo "=== BEGIN 00install.out ==="
-  cat "./httpuv.Rcheck/00install.out"
+  cat "./httpuv2.Rcheck/00install.out"
   echo "=== END 00install.out ==="
 fi
 
