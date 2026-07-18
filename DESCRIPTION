@@ -1,10 +1,10 @@
 Type: Package
 Package: httpuv2
 Title: HTTP and WebSocket Server Library
-Version: 1.6.16.9000
+Version: 0.1
 Authors@R: c(
     person("Joe", "Cheng", , "joe@posit.co", role = "aut"),
-    person("Winston", "Chang", , "winston@posit.co", role = c("aut", "cre")),
+    person("Winston", "Chang", , "winston@posit.co", role = "aut"),
     person("Posit, PBC", role = c("cph", "fnd"),
            comment = c(ROR = "03wc8by49")),
     person("Hector", "Corrada Bravo", role = "ctb"),
@@ -43,7 +43,7 @@ Authors@R: c(
            comment = "base64 implementation"),
     person("Igor", "Sysoev", role = "cph",
            comment = "http-parser"),
-    person(given = "Mauricio", family = "Vargas Sepulveda", role = "aut",
+    person(given = "Mauricio", family = "Vargas Sepulveda", role = c("aut", "cre"),
         email = "m.vargas.sepulveda@gmail.com",
         comment = c(ORCID = "0000-0003-1017-7574"))
   )

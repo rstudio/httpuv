@@ -63,7 +63,7 @@ local({
 local({
   # runStaticServer() in foreground with default port ----
 
-  if (isFALSE(is_port_available(7446))) { return(NULL) }
+  if (isFALSE(httpuv2:::is_port_available(7446))) { return(NULL) }
 
   r <- start_example_server(NULL)
   on.exit(
@@ -119,7 +119,7 @@ local({
 local({
   # runStaticServer() in background uses default port ----
 
-  if (isFALSE(is_port_available(7446))) { return(NULL) }
+  if (isFALSE(httpuv2:::is_port_available(7446))) { return(NULL) }
 
   s <- runStaticServer(path_example_site(), background = TRUE, browse = FALSE)
   on.exit(
@@ -135,7 +135,7 @@ local({
 local({
   # runStaticServer() in background uses default port or random port ----
 
-  if (isFALSE(is_port_available(7446))) { return(NULL) }
+  if (isFALSE(httpuv2:::is_port_available(7446))) { return(NULL) }
 
   s1 <- runStaticServer(path_example_site(), background = TRUE, browse = FALSE)
   on.exit(
