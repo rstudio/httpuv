@@ -1,9 +1,13 @@
+# tinytest sets the working directory to this file's directory before
+# sourcing it, so paths can be resolved with base R's file.path() instead of
+# testthat::test_path().
+test_path <- function(...) file.path(...)
+
 index_file_content <- raw_file_content(test_path("apps/content/index.html"))
 data_file_content <- raw_file_content(test_path("apps/content/data.txt"))
 subdir_index_file_content <- raw_file_content(test_path(
   "apps/content/subdir/index.html"
 ))
-index_file_1_content <- raw_file_content(test_path("apps/content_1/index.html"))
 
 local({
   # Basic static file serving ----
@@ -39,7 +43,7 @@ local({
   expect_equal(r_subdir$status_code, 200)
   expect_identical(r_subdir$content, subdir_index_file_content)
 
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(as.integer(h$`content-length`), length(index_file_content))
   expect_equal(as.integer(h$`content-length`), length(r$content))
   expect_identical(h$`content-type`, "text/html; charset=utf-8")
@@ -51,44 +55,44 @@ local({
 
   # Testing index for other paths
   r1 <- fetch(local_url("/1", s$getPort()), gzip = FALSE)
-  h1 <- parse_headers_list(r1$headers)
+  h1 <- curl::parse_headers_list(r1$headers)
   expect_identical(r$content, r1$content)
   expect_identical(h$`content-length`, h1$`content-length`)
   expect_identical(h$`content-type`, h1$`content-type`)
 
   r2 <- fetch(local_url("/1/", s$getPort()), gzip = FALSE)
-  h2 <- parse_headers_list(r2$headers)
+  h2 <- curl::parse_headers_list(r2$headers)
   expect_identical(r$content, r2$content)
   expect_identical(h$`content-length`, h2$`content-length`)
   expect_identical(h$`content-type`, h2$`content-type`)
 
   r3 <- fetch(local_url("/1/index.html", s$getPort()), gzip = FALSE)
-  h3 <- parse_headers_list(r3$headers)
+  h3 <- curl::parse_headers_list(r3$headers)
   expect_identical(r$content, r3$content)
   expect_identical(h$`content-length`, h3$`content-length`)
   expect_identical(h$`content-type`, h3$`content-type`)
 
   # Missing file (404)
   r <- fetch(local_url("/foo", s$getPort()), gzip = FALSE)
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 404)
   expect_identical(rawToChar(r$content), "404 Not Found\n")
   expect_equal(h$`content-length`, "14")
 
   # Missing directory in path (404)
   r <- fetch(local_url("/foo/bar", s$getPort()), gzip = FALSE)
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 404)
   expect_identical(rawToChar(r$content), "404 Not Found\n")
   expect_equal(h$`content-length`, "14")
 
   # MIME types for other files
   r <- fetch(local_url("/mtcars.csv", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(h$`content-type`, "text/csv")
 
   r <- fetch(local_url("/data.txt", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(h$`content-type`, "text/plain")
 })
 
@@ -118,7 +122,7 @@ local({
   on.exit(s$stop())
 
   r <- fetch(local_url("/", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 404)
   expect_identical(h$`test-code-path`, "R")
   expect_identical(rawToChar(r$content), "404 file not found: /")
@@ -208,33 +212,33 @@ local({
   on.exit(s$stop())
 
   r <- fetch(local_url("/default", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_identical(h$`content-type`, "text/html; charset=utf-8")
   expect_identical(h$`test-code-path`, "C++")
   expect_identical(r$content, index_file_content)
 
   r <- fetch(local_url("/override", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 404)
   expect_identical(h$`test-code-path`, "R")
   expect_identical(rawToChar(r$content), "404 file not found: /override")
 
   r <- fetch(local_url("/override/index.html", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_identical(h$`test-code-path`, "C++2")
   expect_identical(h$`content-type`, "text/html; charset=ISO-8859-1")
 
   r <- fetch(local_url("/unset", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_false("test-code-path" %in% names(h))
   expect_identical(h$`content-type`, "text/html")
   expect_identical(r$content, index_file_content)
 
   r <- fetch(local_url("/unset/index.html", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_false("test-code-path" %in% names(h))
   expect_identical(h$`content-type`, "text/html")
@@ -376,7 +380,7 @@ local({
   on.exit(s$stop())
 
   r <- fetch(local_url("/default", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 403)
   # This header doesn't get set. Should it?
   expect_false("test-code-path" %in% names(h))
@@ -384,9 +388,9 @@ local({
 
   r <- fetch(
     local_url("/default", s$getPort()),
-    handle_setheaders(new_handle(), "test-validation" = "aaa")
+    curl::handle_setheaders(curl::new_handle(), "test-validation" = "aaa")
   )
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_identical(h$`test-code-path`, "C++")
   expect_identical(r$content, index_file_content)
@@ -394,12 +398,12 @@ local({
   # Check case insensitive
   r <- fetch(
     local_url("/default", s$getPort()),
-    handle_setheaders(new_handle(), "tesT-ValidatioN" = "aaa")
+    curl::handle_setheaders(curl::new_handle(), "tesT-ValidatioN" = "aaa")
   )
   expect_equal(r$status_code, 200)
 
   r <- fetch(local_url("/unset", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_identical(h$`test-code-path`, "C++")
   expect_identical(r$content, index_file_content)
@@ -407,7 +411,7 @@ local({
   # When fallthrough=TRUE, the header validation is still checked before falling
   # through to the R code path.
   r <- fetch(local_url("/fallthrough/missingfile", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 403)
   # This header doesn't get set. Should it?
   expect_false("test-code-path" %in% names(h))
@@ -415,9 +419,9 @@ local({
 
   r <- fetch(
     local_url("/fallthrough/missingfile", s$getPort()),
-    handle_setheaders(new_handle(), "test-validation" = "aaa")
+    curl::handle_setheaders(curl::new_handle(), "test-validation" = "aaa")
   )
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_identical(h$`test-code-path`, "R")
   expect_identical(rawToChar(r$content), "200 OK\n")
@@ -452,7 +456,7 @@ local({
   # Replace with different static path and options
   s$setStaticPath(
     "/static" = staticPath(
-      test_path("apps/content_1"),
+      test_path("apps/content"),
       indexhtml = FALSE
     )
   )
@@ -462,7 +466,10 @@ local({
 
   r <- fetch(local_url("/static/index.html", s$getPort()))
   expect_equal(r$status_code, 200)
-  expect_identical(r$content, index_file_1_content)
+  expect_identical(
+    r$content,
+    raw_file_content(test_path("apps/content/index.html"))
+  )
 
   # Remove static path
   s$removeStaticPath("/static")
@@ -471,7 +478,7 @@ local({
 
   r <- fetch(local_url("/static", s$getPort()))
   expect_equal(r$status_code, 500)
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_identical(h$`test-code-path`, "R")
   expect_identical(rawToChar(r$content), "500 Internal Server Error\n")
 
@@ -526,9 +533,9 @@ local({
   expect_equal(r$status_code, 403)
   r <- fetch(
     local_url("/static", s$getPort()),
-    handle_setheaders(new_handle(), "test-validation" = "aaa")
+    curl::handle_setheaders(curl::new_handle(), "test-validation" = "aaa")
   )
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_identical(h$`test-headers`, "aaa")
 
@@ -538,7 +545,7 @@ local({
     validation = character()
   )
   r <- fetch(local_url("/static", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   expect_equal(r$status_code, 200)
   expect_false("test-headers" %in% h)
 })
@@ -712,19 +719,19 @@ local({
 
   # The GET results, for comparison to HEAD.
   r_get <- fetch(local_url("/static", s$getPort()), gzip = FALSE)
-  h_get <- parse_headers_list(r_get$headers)
+  h_get <- curl::parse_headers_list(r_get$headers)
 
   # HEAD is OK.
   # Note the weird interface for a HEAD request:
   # https://github.com/jeroen/curl/issues/24
   r <- fetch(
     local_url("/static", s$getPort()),
-    new_handle(nobody = TRUE),
+    curl::new_handle(nobody = TRUE),
     gzip = FALSE
   )
   expect_equal(r$status_code, 200)
   expect_true(length(r$content) == 0) # No message body for HEAD
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   # Headers should match GET request, except for date.
   expect_identical(
     h[setdiff(names(h), "date")],
@@ -734,13 +741,13 @@ local({
   # POST and PUT are not OK
   r <- fetch(
     local_url("/static", s$getPort()),
-    handle_setopt(new_handle(), customrequest = "POST")
+    curl::handle_setopt(curl::new_handle(), customrequest = "POST")
   )
   expect_equal(r$status_code, 400)
 
   r <- fetch(
     local_url("/static", s$getPort()),
-    handle_setopt(new_handle(), customrequest = "PUT")
+    curl::handle_setopt(curl::new_handle(), customrequest = "PUT")
   )
   expect_equal(r$status_code, 400)
 })
@@ -774,18 +781,18 @@ local({
 
   # First time retrieving: no Last-Modified header.
   r <- fetch(local_url("/mtcars.csv", s$getPort()))
-  h <- parse_headers_list(r$headers)
+  h <- curl::parse_headers_list(r$headers)
   http_mtime <- r$modified
   expect_equal(as.character(file_mtime), as.character(http_mtime))
 
   # Use the Last-Modified value in the If-Modified-Since header.
   r1 <- fetch(
     local_url("/mtcars.csv", s$getPort()),
-    handle_setheaders(new_handle(), "If-Modified-Since" = h$`last-modified`)
+    curl::handle_setheaders(curl::new_handle(), "If-Modified-Since" = h$`last-modified`)
   )
   expect_identical(r1$status_code, 304L)
   expect_true(length(r1$content) == 0)
-  h1 <- parse_headers_list(r1$headers)
+  h1 <- curl::parse_headers_list(r1$headers)
   # A 304 response should contain only the following headers (and must contain
   # them if the corresponding 200 response would have them):
   # Cache-Control, Content-Location, Date, ETag, Expires, Vary
@@ -801,8 +808,8 @@ local({
   # The mtime plus 1 second should result in a 304.
   r1 <- fetch(
     local_url("/mtcars.csv", s$getPort()),
-    handle_setheaders(
-      new_handle(),
+    curl::handle_setheaders(
+      curl::new_handle(),
       "If-Modified-Since" = http_date_string(file_mtime + 1)
     )
   )
@@ -811,13 +818,13 @@ local({
   # Last-Modified header minus 1 second should result in a regular 200 response.
   r1 <- fetch(
     local_url("/mtcars.csv", s$getPort()),
-    handle_setheaders(
-      new_handle(),
+    curl::handle_setheaders(
+      curl::new_handle(),
       "If-Modified-Since" = http_date_string(file_mtime - 1)
     )
   )
   expect_identical(r1$status_code, 200L)
-  h1 <- parse_headers_list(r1$headers)
+  h1 <- curl::parse_headers_list(r1$headers)
   expect_identical(h[setdiff(names(h), "date")], h1[setdiff(names(h1), "date")])
 
   # Malformed If-Modified-Since value should be ignored.
@@ -828,8 +835,8 @@ local({
   # instead of 304. Other platforms seem not to have this limitation.
   r1 <- fetch(
     local_url("/mtcars.csv", s$getPort()),
-    handle_setheaders(
-      new_handle(),
+    curl::handle_setheaders(
+      curl::new_handle(),
       "If-Modified-Since" = "Mon, 01 Jan 2038 12:00:00 GMT"
     )
   )
@@ -837,8 +844,8 @@ local({
   # Next, almost the same date, but slightly malformed, should result in 200.
   r1 <- fetch(
     local_url("/mtcars.csv", s$getPort()),
-    handle_setheaders(
-      new_handle(),
+    curl::handle_setheaders(
+      curl::new_handle(),
       "If-Modified-Since" = "Mon, 01 Jan 2038 12:100:00 GMT"
     )
   )

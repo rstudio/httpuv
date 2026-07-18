@@ -1,7 +1,6 @@
 # These tests are time-sensitive, which makes CRAN unhappy.
-skip_on_cran()
-skip_if_not_installed("curl")
-library(curl)
+if (Sys.getenv("HTTPUV2_FULL_TESTING") != "yes") { return(NULL) }
+if (!requireNamespace("curl")) { return(NULL) }
 
 path_example_site <- function(...) {
   system.file("example-static-site", ..., package = "httpuv")
@@ -64,7 +63,7 @@ local({
 local({
   # runStaticServer() in foreground with default port ----
 
-  skip_if_not(is_port_available(7446))
+  if (isFALSE(is_port_available(7446))) { return(NULL) }
 
   r <- start_example_server(NULL)
   on.exit(
@@ -120,7 +119,7 @@ local({
 local({
   # runStaticServer() in background uses default port ----
 
-  skip_if_not(is_port_available(7446))
+  if (isFALSE(is_port_available(7446))) { return(NULL) }
 
   s <- runStaticServer(path_example_site(), background = TRUE, browse = FALSE)
   on.exit(
@@ -136,7 +135,7 @@ local({
 local({
   # runStaticServer() in background uses default port or random port ----
 
-  skip_if_not(is_port_available(7446))
+  if (isFALSE(is_port_available(7446))) { return(NULL) }
 
   s1 <- runStaticServer(path_example_site(), background = TRUE, browse = FALSE)
   on.exit(
@@ -185,9 +184,11 @@ local({
 local({
   # runStaticServer() prints informative console messages ----
 
-  local_edition(3)
-
-  expect_snapshot(
+  # tinytest has no expect_snapshot(). message() writes to the "message"
+  # stream, so we capture it with capture.output(type = "message") and
+  # compare against a fixed expected value, after redacting the parts that
+  # vary between runs/machines (site path and port).
+  msgs <- capture.output(
     {
       s <- runStaticServer(
         path_example_site(),
@@ -196,8 +197,17 @@ local({
       )
       s$stop()
     },
-    transform = function(x) {
-      sub(path_example_site(), "/Users/user/path/to/site", x, fixed = TRUE)
-    }
+    type = "message"
+  )
+
+  msgs <- sub(path_example_site(), "/Users/user/path/to/site", msgs, fixed = TRUE)
+  msgs <- sub(":\\d+$", ":PORT", msgs)
+
+  expect_equal(
+    msgs,
+    c(
+      "Serving: '/Users/user/path/to/site'",
+      "View at: http://127.0.0.1:PORT"
+    )
   )
 })

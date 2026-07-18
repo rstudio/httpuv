@@ -30,10 +30,10 @@ port numbers smaller than 1024 require root privileges.}
     \item{\code{indexhtml}}{If an index.html file is present, should it be served up
 when the client requests the static path or any subdirectory?}
     \item{\code{fallthrough}}{With the default value, \code{FALSE}, if a request is made
-for a file that doesn't exist, then httpuv will immediately send a 404
+for a file that doesn't exist, then httpuv2 will immediately send a 404
 response from the background I/O thread, without needing to call back into
 the main R thread. This offers the best performance. If the value is
-\code{TRUE}, then instead of sending a 404 response, httpuv will call the
+\code{TRUE}, then instead of sending a 404 response, httpuv2 will call the
 application's \code{call} function, and allow it to handle the request.}
     \item{\code{html_charset}}{When HTML files are served, the value that will be
 provided for \code{charset} in the Content-Type header. For example, with
@@ -45,8 +45,8 @@ response.}
 validation supported is an exact string match of a header. For example, if
 \code{validation} is \code{'"abc" = "xyz"'}, then HTTP requests must have a
 header named \code{abc} (case-insensitive) with the value \code{xyz}
-(case-sensitive). If a request does not have a matching header, than httpuv
-will give a 403 Forbidden response. If the \code{character(0)} (the
+(case-sensitive). If a request does not have a matching header, than
+httpuv2 will give a 403 Forbidden response. If the \code{character(0)} (the
 default), then no validation check will be performed.}
   }}
 

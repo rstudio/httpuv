@@ -1,3 +1,5 @@
+source("helper-app.R")
+
 local({
   # Large HTTP header values are preserved ----
 
@@ -6,7 +8,7 @@ local({
   # This is a test for https://github.com/rstudio/httpuv/issues/275
   # When there is a very large header, it may span multiple TCP messages.
   # Previously, these headers would get truncated.
-  s <- httpuv::startServer(
+  s <- httpuv2::startServer(
     "0.0.0.0",
     randomPort(),
     list(
@@ -29,8 +31,8 @@ local({
   # to be 80*1024. A larger message would result in the server just closing the
   # connection.
   long_string <- paste0(rep(".", 80000), collapse = "")
-  h <- new_handle()
-  handle_setheaders(h, `test-header` = long_string)
+  h <- curl::new_handle()
+  curl::handle_setheaders(h, `test-header` = long_string)
 
   res <- fetch(local_url("/", s$getPort()), h)
   content <- rawToChar(res$content)
@@ -48,8 +50,8 @@ local({
 
   # The second test-header value is the long one, so it will be split across
   # multiple TCP messages.
-  h <- new_handle()
-  handle_setheaders(
+  h <- curl::new_handle()
+  curl::handle_setheaders(
     h,
     `test-header` = long_string_a,
     `test-header` = long_string_b
@@ -60,8 +62,8 @@ local({
 
   # The first test-header value is the long one, so it will be split across
   # multiple TCP messages.
-  h <- new_handle()
-  handle_setheaders(
+  h <- curl::new_handle()
+  curl::handle_setheaders(
     h,
     `test-header` = long_string_b,
     `test-header` = long_string_a
@@ -77,7 +79,7 @@ local({
   # Also for https://github.com/rstudio/httpuv/issues/275
   # This tests for field names that are split across messages.
   headers_received <- NULL
-  s <- httpuv::startServer(
+  s <- httpuv2::startServer(
     "0.0.0.0",
     randomPort(),
     list(
@@ -98,7 +100,7 @@ local({
   #  bbbbbb...bbbbbb: B
   # Variable names in R must be 10000 bytes or less, so we need several of them
   # to do this test.
-  h <- new_handle()
+  h <- curl::new_handle()
   values <- as.list(LETTERS[1:8])
   # Use 9900-byte field names (instead of 10000) because the Rook object makes
   # them longer by prepending "HTTP_".
@@ -108,7 +110,7 @@ local({
     ""
   )
   headers <- setNames(values, fields)
-  do.call(handle_setheaders, c(list(h), headers))
+  do.call(curl::handle_setheaders, c(list(h), headers))
 
   res <- fetch(local_url("/", s$getPort()), h)
   expect_true(all(fields %in% names(headers_received)))

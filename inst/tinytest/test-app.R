@@ -1,9 +1,11 @@
+source("helper-app.R")
+
 local({
   # Basic functionality ----
 
   if (!requireNamespace("curl", quietly = TRUE)) { return (NULL) }
 
-  s1 <- startServer(
+  s1 <- httpuv2::startServer(
     "127.0.0.1",
     randomPort(),
     list(
@@ -16,9 +18,10 @@ local({
       }
     )
   )
+
   expect_equal(length(listServers()), 1)
 
-  s2 <- startServer(
+  s2 <- httpuv2::startServer(
     "127.0.0.1",
     randomPort(),
     list(
@@ -42,8 +45,8 @@ local({
   expect_identical(rawToChar(r1$content), "server 1")
   expect_identical(rawToChar(r2$content), "server 2")
 
-  expect_identical(parse_headers_list(r1$headers)$`content-type`, "text/html")
-  expect_identical(parse_headers_list(r1$headers)$`content-length`, "8")
+  expect_identical(curl::parse_headers_list(r1$headers)$`content-type`, "text/html")
+  expect_identical(curl::parse_headers_list(r1$headers)$`content-length`, "8")
 
   s1$stop()
   expect_equal(length(listServers()), 1)
@@ -54,7 +57,7 @@ local({
 local({
   # Empty and NULL headers are OK ----
 
-  s <- startServer(
+  s <- httpuv2::startServer(
     "127.0.0.1",
     randomPort(),
     list(
@@ -99,7 +102,7 @@ local({
 local({
   # Content length depends on the presence of 'body' ----
 
-  s <- startServer(
+  s <- httpuv2::startServer(
     "127.0.0.1",
     randomPort(),
     list(
@@ -130,7 +133,7 @@ local({
 
   r1 <- fetch(local_url("/ok", s$getPort()), gzip = FALSE)
   # HEAD requests should not have a body.
-  r2 <- fetch(local_url("/ok", s$getPort()), new_handle(nobody = TRUE))
+  r2 <- fetch(local_url("/ok", s$getPort()), curl::new_handle(nobody = TRUE))
   r3 <- fetch(local_url("/nullbody", s$getPort()))
   r4 <- fetch(local_url("/nobody", s$getPort()))
 
@@ -144,9 +147,9 @@ local({
   expect_equal(length(r3$content), 0)
   expect_equal(length(r4$content), 0)
 
-  expect_identical(parse_headers_list(r1$headers)$`content-length`, "0")
+  expect_identical(curl::parse_headers_list(r1$headers)$`content-length`, "0")
   # HEAD requests *can* have a content-length, but they don't have to.
-  expect_identical(parse_headers_list(r2$headers)$`content-length`, NULL)
-  expect_identical(parse_headers_list(r3$headers)$`content-length`, NULL)
-  expect_identical(parse_headers_list(r4$headers)$`content-length`, NULL)
+  expect_identical(curl::parse_headers_list(r2$headers)$`content-length`, NULL)
+  expect_identical(curl::parse_headers_list(r3$headers)$`content-length`, NULL)
+  expect_identical(curl::parse_headers_list(r4$headers)$`content-length`, NULL)
 })

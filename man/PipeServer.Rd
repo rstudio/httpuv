@@ -58,7 +58,7 @@ server <- PipeServer$new("my_pipe", -1, app)
 \subsection{\code{PipeServer$new()}}{
   Initialize a new PipeServer object
 
-Create a new \code{PipeServer} object. \code{app} is an httpuv application
+Create a new \code{PipeServer} object. \code{app} is an httpuv2 application
 object as described in \code{\link[=startServer]{startServer()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
@@ -70,7 +70,7 @@ object as described in \code{\link[=startServer]{startServer()}}.
     \describe{
       \item{\code{name}}{The name of the named pipe to bind the server to.}
       \item{\code{mask}}{The mask for the named pipe. If NULL, it defaults to -1.}
-      \item{\code{app}}{An httpuv application object as described in
+      \item{\code{app}}{An httpuv2 application object as described in
 \code{\link[=startServer]{startServer()}}.}
       \item{\code{quiet}}{If TRUE, suppresses output from the server.}
     }

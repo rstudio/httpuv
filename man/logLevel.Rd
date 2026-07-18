@@ -18,7 +18,7 @@ If \code{level=NULL}, then this returns the current logging level. If
 level, from before it is set to the new value.
 }
 \description{
-The logging level for httpuv can be set to report differing levels of
+The logging level for httpuv2 can be set to report differing levels of
 information. Possible logging levels (from least to most information
 reported) are: \code{"OFF"}, \code{"ERROR"}, \code{"WARN"}, \code{"INFO"}, or
 \code{"DEBUG"}. The default level is \code{ERROR}.

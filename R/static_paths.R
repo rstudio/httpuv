@@ -123,10 +123,10 @@ format.staticPath <- function(x, ...) {
 #' @param indexhtml If an index.html file is present, should it be served up
 #'   when the client requests the static path or any subdirectory?
 #' @param fallthrough With the default value, `FALSE`, if a request is made
-#'   for a file that doesn't exist, then httpuv will immediately send a 404
+#'   for a file that doesn't exist, then httpuv2 will immediately send a 404
 #'   response from the background I/O thread, without needing to call back into
 #'   the main R thread. This offers the best performance. If the value is
-#'   `TRUE`, then instead of sending a 404 response, httpuv will call the
+#'   `TRUE`, then instead of sending a 404 response, httpuv2 will call the
 #'   application's `call` function, and allow it to handle the request.
 #' @param html_charset When HTML files are served, the value that will be
 #'   provided for `charset` in the Content-Type header. For example, with
@@ -139,8 +139,8 @@ format.staticPath <- function(x, ...) {
 #'   validation supported is an exact string match of a header. For example, if
 #'   `validation` is `'"abc" = "xyz"'`, then HTTP requests must have a
 #'   header named `abc` (case-insensitive) with the value `xyz`
-#'   (case-sensitive). If a request does not have a matching header, than httpuv
-#'   will give a 403 Forbidden response. If the `character(0)` (the
+#'   (case-sensitive). If a request does not have a matching header, than
+#'   httpuv2 will give a 403 Forbidden response. If the `character(0)` (the
 #'   default), then no validation check will be performed.
 #' @param exclude Should this path be excluded from static serving? (This is
 #'   only to be used internally, for [excludeStaticPath()].)

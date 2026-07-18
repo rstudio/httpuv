@@ -48,12 +48,15 @@ parse_ab_output <- function(p) {
 # Launch sample_app process and return process object
 start_app <- function(port) {
   outfile <- tempfile()
+  # Resolve the absolute path here (in the tinytest working directory) since
+  # the background process may not inherit the same cwd.
+  app_path <- file.path(getwd(), "sample_app.R")
   callr::r_bg(
-    function(app_port) {
-      source(testthat::test_path('sample_app.R'), local = TRUE)
+    function(app_port, app_path) {
+      source(app_path, local = TRUE)
       service(Inf)
     },
-    args = list(app_port = port),
+    args = list(app_port = port, app_path = app_path),
     stdout = outfile,
     stderr = outfile,
     supervise = TRUE

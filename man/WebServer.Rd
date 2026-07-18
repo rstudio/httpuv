@@ -58,7 +58,7 @@ server <- WebServer$new("127.0.0.1", 8080, app)
 \subsection{\code{WebServer$new()}}{
   Initialize a new WebServer object
 
-Create a new \code{WebServer} object. \code{app} is an httpuv application
+Create a new \code{WebServer} object. \code{app} is an httpuv2 application
 object as described in \code{\link[=startServer]{startServer()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
@@ -70,7 +70,7 @@ object as described in \code{\link[=startServer]{startServer()}}.
     \describe{
       \item{\code{host}}{The host name or IP address to bind the server to.}
       \item{\code{port}}{The port number to bind the server to.}
-      \item{\code{app}}{An httpuv application object as described in \code{\link[=startServer]{startServer()}}.}
+      \item{\code{app}}{An httpuv2 application object as described in \code{\link[=startServer]{startServer()}}.}
       \item{\code{quiet}}{If TRUE, suppresses output from the server.}
     }
     \if{html}{\out{</div>}}

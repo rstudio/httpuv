@@ -2,12 +2,12 @@
 # which is called often. We can't get the version at build time because the
 # package won't have been installed yet. Instead, we'll get it at run time and
 # cache it.
-httpuv_version <- local({
+httpuv2_version <- local({
   version <- NULL
 
   function() {
     if (is.null(version)) {
-      version <<- utils::packageVersion("httpuv")
+      version <<- utils::packageVersion("httpuv2")
     }
     version
   }
@@ -43,7 +43,7 @@ drop_duplicate_names <- function(x) {
 
 #' Get and set logging level
 #'
-#' The logging level for httpuv can be set to report differing levels of
+#' The logging level for httpuv2 can be set to report differing levels of
 #' information. Possible logging levels (from least to most information
 #' reported) are: `"OFF"`, `"ERROR"`, `"WARN"`, `"INFO"`, or
 #' `"DEBUG"`. The default level is `ERROR`.

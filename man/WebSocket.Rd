@@ -12,7 +12,7 @@ notifications when messages are received or the connection is closed.
 Note that this WebSocket class is different from the one provided by the
 package named websocket. This class is meant to be used on the server side,
 whereas the one in the websocket package is to be used as a client. The
-WebSocket class in httpuv has an older API than the one in the websocket
+WebSocket class in httpuv2 has an older API than the one in the websocket
 package.
 
 WebSocket objects should never be created directly. They are obtained by

@@ -7,7 +7,6 @@ local({
   if (!requireNamespace("websocket")) { return(NULL) }
 
   # Timing on CRAN build machines can be unreliable.
-  skip_on_cran()
   if (Sys.getenv("HTTPUV2_FULL_TESTING") != "yes") { return(NULL) }
 
   elapsed <- NULL

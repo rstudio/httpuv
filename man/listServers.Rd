@@ -2,10 +2,10 @@
 % Please edit documentation in R/server.R
 \name{listServers}
 \alias{listServers}
-\title{List all running httpuv servers}
+\title{List all running httpuv2 servers}
 \usage{
 listServers()
 }
 \description{
-This returns a list of all running httpuv server applications.
+This returns a list of all running httpuv2 server applications.
 }

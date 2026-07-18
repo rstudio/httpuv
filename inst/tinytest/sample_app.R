@@ -1,5 +1,8 @@
-library(httpuv)
-library(testthat)
+library(httpuv2)
+
+# The working directory is set by the caller (see test-traffic.R) before this
+# file is sourced, so a plain file.path() resolves paths correctly here.
+test_path <- function(...) file.path(...)
 
 content <- list(
   status = 200L,
