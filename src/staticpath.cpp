@@ -89,12 +89,12 @@ void StaticPathOptions::setOptions(const list &options) {
 
 list StaticPathOptions::asRObject() const {
   ASSERT_MAIN_THREAD()
-  writable::list obj = {"indexhtml"_nm = optional_wrap(indexhtml),
-                        "fallthrough"_nm = optional_wrap(fallthrough),
-                        "html_charset"_nm = optional_wrap(html_charset),
-                        "headers"_nm = optional_wrap(headers),
-                        "validation"_nm = optional_wrap(validation),
-                        "exclude"_nm = optional_wrap(exclude)};
+  writable::list obj{"indexhtml"_nm = optional_wrap(indexhtml),
+                     "fallthrough"_nm = optional_wrap(fallthrough),
+                     "html_charset"_nm = optional_wrap(html_charset),
+                     "headers"_nm = optional_wrap(headers),
+                     "validation"_nm = optional_wrap(validation),
+                     "exclude"_nm = optional_wrap(exclude)};
   obj.attr("class") = "staticPathOptions";
   return obj;
 }
@@ -171,7 +171,7 @@ StaticPath::StaticPath(const list &sp) {
 
 list StaticPath::asRObject() const {
   ASSERT_MAIN_THREAD()
-  writable::list obj = {"path"_nm = path, "options"_nm = options.asRObject()};
+  writable::list obj{"path"_nm = path, "options"_nm = options.asRObject()};
   obj.attr("class") = "staticPath";
   return obj;
 }

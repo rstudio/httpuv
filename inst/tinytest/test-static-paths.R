@@ -1,6 +1,3 @@
-skip_if_not_installed("curl")
-library(curl)
-
 index_file_content <- raw_file_content(test_path("apps/content/index.html"))
 data_file_content <- raw_file_content(test_path("apps/content/data.txt"))
 subdir_index_file_content <- raw_file_content(test_path(
@@ -8,7 +5,11 @@ subdir_index_file_content <- raw_file_content(test_path(
 ))
 index_file_1_content <- raw_file_content(test_path("apps/content_1/index.html"))
 
-test_that("Basic static file serving", {
+local({
+  # Basic static file serving ----
+
+  if (!requireNamespace("curl")) { return(NULL) }
+
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -91,8 +92,8 @@ test_that("Basic static file serving", {
   expect_equal(h$`content-type`, "text/plain")
 })
 
-
-test_that("Missing file fallthrough", {
+local({
+  # Missing file fallthrough ----
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -123,8 +124,8 @@ test_that("Missing file fallthrough", {
   expect_identical(rawToChar(r$content), "404 file not found: /")
 })
 
-
-test_that("Longer paths override shorter ones", {
+local({
+  # Longer paths override shorter ones ----
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -167,8 +168,8 @@ test_that("Longer paths override shorter ones", {
   expect_identical(r$content, index_file_content)
 })
 
-
-test_that("Options and option inheritance", {
+local({
+  # Options and option inheritance ----
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -240,8 +241,9 @@ test_that("Options and option inheritance", {
   expect_identical(r$content, index_file_content)
 })
 
+local({
+  # Excluding subpaths ----
 
-test_that("Excluding subpaths", {
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -326,7 +328,9 @@ test_that("Excluding subpaths", {
   expect_equal(r$status_code, 404)
 })
 
-test_that("Header validation", {
+local({
+  # Header validation ----
+
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -420,7 +424,9 @@ test_that("Header validation", {
 })
 
 
-test_that("Dynamically changing paths", {
+local({
+  # Dynamically changing paths ----
+
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -479,7 +485,9 @@ test_that("Dynamically changing paths", {
 })
 
 
-test_that("Dynamically changing options", {
+local({
+  # Dynamically changing options ----
+
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -535,8 +543,9 @@ test_that("Dynamically changing options", {
   expect_false("test-headers" %in% h)
 })
 
+local({
+  # Escaped characters in paths ----
 
-test_that("Escaped characters in paths", {
   # Need to create files with weird names
   static_dir <- tempfile("httpuv_test")
   dir.create(static_dir)
@@ -571,8 +580,9 @@ test_that("Escaped characters in paths", {
   expect_identical(rawToChar(r$content), "This is file content.\n")
 })
 
+local({
+  # Paths with .. ----
 
-test_that("Paths with ..", {
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -625,7 +635,9 @@ test_that("Paths with ..", {
   expect_false(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
 })
 
-test_that("Paths with backslash", {
+local({
+  # Paths with backslash ----
+
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -677,7 +689,9 @@ test_that("Paths with backslash", {
   expect_true(any(grepl("^Test-Code-Path: R$", res, ignore.case = TRUE)))
 })
 
-test_that("HEAD, POST, PUT requests", {
+local({
+  # HEAD, POST, PUT requests ----
+
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -732,7 +746,9 @@ test_that("HEAD, POST, PUT requests", {
 })
 
 
-test_that("Last-Modified and If-Modified-Since headers", {
+local({
+  # Last-Modified and If-Modified-Since headers ----
+
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -829,8 +845,9 @@ test_that("Last-Modified and If-Modified-Since headers", {
   expect_identical(r1$status_code, 200L)
 })
 
+local({
+  # Paths with non-ASCII characters ----
 
-test_that("Paths with non-ASCII characters", {
   # Workaround for https://github.com/rstudio/httpuv/issues/264
   # On Unix platforms that are using a non-UTF-8 locale, don't do these tests.
   testthat::skip_if(

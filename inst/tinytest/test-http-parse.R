@@ -1,7 +1,8 @@
-skip_if_not_installed("curl")
-library(curl)
+local({
+  # Large HTTP header values are preserved ----
 
-test_that("Large HTTP header values are preserved", {
+  if (!requireNamespace("curl")) { return(NULL) }
+
   # This is a test for https://github.com/rstudio/httpuv/issues/275
   # When there is a very large header, it may span multiple TCP messages.
   # Previously, these headers would get truncated.
@@ -70,8 +71,9 @@ test_that("Large HTTP header values are preserved", {
   expect_identical(content, paste0(long_string_b, ",", long_string_a))
 })
 
+local({
+  # Large HTTP header field names are preserved ----
 
-test_that("Large HTTP header field names are preserved", {
   # Also for https://github.com/rstudio/httpuv/issues/275
   # This tests for field names that are split across messages.
   headers_received <- NULL

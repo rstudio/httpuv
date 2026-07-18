@@ -1,4 +1,6 @@
-test_that("encodeURI and encodeURIComponent", {
+local({
+  # encodeURI and encodeURIComponent ----
+
   # "abc \ue5 \u4e2d" is identical to "abc å 中" when the system's encoding is
   # UTF-8. However, the former is always encoded as UTF-8, while the latter will
   # be encoded using the system's native encoding.
@@ -69,8 +71,9 @@ test_that("encodeURI and encodeURIComponent", {
   expect_identical(encodeURIComponent(latin1_str), "%C3%A5")
 })
 
-
-test_that("ipFamily works correctly", {
+local({
+  # ipFamily works correctly ----
+  
   expect_identical(ipFamily("127.0.0.1"), 4L)
   expect_identical(ipFamily("0.0.0.0"), 4L)
   expect_identical(ipFamily("192.168.0.1"), 4L)

@@ -13,12 +13,12 @@
 #include <unistd.h>
 #include <vector>
 
-#include "cpp11.hpp"
+#include "cpp4r.hpp"
 
-using namespace cpp11;
+using namespace cpp4r;
 
 // A callback for deleting objects on the main thread using later(). This is
-// needed when the object is a cpp11 object or contains one, because deleting
+// needed when the object is a cpp4r object or contains one, because deleting
 // such objects invoke R's memory management functions.
 template <typename T> void deleter_main(void *obj) {
   ASSERT_MAIN_THREAD()

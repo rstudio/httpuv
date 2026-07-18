@@ -148,7 +148,7 @@ rookCall <- function(func, req, data = NULL, dataLength = -1) {
   }
 
   if (is.promise(response)) {
-    response %...>% prepare_response %...!% on_error
+    then(response, onFulfilled = prepare_response, onRejected = on_error)
   } else {
     tryCatch(prepare_response(response), error = on_error)
   }
@@ -249,7 +249,7 @@ AppWrapper <- R6Class(
 
       if (is.promise(resp)) {
         # Slower path if resp is a promise
-        resp <- resp %...>% invokeCppCallback(., cpp_callback)
+        resp <- then(resp, function(value) invokeCppCallback(value, cpp_callback))
         finally(resp, clean_up)
       } else {
         # Fast path if resp is a regular value

@@ -75,8 +75,9 @@ start_ab <- function(port, path, n = 400, concurrent = 100) {
   )
 }
 
+local({
+  # Basic traffic test ----
 
-test_that("Basic traffic test", {
   skip_if_not_possible()
   port <- randomPort()
   p <- start_app(port)
@@ -93,7 +94,9 @@ test_that("Basic traffic test", {
   bench$kill()
 })
 
-test_that("Two concurrent", {
+local({
+  # Two concurrent ----
+
   skip_if_not_possible()
   port <- randomPort()
   p <- start_app(port)
@@ -119,8 +122,9 @@ test_that("Two concurrent", {
   bencha$kill()
 })
 
+local({
+  # /header /sync endpoints ----
 
-test_that("/header /sync endpoints", {
   skip_if_not_possible()
   port <- randomPort()
   p <- start_app(port)
@@ -147,7 +151,9 @@ test_that("/header /sync endpoints", {
   bencha$kill()
 })
 
-test_that("/header /async endpoints", {
+local({
+  # /header /async endpoints ----
+
   skip_if_not_possible()
   port <- randomPort()
   p <- start_app(port)
@@ -174,8 +180,9 @@ test_that("/header /async endpoints", {
   bencha$kill()
 })
 
+local({
+  # /header /async-error endpoints
 
-test_that("/header /async-error endpoints", {
   skip_if_not_possible()
   port <- randomPort()
   p <- start_app(port)
@@ -202,8 +209,9 @@ test_that("/header /async-error endpoints", {
   bencha$kill()
 })
 
+local({
+  # /async /async-error endpoints ----
 
-test_that("/async /async-error endpoints", {
   skip_if_not_possible()
   port <- randomPort()
   p <- start_app(port)
@@ -230,8 +238,9 @@ test_that("/async /async-error endpoints", {
   bencha$kill()
 })
 
+local({
+  # /body-error /async-error endpoints ----
 
-test_that("/body-error /async-error endpoints", {
   skip_if_not_possible()
   port <- randomPort()
   p <- start_app(port)
@@ -258,8 +267,9 @@ test_that("/body-error /async-error endpoints", {
   bencha$kill()
 })
 
+local({
+  # static paths ----
 
-test_that("static paths", {
   skip_if_not_possible()
   port <- randomPort()
   p <- start_app(port)

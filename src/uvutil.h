@@ -8,9 +8,9 @@
 #include <uv.h>
 #include <vector>
 
-#include "cpp11.hpp"
+#include "cpp4r.hpp"
 
-using namespace cpp11;
+using namespace cpp4r;
 
 inline uv_handle_t *toHandle(uv_timer_t *timer) { return (uv_handle_t *)timer; }
 inline uv_handle_t *toHandle(uv_tcp_t *tcp) { return (uv_handle_t *)tcp; }

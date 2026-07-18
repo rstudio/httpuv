@@ -1,11 +1,15 @@
 # Regression test of
 # https://github.com/rstudio/httpuv/pull/219
 
-skip_if_not_installed("websocket")
+local({
+  # a close message with no payload is processed ----
 
-test_that("a close message with no payload is processed", {
+  if (!requireNamespace("websocket")) { return(NULL) }
+
   # Timing on CRAN build machines can be unreliable.
   skip_on_cran()
+  if (Sys.getenv("HTTPUV2_FULL_TESTING") != "yes") { return(NULL) }
+
   elapsed <- NULL
   client_on_open_called <- FALSE
 
@@ -27,7 +31,7 @@ test_that("a close message with no payload is processed", {
 
   on.exit(srv$stop())
 
-  # "Unnecessary" braces here to prevent `later` from attempting to
+  # "Unnecessary" braces here to prevent `later2` from attempting to
   # run callbacks if this test is pasted at the console
   {
     ws_client <- websocket::WebSocket$new(sprintf(
@@ -49,10 +53,10 @@ test_that("a close message with no payload is processed", {
     if (loop_elapsed > 10) {
       stop("run loop timed out")
     }
-    later::run_now(0.5)
+    later2::run_now(0.5)
   }
 
   # Run ws$onClose
-  later::run_now(0.5)
+  later2::run_now(0.5)
   expect_true(elapsed < 1)
 })

@@ -1,5 +1,4 @@
 library(httpuv)
-library(promises)
 library(testthat)
 
 content <- list(
@@ -43,16 +42,16 @@ app_handle <- startServer(
       } else if (req$PATH_INFO == "/sync-error") {
         stop("Error in app (sync)")
       } else if (req$PATH_INFO == "/async") {
-        promise(function(resolve, reject) {
+        later2::promise(function(resolve, reject) {
           resolve(content)
         })
       } else if (req$PATH_INFO == "/async-delay") {
-        promise(function(resolve, reject) {
+        later2::promise(function(resolve, reject) {
           Sys.sleep(5)
           resolve(content)
         })
       } else if (req$PATH_INFO == "/async-error") {
-        promise(function(resolve, reject) {
+        later2::promise(function(resolve, reject) {
           stop("Error in app (async)")
         })
       } else {

@@ -31,7 +31,7 @@ server <- WebServer$new("127.0.0.1", 8080, app)
 }
 \keyword{internal}
 \section{Super class}{
-\code{\link[httpuv:Server]{Server}} -> \code{WebServer}
+\code{\link[httpuv2:Server]{Server}} -> \code{WebServer}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -43,13 +43,13 @@ server <- WebServer$new("127.0.0.1", 8080, app)
 }
 \if{html}{\out{<details><summary>Inherited methods</summary>
 <ul>
-  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPathOptions"><a href='../../httpuv/html/Server.html#method-Server-getStaticPathOptions'><code>Server$getStaticPathOptions()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="getStaticPaths"><a href='../../httpuv/html/Server.html#method-Server-getStaticPaths'><code>Server$getStaticPaths()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="isRunning"><a href='../../httpuv/html/Server.html#method-Server-isRunning'><code>Server$isRunning()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="removeStaticPath"><a href='../../httpuv/html/Server.html#method-Server-removeStaticPath'><code>Server$removeStaticPath()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPath"><a href='../../httpuv/html/Server.html#method-Server-setStaticPath'><code>Server$setStaticPath()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="setStaticPathOption"><a href='../../httpuv/html/Server.html#method-Server-setStaticPathOption'><code>Server$setStaticPathOption()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="httpuv" data-topic="Server" data-id="stop"><a href='../../httpuv/html/Server.html#method-Server-stop'><code>Server$stop()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv2" data-topic="Server" data-id="getStaticPathOptions"><a href='../../httpuv2/html/Server.html#method-Server-getStaticPathOptions'><code>Server$getStaticPathOptions()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv2" data-topic="Server" data-id="getStaticPaths"><a href='../../httpuv2/html/Server.html#method-Server-getStaticPaths'><code>Server$getStaticPaths()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv2" data-topic="Server" data-id="isRunning"><a href='../../httpuv2/html/Server.html#method-Server-isRunning'><code>Server$isRunning()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv2" data-topic="Server" data-id="removeStaticPath"><a href='../../httpuv2/html/Server.html#method-Server-removeStaticPath'><code>Server$removeStaticPath()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv2" data-topic="Server" data-id="setStaticPath"><a href='../../httpuv2/html/Server.html#method-Server-setStaticPath'><code>Server$setStaticPath()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv2" data-topic="Server" data-id="setStaticPathOption"><a href='../../httpuv2/html/Server.html#method-Server-setStaticPathOption'><code>Server$setStaticPathOption()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="httpuv2" data-topic="Server" data-id="stop"><a href='../../httpuv2/html/Server.html#method-Server-stop'><code>Server$stop()</code></a></span></li>
 </ul>
 </details>}}
 \if{html}{\out{<hr>}}

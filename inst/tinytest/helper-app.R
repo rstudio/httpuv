@@ -1,13 +1,10 @@
-library(promises)
-
-
 curl_fetch_async <- function(
   url,
   pool = NULL,
   data = NULL,
   handle = curl::new_handle()
 ) {
-  p <- promises::promise(function(resolve, reject) {
+  p <- later2::promise(function(resolve, reject) {
     curl::curl_fetch_multi(
       url,
       done = resolve,
@@ -22,15 +19,14 @@ curl_fetch_async <- function(
   poll <- function() {
     if (!finished) {
       curl::multi_run(timeout = 0, poll = TRUE, pool = pool)
-      later::later(poll, 0.01)
+      later2::later(poll, 0.01)
     }
   }
   poll()
 
-  p %>%
-    finally(function() {
-      finished <<- TRUE
-    })
+  later2::finally(p, function() {
+    finished <<- TRUE
+  })
 }
 
 
@@ -41,7 +37,7 @@ http_request_con_async <- function(request, host, port) {
   reject_fun <- NULL
   con <- NULL
 
-  p <- promises::promise(function(resolve, reject) {
+  p <- later2::promise(function(resolve, reject) {
     resolve_fun <<- resolve
     reject_fun <<- reject
     con <<- socketConnection(host, port)
@@ -55,21 +51,20 @@ http_request_con_async <- function(request, host, port) {
     if (length(result) > 0) {
       resolve_fun(result)
     } else {
-      later::later(poll, 0.01)
+      later2::later(poll, 0.01)
     }
   }
   poll()
 
-  p %>%
-    finally(function() {
-      close(con)
-    })
+  later2::finally(p, function() {
+    close(con)
+  })
 }
 
 
 wait_for_it <- function() {
-  while (!later::loop_empty()) {
-    later::run_now()
+  while (!later2::loop_empty()) {
+    later2::run_now()
   }
 }
 
@@ -79,9 +74,11 @@ wait_for_it <- function() {
 extract <- function(promise) {
   promise_value <- NULL
   error <- NULL
-  promise %...>%
-    (function(value) promise_value <<- value) %...!%
-    (function(reason) error <<- reason)
+  later2::then(
+    promise,
+    onFulfilled = function(value) promise_value <<- value,
+    onRejected = function(reason) error <<- reason
+  )
 
   wait_for_it()
   if (!is.null(error)) {

@@ -11,5 +11,5 @@ void invoke_callback(void *data) {
 // Schedule a std::function<void(void)> to be invoked with later().
 void invoke_later(std::function<void(void)> f, double secs) {
   StdFunctionCallback *b_fun = new StdFunctionCallback(f);
-  later::later(invoke_callback, (void *)b_fun, secs);
+  later2::later(invoke_callback, (void *)b_fun, secs);
 }

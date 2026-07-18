@@ -45,7 +45,9 @@ start_example_server <- function(port) {
   r
 }
 
-test_that("runStaticServer() in foreground with custom port", {
+local({
+  # runStaticServer() in foreground with custom port ----
+
   port <- randomPort()
 
   r <- start_example_server(port)
@@ -59,7 +61,9 @@ test_that("runStaticServer() in foreground with custom port", {
   expect_example_site(port)
 })
 
-test_that("runStaticServer() in foreground with default port", {
+local({
+  # runStaticServer() in foreground with default port ----
+
   skip_if_not(is_port_available(7446))
 
   r <- start_example_server(NULL)
@@ -73,7 +77,9 @@ test_that("runStaticServer() in foreground with default port", {
   expect_example_site(7446)
 })
 
-test_that("runStaticServer() throws an error for invalid ports", {
+local({
+  # runStaticServer() throws an error for invalid ports ----
+
   on.exit({
     stopAllServers()
   }) # in case of a test failure
@@ -92,7 +98,9 @@ test_that("runStaticServer() throws an error for invalid ports", {
   )
 })
 
-test_that("runStaticServer() throws an error if the requested port is used", {
+local({
+  # runStaticServer() throws an error if the requested port is used ----
+
   on.exit({
     stopAllServers()
   }) # in case of a test failure
@@ -109,7 +117,9 @@ test_that("runStaticServer() throws an error if the requested port is used", {
   )
 })
 
-test_that("runStaticServer() in background uses default port", {
+local({
+  # runStaticServer() in background uses default port ----
+
   skip_if_not(is_port_available(7446))
 
   s <- runStaticServer(path_example_site(), background = TRUE, browse = FALSE)
@@ -123,7 +133,9 @@ test_that("runStaticServer() in background uses default port", {
   expect_example_site(7446)
 })
 
-test_that("runStaticServer() in background uses default port or random port", {
+local({
+  # runStaticServer() in background uses default port or random port ----
+
   skip_if_not(is_port_available(7446))
 
   s1 <- runStaticServer(path_example_site(), background = TRUE, browse = FALSE)
@@ -146,7 +158,9 @@ test_that("runStaticServer() in background uses default port or random port", {
   expect_example_site(s2$getPort())
 })
 
-test_that("runStaticServer() in background errors if requested port is in use", {
+local({
+  # runStaticServer() in background errors if requested port is in use ----
+
   s1 <- runStaticServer(path_example_site(), background = TRUE, browse = FALSE)
   on.exit(
     {
@@ -168,7 +182,9 @@ test_that("runStaticServer() in background errors if requested port is in use", 
   })
 })
 
-test_that("runStaticServer() prints informative console messages", {
+local({
+  # runStaticServer() prints informative console messages ----
+
   local_edition(3)
 
   expect_snapshot(

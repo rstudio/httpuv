@@ -1,5 +1,5 @@
 Type: Package
-Package: httpuv
+Package: httpuv2
 Title: HTTP and WebSocket Server Library
 Version: 1.6.16.9000
 Authors@R: c(
@@ -55,37 +55,28 @@ Description: Provides low-level socket and protocol support for handling
     libraries, both of which were developed by Joyent, Inc. (See LICENSE
     file for libuv and http-parser license information.)
 License: GPL (>= 2) | file LICENSE
-URL: https://rstudio.github.io/httpuv/, https://github.com/rstudio/httpuv
+URL: https://rstudio.github.io/httpuv/,
+        https://github.com/rstudio/httpuv
 BugReports: https://github.com/rstudio/httpuv/issues
-Depends:
+Depends: 
     R (>= 2.15.1)
-Imports:
-    later (>= 0.8.0),
-    promises,
+Imports: 
+    later2,
     R6,
     utils
-Suggests:
+Suggests: 
     callr,
     curl,
     jsonlite,
     testthat (>= 3.0.0),
-    websocket
-LinkingTo:
-    later,
-    cpp11
+    websocket, tinytest
+LinkingTo: cpp4r, later2
 Config/Needs/website: tidyverse/tidytemplate
 Config/testthat/edition: 3
 Config/usethis/last-upkeep: 2025-07-01
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 SystemRequirements: GNU make, zlib
-Collate:
-    'cpp11.R'
-    'httpuv-package.R'
-    'httpuv.R'
-    'random_port.R'
-    'server.R'
-    'staticServer.R'
-    'static_paths.R'
-    'utils.R'
+Collate: 'cpp4r.R' 'httpuv.R' 'httpuv2-package.R' 'random_port.R'
+        'server.R' 'staticServer.R' 'static_paths.R' 'utils.R'
 Config/roxygen2/version: 8.0.0

@@ -7,9 +7,9 @@
 #include <map>
 #include <string>
 
-#include "cpp11.hpp"
+#include "cpp4r.hpp"
 
-using namespace cpp11;
+using namespace cpp4r;
 
 class StaticPathOptions {
 public:

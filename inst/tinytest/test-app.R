@@ -1,7 +1,8 @@
-skip_if_not_installed("curl")
-library(curl)
+local({
+  # Basic functionality ----
 
-test_that("Basic functionality", {
+  if (!requireNamespace("curl", quietly = TRUE)) { return (NULL) }
+
   s1 <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -50,8 +51,9 @@ test_that("Basic functionality", {
   expect_equal(length(listServers()), 0)
 })
 
+local({
+  # Empty and NULL headers are OK ----
 
-test_that("Empty and NULL headers are OK", {
   s <- startServer(
     "127.0.0.1",
     randomPort(),
@@ -94,8 +96,9 @@ test_that("Empty and NULL headers are OK", {
   expect_identical(r$content, raw())
 })
 
+local({
+  # Content length depends on the presence of 'body' ----
 
-test_that("Content length depends on the presence of 'body'", {
   s <- startServer(
     "127.0.0.1",
     randomPort(),

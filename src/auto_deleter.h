@@ -5,7 +5,7 @@
 #include "thread.h"
 #include "utils.h"
 #include <functional>
-#include <later_api.h>
+#include <later2_api.h>
 
 extern CallbackQueue *background_queue;
 
@@ -23,7 +23,7 @@ template <typename T> void auto_deleter_main(void *obj) {
     }
 
   } else if (is_background_thread()) {
-    later::later(auto_deleter_main<T>, obj, 0);
+    later2::later(auto_deleter_main<T>, obj, 0);
 
   } else {
     debug_log("Can't detect correct thread for auto_deleter_main.", LOG_ERROR);
