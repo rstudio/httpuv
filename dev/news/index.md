@@ -2,6 +2,9 @@
 
 ## httpuv (development version)
 
+- The httpuv package is now licensed under the MIT License.
+  ([\#418](https://github.com/rstudio/httpuv/issues/418))
+
 - Fixed [\#439](https://github.com/rstudio/httpuv/issues/439): Multiple
   `Cookie` request headers are now combined with `"; "` instead of
   `","`, as required by RFC 6265 (thanks to
