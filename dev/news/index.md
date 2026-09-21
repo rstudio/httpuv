@@ -11,6 +11,11 @@
   [@andyquinterom](https://github.com/andyquinterom),
   [\#440](https://github.com/rstudio/httpuv/issues/440)).
 
+- Updated stale URLs in the documentation and comments (thanks to
+  [@vikram-rawat](https://github.com/vikram-rawat),
+  [\#286](https://github.com/rstudio/httpuv/issues/286),
+  [\#444](https://github.com/rstudio/httpuv/issues/444)).
+
 ## httpuv 1.6.17
 
 CRAN release: 2026-03-18

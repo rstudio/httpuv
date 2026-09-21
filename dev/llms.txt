@@ -31,7 +31,7 @@ pak::pak("rstudio/httpuv")
 
 Since httpuv contains C code, you’ll need to make sure you’re set up to
 install packages with compiled code. Follow the instructions at
-<http://www.rstudio.com/ide/docs/packages/prerequisites>
+<https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites>
 
 httpuv may optionally be built using a `libuv` system package, which you
 can install prior to installing the R package. It goes by different

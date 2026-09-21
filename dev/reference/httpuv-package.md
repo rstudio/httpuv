@@ -6,7 +6,7 @@ HTTP and WebSocket server
 
 Allows R code to listen for and interact with HTTP and WebSocket
 clients, so you can serve web traffic directly out of your R process.
-Implementation is based on [libuv](https://github.com/joyent/libuv) and
+Implementation is based on [libuv](https://github.com/libuv/libuv) and
 [http-parser](https://github.com/nodejs/http-parser).
 
 This is a low-level library that provides little more than network I/O

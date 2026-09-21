@@ -63,7 +63,7 @@
 <span></span>
 <span><span class="co"># or if you want to test the development version here</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"rstudio/httpuv"</span><span class="op">)</span></span></code></pre></div>
-<p>Since httpuv contains C code, you’ll need to make sure you’re set up to install packages with compiled code. Follow the instructions at <a href="http://www.rstudio.com/ide/docs/packages/prerequisites" class="external-link uri">http://www.rstudio.com/ide/docs/packages/prerequisites</a></p>
+<p>Since httpuv contains C code, you’ll need to make sure you’re set up to install packages with compiled code. Follow the instructions at <a href="https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites" class="external-link uri">https://support.posit.co/hc/en-us/articles/200486498-Package-Development-Prerequisites</a></p>
 <p>httpuv may optionally be built using a <code>libuv</code> system package, which you can install prior to installing the R package. It goes by different names on different package managers: <code>libuv1-dev</code> (deb), <code>libuv-devel</code> (rpm), <code>libuv</code> (brew). Version 1.43 or greater is required. If <code>libuv</code> is not found on the system, it will be built from source along with the R package.</p>
 </div>
 <div class="section level2">
