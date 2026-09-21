@@ -94,7 +94,7 @@ jobs:
 
   # Single stable context to mark as a required status check on `main`.
   # Matrix job names are not stable enough to require individually.
-  checks:
+  done:
     if: always()
     needs: [website, routine, R-CMD-check, system-libuv]
     runs-on: ubuntu-latest
