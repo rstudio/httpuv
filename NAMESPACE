@@ -34,10 +34,12 @@ export(stopServer)
 importFrom(R6,R6Class)
 importFrom(Rcpp,evalCpp)
 importFrom(later,run_now)
-importFrom(promises,"%...!%")
-importFrom(promises,"%...>%")
-importFrom(promises,finally)
-importFrom(promises,is.promise)
-importFrom(promises,promise)
-importFrom(promises,then)
+importFrom(promises,
+  "%...!%",
+  "%...>%",
+  finally,
+  is.promise,
+  promise,
+  then
+)
 useDynLib(httpuv, .registration = TRUE)

@@ -11,7 +11,7 @@ be instantiated.
 \examples{
 
 ## ------------------------------------------------
-## Method `Server$setStaticPath`
+## Method `Server$setStaticPath()`
 ## ------------------------------------------------
 
 \dontrun{
@@ -25,7 +25,7 @@ server$setStaticPath(
 }
 
 ## ------------------------------------------------
-## Method `Server$removeStaticPath`
+## Method `Server$removeStaticPath()`
 ## ------------------------------------------------
 
 \dontrun{
@@ -46,78 +46,83 @@ server$removeStaticPath("staticPath1")
 \keyword{internal}
 \section{Methods}{
 \subsection{Public methods}{
-\itemize{
-\item \href{#method-Server-stop}{\code{Server$stop()}}
-\item \href{#method-Server-isRunning}{\code{Server$isRunning()}}
-\item \href{#method-Server-getStaticPaths}{\code{Server$getStaticPaths()}}
-\item \href{#method-Server-setStaticPath}{\code{Server$setStaticPath()}}
-\item \href{#method-Server-removeStaticPath}{\code{Server$removeStaticPath()}}
-\item \href{#method-Server-getStaticPathOptions}{\code{Server$getStaticPathOptions()}}
-\item \href{#method-Server-setStaticPathOption}{\code{Server$setStaticPathOption()}}
-}
+  \itemize{
+    \item \href{#method-Server-stop}{\code{Server$stop()}}
+    \item \href{#method-Server-isRunning}{\code{Server$isRunning()}}
+    \item \href{#method-Server-getStaticPaths}{\code{Server$getStaticPaths()}}
+    \item \href{#method-Server-setStaticPath}{\code{Server$setStaticPath()}}
+    \item \href{#method-Server-removeStaticPath}{\code{Server$removeStaticPath()}}
+    \item \href{#method-Server-getStaticPathOptions}{\code{Server$getStaticPathOptions()}}
+    \item \href{#method-Server-setStaticPathOption}{\code{Server$setStaticPathOption()}}
+  }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Server-stop"></a>}}
 \if{latex}{\out{\hypertarget{method-Server-stop}{}}}
-\subsection{Method \code{stop()}}{
-Stop a running server
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Server$stop()}\if{html}{\out{</div>}}
+\subsection{\code{Server$stop()}}{
+  Stop a running server
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Server$stop()}
+    \if{html}{\out{</div>}}
+  }
 }
 
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Server-isRunning"></a>}}
 \if{latex}{\out{\hypertarget{method-Server-isRunning}{}}}
-\subsection{Method \code{isRunning()}}{
-Check if the server is running
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Server$isRunning()}\if{html}{\out{</div>}}
+\subsection{\code{Server$isRunning()}}{
+  Check if the server is running
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Server$isRunning()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    TRUE if the server is running, FALSE otherwise.
+  }
 }
 
-\subsection{Returns}{
-TRUE if the server is running, FALSE otherwise.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Server-getStaticPaths"></a>}}
 \if{latex}{\out{\hypertarget{method-Server-getStaticPaths}{}}}
-\subsection{Method \code{getStaticPaths()}}{
-Get the static paths for the server
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Server$getStaticPaths()}\if{html}{\out{</div>}}
+\subsection{\code{Server$getStaticPaths()}}{
+  Get the static paths for the server
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Server$getStaticPaths()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A list of \code{\link[=staticPath]{staticPath()}} objects.
+  }
 }
 
-\subsection{Returns}{
-A list of \code{\link[=staticPath]{staticPath()}} objects.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Server-setStaticPath"></a>}}
 \if{latex}{\out{\hypertarget{method-Server-setStaticPath}{}}}
-\subsection{Method \code{setStaticPath()}}{
-Set a static path for the server
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Server$setStaticPath(..., .list = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{...}}{Named arguments where each name is the name of the static path
+\subsection{\code{Server$setStaticPath()}}{
+  Set a static path for the server
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Server$setStaticPath(..., .list = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Named arguments where each name is the name of the static path
 and the value is the path to the directory to serve. If there already
 exists a static path with the same name, it will be replaced.}
-
-\item{\code{.list}}{A named list where each name is the name of the static path
+      \item{\code{.list}}{A named list where each name is the name of the static path
 and the value is the path to the directory to serve. If there already
 exists a static path with the same name, it will be replaced.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-# Create a server
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Examples}{
+    \if{html}{\out{<div class="r example copy">}}
+    \preformatted{# Create a server
 server <- WebServer$new("127.0.0.1", 8080, app = my_app)
 #' # Set a static path
 server$setStaticPath(
@@ -125,36 +130,34 @@ server$setStaticPath(
   staticPath2 = "another/path/to/static/files"
 )
 }
+    \if{html}{\out{</div>}}
+  }
 }
-\if{html}{\out{</div>}}
 
-}
-
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Server-removeStaticPath"></a>}}
 \if{latex}{\out{\hypertarget{method-Server-removeStaticPath}{}}}
-\subsection{Method \code{removeStaticPath()}}{
-Remove a static path
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Server$removeStaticPath(path)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{path}}{The name of the static path to remove.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-An invisible NULL if the server is running, otherwise it does
+\subsection{\code{Server$removeStaticPath()}}{
+  Remove a static path
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Server$removeStaticPath(path)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{path}}{The name of the static path to remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    An invisible NULL if the server is running, otherwise it does
 nothing.
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
-# Create a server
+  }
+  \subsection{Examples}{
+    \if{html}{\out{<div class="r example copy">}}
+    \preformatted{# Create a server
 server <- WebServer$new("127.0.0.1", 8080, app = my_app)
 # Set a static path
 server$setStaticPath(
@@ -164,50 +167,51 @@ server$setStaticPath(
 # Remove a static path
 server$removeStaticPath("staticPath1")
 }
+    \if{html}{\out{</div>}}
+  }
 }
-\if{html}{\out{</div>}}
 
-}
-
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Server-getStaticPathOptions"></a>}}
 \if{latex}{\out{\hypertarget{method-Server-getStaticPathOptions}{}}}
-\subsection{Method \code{getStaticPathOptions()}}{
-Get the static path options for the server
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Server$getStaticPathOptions()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-A list of default \code{staticPathOptions} for the current server.
+\subsection{\code{Server$getStaticPathOptions()}}{
+  Get the static path options for the server
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Server$getStaticPathOptions()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A list of default \code{staticPathOptions} for the current server.
 Each static path will use these options by default, but they can be
 overridden for each static path.
+  }
 }
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Server-setStaticPathOption"></a>}}
 \if{latex}{\out{\hypertarget{method-Server-setStaticPathOption}{}}}
-\subsection{Method \code{setStaticPathOption()}}{
-Set one or more static path options
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Server$setStaticPathOption(..., .list = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{...}}{Named arguments where each name is the name of the static path
+\subsection{\code{Server$setStaticPathOption()}}{
+  Set one or more static path options
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Server$setStaticPathOption(..., .list = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Named arguments where each name is the name of the static path
 option and the value is the value to set for that option.}
-
-\item{\code{.list}}{A named list where each name is the name of the static path
+      \item{\code{.list}}{A named list where each name is the name of the static path
 option and the value is the value to set for that option.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-An invisible NULL if the server is running, otherwise it does
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    An invisible NULL if the server is running, otherwise it does
 nothing.
+  }
 }
-}
+
 }
