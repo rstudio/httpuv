@@ -2,6 +2,10 @@
 
 ## httpuv (development version)
 
+## httpuv 1.6.17
+
+CRAN release: 2026-03-18
+
 - Closed [\#426](https://github.com/rstudio/httpuv/issues/426): Uses
   native symbol registration for calls into compiled code, resulting in
   performance gains from not having to perform a lookup on each call.

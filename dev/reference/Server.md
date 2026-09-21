@@ -32,7 +32,7 @@ and
 
 ------------------------------------------------------------------------
 
-### Method [`stop()`](https://rdrr.io/r/base/stop.html)
+### `Server$stop()`
 
 Stop a running server
 
@@ -42,7 +42,7 @@ Stop a running server
 
 ------------------------------------------------------------------------
 
-### Method `isRunning()`
+### `Server$isRunning()`
 
 Check if the server is running
 
@@ -56,7 +56,7 @@ TRUE if the server is running, FALSE otherwise.
 
 ------------------------------------------------------------------------
 
-### Method `getStaticPaths()`
+### `Server$getStaticPaths()`
 
 Get the static paths for the server
 
@@ -72,7 +72,7 @@ objects.
 
 ------------------------------------------------------------------------
 
-### Method `setStaticPath()`
+### `Server$setStaticPath()`
 
 Set a static path for the server
 
@@ -96,7 +96,6 @@ Set a static path for the server
 
 #### Examples
 
-    \dontrun{
     # Create a server
     server <- WebServer$new("127.0.0.1", 8080, app = my_app)
     #' # Set a static path
@@ -104,11 +103,10 @@ Set a static path for the server
       staticPath1 = "path/to/static/files",
       staticPath2 = "another/path/to/static/files"
     )
-    }
 
 ------------------------------------------------------------------------
 
-### Method `removeStaticPath()`
+### `Server$removeStaticPath()`
 
 Remove a static path
 
@@ -128,7 +126,6 @@ An invisible NULL if the server is running, otherwise it does nothing.
 
 #### Examples
 
-    \dontrun{
     # Create a server
     server <- WebServer$new("127.0.0.1", 8080, app = my_app)
     # Set a static path
@@ -138,11 +135,10 @@ An invisible NULL if the server is running, otherwise it does nothing.
     )
     # Remove a static path
     server$removeStaticPath("staticPath1")
-    }
 
 ------------------------------------------------------------------------
 
-### Method `getStaticPathOptions()`
+### `Server$getStaticPathOptions()`
 
 Get the static path options for the server
 
@@ -158,7 +154,7 @@ overridden for each static path.
 
 ------------------------------------------------------------------------
 
-### Method `setStaticPathOption()`
+### `Server$setStaticPathOption()`
 
 Set one or more static path options
 
@@ -187,7 +183,7 @@ An invisible NULL if the server is running, otherwise it does nothing.
 ``` r
 
 ## ------------------------------------------------
-## Method `Server$setStaticPath`
+## Method `Server$setStaticPath()`
 ## ------------------------------------------------
 
 if (FALSE) { # \dontrun{
@@ -201,7 +197,7 @@ server$setStaticPath(
 } # }
 
 ## ------------------------------------------------
-## Method `Server$removeStaticPath`
+## Method `Server$removeStaticPath()`
 ## ------------------------------------------------
 
 if (FALSE) { # \dontrun{

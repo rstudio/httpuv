@@ -11,14 +11,14 @@ and
 
 ## Super class
 
-[`httpuv::Server`](https://rstudio.github.io/httpuv/dev/reference/Server.md)
--\> `WebServer`
+[`Server`](https://rstudio.github.io/httpuv/dev/reference/Server.md) -\>
+`WebServer`
 
 ## Methods
 
 ### Public methods
 
-- [`WebServer$new()`](#method-WebServer-new)
+- [`WebServer$new()`](#method-WebServer-initialize)
 
 - [`WebServer$getHost()`](#method-WebServer-getHost)
 
@@ -26,17 +26,17 @@ and
 
 Inherited methods
 
-- [`httpuv::Server$getStaticPathOptions()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-getStaticPathOptions)
-- [`httpuv::Server$getStaticPaths()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-getStaticPaths)
-- [`httpuv::Server$isRunning()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-isRunning)
-- [`httpuv::Server$removeStaticPath()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-removeStaticPath)
-- [`httpuv::Server$setStaticPath()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-setStaticPath)
-- [`httpuv::Server$setStaticPathOption()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-setStaticPathOption)
-- [`httpuv::Server$stop()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-stop)
+- [`Server$getStaticPathOptions()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-getStaticPathOptions)
+- [`Server$getStaticPaths()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-getStaticPaths)
+- [`Server$isRunning()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-isRunning)
+- [`Server$removeStaticPath()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-removeStaticPath)
+- [`Server$setStaticPath()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-setStaticPath)
+- [`Server$setStaticPathOption()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-setStaticPathOption)
+- [`Server$stop()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-stop)
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `WebServer$new()`
 
 Initialize a new WebServer object
 
@@ -73,7 +73,6 @@ A new `WebServer` object.
 
 #### Examples
 
-    \dontrun{
     # Create a simple app
     app <- function(req) {
       list(
@@ -84,11 +83,10 @@ A new `WebServer` object.
     }
     # Create a server
     server <- WebServer$new("127.0.0.1", 8080, app)
-    }
 
 ------------------------------------------------------------------------
 
-### Method `getHost()`
+### `WebServer$getHost()`
 
 Get the host name or IP address of the server
 
@@ -102,7 +100,7 @@ The host name or IP address that the server is bound to.
 
 ------------------------------------------------------------------------
 
-### Method `getPort()`
+### `WebServer$getPort()`
 
 Get the port number of the server
 
@@ -119,7 +117,7 @@ The port number that the server is bound to.
 ``` r
 
 ## ------------------------------------------------
-## Method `WebServer$new`
+## Method `WebServer$new()`
 ## ------------------------------------------------
 
 if (FALSE) { # \dontrun{

@@ -73,13 +73,13 @@ Source:
 [`DESCRIPTION`](https://github.com/rstudio/httpuv/blob/main/DESCRIPTION)
 
 Cheng J, Chang W, Reid S, Brown J, Trower B, Peslyak A (2026). *httpuv:
-HTTP and WebSocket Server Library*. R package version 1.6.16.9000,
+HTTP and WebSocket Server Library*. R package version 1.6.17.9000,
 <https://rstudio.github.io/httpuv/>.
 
     @Manual{,
       title = {httpuv: HTTP and WebSocket Server Library},
       author = {Joe Cheng and Winston Chang and Steve Reid and James Brown and Bob Trower and Alexander Peslyak},
       year = {2026},
-      note = {R package version 1.6.16.9000},
+      note = {R package version 1.6.17.9000},
       url = {https://rstudio.github.io/httpuv/},
     }

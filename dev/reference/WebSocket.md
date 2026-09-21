@@ -42,7 +42,7 @@ passing an `onWSOpen` function to
 
 ### Public methods
 
-- [`WebSocket$new()`](#method-WebSocket-new)
+- [`WebSocket$new()`](#method-WebSocket-initialize)
 
 - [`WebSocket$onMessage()`](#method-WebSocket-onMessage)
 
@@ -56,7 +56,7 @@ passing an `onWSOpen` function to
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `WebSocket$new()`
 
 Initializes a new WebSocket object.
 
@@ -76,7 +76,7 @@ Initializes a new WebSocket object.
 
 ------------------------------------------------------------------------
 
-### Method `onMessage()`
+### `WebSocket$onMessage()`
 
 Registers a callback function that will be invoked whenever a message is
 received on this connection.
@@ -96,7 +96,7 @@ received on this connection.
 
 ------------------------------------------------------------------------
 
-### Method `onClose()`
+### `WebSocket$onClose()`
 
 Registers a callback function that will be invoked when the connection
 is closed.
@@ -113,7 +113,7 @@ is closed.
 
 ------------------------------------------------------------------------
 
-### Method `send()`
+### `WebSocket$send()`
 
 Begins sending the given message over the websocket.
 
@@ -130,7 +130,7 @@ Begins sending the given message over the websocket.
 
 ------------------------------------------------------------------------
 
-### Method [`close()`](https://rdrr.io/r/base/connections.html)
+### `WebSocket$close()`
 
 Closes the websocket connection
 
@@ -152,7 +152,7 @@ Closes the websocket connection
 
 ------------------------------------------------------------------------
 
-### Method `clone()`
+### `WebSocket$clone()`
 
 The objects of this class are cloneable with this method.
 

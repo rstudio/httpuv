@@ -11,14 +11,14 @@ and
 
 ## Super class
 
-[`httpuv::Server`](https://rstudio.github.io/httpuv/dev/reference/Server.md)
--\> `PipeServer`
+[`Server`](https://rstudio.github.io/httpuv/dev/reference/Server.md) -\>
+`PipeServer`
 
 ## Methods
 
 ### Public methods
 
-- [`PipeServer$new()`](#method-PipeServer-new)
+- [`PipeServer$new()`](#method-PipeServer-initialize)
 
 - [`PipeServer$getName()`](#method-PipeServer-getName)
 
@@ -26,17 +26,17 @@ and
 
 Inherited methods
 
-- [`httpuv::Server$getStaticPathOptions()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-getStaticPathOptions)
-- [`httpuv::Server$getStaticPaths()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-getStaticPaths)
-- [`httpuv::Server$isRunning()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-isRunning)
-- [`httpuv::Server$removeStaticPath()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-removeStaticPath)
-- [`httpuv::Server$setStaticPath()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-setStaticPath)
-- [`httpuv::Server$setStaticPathOption()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-setStaticPathOption)
-- [`httpuv::Server$stop()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-stop)
+- [`Server$getStaticPathOptions()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-getStaticPathOptions)
+- [`Server$getStaticPaths()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-getStaticPaths)
+- [`Server$isRunning()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-isRunning)
+- [`Server$removeStaticPath()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-removeStaticPath)
+- [`Server$setStaticPath()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-setStaticPath)
+- [`Server$setStaticPathOption()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-setStaticPathOption)
+- [`Server$stop()`](https://rstudio.github.io/httpuv/dev/reference/Server.html#method-stop)
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `PipeServer$new()`
 
 Initialize a new PipeServer object
 
@@ -73,7 +73,6 @@ A new `PipeServer` object.
 
 #### Examples
 
-    \dontrun{
     # Create a simple app
     app <- function(req) {
       list(
@@ -84,11 +83,10 @@ A new `PipeServer` object.
     }
     # Create a server
     server <- PipeServer$new("my_pipe", -1, app)
-    }
 
 ------------------------------------------------------------------------
 
-### Method `getName()`
+### `PipeServer$getName()`
 
 Get the name of the named pipe
 
@@ -102,7 +100,7 @@ The name of the named pipe that the server is bound to.
 
 ------------------------------------------------------------------------
 
-### Method `getMask()`
+### `PipeServer$getMask()`
 
 Get the mask for the named pipe
 
@@ -119,7 +117,7 @@ The mask for the named pipe that the server is bound to.
 ``` r
 
 ## ------------------------------------------------
-## Method `PipeServer$new`
+## Method `PipeServer$new()`
 ## ------------------------------------------------
 
 if (FALSE) { # \dontrun{
