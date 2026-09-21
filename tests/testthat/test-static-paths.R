@@ -773,7 +773,7 @@ test_that("Last-Modified and If-Modified-Since headers", {
   # A 304 response should contain only the following headers (and must contain
   # them if the corresponding 200 response would have them):
   # Cache-Control, Content-Location, Date, ETag, Expires, Vary
-  # https://httpstatuses.com/304
+  # https://httpstatuses.io/304
   expect_identical(
     h[c("cache-control", "etag")],
     h1[c("cache-control", "etag")]

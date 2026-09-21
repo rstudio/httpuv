@@ -60,7 +60,7 @@ error_unavailable_port <- function(message = "Cannot find an available port.") {
 }
 
 # Ports that are considered unsafe by Chrome
-# http://superuser.com/questions/188058/which-ports-are-considered-unsafe-on-chrome
+# https://superuser.com/questions/188058/which-ports-are-considered-unsafe-on-chrome
 # https://github.com/rstudio/shiny/issues/1784
 unsafe_ports <- c(
   1,
