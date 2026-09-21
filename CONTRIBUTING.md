@@ -2,7 +2,7 @@ We welcome contributions to the **httpuv** package. To submit a contribution:
 
 1. [Fork](https://github.com/rstudio/httpuv/fork) the repository and make your changes.
 
-2. Submit a [pull request](https://help.github.com/articles/using-pull-requests).
+2. Submit a [pull request](https://docs.github.com/en/pull-requests/reference/pull-requests).
 
 3. You will be prompted to read and agree to the "RStudio Corporate and Individual Contributor Agreement."
 
