@@ -2,6 +2,12 @@
 
 ## httpuv (development version)
 
+- Fixed [\#439](https://github.com/rstudio/httpuv/issues/439): Multiple
+  `Cookie` request headers are now combined with `"; "` instead of
+  `","`, as required by RFC 6265 (thanks to
+  [@andyquinterom](https://github.com/andyquinterom),
+  [\#440](https://github.com/rstudio/httpuv/issues/440)).
+
 ## httpuv 1.6.17
 
 CRAN release: 2026-03-18
