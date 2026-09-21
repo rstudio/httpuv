@@ -49,9 +49,9 @@ Description: Provides low-level socket and protocol support for handling
     intended as a building block for other packages, rather than making it
     particularly easy to create complete web applications using httpuv
     alone.  httpuv is built on top of the libuv and http-parser C
-    libraries, both of which were developed by Joyent, Inc. (See LICENSE
+    libraries, both of which were developed by Joyent, Inc. (See LICENSE.note
     file for libuv and http-parser license information.)
-License: GPL (>= 2) | file LICENSE
+License: MIT + file LICENSE
 URL: https://rstudio.github.io/httpuv/, https://github.com/rstudio/httpuv
 BugReports: https://github.com/rstudio/httpuv/issues
 Depends:
