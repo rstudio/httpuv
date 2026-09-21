@@ -75,11 +75,14 @@ test_that("Multiple Cookie headers are joined with semicolon", {
   # This is a test for correct Cookie header concatenation per RFC 6265.
   # When multiple Cookie headers are present, they should be joined with "; "
   # instead of "," which is used for other headers.
+  headers_received <- NULL
   s <- httpuv::startServer(
     "0.0.0.0",
     randomPort(),
     list(
       call = function(req) {
+        # Save the headers for examination later
+        headers_received <<- req$HEADERS
         list(
           status = 200L,
           headers = list('Content-Type' = 'text/plain'),
@@ -113,6 +116,19 @@ test_that("Multiple Cookie headers are joined with semicolon", {
   content <- rawToChar(res$content)
   expect_identical(content, "session=abc123; user=john; theme=dark")
 
+  # Cookie headers are combined even when another header sits between them,
+  # and regardless of the case used for the field name.
+  h <- new_handle()
+  handle_setheaders(
+    h,
+    `Cookie` = "session=abc123",
+    `X-Custom` = "value1",
+    `cookie` = "user=john"
+  )
+  res <- fetch(local_url("/", s$getPort()), h)
+  content <- rawToChar(res$content)
+  expect_identical(content, "session=abc123; user=john")
+
   # Verify that non-Cookie headers still use comma separator
   h <- new_handle()
   handle_setheaders(
@@ -120,10 +136,8 @@ test_that("Multiple Cookie headers are joined with semicolon", {
     `X-Custom` = "value1",
     `X-Custom` = "value2"
   )
-  res <- fetch(local_url("/", s$getPort()), h)
-  content <- rawToChar(res$content)
-  # The body should be empty since we're not setting Cookie, but we test
-  # the X-Custom header via a separate server that returns it
+  fetch(local_url("/", s$getPort()), h)
+  expect_identical(headers_received[["x-custom"]], "value1,value2")
 })
 
 test_that("Large HTTP header field names are preserved", {
