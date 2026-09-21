@@ -1,6 +1,6 @@
 # MIT License
 
-Copyright (c) 2026 httpuv authors
+Copyright (c) 2013-2026 Posit Software, PBC
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
