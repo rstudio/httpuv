@@ -34,7 +34,7 @@ developer.mozilla.org:
 }
 \details{
 Intended as a faster replacement for \code{\link[utils:URLencode]{utils::URLencode()}} and
-\code{\link[utils:URLencode]{utils::URLdecode()}}.
+\code{\link[utils:URLdecode]{utils::URLdecode()}}.
 
 encodeURI differs from encodeURIComponent in that the former will not encode
 reserved characters: \code{;,/?:@&=+$}

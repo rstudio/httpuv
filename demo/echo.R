@@ -2,7 +2,7 @@ library(httpuv)
 
 app <- list(
   call = function(req) {
-    wsUrl = paste(
+    wsUrl <- paste(
       sep = '',
       '"',
       "ws://",

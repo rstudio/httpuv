@@ -24,7 +24,7 @@ listened on. Note that on most Unix-like systems including Linux and macOS,
 port numbers smaller than 1024 require root privileges.}
 
 \item{...}{
-  Arguments passed on to \code{\link[=staticPath]{staticPath}}
+  Arguments passed on to \code{\link{staticPath}}
   \describe{
     \item{\code{path}}{The local path.}
     \item{\code{indexhtml}}{If an index.html file is present, should it be served up
