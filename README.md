@@ -168,4 +168,8 @@ withr::with_makevars(
 )
 ```
 
-&copy; 2013-2020 RStudio, Inc.
+## License
+
+The httpuv package is licensed under the MIT License. See
+[LICENSE.md](LICENSE.md) for the full terms. Third-party components retain
+their respective licenses, which are detailed in [LICENSE.note](LICENSE.note).

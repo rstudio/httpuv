@@ -1,5 +1,7 @@
 # httpuv (development version)
 
+* The httpuv package is now licensed under the MIT License. (#418)
+
 * Fixed #439: Multiple `Cookie` request headers are now combined with `"; "` instead of `","`, as required by RFC 6265 (thanks to @andyquinterom, #440).
 
 # httpuv 1.6.17
