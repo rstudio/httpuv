@@ -72,6 +72,7 @@ LinkingTo:
     later,
     Rcpp
 Config/Needs/website: tidyverse/tidytemplate
+Config/roxygen2/version: 8.1.0
 Config/testthat/edition: 3
 Config/usethis/last-upkeep: 2025-07-01
 Encoding: UTF-8
@@ -86,4 +87,3 @@ Collate:
     'staticServer.R'
     'static_paths.R'
     'utils.R'
-Config/roxygen2/version: 8.1.0
