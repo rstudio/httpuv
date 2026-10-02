@@ -176,6 +176,16 @@ std::string HttpRequest::url() const {
   return _url;
 }
 
+double HttpRequest::timestamp() const {
+  // According to the std::chrono docs, we need at least 55 bit here.
+  long long since_epoch = std::chrono::duration_cast<std::chrono::microseconds>(
+    _timestamp.time_since_epoch()
+  ).count();
+  // R's currentTime() returns a Unix timestamp with microseconds (or
+  // nanoseconds on supported platforms) tacked on.
+  return ((double) since_epoch) / 1e6;
+}
+
 const RequestHeaders& HttpRequest::headers() const {
   return _headers;
 }
